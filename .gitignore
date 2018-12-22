@@ -1,0 +1,6 @@
+**/bin/*
+**/lib/*
+**/obj/*
+*.swp
+
+notes.txt

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <UseNETCoreGenerator>true</UseNETCoreGenerator>
+    <RootNamespace>TensorFlowSharp</RootNamespace>
+    <AssemblyName>TensorFlowSharp</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="lib/Google.Protobuf.dll" />
+    <Reference Include="lib/HDF.PInvoke.dll" />
+    <Reference Include="lib/TensorFlowSharp.dll" />
+    <Reference Include="lib/TensorFlowSharpProto.dll" />
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Utils.fs" /> 
+    <Compile Include="Common.fs" /> 
+    <Compile Include="DType.fs" /> 
+    <Compile Include="Buffer.fs" /> 
+    <Compile Include="Tensorflow.fs" /> 
+  </ItemGroup>
+</Project>
+
