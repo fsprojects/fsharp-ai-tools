@@ -26,6 +26,11 @@
     <Compile Include="DType.fs" /> 
     <Compile Include="Buffer.fs" /> 
     <Compile Include="Tensorflow.fs" /> 
+    <Compile Include="Tensor.fs" /> 
+    <Compile Include="Operation.fs" /> 
+    <Compile Include="Output.fs" /> 
+    <Compile Include="Graph.fs" /> 
+    <Compile Include="Variable.fs" /> 
   </ItemGroup>
 </Project>
 

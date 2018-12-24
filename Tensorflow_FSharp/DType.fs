@@ -1,8 +1,6 @@
-module Tensorflow.DType
+namespace Tensorflow
 open System
 
-let private toEnum = LanguagePrimitives.EnumOfValue
-let private ofEnum = LanguagePrimitives.EnumToValue
 
 /// <summary>
 /// The data type for a specific tensor.
@@ -34,13 +32,16 @@ type DType =
     | UInt16        = 17u
     | Complex128    = 18u
     | Float16       = 19u
-    | Resource      = 21u
+    | Resource      = 20u
     | Variant       = 21u
     | UInt32        = 22u
     | UInt64        = 23u
 
 [<AutoOpen>]
 module DTypeExtensions =
+    let private toEnum = LanguagePrimitives.EnumOfValue
+    let private ofEnum = LanguagePrimitives.EnumToValue
+
     type DType with    
         member this.IsComplex 
             with get() = 

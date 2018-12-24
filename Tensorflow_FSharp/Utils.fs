@@ -3,6 +3,7 @@ module Tensorflow.Utils
 open System.Collections.Generic
 
 module Option =
+    let orNull (x:'a option) = match x with | None -> box null :?> 'a | Some(x) -> x
     let orDefault (default_:'a) (x:'a option)  = match x with | None -> default_ | Some(x) -> x
     let orDefaultLazy (default_:Lazy<'a>) (x:'a option)  = 
         match x with | None -> default_.Force() | Some(x) -> x
@@ -10,7 +11,8 @@ module Option =
         match x with | None -> f() | Some(x) -> x
     let tryNull(x) = if box x <> null then Some(x) else None
     let ofRef (result:bool,byref:'a) = if result then Some(byref) else None
-    let collect (x:'a[] option) = match x with | None -> [||] | Some(xs) -> xs
+    let collect (x:'a[] option) = match x with | None -> [||] | Some(xs) -> xs; 
+        
 
 type Dictionary<'a,'b> with 
     member this.TryGet(x) = match this.TryGetValue(x) with | (true,v) -> Some(v) | _ -> None
@@ -36,6 +38,16 @@ module Array =
     let update (i:int) (x:'a) (xs:'a[]) = xs |> Array.mapi (fun j y -> if i = j then x else y)
 
 
-
-
-
+/// to instantiate a default value. Though it's possible anything 
+/// beyond this is is not needed
+type DictionaryCount<'a when 'a : equality>() =
+    inherit Dictionary<'a,int>()
+    member this.Item 
+        with get(x:'a) = if this.ContainsKey(x) then this.[x] else 0
+        and set(x:'a) (v:int) = this.Add(x,v)
+    member this.Increment(x:'a) = this.[x] <- this.[x] + 1
+    member this.Decrement(x:'a) = this.[x] <- this.[x] - 1
+    member this.GetThenIncrement(x:'a) = 
+        let value = this.[x]
+        this.Increment(x)
+        value

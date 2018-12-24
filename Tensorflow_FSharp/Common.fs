@@ -74,16 +74,6 @@
 
 
 
-// /// TODO, this could be generalized with the ability
-// /// to instantiate a default value. Though it's possible anything 
-// /// beyond this is is not needed
-// type DictionaryCount<'a when 'a : equality>() =
-//     inherit Dictionary<'a,int>()
-//     member this.Item 
-//         with get(x:'a) = if this.ContainsKey(x) then this.[x] else 0
-//         and set(x:'a) (v:int) = this.Add(x,v)
-//     member this.Increment(x:'a) = this.[x] <- this.[x] + 1
-//     member this.Decrement(x:'a) = this.[x] <- this.[x] - 1
 
 
 
