@@ -1,9 +1,11 @@
 [<AutoOpen>]
 module Tensorflow.Utils
 open System.Collections.Generic
+open System.Collections
 
 module Option =
     let orNull (x:'a option) = match x with | None -> box null :?> 'a | Some(x) -> x
+    let mapOrNull (f:'a->'b) (x:'a option)  = match x with | None -> box null :?> 'b | Some(x) -> f(x)
     let orDefault (default_:'a) (x:'a option)  = match x with | None -> default_ | Some(x) -> x
     let orDefaultLazy (default_:Lazy<'a>) (x:'a option)  = 
         match x with | None -> default_.Force() | Some(x) -> x
@@ -36,7 +38,14 @@ module Array =
     let all (f:'a -> bool ) (xs:'a[]) : bool = xs |> Array.exists (f >> not) |> not
     let enumerate (xs:'a[]) = xs |> Array.mapi (fun i x -> (i,x))
     let update (i:int) (x:'a) (xs:'a[]) = xs |> Array.mapi (fun j y -> if i = j then x else y)
+    // Not sure what to do with the warning here...
+    let cast<'b> (xs:IEnumerable) = [|for x in xs -> x :?> 'b |]
 
+
+let (|Integer|_|) (str: string) =
+   let mutable intvalue = 0
+   if System.Int32.TryParse(str, &intvalue) then Some(intvalue)
+   else None
 
 /// to instantiate a default value. Though it's possible anything 
 /// beyond this is is not needed

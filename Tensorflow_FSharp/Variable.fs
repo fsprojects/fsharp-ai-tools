@@ -40,7 +40,7 @@ type TF_Tensor = System.IntPtr
 /// There is an implicit conversion from the Variable into the VarHandleOp if
 /// used.
 /// </remarks>
-type Variable internal (variableHandle : TF_Output, readHandle : TF_Output, assignOp : TF_Opeartion) = 
+type Variable internal (variableHandle : TF_Output, readHandle : TF_Output, assignOp : TF_Operation) = 
 
     /// <summary>
     /// Returns the ReadVariableOp that is used to fetch the value of the variable from the graph.

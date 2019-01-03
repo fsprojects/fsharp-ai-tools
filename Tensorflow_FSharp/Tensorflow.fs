@@ -243,7 +243,7 @@ type BufferReleaseFunc = delegate of IntPtr * IntPtr -> unit
 /// </remarks>
 // TODO: the string ctor
 // TODO: perhaps we should have an implicit byte [] conversion that just calls ToArray?
-type TFBuffer private (handle:IntPtr) =
+type TFBuffer internal (handle:IntPtr) =
     inherit TFDisposable(handle) 
     // extern TF_Buffer * TF_NewBufferFromString (const void *proto, size_t proto_len);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
@@ -645,7 +645,6 @@ type TFSessionOptions(handle) =
 
     override this.NativeDispose (handle : IntPtr) = TF_DeleteSessionOptions (handle)
 
-
     /// <summary>
     /// Sets the target in options.
     /// </summary>
@@ -654,7 +653,6 @@ type TFSessionOptions(handle) =
     member this.SetTarget (target : string) =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("TFSessionOptions"))
         else TF_SetTarget (handle, target);
-
 
     /// <summary>
     /// Sets the configuration information for the session.
@@ -670,6 +668,8 @@ type TFSessionOptions(handle) =
         let cstatus = TFStatus.Setup (?incoming=status)
         TF_SetConfig (handle, protoData, UIntPtr(uint32 length), cstatus.Handle);
         cstatus.CheckMaybeRaise (?incomingStatus=status);
+    
+    member this.Handle = handle
 
 /// Low-level: Enumeration describing the types of a metadata attribute
 type TFAttributeType =
@@ -919,4 +919,58 @@ type TFFunction internal (handle : IntPtr) =
         else
             new TFFunction (handle)
 
-    member this.Name = Marshal.PtrToStringAnsi (handle);
+
+
+
+
+
+
+/// <summary>
+/// Represents a dynamically loaded library of TensorFlow operations, use to load and consume TensorFlow operations from an external library.
+/// </summary>
+/// <remarks>
+/// Use the static method <see cref="M:Tensorflow.TFLibrary.FromFile"/> to load a dynamic library.
+/// Once that function returns
+/// </remarks>
+type TFLibrary private (handle : IntPtr) = 
+    inherit TFDisposable(handle)
+
+    // extern TF_Library * TF_LoadLibrary (const char *library_filename, TF_Status *status);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern TF_Library TF_LoadLibrary (string library_filename, TF_Status  status);
+
+    // extern void TF_DeleteLibraryHandle (TF_Library *lib_handle);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_DeleteLibraryHandle (TF_Library lib_handle);
+
+    // extern TF_Buffer TF_GetOpList (TF_Library *lib_handle);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern LLBuffer TF_GetOpList (TF_Library lib_handle);
+
+    /// <summary>
+    /// Load the library specified by and register the operations and
+    /// kernels present in that library.
+    /// </summary>
+    /// <returns>Handle to the loaded library.</returns>
+    /// <param name="libraryFile">Name of the library to load, this is a platform specific name.</param>
+    /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
+    /// <remarks>
+    /// The provided <paramref name="libraryFile"/> is passed to the operating system dynamic loader
+    /// and it will load the library using the operating system defined search paths and rules to load this.
+    /// </remarks>
+    static member FromFile (libraryFile : string, ?status : TFStatus) : TFLibrary  =
+        let cstatus = TFStatus.Setup (?incoming=status)
+        let h = TF_LoadLibrary (libraryFile, cstatus.Handle);
+        cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+        new TFLibrary (h);
+
+    /// <summary>
+    /// Retrieves the ProtocolBuffer describing the available operations in
+    /// the loaded TensorFlow library.
+    /// </summary>
+    /// <returns>The buffer contains a ProtocolBuffer encoded payload, you need a ProtocolBuffer reader to process the contents.</returns>
+    member this.GetOpList () : TFBuffer = new TFBuffer ((TF_GetOpList (handle)).data)
+
+
+    override this.NativeDispose (handle : IntPtr) = TF_DeleteLibraryHandle (handle);
+

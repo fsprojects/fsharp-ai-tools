@@ -31,6 +31,8 @@
     <Compile Include="Output.fs" /> 
     <Compile Include="Graph.fs" /> 
     <Compile Include="Variable.fs" /> 
+    <Compile Include="Session.fs" /> 
+    <Compile Include="Queue.fs" /> 
   </ItemGroup>
 </Project>
 
