@@ -3,4 +3,5 @@
 **/obj/*
 *.swp
 
+nuget/
 notes.txt
