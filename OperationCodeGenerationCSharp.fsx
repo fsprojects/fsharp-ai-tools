@@ -250,7 +250,7 @@ let run(dirs : string []) =
 
 
     let setAttribute (_type : string, attrName : string, csAttrName : string) =
-        if _type = "shape" then p (sprintf "desc.SetAttrSahpe (\"%s\", %s)" attrName csAttrName)
+        if _type = "shape" then p (sprintf "desc.SetAttrShape (\"%s\", %s)" attrName csAttrName)
         elif _type.StartsWith ("list(shape") then p (sprintf "desc.SetAttrShape (\"%s\", %s)" attrName csAttrName)
         else
             match fsharptype _type |> Option.get with
@@ -340,7 +340,7 @@ let run(dirs : string []) =
             
     p "using System;\n"
     pi "namespace Tensorflow {"
-    pi "public patrial class TFGraph {"
+    pi "public partial class TFGraph {"
 
     for oper in operations |> Array.sortBy (fun x -> x.Name) do
         // Skip internal operations
@@ -366,39 +366,3 @@ let res = run([|"/home/moloneymb/EE/Git/tensorflow/tensorflow/core/api_def/base_
 
 File.WriteAllText(__SOURCE_DIRECTORY__ + "/gen.cs", res)
 
-
-
-
-
-// TODO Debug missing parameters, for operations such as Variable, VariableV2.. etc.
-let operations, apimap = getOpsList()
-let dirs = [|"/home/moloneymb/EE/Git/tensorflow/tensorflow/core/api_def/base_api"|]
-dirs |> Array.collect (fun dir -> Directory.GetFiles(dir)) |> Array.iter (fun f -> apimap.Put(File.ReadAllText(f)) |>ignore)
-
-let variableOperDef = operations |> Array.find (fun x -> x.Name = "Variable")
-
-
-let setupArguments (oper : OpDef) = 
-    // Attributes related ot the InputArg's type are inferred automatically
-    // and are not exposed to the client
-    let inferred = 
-        oper.InputArgs |> Seq.toArray |> Array.choose (fun argdef ->
-            if argdef.TypeAttr <> "" then Some(argdef.TypeAttr)
-            elif argdef.TypeListAttr <> "" then Some(argdef.TypeListAttr)
-            elif argdef.NumberAttr <> "" then Some(argdef.NumberAttr)
-            else None) |> Set.ofArray
-    let requiredAttrs, optionalAttrs = 
-        oper.Attrs |> Seq.toArray
-        |> Array.filter (fun attr -> not (inferred.Contains(attr.Name)))
-        |> Array.partition (fun attr -> attr.DefaultValue = null)
-
-    (requiredAttrs,optionalAttrs, oper.OutputArgs.Count > 0) 
-
-
-let reqAttr, opAttrs, haReturn = setupArguments variableOperDef
-
-reqAttr
-opAttrs
-hasReturn
-variableOperDef.Attrs
-variableOperDef.InputArgs

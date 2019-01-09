@@ -279,6 +279,31 @@ and TFGraph internal (handle) =
     let mutable currentDependencies = Array.empty<Operation>
     let values = new DictionaryCount<string> ();
 
+    /// <summary>
+    /// Gets or sets the graph random seed, see remarks for details.
+    /// </summary>
+    /// <value>The seed.</value>
+    /// <remarks>
+    ///  Operations that rely on a random seed actually derive it from two seeds:
+    ///  the graph-level and operation-level seeds.This sets the graph-level seed.
+    ///
+    /// Its interactions with operation-level seeds is as follows:
+    /// 1. If neither the graph-level nor the operation seed is set:
+    ///    A random seed is used for this op.
+    /// 2. If the graph-level seed is set, but the operation seed is not:
+    ///    The system deterministically picks an operation seed in conjunction
+    ///    with the graph-level seed so that it gets a unique random sequence.
+    /// 3. If the graph-level seed is not set, but the operation seed is set:
+    ///    A default graph-level seed and the specified operation seed are used to
+    ///    determine the random sequence.
+    /// 4. If both the graph-level and the operation seed are set:
+    ///    Both seeds are used in conjunction to determine the random sequence.
+    /// </remarks>
+    let mutable seed = 87654321
+
+    let pending_init_variables : List<Operation> = List<Operation>()
+    let trainable_variables : List<Variable> = List<Variable>()
+
     let mutable lastId = 0
 
     // extern TF_Graph * TF_NewGraph ();
@@ -364,6 +389,22 @@ and TFGraph internal (handle) =
 
     override this.NativeDispose (handle : IntPtr) = TF_DeleteGraph (handle);
 
+    member this.PendingInitVariables with get() = pending_init_variables
+    member this.TrainingVariables with get() = pending_init_variables
+
+
+    /// <summary>
+    /// Returns the graph and local seeds based on an optionally set incoming seed value.
+    /// </summary>
+    /// <param name="operationSeed">The seed value that might be set.</param>
+    /// <param name="graphSeed">Returned graph seed.</param>
+    /// <param name="localSeed">Returned local seed.</param>
+    /// <remarks>
+    /// This helper function returns two seeds derived from graph-level and op-level seeds.
+    /// Many random operations internally use the two seeds to allow user to change 
+    /// the seed globally for a graph, or for only specific operations.
+    /// </remarks>
+    member this.GetRandomSeeds (?operationSeed : int) = (seed, operationSeed |> Option.orElse lastId)
 
     /// <summary>
     /// Sets the tensor shape of the tensor referenced by <paramref name="output"/> to the shape described by <paramref name="dims"/>.
