@@ -96,6 +96,34 @@ module DTypeExtensions =
         /// Returns a non reference `DType` based on this `DType`.
         member this.BaseType with get() = if this.IsRefDtype then (toEnum(ofEnum(this) - 100u)) else this
 
+        member this.ByteSize with get () =
+            match this with
+            | Unknown       -> -1 
+            | Float32       -> 4
+            | Float64       -> 8
+            | Int32         -> 4
+            | UInt8         -> 1
+            | Int16         -> 2
+            | Int8          -> 1
+            | String        -> -1
+            | Complex64     -> 16
+            | Complex       -> 8
+            | Int64         -> 8
+            | Bool          -> 1
+            | QInt8         -> 1
+            | QUInt8        -> 1
+            | QInt32        -> 4
+            | BFloat16      -> 2
+            | QInt16        -> 2
+            | QUInt16       -> 2
+            | UInt16        -> 2
+            | Complex128    -> 32
+            | Float16       -> 2
+            | Resource      -> -1
+            | Variant       -> -1
+            | UInt32        -> 4
+            | UInt64        -> 8
+
 
 
 

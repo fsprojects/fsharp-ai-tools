@@ -2,6 +2,7 @@
 module Tensorflow.Utils
 open System.Collections.Generic
 open System.Collections
+open Microsoft.FSharp.NativeInterop
 
 module Option =
     let orNull (x:'a option) = match x with | None -> box null :?> 'a | Some(x) -> x
@@ -41,6 +42,11 @@ module Array =
     // Not sure what to do with the warning here...
     let cast<'b> (xs:IEnumerable) = [|for x in xs -> x :?> 'b |]
 
+module NativePtr =
+    let nativeIntRead<'a> (ptr:IntPtr) = ptr |> NativePtr.ofNativeInt<'a> |> NativePtr.read
+    let nativeIntWrite<'a> (ptr:IntPtr) (x:'a) = NativePtr.write (ptr |> NativePtr.ofNativeInt<'a>) x
+    let nativeIntGet<'a> (ptr:IntPtr) (i:int) =  NativePtr.get (x |> NativePtr.ofNativeInt<'a>) i
+    let nativeIntSet<'a> (ptr:IntPtr)(i:int) (x:'a) =  NativePtr.set (ptr |> NativePtr.ofNativeInt<'a>) i x 
 
 let (|Integer|_|) (str: string) =
    let mutable intvalue = 0
@@ -60,3 +66,13 @@ type DictionaryCount<'a when 'a : equality>() =
         let value = this.[x]
         this.Increment(x)
         value
+
+let isAssignableTo<'a> (x:_) = typeof<'a>.IsAssignableFrom(x.GetType())
+
+let inline (!>) (x:^a) : ^b = ((^a or ^b) : (static member op_Implicit : ^a -> ^b) x)
+
+/// This is for value types
+let valueToIntPtr (v:'a) = 
+    let intPtr = Marshal.AllocHGlobal (sizeof<'a>))
+    NativePtr.nativeIntWrite v
+    intPtr

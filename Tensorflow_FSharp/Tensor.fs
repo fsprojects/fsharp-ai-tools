@@ -104,7 +104,7 @@ type TFTensor internal (handle : IntPtr) as this =
 
     static let FreeTensorDataDelegate : Deallocator = Deallocator(TFTensor.FreeTensorData)
     static let FreeTensorHandleDelegate : Deallocator  = Deallocator(TFTensor.FreeTensorHandle)
-  
+
     let createFromMultidimensionalArrays (array : Array) =
         let t = array.GetType().GetElementType ();
         let tc = Type.GetTypeCode (t);
@@ -136,6 +136,10 @@ type TFTensor internal (handle : IntPtr) as this =
     static member FreeTensorHandle (data : IntPtr, len : IntPtr, closure : IntPtr) =
         let gch = GCHandle.FromIntPtr (closure);
         gch.Free ();
+
+
+
+
 
     // General purpose constructor, specifies data type and gets pointer to buffer
     // Is the default good, one where we let the user provide their own deallocator, or should we make a copy in that case?
@@ -291,7 +295,7 @@ type TFTensor internal (handle : IntPtr) as this =
         | DType.Complex128 -> data |> NativePtr.ofNativeInt<Complex>  |> box
         | _ -> box null
 
-        //used to create multidementional arrays / tensor with a constant value
+    //used to create multidementional arrays / tensor with a constant value
     static member Set (target : Array, dt : DType, shape : int64 [], idx : int [], level : int, value : obj) =
         if level < shape.Length - 1 then
             idx.[level] <- 0
@@ -320,917 +324,687 @@ type TFTensor internal (handle : IntPtr) as this =
         // TODO Double check the NativePtr conversions
         Buffer.MemoryCopy (src |> NativePtr.ofNativeInt<int64> |> NativePtr.toVoidPtr, target, uint64 size, uint64 size);
 
-    // static void FetchFlatArray (Array target, TFDataType dt, IntPtr data)
-    // {
-    // int len = target.Length;
-    // switch (dt) {
-    // case TFDataType.Int8:
-    //   var asbyte = (sbyte [])target;
-    //   fixed (sbyte* p = &asbyte [0])
-    //     Copy (data, p, len);
-    //   return;
-    // case TFDataType.Bool:
-    //   var abool = (bool [])target;
-    //   fixed (bool* p = &abool [0])
-    //     Copy (data, p, len);
-    //   return;
-    // case TFDataType.UInt16:
-    //   var aushort = (ushort [])target;
-    //   fixed (ushort* p = &aushort [0])
-    //     Copy (data, p, len * 2);
-    //   return;
-    // case TFDataType.Complex128:
-    //   var acomplex = (Complex [])target;
-    //   fixed (Complex* p = &acomplex [0])
-    //     Copy (data, p, len * sizeof (Complex));
-    //   return;
-    // case TFDataType.Float:
-    //   var afloat = (float [])target;
-    //   fixed (float* p = &afloat [0])
-    //     Copy (data, p, len * sizeof (float));
-    //   return;
-    // case TFDataType.Double:
-    //   var adouble = (double [])target;
-    //   fixed (double* p = &adouble [0])
-    //     Copy (data, p, len * sizeof (double));
-    //   return;
-    // case TFDataType.Int32:
-    //   var aint = (int [])target;
-    //   fixed (int* p = &aint [0])
-    //     Copy (data, p, len * sizeof (double));
-    //   return;
-    // case TFDataType.UInt8:
-    //   var abyte = (byte [])target;
-    //   fixed (byte* p = &abyte [0])
-    //     Copy (data, p, len * sizeof (byte));
-    //   return;
-    // case TFDataType.Int16:
-    //   var ashort = (short [])target;
-    //   fixed (short* p = &ashort [0])
-    //     Copy (data, p, len * sizeof (short));
-    //   return;
-    // case TFDataType.Int64:
-    //   var along = (long [])target;
-    //   fixed (long* p = &along [0])
-    //     Copy (data, p, len * sizeof (long));
-    //   return;
-    // case TFDataType.String:
-    //   // need to return an array of TFStrings []
-    //   throw new NotImplementedException ();
-    // default:
-    //   throw new NotImplementedException ();
-    // }
-    // }
+    static member Copy(target : Array, dt : DType, shape : int64 [], idx : int [], level : int, data : ref<IntPtr>) =
+            if level < shape.Length - 1 then
+                idx.[level] <- 0
+                while (idx.[level] < int shape.[level]) do
+                    TFTensor.Copy (target, dt, shape, idx, level + 1, ref data);
+                    idx.[level] <- idx.[level] + 1
+            else
+                idx.[level] <- 0
+                while (idx.[level] <- int shape.[level]) do
+                    let offset = dt.ByteSize
+                    match dt with 
+                    | DType.Float32
+                    | DType.Float64
+                    | DType.Int32
+                    | DType.UInt32
+                    | DType.Int16
+                    | DType.Int8
+                    | DType.Int64
+                    | DType.Bool
+                    | DType.Complex128 -> 
+                        // TODO note, we may have to cast here value here?, will know more when this can type check
+                        target.SetValue (value, idx)
+                        data := !data |> NativePtr.add offset
+                    | DType.String -> 
+                        raise(NotImplementedException ("String decoding not implemented for tensor vecotrs yet"))
+                    | _ ->
+                        raise(NotImplementedException ())
 
-    // static object FetchJaggedArray (Type t, TFDataType dt, ref IntPtr data, long [] shape, int level = 0)
-    // {
-    // Array target;
+    static member FetchFlatArray (target : Array, dt : DType, data : IntPtr) =
+        let len = target.Length;
+        let size = dt.ByteSize
+        match dt, target with 
+        | DType.Int8, (:? array<int8> as asbyte) -> 
+            use p = fixed &asbyte.[0]
+            TFTensor.Copy (data, p, len * size)
+        | DType.Bool, (:? array<bool> as abool) ->
+            use p = fixed &abool.[0]
+            TFTensor.Copy (data, p, len * size)
+        | DType.UInt16, (:? array<uint16> as ushort) ->
+            use p = fixed &ushort.[0]
+            TFTensor.Copy (data, p, len * size)
+        | DType.Complex128, (:? array<Complex> as acomplex) ->
+            use p = fixed &acomplex.[0]
+            TFTensor.Copy (data, p, len * size)
+        | DType.Float32, (:? array<float32> as afloat) ->
+            use p = fixed &afloat.[0]
+            TFTensor.Copy (data, p, len * size)
+        | DType.Float64, (:? array<double> as adouble) ->
+            use p = fixed &adouble.[0]
+            TFTensor.Copy (data, p, len * size)
+        | DType.Int32, (:? array<int32> as aint) ->
+            use p = fixed &adouble.[0]
+            TFTensor.Copy (data, p, len * size)
+        | DType.UInt8, (:? array<uint8> as abyte) ->
+            use p = fixed &abyte.[0]
+            TFTensor.Copy (data, p, len * size)
+        | DType.Int16, (:? array<float16> as ashort) ->
+            use p = fixed &ashort.[0]
+            TFTensor.Copy (data, p, len * size)
+        | DType.Int64, (:? array<int64> as along) ->
+            use p = fixed &along.[0]
+            TFTensor.Copy (data, p, len * size)
+        | DType.String -> 
+           // need to return an array of TFStrings []
+           raise (NotImplementedException ())
+        | _ -> raise (NotImplementedException ())
 
-    // // If we are at the last node
-    // if (level == shape.Length - 1) {
-    //   target = Array.CreateInstance (t, shape [level]);
+    static member FetchJaggedArray (t : Type, dt : TFDataType, data : ref<IntPtr>, shape : int64 [], ?level : int ) =
+        let level = defaultArg level 0
+        let size = dt.ByteSize()
+        match dt with 
+        // If we are at the last node
+        if level = shape.Length - 1 then
+            let target = Array.CreateInstance (t, shape [level]);
+            for  l = 0L l < shape.[level] - 1L do
+                target.SetValue(data,l)
 
-    //   for (long l = 0; l < shape [level]; l++)
-    //     switch (dt) {
-    //     case TFDataType.Float:
-    //       target.SetValue ((*(float*)data), l);
-    //       data += 4;
-    //       break;
-    //     case TFDataType.Double:
-    //       target.SetValue ((*(double*)data), l);
-    //       data += 8;
-    //       break;
-    //     case TFDataType.Int32:
-    //       target.SetValue ((*(int*)data), l);
-    //       data += 4;
-    //       break;
-    //     case TFDataType.UInt8:
-    //       target.SetValue ((*(byte*)data), l);
-    //       data += 1;
-    //       break;
-    //     case TFDataType.Int16:
-    //       target.SetValue ((*(short*)data), l);
-    //       data += 2;
-    //       break;
-    //     case TFDataType.Int8:
-    //       target.SetValue ((*(sbyte*)data), l);
-    //       data += 1;
-    //       break;
-    //     case TFDataType.Int64:
-    //       target.SetValue ((*(long*)data), l);
-    //       data += 8;
-    //       break;
-    //     case TFDataType.Bool:
-    //       target.SetValue ((*(bool*)data), l);
-    //       data += 1;
-    //       break;
-    //     case TFDataType.Complex128:
-    //       target.SetValue ((*(Complex*)data), l);
-    //       data += sizeof (Complex);
-    //       break;
-    //     case TFDataType.String:
-    //       throw new NotImplementedException ("String decoding not implemented for tensor vecotrs yet");
-    //     default:
-    //       throw new NotImplementedException ();
-    //     }
-    // } else {
-    //   target = null;
+                match dt with
+                | DType.Float32 ( 
+                  //target.SetValue (((float)data), l);
+                  data += 4;
+                case TFDataType.Double:
+                  target.SetValue ((*(double*)data), l);
+                  data += 8;
+                  break;
+                case TFDataType.Int32:
+                  target.SetValue ((*(int*)data), l);
+                  data += 4;
+                  break;
+                case TFDataType.UInt8:
+                  target.SetValue ((*(byte*)data), l);
+                  data += 1;
+                  break;
+                case TFDataType.Int16:
+                  target.SetValue ((*(short*)data), l);
+                  data += 2;
+                  break;
+                case TFDataType.Int8:
+                  target.SetValue ((*(sbyte*)data), l);
+                  data += 1;
+                  break;
+                case TFDataType.Int64:
+                  target.SetValue ((*(long*)data), l);
+                  data += 8;
+                  break;
+                case TFDataType.Bool:
+                  target.SetValue ((*(bool*)data), l);
+                  data += 1;
+                  break;
+                case TFDataType.Complex128:
+                  target.SetValue ((*(Complex*)data), l);
+                  data += sizeof (Complex);
+                  break;
+                case TFDataType.String:
+                  throw new NotImplementedException ("String decoding not implemented for tensor vecotrs yet");
+                default:
+                  throw new NotImplementedException ();
+            target
+        else
+            let mutable target = None
+            let top = shape.[level]
+            if top < Int32.MaxValue then
+              let itop = int(top)
+              for i = 0 to itop - 1 do
+                let childArray = FetchJaggedArray (t, dt, ref data, shape, level + 1)
+                match target with | None -> target <- Array.CreateInstance (childArray.GetType (), shape [level])
+                target.Value.SetValue (childArray, i)
+            else
+              for l = 0L to top - 1L do
+                let chidArray = this.FetchJaggedArray (t, dt, ref data, shape, level + 1)
+                match target with | None -> target <- Array.CreateInstance (childArray.GetType (), shape [level])
+                target.SetValue (chidArray, l)
+      return target
 
-    //   long top = shape [level];
-    //   if (top < Int32.MaxValue) {
-    //     int itop = (int)top;
 
-    //     for (int i = 0; i < itop; i++) {
-    //       var childArray = FetchJaggedArray (t, dt, ref data, shape, level + 1);
-    //       if (target == null)
-    //         target = Array.CreateInstance (childArray.GetType (), shape [level]);
+    static member FetchMultiDimensionalArray (target : Array, dt : TFDataType, data : IntPtr, shape : int64 []) =
+        let idx = Array.zeroCreate<int> target.Length
+        for i = 0 to shape.Length - 1 do
+          if (shape.[i] > Int32.MaxValue) then raise(ArgumentOutOfRangeException ("Shape can not be longer than 32 bits"))
+        TFTensor.Copy (target, dt, shape, idx, 0, ref data);
 
-    //       target.SetValue (childArray, i);
-    //     }
-    //   } else {
-    //     for (long l = 0; l < top; l++) {
+  /// <summary>
+  /// Returns the value of the Tensor as a C# type if possible, or null if the data type can not be represented in C#
+  /// </summary>
+  /// <param name="jagged">
+  /// The default is set to false, which returns .NET multi-dimensional arrays for multi-dimensional
+  /// tensors.    This is useful to feed the data back as a TFTensor created from an array.   Set to
+  /// true if you want to get arrays pointing to arrays, which are slightly more convenient to work
+  /// with from C#
+  /// </param>
+  /// <remarks>
+  /// Jagged arrays create various intermediate arrays, while multi-dimensional arrays are more
+  /// efficient memory-wise.
+  /// </remarks>
+  /// <returns>The value encodes the contents of the tensor, and could include simple values, arrays and multi-dimensional values.</returns>
+  member this.GetValue(?jagged : bool) : obj =
+    match TFTensor.TypeFromTensorType (this.TensorType) with
+    | null -> null
+    | t ->
+        let jagged = defaultArg jagged false
+        match this.NumDims with
+        | 0 -> this.FetchSimple (this.TensorType, Data);
+        | 1 -> TFTensor.FetchFlatArray (Array.CreateInstance (t, Shape.[0]);, this.TensorType, Data);
+        | dims when jagged ->
+                IntPtr data = Data;
+                FetchJaggedArray (t, this.TensorType, ref data, Shape);
+        | dims -> 
+                let result = Array.CreateInstance (t, Shape);
+                TFTensor.FetchMultiDimensionalArray (result, this.TensorType, Data, Shape);
+                result
 
-    //       var chidArray = FetchJaggedArray (t, dt, ref data, shape, level + 1);
-    //       if (target == null)
-    //         target = Array.CreateInstance (chidArray.GetType (), shape [level]);
+  /// <summary>
+  /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.TFTensor"/>.
+  /// </summary>
+  /// <returns>A <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.TFTensor"/>.</returns>
+  override this.ToString () : string =
+    let n = this.NumDims;
+    if n = 0 then this.GetValue ().ToString ();
+    else
+        let sb = new StringBuilder ("[")
+        for i = 0 to n - 1 do
+          sb.Append (TF_Dim (handle, i))
+          if i + 1 < n then
+            sb.Append ("x")
+        sb.Append ("]")
+        sb.ToString ()
 
-    //       target.SetValue (chidArray, l);
-    //     }
-    //   }
-    //   return target;
-    // }
+  static member GetLength (array : Array, ?deep : bool, ?max : bool) : int[] =
+    let deep = defaultArg deep true
+    let max  = defaultArg max false
+    // This function gets the length of all dimensions in a multidimensional, jagged, or mixed array.
+    // https://github.com/accord-net/framework/blob/b4990721a61f03602d04c12b148215c7eca1b7ac/Sources/Accord.Math/Matrix/Matrix.Construction.cs#L1118
+    // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
+    if array.Rank = 0 then [||]
+    elif deep && isJagged (array) then
+      if array.Length = 0 then [||]
+      else
+      let rest =
+          if not(max) then getLength (array.GetValue (0) as Array, deep);
+          else
+            // find the max
+            let rest = getLength (array.GetValue (0) :> Array, deep)
+            let r = [| for i = 1 to array.Length - 1 do yield getLength (array.GetValue (i) :> Array, deep) |]
+            for j = 0 to r.Length - 1 do
+                if (r.[j] > rest.[j]) then
+                  rest.[j] = r.[j];
+       [| yield! array.Length; yield! rest |] // not sure about this
+    Array.init array.Rank (fun i -> array.GetUpperBound (i) + 1;)
 
-    // return target;
-    // }
+  static member deepFlatten (array : Array) : Array =
+    // This function converts multidimensional, jagged, or mixed arrays into a single unidimensional array (i.e. flattens the mixed array).
+    // https://github.com/accord-net/framework/blob/f78181b82eb6ee6cc7fd10d2a7a55334982c40df/Sources/Accord.Math/Matrix/Matrix.Common.cs#L1625
+    // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
+    let totalLength = TFTensor.getTotalLength (array, deep: true);
+    let elementType = TFTensor.getInnerMostType (array);
+    let result = Array.CreateInstance (elementType, totalLength);
+    let mutable k = 0;
+    for v in TFTensor.enumerateJagged (array) do
+      result.SetValue (v, k)
+      k <- k + 1
+    result
 
-    // static void FetchMultiDimensionalArray (Array target, TFDataType dt, IntPtr data, long [] shape)
-    // {
-    // var idx = new int [shape.Length];
-    // for (int i = 0; i < shape.Length; i++) {
-    //   if (shape [i] > Int32.MaxValue)
-    //     throw new ArgumentOutOfRangeException ("Shape can not be longer than 32 bits");
-    // }
-    // Copy (target, dt, shape, idx, 0, ref data);
-    // }
+    static member enumerateJagged (array : Array) : IEnumerable =
+        // This function can enumerate all elements in a multidimensional ,jagged, or mixed array.
+        // From https://github.com/accord-net/framework/blob/b4990721a61f03602d04c12b148215c7eca1b7ac/Sources/Accord.Math/Matrix/Jagged.Construction.cs#L1202
+        // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
+        let arrays = new Stack<Array> ()
+        let counters = new Stack<int> ()
 
-    // static void Copy (Array target, TFDataType dt, long [] shape, int [] idx, int level, ref IntPtr data)
-    // {
-    // if (level < shape.Length - 1) {
-    //   for (idx [level] = 0; idx [level] < shape [level]; idx [level]++)
-    //     Copy (target, dt, shape, idx, level + 1, ref data);
-    // } else {
-    //   for (idx [level] = 0; idx [level] < shape [level]; idx [level]++) {
-    //     switch (dt) {
-    //     case TFDataType.Float:
-    //       target.SetValue ((*(float*)data), idx);
-    //       data += 4;
-    //       break;
-    //     case TFDataType.Double:
-    //       target.SetValue ((*(double*)data), idx);
-    //       data += 8;
-    //       break;
-    //     case TFDataType.Int32:
-    //       target.SetValue ((*(int*)data), idx);
-    //       data += 4;
-    //       break;
-    //     case TFDataType.UInt8:
-    //       target.SetValue ((*(byte*)data), idx);
-    //       data += 1;
-    //       break;
-    //     case TFDataType.Int16:
-    //       target.SetValue ((*(short*)data), idx);
-    //       data += 2;
-    //       break;
-    //     case TFDataType.Int8:
-    //       target.SetValue ((*(sbyte*)data), idx);
-    //       data += 1;
-    //       break;
-    //     case TFDataType.Int64:
-    //       target.SetValue ((*(long*)data), idx);
-    //       data += 8;
-    //       break;
-    //     case TFDataType.Bool:
-    //       target.SetValue ((*(bool*)data), idx);
-    //       data += 1;
-    //       break;
-    //     case TFDataType.Complex128:
-    //       target.SetValue ((*(Complex*)data), idx);
-    //       data += sizeof (Complex);
-    //       break;
-    //     case TFDataType.String:
-    //       throw new NotImplementedException ("String decoding not implemented for tensor vecotrs yet");
-    //     default:
-    //       throw new NotImplementedException ();
-    //     }
-    //   }
-    // }
-    // }
+        arrays.Push (array)
+        counters.Push (0)
+        let mutable depth = 1
 
-//   /// <summary>
-//   /// Returns the value of the Tensor as a C# type if possible, or null if the data type can not be represented in C#
-//   /// </summary>
-//   /// <param name="jagged">
-//   /// The default is set to false, which returns .NET multi-dimensional arrays for multi-dimensional
-//   /// tensors.    This is useful to feed the data back as a TFTensor created from an array.   Set to
-//   /// true if you want to get arrays pointing to arrays, which are slightly more convenient to work
-//   /// with from C#
-//   /// </param>
-//   /// <remarks>
-//   /// Jagged arrays create various intermediate arrays, while multi-dimensional arrays are more
-//   /// efficient memory-wise.
-//   /// </remarks>
-//   /// <returns>The value encodes the contents of the tensor, and could include simple values, arrays and multi-dimensional values.</returns>
-//   public object GetValue (bool jagged = false)
-//   {
-//     var dims = NumDims;
-//     if (dims == 0)
-//       return FetchSimple (TensorType, Data);
+        let mutable a = array;
+        let mutable i = 0;
 
-//     var t = TypeFromTensorType (TensorType);
-//     if (t == null)
-//       return null;
+        [|
+            while arrays.Count > 0 do
+              if (i >= a.Length) then
+                a <- arrays.Pop ()
+                i <- counters.Pop () + 1
+                depth <- depth - 1
+              else
+                let e = a.GetValue (i)
+                let next = e :> Array
+                if next = null then
+                  yield e 
+                  i <- i + 1
+                else
+                  arrays.Push (a)
+                  counters.Push (i)
+                  a <- next
+                  i <- 0
+                  depth <- depth + 1
+        |]
 
-//     if (dims == 1) {
-//       var result = Array.CreateInstance (t, Shape [0]);
-//       FetchFlatArray (result, TensorType, Data);
-//       return result;
-//     } else {
-//       if (jagged) {
-//         IntPtr data = Data;
-//         return FetchJaggedArray (t, TensorType, ref data, Shape);
-//       } else {
-//         var result = Array.CreateInstance (t, Shape);
-//         FetchMultiDimensionalArray (result, TensorType, Data, Shape);
-//         return result;
-//       }
-//     }
-//   }
+    static member GetTotalLength (array : Array, ?deep : bool, ?rectangular : bool) =
+        // From https://github.com/accord-net/framework/blob/b4990721a61f03602d04c12b148215c7eca1b7ac/Sources/Accord.Math/Matrix/Matrix.Construction.cs#L1087
+        // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
+        let deep = defaultArg true
+        let rectangular = defaultArg true
+        if deep && isJagged (array.GetType ()) then
+          if rectangular then
+            let rest = TFTensor.GetTotalLength (array.GetValue (0) :> Array, deep);
+            array.Length * rest
+          else 
+            let mutable sum = 0;
+            for i = 0 to array.Length - 1 do
+              sum <- sum TFTensor.GetTotalLength (array.GetValue (i) :> Array, deep))
+            sum
+        else array.Length
 
-//   /// <summary>
-//   /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.TFTensor"/>.
-//   /// </summary>
-//   /// <returns>A <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.TFTensor"/>.</returns>
-//   public override string ToString ()
-//   {
-//     var n = NumDims;
-//     if (n == 0)
-//       return GetValue ().ToString ();
+    static member IsArrayJagged (array : Array) = 
+        // From https://github.com/accord-net/framework/blob/f78181b82eb6ee6cc7fd10d2a7a55334982c40df/Sources/Accord.Math/Matrix/Matrix.Construction.cs#L1204
+        // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
+        if (array.Length = 0) then array.Rank = 1
+        else array.Rank = 1 && (array.GetValue (0) isAssignableTo<Array>)
 
-//     StringBuilder sb = new StringBuilder ("[");
-//     for (int i = 0; i < n; i++) {
-//       sb.Append (TF_Dim (handle, i));
-//       if (i + 1 < n)
-//         sb.Append ("x");
-//     }
-//     sb.Append ("]");
-//     return sb.ToString ();
-//   }
+    static member IsTypeJagged (type : Type) =
+     // From https://github.com/accord-net/framework/blob/eb371fbc540a41c1a711b6ab1ebd49889316e7f7/Sources/Accord.Math/Matrix/Matrix.Common.cs#L84
+     // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
+        type.IsArray && type.GetElementType().IsArray;
 
-//   private static int [] getLength (Array array, bool deep = true, bool max = false)
-//   {
-//     // This function gets the length of all dimensions in a multidimensional, jagged, or mixed array.
-//     // https://github.com/accord-net/framework/blob/b4990721a61f03602d04c12b148215c7eca1b7ac/Sources/Accord.Math/Matrix/Matrix.Construction.cs#L1118
-//     // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
+    static member GetInnerMostType (array : Array) : Type =
+     // From https://github.com/accord-net/framework/blob/eb371fbc540a41c1a711b6ab1ebd49889316e7f7/Sources/Accord.Math/Matrix/Matrix.Common.cs#L95
+     // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
+         let mutable _type = array.GetType ()
+         while type.IsArray do
+           _type <- type.GetElementType ()
+         type
 
-//     if (array.Rank == 0)
-//       return new int [0];
+ 
+// Factory methods to create tensors from a constant
+     
 
-//     if (deep && isJagged (array)) {
-//       if (array.Length == 0)
-//         return new int [0];
+     /// <summary>
+     /// Converts an integer into a 1-dimensional, 1-valued tensor.
+     /// </summary>
+     /// <returns>The tensor representing the integer value.</returns>
+     /// <param name="value">Value to initialize the tensor with.</param>
+     static member op_Implicit(value : int) = TFTensor (value)
 
-//       int [] rest;
-//       if (!max) {
-//         rest = getLength (array.GetValue (0) as Array, deep);
-//       } else {
-//         // find the max
-//         rest = getLength (array.GetValue (0) as Array, deep);
-//         for (int i = 1; i < array.Length; i++) {
-//           int [] r = getLength (array.GetValue (i) as Array, deep);
+     /// <summary>
+     /// Converts a boolean into a 1-dimensional, 1-valued tensor.
+     /// </summary>
+     /// <returns>The tensor representing the integer value.</returns>
+     /// <param name="value">Value to initialize the tensor with.</param>
+     static member op_Implicit(value : bool) = TFTensor (value)
 
-//           for (int j = 0; j < r.Length; j++) {
-//             if (r [j] > rest [j])
-//               rest [j] = r [j];
-//           }
-//         }
-//       }
+     /// <summary>
+     /// Converts a long into a 1-dimensional, 1-valued tensor.
+     /// </summary>
+     /// <returns>The tensor representing the long value.</returns>
+     /// <param name="value">Value to initialize the tensor with.</param>
+     static member op_Implicit(value : int64) = TFTensor (value)
 
-//       return new [] { array.Length }.Concat (rest).ToArray ();
-//     }
+     /// <summary>
+     /// Converts a double into a 1-dimensional, 1-valued tensor.
+     /// </summary>
+     /// <returns>The tensor representing the double value.</returns>
+     /// <param name="value">Value to initialize the tensor with.</param>
+     static member op_Implicit(value : double) = TFTensor (value)
 
-//     int [] vector = new int [array.Rank];
-//     for (int i = 0; i < vector.Length; i++)
-//       vector [i] = array.GetUpperBound (i) + 1;
-//     return vector;
-//   }
+     /// <summary>
+     /// Converts a float into a 1-dimensional, 1-valued tensor.
+     /// </summary>
+     /// <returns>The tensor representing the float value.</returns>
+     /// <param name="value">Value to initialize the tensor with.</param>
+     static member op_Implicit(value : float) = TFTensor (value)
 
-//   private static Array deepFlatten (Array array)
-//   {
-//     // This function converts multidimensional, jagged, or mixed arrays into a single unidimensional array (i.e. flattens the mixed array).
-//     // https://github.com/accord-net/framework/blob/f78181b82eb6ee6cc7fd10d2a7a55334982c40df/Sources/Accord.Math/Matrix/Matrix.Common.cs#L1625
-//     // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
-//     int totalLength = getTotalLength (array, deep: true);
-//     var elementType = getInnerMostType (array);
-//     Array result = Array.CreateInstance (elementType, totalLength);
+     /// <summary>
+     /// Converts a Complex number into a 1-dimensional, 1-valued tensor.
+     /// </summary>
+     /// <returns>The tensor representing the complex value.</returns>
+     /// <param name="value">Value to initialize the tensor with.</param>
+     static member op_Implicit(value : Complex) = TFTensor (value)
 
-//     int k = 0;
-//     foreach (object v in enumerateJagged (array))
-//       result.SetValue (v, k++);
-//     return result;
-//   }
+     /// <summary>
+     /// Converts a byte into a 1-dimensional, 1-valued tensor.
+     /// </summary>
+     /// <returns>The tensor representing the byte value.</returns>
+     /// <param name="value">Value to initialize the tensor with.</param>
+     static member op_Implicit(value : byte) = TFTensor (value)
 
-//   private static IEnumerable enumerateJagged (Array array)
-//   {
-//     // This function can enumerate all elements in a multidimensional ,jagged, or mixed array.
-//     // From https://github.com/accord-net/framework/blob/b4990721a61f03602d04c12b148215c7eca1b7ac/Sources/Accord.Math/Matrix/Jagged.Construction.cs#L1202
-//     // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
-//     var arrays = new Stack<Array> ();
-//     var counters = new Stack<int> ();
+    /// <summary>
+    /// Creates a 1 dimensional tensor from an array of booleans.
+    /// </summary>
+    /// <param name="data">Data.</param>
+    new (data : bool []) = SetupTensor (DType.Bool, data, size = !>1)
+    /// <summary>
+    /// Creates a 1 dimensional tensor from an array of sbytes.
+    /// </summary>
+    /// <param name="data">Data.</param>
+    new (data : int8[]) = SetupTensor (DType.Int8, data, size = !>1)
+    /// <summary>
+    /// Creates a 1 dimensional tensor from an array of bytes.
+    /// </summary>
+    /// <param name="data">Data.</param>
+    new (data : byte []) = SetupTensor (DType.UInt8, data, size = !>1))
+    /// <summary>
+    /// Creates a 1 dimensional tensor from an array of shorts.
+    /// </summary>
+    /// <param name="data">Data.</param>
+    new (data : int16[]) = SetupTensor (DType.Int16, data, size = !>2))
+    /// <summary>
+    /// Creates a 1 dimensional tensor from an array of ushorts
+    /// </summary>
+    /// <param name="data">Data.</param>
+    new (data : uint16[]) = SetupTensor (DType.UInt16, data, size = !>2)
+    /// <summary>
+    /// Creates a 1 dimensional tensor from an array of ints.
+    /// </summary>
+    /// <param name="data">Data.</param>
+    new (data : int []) = SetupTensor (DType.Int32, data, size = !>4))
+    /// <summary>
+    /// Creates a 1 dimensional tensor from an array of floats.
+    /// </summary>
+    /// <param name="data">Data.</param>
+    new (data : float []) = SetupTensor (DType.Float, data, size = !>4)
+    /// <summary>
+    /// Creates a 1 dimensional tensor from an array of doubles.
+    /// </summary>
+    /// <param name="data">Data.</param>
+    new (data : double []) = SetupTensor (DType.Double, data, size = !>8)
+    /// <summary>
+    /// Creates a 1 dimensional tensor from an array of longs.
+    /// </summary>
+    /// <param name="data">Data.</param>
+    new (data : int64 [] ) = SetupTensor (DType.Int64, data, size = !>8)) 
+    /// <summary>
+    /// Creates a 1 dimensional tensor from an array of complex numbers.
+    /// </summary>
+    /// <param name="data">Data.</param>
+    new (data : Complex []) = SetupTensor (DType.Complex128, data, size = !>16))
 
-//     arrays.Push (array);
-//     counters.Push (0);
-//     int depth = 1;
-
-//     Array a = array;
-//     int i = 0;
-
-//     while (arrays.Count > 0) {
-//       if (i >= a.Length) {
-//         a = arrays.Pop ();
-//         i = counters.Pop () + 1;
-//         depth--;
-//       } else {
-//         Object e = a.GetValue (i);
-//         Array next = e as Array;
-//         if (next == null) {
-//           yield return e;
-//           i++;
-//         } else {
-//           arrays.Push (a);
-//           counters.Push (i);
-//           a = next;
-//           i = 0;
-//           depth++;
-//         }
-//       }
-//     }
-//   }
-
-//   private static int getTotalLength (Array array, bool deep = true, bool rectangular = true)
-//   {
-//     // From https://github.com/accord-net/framework/blob/b4990721a61f03602d04c12b148215c7eca1b7ac/Sources/Accord.Math/Matrix/Matrix.Construction.cs#L1087
-//     // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
-//     if (deep && isJagged (array.GetType ())) {
-//       if (rectangular) {
-//         int rest = getTotalLength (array.GetValue (0) as Array, deep);
-//         return array.Length * rest;
-//       } else {
-//         int sum = 0;
-//         for (int i = 0; i < array.Length; i++)
-//           sum += getTotalLength (array.GetValue (i) as Array, deep);
-//         return sum;
-//       }
-//     }
-
-//     return array.Length;
-//   }
-
-//   private static bool isJagged (Array array)
-//   {
-//     // From https://github.com/accord-net/framework/blob/f78181b82eb6ee6cc7fd10d2a7a55334982c40df/Sources/Accord.Math/Matrix/Matrix.Construction.cs#L1204
-//     // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
-//     if (array.Length == 0)
-//       return array.Rank == 1;
-//     return array.Rank == 1 && array.GetValue (0) is Array;
-//   }
-
-//   private static bool isJagged (Type type)
-//   {
-//     // From https://github.com/accord-net/framework/blob/eb371fbc540a41c1a711b6ab1ebd49889316e7f7/Sources/Accord.Math/Matrix/Matrix.Common.cs#L84
-//     // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
-//     return type.IsArray && type.GetElementType ().IsArray;
-//   }
-
-//   private static Type getInnerMostType (Array array)
-//   {
-//     // From https://github.com/accord-net/framework/blob/eb371fbc540a41c1a711b6ab1ebd49889316e7f7/Sources/Accord.Math/Matrix/Matrix.Common.cs#L95
-//     // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
-//     Type type = array.GetType ();
-
-//     while (type.IsArray)
-//       type = type.GetElementType ();
-
-//     return type;
-//   }
-// }
-//
-//  // 
-//  // Factory methods to create tensors from a constant
-//  //
-//
-//  /// <summary>
-//  /// Converts an integer into a 1-dimensional, 1-valued tensor.
-//  /// </summary>
-//  /// <returns>The tensor representing the integer value.</returns>
-//  /// <param name="value">Value to initialize the tensor with.</param>
-//  public static implicit operator TFTensor (int value)
-//  {
-//    return new TFTensor (value);
-//  }
-//
-//  /// <summary>
-//  /// Converts a boolean into a 1-dimensional, 1-valued tensor.
-//  /// </summary>
-//  /// <returns>The tensor representing the integer value.</returns>
-//  /// <param name="value">Value to initialize the tensor with.</param>
-//  public static implicit operator TFTensor (bool value)
-//  {
-//    return new TFTensor (value);
-//  }
-//
-//  /// <summary>
-//  /// Converts a long into a 1-dimensional, 1-valued tensor.
-//  /// </summary>
-//  /// <returns>The tensor representing the long value.</returns>
-//  /// <param name="value">Value to initialize the tensor with.</param>
-//  public static implicit operator TFTensor (long value)
-//  {
-//    return new TFTensor (value);
-//  }
-//
-//  /// <summary>
-//  /// Converts a double into a 1-dimensional, 1-valued tensor.
-//  /// </summary>
-//  /// <returns>The tensor representing the double value.</returns>
-//  /// <param name="value">Value to initialize the tensor with.</param>
-//  public static implicit operator TFTensor (double value)
-//  {
-//    return new TFTensor (value);
-//  }
-//
-//  /// <summary>
-//  /// Converts a float into a 1-dimensional, 1-valued tensor.
-//  /// </summary>
-//  /// <returns>The tensor representing the float value.</returns>
-//  /// <param name="value">Value to initialize the tensor with.</param>
-//  public static implicit operator TFTensor (float value)
-//  {
-//    return new TFTensor (value);
-//  }
-//
-//  /// <summary>
-//  /// Converts a Complex number into a 1-dimensional, 1-valued tensor.
-//  /// </summary>
-//  /// <returns>The tensor representing the complex value.</returns>
-//  /// <param name="value">Value to initialize the tensor with.</param>
-//  public static implicit operator TFTensor (Complex value)
-//  {
-//    return new TFTensor (value);
-//  }
-//
-//  /// <summary>
-//  /// Converts a byte into a 1-dimensional, 1-valued tensor.
-//  /// </summary>
-//  /// <returns>The tensor representing the byte value.</returns>
-//  /// <param name="value">Value to initialize the tensor with.</param>
-//  public static implicit operator TFTensor (byte value)
-//  {
-//    return new TFTensor (value);
-//  }
-
-//
-//  /// <summary>
-//  /// Creates a 1 dimensional tensor from an array of booleans.
-//  /// </summary>
-//  /// <param name="data">Data.</param>
-//  public TFTensor (bool [] data) : base (SetupTensor (TFDataType.Bool, data, size: 1)) { }
-//  /// <summary>
-//  /// Creates a 1 dimensional tensor from an array of sbytes.
-//  /// </summary>
-//  /// <param name="data">Data.</param>
-//  public TFTensor (sbyte [] data) : base (SetupTensor (TFDataType.Int8, data, size: 1)) { }
-//  /// <summary>
-//  /// Creates a 1 dimensional tensor from an array of bytes.
-//  /// </summary>
-//  /// <param name="data">Data.</param>
-//  public TFTensor (byte [] data) : base (SetupTensor (TFDataType.UInt8, data, size: 1)) { }
-//  /// <summary>
-//  /// Creates a 1 dimensional tensor from an array of shorts.
-//  /// </summary>
-//  /// <param name="data">Data.</param>
-//  public TFTensor (short [] data) : base (SetupTensor (TFDataType.Int16, data, size: 2)) { }
-//  /// <summary>
-//  /// Creates a 1 dimensional tensor from an array of ushorts
-//  /// </summary>
-//  /// <param name="data">Data.</param>
-//  public TFTensor (ushort [] data) : base (SetupTensor (TFDataType.UInt16, data, size: 2)) { }
-//  /// <summary>
-//  /// Creates a 1 dimensional tensor from an array of ints.
-//  /// </summary>
-//  /// <param name="data">Data.</param>
-//  public TFTensor (int [] data) : base (SetupTensor (TFDataType.Int32, data, size: 4)) { }
-//  /// <summary>
-//  /// Creates a 1 dimensional tensor from an array of floats.
-//  /// </summary>
-//  /// <param name="data">Data.</param>
-//  public TFTensor (float [] data) : base (SetupTensor (TFDataType.Float, data, size: 4)) { }
-//  /// <summary>
-//  /// Creates a 1 dimensional tensor from an array of doubles.
-//  /// </summary>
-//  /// <param name="data">Data.</param>
-//  public TFTensor (double [] data) : base (SetupTensor (TFDataType.Double, data, size: 8)) { }
-//  /// <summary>
-//  /// Creates a 1 dimensional tensor from an array of longs.
-//  /// </summary>
-//  /// <param name="data">Data.</param>
-//  public TFTensor (long [] data) : base (SetupTensor (TFDataType.Int64, data, size: 8)) { }
-//  /// <summary>
-//  /// Creates a 1 dimensional tensor from an array of complex numbers.
-//  /// </summary>
-//  /// <param name="data">Data.</param>
-//  public TFTensor (Complex [] data) : base (SetupTensor (TFDataType.Complex128, data, size: 16)) { }
-//
 
 // TODO: Other overloads we could add: String, Complex (float), Bool, QInt8, QUInt8, QInt32, Bfloat16,
 // QInt16, QUint16, Half, Resource
 // TODO: not clear that this is very useful (the dims versions), perhaps to reduce the surface of
 // construcors these rarer blobs should be "FromSpec" or something like that
-//   /// <summary>
-//   /// Creates a new tensor from a portion of an array of sbytes
-//   /// </summary>
-//   /// <param name="shape">Represents the tensor shape.</param>
-//   /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
-//   /// <param name="start">The offset into the provided data array where the data resides.</param>
-//   /// <param name="count">The number of bytes to copy from count into the tensor.</param>
-//   /// <remarks>
-//   /// Use the FromBuffer method to create a tensor that has the specified dimensions
-//   /// and is initialized with data from the data array.   The data is copied starting
-//   /// at the start offset, for count bytes and is laid out into the tensor following the
-//   /// specified dimensions.
-//   /// </remarks>
-//   public static TFTensor FromBuffer (TFShape shape, sbyte [] data, int start, int count)
-//   {
-//     return new TFTensor (SetupTensor (TFDataType.Int8, shape, data, start, count, size: 2));
-//   }
+  /// <summary>
+  /// Creates a new tensor from a portion of an array of sbytes
+  /// </summary>
+  /// <param name="shape">Represents the tensor shape.</param>
+  /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
+  /// <param name="start">The offset into the provided data array where the data resides.</param>
+  /// <param name="count">The number of bytes to copy from count into the tensor.</param>
+  /// <remarks>
+  /// Use the FromBuffer method to create a tensor that has the specified dimensions
+  /// and is initialized with data from the data array.   The data is copied starting
+  /// at the start offset, for count bytes and is laid out into the tensor following the
+  /// specified dimensions.
+  /// </remarks>
+  static member FromBuffer (shape, int8[] data, int start, int count) =
+    TFTensor (SetupTensor (DType.Int8, shape, data, start, count, size = 1))
   
-//   /// <summary>
-//   /// Creates a new tensor from a portion of an array of bytes
-//   /// </summary>
-//   /// <param name="shape">Represents the tensor shape.</param>
-//   /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
-//   /// <param name="start">The offset into the provided data array where the data resides.</param>
-//   /// <param name="count">The number of bytes to copy from count into the tensor.</param>
-//   /// <remarks>
-//   /// Use the FromBuffer method to create a tensor that has the specified dimensions
-//   /// and is initialized with data from the data array.   The data is copied starting
-//   /// at the start offset, for count bytes and is laid out into the tensor following the
-//   /// specified dimensions.
-//   /// </remarks>
-//   public static TFTensor FromBuffer (TFShape shape, byte [] data, int start, int count)
-//   {
-//     return new TFTensor (SetupTensor (TFDataType.UInt8, shape, data, start, count, size: 1));
-//   }
+  /// <summary>
+  /// Creates a new tensor from a portion of an array of bytes
+  /// </summary>
+  /// <param name="shape">Represents the tensor shape.</param>
+  /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
+  /// <param name="start">The offset into the provided data array where the data resides.</param>
+  /// <param name="count">The number of bytes to copy from count into the tensor.</param>
+  /// <remarks>
+  /// Use the FromBuffer method to create a tensor that has the specified dimensions
+  /// and is initialized with data from the data array.   The data is copied starting
+  /// at the start offset, for count bytes and is laid out into the tensor following the
+  /// specified dimensions.
+  /// </remarks>
+  static member FromBuffer (shape, uint8[] data, int start, int count) =
+    TFTensor (SetupTensor (DType.UInt8, shape, data, start, count, size = 1))
   
-//   /// <summary>
-//   /// Creates a new tensor from a portion of an array of shorts
-//   /// </summary>
-//   /// <param name="shape">Represents the tensor shape.</param>
-//   /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
-//   /// <param name="start">The offset into the provided data array where the data resides.</param>
-//   /// <param name="count">The number of bytes to copy from count into the tensor.</param>
-//   /// <remarks>
-//   /// Use the FromBuffer method to create a tensor that has the specified dimensions
-//   /// and is initialized with data from the data array.   The data is copied starting
-//   /// at the start offset, for count bytes and is laid out into the tensor following the
-//   /// specified dimensions.
-//   /// </remarks>
-//   public static TFTensor FromBuffer (TFShape shape, short [] data, int start, int count)
-//   {
-//     return new TFTensor (SetupTensor (TFDataType.Int16, shape, data, start, count, size: 2));
-//   }
+  /// <summary>
+  /// Creates a new tensor from a portion of an array of shorts
+  /// </summary>
+  /// <param name="shape">Represents the tensor shape.</param>
+  /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
+  /// <param name="start">The offset into the provided data array where the data resides.</param>
+  /// <param name="count">The number of bytes to copy from count into the tensor.</param>
+  /// <remarks>
+  /// Use the FromBuffer method to create a tensor that has the specified dimensions
+  /// and is initialized with data from the data array.   The data is copied starting
+  /// at the start offset, for count bytes and is laid out into the tensor following the
+  /// specified dimensions.
+  /// </remarks>
+  static member FromBuffer (shape, int16[] data, int start, int count) =
+    TFTensor (SetupTensor (DType.Int16, shape, data, start, count, size = 2))
   
-//   /// <summary>
-//   /// Creates a new tensor from a portion of an array of ushorts
-//   /// </summary>
-//   /// <param name="shape">Represents the tensor shape.</param>
-//   /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
-//   /// <param name="start">The offset into the provided data array where the data resides.</param>
-//   /// <param name="count">The number of bytes to copy from count into the tensor.</param>
-//   /// <remarks>
-//   /// Use the FromBuffer method to create a tensor that has the specified dimensions
-//   /// and is initialized with data from the data array.   The data is copied starting
-//   /// at the start offset, for count bytes and is laid out into the tensor following the
-//   /// specified dimensions.
-//   /// </remarks>
-//   public static TFTensor FromBuffer (TFShape shape, ushort [] data, int start, int count)
-//   {
-//     return new TFTensor (SetupTensor (TFDataType.UInt16, shape, data, start, count, size: 2));
-//   }
+  /// <summary>
+  /// Creates a new tensor from a portion of an array of ushorts
+  /// </summary>
+  /// <param name="shape">Represents the tensor shape.</param>
+  /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
+  /// <param name="start">The offset into the provided data array where the data resides.</param>
+  /// <param name="count">The number of bytes to copy from count into the tensor.</param>
+  /// <remarks>
+  /// Use the FromBuffer method to create a tensor that has the specified dimensions
+  /// and is initialized with data from the data array.   The data is copied starting
+  /// at the start offset, for count bytes and is laid out into the tensor following the
+  /// specified dimensions.
+  /// </remarks>
+  static member FromBuffer (shape, uint16[] data, int start, int count) =
+    TFTensor (SetupTensor (DType.UInt16, shape, data, start, count, size = 2))
+
+  /// <summary>
+  /// Creates a new tensor from a portion of an array of ints
+  /// </summary>
+  /// <param name="shape">Represents the tensor shape.</param>
+  /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
+  /// <param name="start">The offset into the provided data array where the data resides.</param>
+  /// <param name="count">The number of bytes to copy from count into the tensor.</param>
+  /// <remarks>
+  /// Use the FromBuffer method to create a tensor that has the specified dimensions
+  /// and is initialized with data from the data array.   The data is copied starting
+  /// at the start offset, for count bytes and is laid out into the tensor following the
+  /// specified dimensions.
+  /// </remarks>
+  static member FromBuffer (shape, int32[] data, int start, int count) =
+    TFTensor (SetupTensor (DType.Int32, shape, data, start, count, size = 4))
   
-//   /// <summary>
-//   /// Creates a new tensor from a portion of an array of ints
-//   /// </summary>
-//   /// <param name="shape">Represents the tensor shape.</param>
-//   /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
-//   /// <param name="start">The offset into the provided data array where the data resides.</param>
-//   /// <param name="count">The number of bytes to copy from count into the tensor.</param>
-//   /// <remarks>
-//   /// Use the FromBuffer method to create a tensor that has the specified dimensions
-//   /// and is initialized with data from the data array.   The data is copied starting
-//   /// at the start offset, for count bytes and is laid out into the tensor following the
-//   /// specified dimensions.
-//   /// </remarks>
-//   public static TFTensor FromBuffer (TFShape shape, int [] data, int start, int count)
-//   {
-//     return new TFTensor (SetupTensor (TFDataType.Int32, shape, data, start, count, size: 4));
-//   }
+  /// <summary>
+  /// Creates a new tensor from a portion of an array of floats
+  /// </summary>
+  /// <param name="shape">Represents the tensor shape.</param>
+  /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
+  /// <param name="start">The offset into the provided data array where the data resides.</param>
+  /// <param name="count">The number of bytes to copy from count into the tensor.</param>
+  /// <remarks>
+  /// Use the FromBuffer method to create a tensor that has the specified dimensions
+  /// and is initialized with data from the data array.   The data is copied starting
+  /// at the start offset, for count bytes and is laid out into the tensor following the
+  /// specified dimensions.
+  /// </remarks>
+  static member FromBuffer (shape, float32[] data, int start, int count) =
+    TFTensor (SetupTensor (DType.Float32, shape, data, start, count, size = 4))
   
-//   /// <summary>
-//   /// Creates a new tensor from a portion of an array of floats
-//   /// </summary>
-//   /// <param name="shape">Represents the tensor shape.</param>
-//   /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
-//   /// <param name="start">The offset into the provided data array where the data resides.</param>
-//   /// <param name="count">The number of bytes to copy from count into the tensor.</param>
-//   /// <remarks>
-//   /// Use the FromBuffer method to create a tensor that has the specified dimensions
-//   /// and is initialized with data from the data array.   The data is copied starting
-//   /// at the start offset, for count bytes and is laid out into the tensor following the
-//   /// specified dimensions.
-//   /// </remarks>
-//   public static TFTensor FromBuffer (TFShape shape, float [] data, int start, int count)
-//   {
-//     return new TFTensor (SetupTensor (TFDataType.Float, shape, data, start, count, size: 4));
-//   }
+  /// <summary>
+  /// Creates a new tensor from a portion of an array of doubles
+  /// </summary>
+  /// <param name="shape">Represents the tensor shape.</param>
+  /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
+  /// <param name="start">The offset into the provided data array where the data resides.</param>
+  /// <param name="count">The number of bytes to copy from count into the tensor.</param>
+  /// <remarks>
+  /// Use the FromBuffer method to create a tensor that has the specified dimensions
+  /// and is initialized with data from the data array.   The data is copied starting
+  /// at the start offset, for count bytes and is laid out into the tensor following the
+  /// specified dimensions.
+  /// </remarks>
+  static member FromBuffer (shape, double[] data, int start, int count) =
+    TFTensor (SetupTensor (DType.Float64, shape, data, start, count, size = 8))
   
-//   /// <summary>
-//   /// Creates a new tensor from a portion of an array of doubles
-//   /// </summary>
-//   /// <param name="shape">Represents the tensor shape.</param>
-//   /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
-//   /// <param name="start">The offset into the provided data array where the data resides.</param>
-//   /// <param name="count">The number of bytes to copy from count into the tensor.</param>
-//   /// <remarks>
-//   /// Use the FromBuffer method to create a tensor that has the specified dimensions
-//   /// and is initialized with data from the data array.   The data is copied starting
-//   /// at the start offset, for count bytes and is laid out into the tensor following the
-//   /// specified dimensions.
-//   /// </remarks>
-//   public static TFTensor FromBuffer (TFShape shape, double [] data, int start, int count)
-//   {
-//     return new TFTensor (SetupTensor (TFDataType.Double, shape, data, start, count, size: 8));
-//   }
+  /// <summary>
+  /// Creates a new tensor from a portion of an array of longs
+  /// </summary>
+  /// <param name="shape">Represents the tensor shape.</param>
+  /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
+  /// <param name="start">The offset into the provided data array where the data resides.</param>
+  /// <param name="count">The number of bytes to copy from count into the tensor.</param>
+  /// <remarks>
+  /// Use the FromBuffer method to create a tensor that has the specified dimensions
+  /// and is initialized with data from the data array.   The data is copied starting
+  /// at the start offset, for count bytes and is laid out into the tensor following the
+  /// specified dimensions.
+  /// </remarks>
+   static member FromBuffer (shape, int64[] data, int start, int count) =
+    TFTensor (SetupTensor (DType.Int64, shape, data, start, count, size = 8))
   
-//   /// <summary>
-//   /// Creates a new tensor from a portion of an array of longs
-//   /// </summary>
-//   /// <param name="shape">Represents the tensor shape.</param>
-//   /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
-//   /// <param name="start">The offset into the provided data array where the data resides.</param>
-//   /// <param name="count">The number of bytes to copy from count into the tensor.</param>
-//   /// <remarks>
-//   /// Use the FromBuffer method to create a tensor that has the specified dimensions
-//   /// and is initialized with data from the data array.   The data is copied starting
-//   /// at the start offset, for count bytes and is laid out into the tensor following the
-//   /// specified dimensions.
-//   /// </remarks>
-//   public static TFTensor FromBuffer (TFShape shape, long [] data, int start, int count)
-//   {
-//     return new TFTensor (SetupTensor (TFDataType.Int64, shape, data, start, count, size: 8));
-//   }
+  /// <summary>
+  /// Creates a new tensor from a portion of an array of Complex numbers
+  /// </summary>
+  /// <param name="shape">Represents the tensor shape.</param>
+  /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
+  /// <param name="start">The offset into the provided data array where the data resides.</param>
+  /// <param name="count">The number of bytes to copy from count into the tensor.</param>
+  /// <remarks>
+  /// Use the FromBuffer method to create a tensor that has the specified dimensions
+  /// and is initialized with data from the data array.   The data is copied starting
+  /// at the start offset, for count bytes and is laid out into the tensor following the
+  /// specified dimensions.
+  /// </remarks>
+   static member FromBuffer (shape, Comlex[] data, int start, int count) =
+    TFTensor (SetupTensor (DType.Complex128, shape, data, start, count, size = 16))
+
+  /// <summary>
+  /// Creates a constant tensor from an array, the shape reflects the shape of the C# array and the underlying type reflects the C# type.
+  /// </summary>
+  new (array : Array) =
+    if array = null then raise (new ArgumentNullException ("array"))
+    // Ensure that, if we have arrays of arrays, we can handle them accordingly:
+    if isJagged (array.GetType ()) then
+      let elementType = getInnerMostType (array);
+      let length = getLength (array);
+      let multidimensional = Array.CreateInstance (elementType, length);
+      let flatten = deepFlatten (array);
+      Buffer.BlockCopy (flatten, 0, multidimensional, 0, flatten.Length * Marshal.SizeOf (elementType));
+      createFromMultidimensionalArrays (multidimensional);
+    else
+      createFromMultidimensionalArrays (array);
+
+    // TODO clean this up
+    static member TFCreate(x:'a) =
+        let v = valueToIntPtr x
+        TF_NewTensor (DType.Int32, zeroDims: IntPtr.Zero, num_dims: 0, data: v, len: UIntPtr(sizeof<'a>), deallocator = FreeTensorDataDelegate, deallocator_arg = IntPtr.Zero)
+        TFTensor(handle)
+
+  /// Creates a constant tensor with a single dimension from an integer value.
+  new (value : int) = TFTensor.TFCreate(value)
+
+  /// Creates a constant tensor with a single dimension from a boolean value.
+  new (value : bool) = TFTensor.TFCreate(value)
+
+  /// Creates a constant tensor with a single dimension from an sbyte value.
+  new (value : int8) = TFTensor.TFCreate(value)
+
+  /// Creates a constant tensor with a single dimension from a short value.
+  new (value : int16) = TFTensor.TFCreate(value)
+
+  /// Creates a constant tensor with a single dimension from an ushort value.
+  new (value : uint16) = TFTensor.TFCreate(value)
+
+  /// Creates a constant tensor with a single dimension from an byte value.
+  new (value : byte) = TFTensor.TFCreate(value)
+
+  /// Creates a constant tensor with a single dimension from a Complex value.
+  new (value : Complex) = TFTensor.TFCreate(value)
+
+  /// Creates a constant tensor with a single dimension from a float value.
+  new (value : float32) = TFTensor.TFCreate(value)
+
+  /// Creates a constant tensor with a single dimension from a double value.
+  new (value : double) = TFTensor.TFCreate(value)
+
+  /// Creates a constant tensor with a single dimension from a long value.
+  new (value : int64) = TFTensor.TFCreate(value)
+
+  // Convenience function to factor out the setup of a new tensor from an array
+  static member SetupTensor (dt : DType, dims : int64 [], data : Array, size : int) : IntPtr = 
+    TFTensor.SetupTensor (dt, dims, data, start: 0, count = data.Length, size = size)
+
+  // Convenience function to factor out the setup of a new tensor from an array
+  static member SetupTensor (dt : DType, data : Array, size : int) : IntPtr =
+    let dims = Array.init dims.Length (fun i -> data.GetLength (i))
+    TFTensor.SetupTensor (dt, dims, data, start = 0, count = data.Length, size = size)
+
+  // Use for single dimension arrays 
+  static member SetupTensor (dt : DType, shape : Shape, data : Array, start : int, count : int, size : int) : IntPtr 
+    if (shape == null)
+      throw new ArgumentNullException (nameof (shape));
+    return SetupTensor (dt, shape.dims, data, start, count, size);
   
-//   /// <summary>
-//   /// Creates a new tensor from a portion of an array of Complex numbers
-//   /// </summary>
-//   /// <param name="shape">Represents the tensor shape.</param>
-//   /// <param name="data">The linear array of data, the data is shuffled to fit in the tensor with the specified dimensions.</param>
-//   /// <param name="start">The offset into the provided data array where the data resides.</param>
-//   /// <param name="count">The number of bytes to copy from count into the tensor.</param>
-//   /// <remarks>
-//   /// Use the FromBuffer method to create a tensor that has the specified dimensions
-//   /// and is initialized with data from the data array.   The data is copied starting
-//   /// at the start offset, for count bytes and is laid out into the tensor following the
-//   /// specified dimensions.
-//   /// </remarks>
-//   public static TFTensor FromBuffer (TFShape shape, Complex [] data, int start, int count)
-//   {
-//     return new TFTensor (SetupTensor (TFDataType.Complex128, shape, data, start, count, size: 16));
-//   }
+  // Use for single dimension arrays 
+  static IntPtr SetupTensor (DType dt, long [] dims, Array data, int start, int count, int size)
+  {
+    if (start < 0 || start > data.Length - count)
+      throw new ArgumentException ("start + count > Array size");
 
-//   /// <summary>
-//   /// Creates a constant tensor from an array, the shape reflects the shape of the C# array and the underlying type reflects the C# type.
-//   /// </summary>
-//   public TFTensor (Array array)
-//   {
-//     if (array == null)
-//       throw new ArgumentNullException (nameof (array));
+    var dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
 
-//     // Ensure that, if we have arrays of arrays, we can handle them accordingly:
-//     if (isJagged (array.GetType ())) {
-//       Type elementType = getInnerMostType (array);
-//       int [] length = getLength (array);
-//       Array multidimensional = Array.CreateInstance (elementType, length);
-//       Array flatten = deepFlatten (array);
-//       Buffer.BlockCopy (flatten, 0, multidimensional, 0, flatten.Length * Marshal.SizeOf (elementType));
-//       createFromMultidimensionalArrays (multidimensional);
-//     } else {
-//       createFromMultidimensionalArrays (array);
-//     }
-//   }
+    if (dims == null)
+      return TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject () + start * size, (UIntPtr)(count * size), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+    else
+      return TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject () + start * size, (UIntPtr)(count * size), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+  }
 
-//   /// <summary>
-//   /// Creates a constant tensor with a single dimension from an integer value.
-//   /// </summary>
-//   public TFTensor (int value)
-//   {
-//     var v = (int*)Marshal.AllocHGlobal (sizeof (int));
-//     *v = value;
-//     handle = TF_NewTensor (TFDataType.Int32, zeroDims: IntPtr.Zero, num_dims: 0, data: (IntPtr)v, len: (UIntPtr)sizeof (int), deallocator: FreeTensorDataDelegate, deallocator_arg: IntPtr.Zero);
-//   }
+  // Use for multiple dimension arrays 
+  static IntPtr SetupMulti (DType dt, long [] dims, Array data, long bytes)
+  {
+    var dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
 
-//   /// <summary>
-//   /// Creates a constant tensor with a single dimension from a boolean value.
-//   /// </summary>
-//   public TFTensor (bool value)
-//   {
-//     var v = (bool*)Marshal.AllocHGlobal (sizeof (bool));
-//     *v = value;
-//     handle = TF_NewTensor (TFDataType.Bool, zeroDims: IntPtr.Zero, num_dims: 0, data: (IntPtr)v, len: (UIntPtr)sizeof (int), deallocator: FreeTensorDataDelegate, deallocator_arg: IntPtr.Zero);
-//   }
+    if (dims == null)
+      return TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject (), (UIntPtr)bytes, FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+    else
+      return TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject (), (UIntPtr)bytes, FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+/   }
 
-//   /// <summary>
-//   /// Creates a constant tensor with a single dimension from an sbyte value.
-//   /// </summary>
-//   public TFTensor (sbyte value)
-//   {
-//     var v = (sbyte*)Marshal.AllocHGlobal (sizeof (sbyte));
-//     *v = value;
-//     handle = TF_NewTensor (TFDataType.Int8, zeroDims: IntPtr.Zero, num_dims: 0, data: (IntPtr)v, len: (UIntPtr)sizeof (sbyte), deallocator: FreeTensorDataDelegate, deallocator_arg: IntPtr.Zero);
-//   }
+  // Convenience, should I add T[,] and T[,,] as more convenience ones?
+  /// <summary>
+  /// Creates a single-dimension tensor from a byte buffer.  This is different than creating a tensor from a byte array that produces a tensor with as many elements as the byte array.
+  /// </summary>
+  public static TFTensor CreateString (byte [] buffer)
+  {
+    if (buffer == null)
+      throw new ArgumentNullException (nameof (buffer));
+    //
+    // TF_STRING tensors are encoded with a table of 8-byte offsets followed by
+    // TF_StringEncode-encoded bytes.
+    //
+    var size = TFString.TF_StringEncodedSize ((UIntPtr)buffer.Length);
+    IntPtr handle = TF_AllocateTensor (DType.String, IntPtr.Zero, 0, (UIntPtr)((ulong)size + 8));
 
-//   /// <summary>
-//   /// Creates a constant tensor with a single dimension from a short value.
-//   /// </summary>
-//   public TFTensor (short value)
-//   {
-//     var v = (short*)Marshal.AllocHGlobal (sizeof (short));
-//     *v = value;
-//     handle = TF_NewTensor (TFDataType.Int16, zeroDims: IntPtr.Zero, num_dims: 0, data: (IntPtr)v, len: (UIntPtr)sizeof (short), deallocator: FreeTensorDataDelegate, deallocator_arg: IntPtr.Zero);
-//   }
+    // Clear offset table
+    IntPtr dst = TF_TensorData (handle);
+    Marshal.WriteInt64 (dst, 0);
+    var status = TFStatus.TF_NewStatus ();
+    fixed (byte* src = &buffer [0])
+    {
+      TFString.TF_StringEncode (src, (UIntPtr)buffer.Length, (sbyte*)(dst + 8), size, status);
+      var ok = TFStatus.TF_GetCode (status) == TFCode.Ok;
+      TFStatus.TF_DeleteStatus (status);
+      if (!ok)
+        return null;
+    }
+    return new TFTensor (handle);
+  }
+  }
 
-//   /// <summary>
-//   /// Creates a constant tensor with a single dimension from an ushort value.
-//   /// </summary>
-//   public TFTensor (ushort value)
-//   {
-//     var v = (ushort*)Marshal.AllocHGlobal (sizeof (ushort));
-//     *v = value;
-//     handle = TF_NewTensor (TFDataType.Int16, zeroDims: IntPtr.Zero, num_dims: 0, data: (IntPtr)v, len: (UIntPtr)sizeof (ushort), deallocator: FreeTensorDataDelegate, deallocator_arg: IntPtr.Zero);
-//   }
+  /// <summary>
+  /// Converts a C# array into a tensor.
+  /// </summary>
+  /// <returns>The tensor containing the data.</returns>
+  /// <param name="array">single dimension, or multi-dimensional array.</param>
+  /// <remarks>
+  /// This implicit conversion can convert single or multidimensional arrays of
+  /// booleans, sbytes, byte, shorts, ushorts, ints, longs, doubles, floats and
+  /// complex numbers into a tensor with the same dimensional shape as the provided
+  /// array.
+  /// </remarks>
+  public static implicit operator TFTensor (Array array)
+  {
+    return new TFTensor (array);
 
-//   /// <summary>
-//   /// Creates a constant tensor with a single dimension from an byte value.
-//   /// </summary>
-//   public TFTensor (byte value)
-//   {
-//     var v = (int*)Marshal.AllocHGlobal (sizeof (byte));
-//     *v = value;
-//     handle = TF_NewTensor (TFDataType.UInt8, zeroDims: IntPtr.Zero, num_dims: 0, data: (IntPtr)v, len: (UIntPtr)sizeof (byte), deallocator: FreeTensorDataDelegate, deallocator_arg: IntPtr.Zero);
-//   }
-
-//   /// <summary>
-//   /// Creates a constant tensor with a single dimension from a Complex value.
-//   /// </summary>
-//   public TFTensor (Complex value)
-//   {
-//     var v = (Complex*)Marshal.AllocHGlobal (sizeof (Complex));
-//     *v = value;
-//     handle = TF_NewTensor (TFDataType.Complex128, zeroDims: IntPtr.Zero, num_dims: 0, data: (IntPtr)v, len: (UIntPtr)sizeof (Complex), deallocator: FreeTensorDataDelegate, deallocator_arg: IntPtr.Zero);
-//   }
-
-//   /// <summary>
-//   /// Creates a constant tensor with a single dimension from a float value.
-//   /// </summary>
-//   public TFTensor (float value)
-//   {
-//     var v = (float*)Marshal.AllocHGlobal (sizeof (float));
-//     *v = value;
-//     handle = TF_NewTensor (TFDataType.Float, zeroDims: IntPtr.Zero, num_dims: 0, data: (IntPtr)v, len: (UIntPtr)sizeof (float), deallocator: FreeTensorDataDelegate, deallocator_arg: IntPtr.Zero);
-//   }
-
-//   /// <summary>
-//   /// Creates a constant tensor with a single dimension from a double value.
-//   /// </summary>
-//   public TFTensor (double value)
-//   {
-//     var v = (double*)Marshal.AllocHGlobal (sizeof (double));
-//     *v = value;
-//     handle = TF_NewTensor (TFDataType.Double, zeroDims: IntPtr.Zero, num_dims: 0, data: (IntPtr)v, len: (UIntPtr)sizeof (double), deallocator: FreeTensorDataDelegate, deallocator_arg: IntPtr.Zero);
-//   }
-
-//   /// <summary>
-//   /// Creates a constant tensor with a single dimension from a long value.
-//   /// </summary>
-//   public TFTensor (long value)
-//   {
-//     var v = (long*)Marshal.AllocHGlobal (sizeof (long));
-//     *v = value;
-//     handle = TF_NewTensor (TFDataType.Int64, zeroDims: IntPtr.Zero, num_dims: 0, data: (IntPtr)v, len: (UIntPtr)sizeof (long), deallocator: FreeTensorDataDelegate, deallocator_arg: IntPtr.Zero);
-//
-//   // Convenience function to factor out the setup of a new tensor from an array
-//   static IntPtr SetupTensor (TFDataType dt, long [] dims, Array data, int size)
-//   {
-//     return SetupTensor (dt, dims, data, start: 0, count: data.Length, size: size);
-//   }
-
-//   // Convenience function to factor out the setup of a new tensor from an array
-//   static IntPtr SetupTensor (TFDataType dt, Array data, int size)
-//   {
-//     long [] dims = new long [data.Rank];
-//     for (int i = 0; i < dims.Length; i++)
-//       dims [i] = data.GetLength (i);
-
-//     return SetupTensor (dt, dims, data, start: 0, count: data.Length, size: size);
-//   }
-
-//   // Use for single dimension arrays 
-//   static IntPtr SetupTensor (TFDataType dt, TFShape shape, Array data, int start, int count, int size)
-//   {
-//     if (shape == null)
-//       throw new ArgumentNullException (nameof (shape));
-//     return SetupTensor (dt, shape.dims, data, start, count, size);
-//   }
-  
-//   // Use for single dimension arrays 
-//   static IntPtr SetupTensor (TFDataType dt, long [] dims, Array data, int start, int count, int size)
-//   {
-//     if (start < 0 || start > data.Length - count)
-//       throw new ArgumentException ("start + count > Array size");
-
-//     var dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
-
-//     if (dims == null)
-//       return TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject () + start * size, (UIntPtr)(count * size), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
-//     else
-//       return TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject () + start * size, (UIntPtr)(count * size), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
-//   }
-
-//   // Use for multiple dimension arrays 
-//   static IntPtr SetupMulti (TFDataType dt, long [] dims, Array data, long bytes)
-//   {
-//     var dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
-
-//     if (dims == null)
-//       return TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject (), (UIntPtr)bytes, FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
-//     else
-//       return TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject (), (UIntPtr)bytes, FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
-// /   }
-
-//   // Convenience, should I add T[,] and T[,,] as more convenience ones?
-//   /// <summary>
-//   /// Creates a single-dimension tensor from a byte buffer.  This is different than creating a tensor from a byte array that produces a tensor with as many elements as the byte array.
-//   /// </summary>
-//   public static TFTensor CreateString (byte [] buffer)
-//   {
-//     if (buffer == null)
-//       throw new ArgumentNullException (nameof (buffer));
-//     //
-//     // TF_STRING tensors are encoded with a table of 8-byte offsets followed by
-//     // TF_StringEncode-encoded bytes.
-//     //
-//     var size = TFString.TF_StringEncodedSize ((UIntPtr)buffer.Length);
-//     IntPtr handle = TF_AllocateTensor (TFDataType.String, IntPtr.Zero, 0, (UIntPtr)((ulong)size + 8));
-
-//     // Clear offset table
-//     IntPtr dst = TF_TensorData (handle);
-//     Marshal.WriteInt64 (dst, 0);
-//     var status = TFStatus.TF_NewStatus ();
-//     fixed (byte* src = &buffer [0])
-//     {
-//       TFString.TF_StringEncode (src, (UIntPtr)buffer.Length, (sbyte*)(dst + 8), size, status);
-//       var ok = TFStatus.TF_GetCode (status) == TFCode.Ok;
-//       TFStatus.TF_DeleteStatus (status);
-//       if (!ok)
-//         return null;
-//     }
-//     return new TFTensor (handle);
-//   }
-//   }
-
-//   /// <summary>
-//   /// Converts a C# array into a tensor.
-//   /// </summary>
-//   /// <returns>The tensor containing the data.</returns>
-//   /// <param name="array">single dimension, or multi-dimensional array.</param>
-//   /// <remarks>
-//   /// This implicit conversion can convert single or multidimensional arrays of
-//   /// booleans, sbytes, byte, shorts, ushorts, ints, longs, doubles, floats and
-//   /// complex numbers into a tensor with the same dimensional shape as the provided
-//   /// array.
-//   /// </remarks>
-//   public static implicit operator TFTensor (Array array)
-//   {
-//     return new TFTensor (array);
-
-//   }
+  }
 
