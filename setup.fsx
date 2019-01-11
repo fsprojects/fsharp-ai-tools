@@ -24,11 +24,26 @@ let nugetFiles =
         "Argu/5.1.0",[|"lib/netstandard2.0/Argu.dll"|]
         "Google.Protobuf/3.6.1", [|"dll";"xml"|] |> Array.map (sprintf "lib/net45/Google.Protobuf.%s")
         "protobuf-net/2.4.0",[|"dll";"xml"|] |> Array.map (sprintf "lib/net40/protobuf-net.%s")
-        //"protobuf-net/2.4.0",[|"dll";"xml"|] |> Array.map (sprintf "lib/netcoreapp2.1/protobuf-net.%s")
     |]
 
 downloadAndExtractNugetFiles nugetFiles
 
-failwith "todo - fetch TensorFlowSharpProto from a yet to be created Nuget package"
+let baseUrl = "https://s3-us-west-1.amazonaws.com/public.data13/Tensorflow_FSharp/"
+
+[ "TensorFlowSharpProtoNet.dll"; "TensorFlowSharpProtoNet.xml"; "nativeWorkaround.dll" ] 
+|> Seq.iter (fun x -> downloadFile(sprintf "%s%s" baseUrl x, sprintf "lib/%s" x))
+
+/// This file contains the api_definitions
+"tensorflow_api_def_1.11.zip" 
+|> fun x -> 
+    downloadFile (sprintf "%s%s" baseUrl x, "cache/" + x)
+    extractZipFileAll ("cache/" + x, "data/api_def/")
+
+// Do code generation
+#load "OperationCodeGenerationFSharp.fsx"
+open System.IO
+
+OperationCodeGenerationFSharp.run([|__SOURCE_DIRECTORY__ + "/data/api_def"|]) 
+|> fun res -> File.WriteAllText(__SOURCE_DIRECTORY__ + "/Tensorflow_FSharp/Operations.g.fs", res)
 
 printfn "Setup has finished."

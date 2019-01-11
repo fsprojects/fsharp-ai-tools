@@ -3,5 +3,9 @@
 **/obj/*
 *.swp
 
+Tensorflow_FSharp/Operations.g.fs
+
+data/
+cache/
 nuget/
 notes.txt
