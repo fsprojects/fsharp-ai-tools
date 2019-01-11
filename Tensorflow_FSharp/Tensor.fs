@@ -931,65 +931,50 @@ type TFTensor internal (handle : IntPtr) as this =
 
   // Use for single dimension arrays 
   static member SetupTensor (dt : DType, shape : Shape, data : Array, start : int, count : int, size : int) : IntPtr 
-    if (shape == null)
-      throw new ArgumentNullException (nameof (shape));
-    return SetupTensor (dt, shape.dims, data, start, count, size);
+    if box shape = null then raise (ArgumentNullException "shape")
+    TFTensor.SetupTensor (dt, shape.dims, data, start, count, size);
   
   // Use for single dimension arrays 
-  static IntPtr SetupTensor (DType dt, long [] dims, Array data, int start, int count, int size)
-  {
-    if (start < 0 || start > data.Length - count)
-      throw new ArgumentException ("start + count > Array size");
-
-    var dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
-
-    if (dims == null)
-      return TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject () + start * size, (UIntPtr)(count * size), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
-    else
-      return TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject () + start * size, (UIntPtr)(count * size), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
-  }
+  static member SetupTensor (dt : DType, dims : int64[], data : Array, start : int, count : int, size : int) : IntPtr  =
+    if start < 0 || start > data.Length - count then raise(ArgumentException ("start + count > Array size"))
+    let dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
+    if box dims = null then
+        TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject () + start * size, UIntPtr((count * size)), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+    else 
+        TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject () + start * size, UIntPtr((count * size)), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
 
   // Use for multiple dimension arrays 
-  static IntPtr SetupMulti (DType dt, long [] dims, Array data, long bytes)
-  {
-    var dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
-
-    if (dims == null)
-      return TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject (), (UIntPtr)bytes, FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+  static member SetupMulti (dt : DType, dims : int64 [], data : Array, bytes : int64) : IntPtr =
+    let dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
+    if box dims == null then 
+        TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject (), UIntPtr(bytes), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
     else
-      return TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject (), (UIntPtr)bytes, FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
-/   }
+        TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject (), UIntPtr(bytes), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
 
   // Convenience, should I add T[,] and T[,,] as more convenience ones?
   /// <summary>
   /// Creates a single-dimension tensor from a byte buffer.  This is different than creating a tensor from a byte array that produces a tensor with as many elements as the byte array.
   /// </summary>
-  public static TFTensor CreateString (byte [] buffer)
-  {
-    if (buffer == null)
-      throw new ArgumentNullException (nameof (buffer));
+  static member CreateString (buffer : byte []) : TFTensor =
+    if box buffer = null then raise(ArgumentNullException ("buffer"))
     //
     // TF_STRING tensors are encoded with a table of 8-byte offsets followed by
     // TF_StringEncode-encoded bytes.
     //
-    var size = TFString.TF_StringEncodedSize ((UIntPtr)buffer.Length);
-    IntPtr handle = TF_AllocateTensor (DType.String, IntPtr.Zero, 0, (UIntPtr)((ulong)size + 8));
+    let size = TFString.TF_StringEncodedSize (UIntPtr(buffer.Length))
+    let handle = TF_AllocateTensor (DType.String, IntPtr.Zero, 0, UIntPtr((uint64(size) + 8L)))
 
     // Clear offset table
-    IntPtr dst = TF_TensorData (handle);
-    Marshal.WriteInt64 (dst, 0);
-    var status = TFStatus.TF_NewStatus ();
-    fixed (byte* src = &buffer [0])
-    {
-      TFString.TF_StringEncode (src, (UIntPtr)buffer.Length, (sbyte*)(dst + 8), size, status);
-      var ok = TFStatus.TF_GetCode (status) == TFCode.Ok;
-      TFStatus.TF_DeleteStatus (status);
-      if (!ok)
-        return null;
-    }
-    return new TFTensor (handle);
-  }
-  }
+    let dst = TF_TensorData (handle)
+    Marshal.WriteInt64 (dst, 0)
+    // TODO Could we not use a normal status here?
+    let status = TFStatus.TF_NewStatus ()
+    use src = fixed &buffer.[0]
+    TFString.TF_StringEncode (src, UIntPtr(buffer.Length), (int8*)(dst + 8), size, status);
+    let ok = TFStatus.TF_GetCode (status) = TFCode.Ok;
+    TFStatus.TF_DeleteStatus (status);
+    if not ok then null
+    else new TFTensor (handle)
 
   /// <summary>
   /// Converts a C# array into a tensor.
@@ -1002,9 +987,6 @@ type TFTensor internal (handle : IntPtr) as this =
   /// complex numbers into a tensor with the same dimensional shape as the provided
   /// array.
   /// </remarks>
-  public static implicit operator TFTensor (Array array)
-  {
-    return new TFTensor (array);
+  static member op_Implicit (array : Array) = new TFTensor (array)
 
-  }
 
