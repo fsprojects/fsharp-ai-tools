@@ -363,8 +363,4 @@ let run(dirs : string []) =
     text |> List.rev |> String.concat "\n"
 
 
-let res = run([|"/home/moloneymb/EE/Git/tensorflow/tensorflow/core/api_def/base_api"|])
-                
-
-File.WriteAllText(__SOURCE_DIRECTORY__ + "/Tensorflow_FSharp/Operations.g.fs", res)
 
