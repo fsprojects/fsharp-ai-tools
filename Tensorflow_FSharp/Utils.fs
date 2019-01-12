@@ -1,8 +1,12 @@
 [<AutoOpen>]
 module Tensorflow.Utils
+open System
 open System.Collections.Generic
 open System.Collections
 open Microsoft.FSharp.NativeInterop
+open System.Runtime.InteropServices
+
+#nowarn "9"
 
 module Option =
     let orNull (x:'a option) = match x with | None -> box null :?> 'a | Some(x) -> x
@@ -43,10 +47,10 @@ module Array =
     let cast<'b> (xs:IEnumerable) = [|for x in xs -> x :?> 'b |]
 
 module NativePtr =
-    let nativeIntRead<'a> (ptr:IntPtr) = ptr |> NativePtr.ofNativeInt<'a> |> NativePtr.read
-    let nativeIntWrite<'a> (ptr:IntPtr) (x:'a) = NativePtr.write (ptr |> NativePtr.ofNativeInt<'a>) x
-    let nativeIntGet<'a> (ptr:IntPtr) (i:int) =  NativePtr.get (x |> NativePtr.ofNativeInt<'a>) i
-    let nativeIntSet<'a> (ptr:IntPtr)(i:int) (x:'a) =  NativePtr.set (ptr |> NativePtr.ofNativeInt<'a>) i x 
+    let nativeIntRead<'a when 'a : unmanaged> (ptr:IntPtr) = ptr |> NativePtr.ofNativeInt |> NativePtr.read<'a>
+    let nativeIntWrite<'a when 'a : unmanaged> (ptr:IntPtr) (x:'a) = NativePtr.write (ptr |> NativePtr.ofNativeInt) x
+    let nativeIntGet<'a when 'a : unmanaged> (ptr:IntPtr) (i:int) =  NativePtr.get<'a> (ptr |> NativePtr.ofNativeInt) i
+    let nativeIntSet<'a when 'a : unmanaged> (ptr:IntPtr)(i:int) (x:'a) =  NativePtr.set (ptr |> NativePtr.ofNativeInt) i x 
 
 let (|Integer|_|) (str: string) =
    let mutable intvalue = 0
@@ -56,10 +60,11 @@ let (|Integer|_|) (str: string) =
 /// to instantiate a default value. Though it's possible anything 
 /// beyond this is is not needed
 type DictionaryCount<'a when 'a : equality>() =
-    inherit Dictionary<'a,int>()
+    let dict = new Dictionary<'a,int>()
+    /// NOTE: it would be nice to be able to override Item
     member this.Item 
-        with get(x:'a) = if this.ContainsKey(x) then this.[x] else 0
-        and set(x:'a) (v:int) = this.Add(x,v)
+        with get(x:'a) = if dict.ContainsKey(x) then dict.[x] else 0
+        and set (x:'a) (v:int)  = dict.Add(x,v)
     member this.Increment(x:'a) = this.[x] <- this.[x] + 1
     member this.Decrement(x:'a) = this.[x] <- this.[x] - 1
     member this.GetThenIncrement(x:'a) = 
@@ -73,6 +78,6 @@ let inline (!>) (x:^a) : ^b = ((^a or ^b) : (static member op_Implicit : ^a -> ^
 
 /// This is for value types
 let valueToIntPtr (v:'a) = 
-    let intPtr = Marshal.AllocHGlobal (sizeof<'a>))
-    NativePtr.nativeIntWrite v
+    let intPtr = Marshal.AllocHGlobal (sizeof<'a>)
+    NativePtr.nativeIntWrite intPtr v
     intPtr

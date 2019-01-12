@@ -9,16 +9,16 @@ type F() =
 
 type TF with
     /// <summary>
-    /// Creates a constant operation from a TFTensor or constant
+    /// Creates a constant operation from a Tensor or constant
     /// </summary>
     /// <param name="value">Value.</param>
     /// <param name="name">Oper name.</param>
     /// <remarks>
-    /// Since TFTensor have implicit conversion operators, you can call this method with
+    /// Since Tensor have implicit conversion operators, you can call this method with
     /// a constant like this: graph.Const (23)
     /// </remarks>
     /// TODO: given that tensor type is optional is this really needed?
-    static member Const (value : TFTensor, ?name : string) = TF.Const (value, value.TensorType, name)
+    static member Const (value : Tensor, ?name : string) = TF.Const (value, value.TensorType, name)
 
     // Returns range(0, rank(x)) if reduction_indices is null
     static member ReduceDims (input : TFOutput, ?axis : TFOutput) =
@@ -30,7 +30,7 @@ type TF with
             if shape.IsFullySpecified then
                 // The python code distinguishes between tensor and sparsetensor
                 // TODO; this will need to be extended to enable subtypes
-                TF.Const ([|0..array.Length|], TFDataType.Int32)
+                TF.Const ([|0..array.Length|], DType.Int32)
             else
                 // Otherwise, we rely on Range and Rank to do the right thing at run-time.
                 TF.Range (TF.Const (0), TF.Rank (input), TF.Const (1))
@@ -99,7 +99,7 @@ type TF with
     /// </remarks>
     static member ReduceMean (input : TFOutput, ?axis : TFOutput, ?keep_dims : bool, ?name: string) =
         let keep_dims = defaultArg keep_dims false
-        let boolToInt8Cast (x:TFOutput) = if input.OutputType = TFDataType.Bool then TF.Cast (x, TFDataType.Int8) else x
+        let boolToInt8Cast (x:TFOutput) = if input.OutputType = DType.Bool then TF.Cast (x, DType.Int8) else x
         TF.Mean (input, this.ReduceDims (boolToInt8Cast(input), axis), keep_dims, name);
 
 
@@ -132,7 +132,7 @@ type TF with
     /// run the session on the variable
     /// </remarks>
     /// TODO: Check up on how init and value are used here, it may be best to 
-    static member Variable (initialValue : TFOutput, [<Out>] init : TFOperation, [<Out>] value : TFOutput , ?trainable : bool, ?name : string) =
+    static member Variable (initialValue : TFOutput, [<Out>] init : Operation, [<Out>] value : TFOutput , ?trainable : bool, ?name : string) =
         let trainable = defaultArg trainable true
         let nv = TF.MakeVariable (initialValue, trainable, name)
         init <- nv.Assign
@@ -147,7 +147,7 @@ type TF with
     /// <remarks>
     /// <para>
     /// This is a convenience method to track the variables that need to be initialized in the graph,
-    /// you can retrieve the list of all those variables by calling the <see cref="M:TensorFlow.TFGraph.GetGlobalVariablesInitializer"/>
+    /// you can retrieve the list of all those variables by calling the <see cref="M:TensorFlow.Graph.GetGlobalVariablesInitializer"/>
     /// which will return this list and clear the state at that point.
     /// </para>
     /// <para>
@@ -156,7 +156,7 @@ type TF with
     /// at their convenience.
     /// </para>
     /// </remarks>
-    static member AddInitVariable (variable : TFOperation) =
+    static member AddInitVariable (variable : Operation) =
         defaultGraph.PendingInitVariables.Add (variable)
 
     // TODO: finalize semantics, when should we clear these?
@@ -171,7 +171,7 @@ type TF with
     /// After this method is invoked the list of pending initialization variables
     /// is cleared.
     /// </remarks>
-    static member GetGlobalVariablesInitializer () : TFOperation [] =
+    static member GetGlobalVariablesInitializer () : Operation [] =
         let res = defaultGraph.PendingInitVariables.ToArray ()
         defaultGraph.PendingInitVariables.Clear () // NOTE: (matt) I'm not sure about this, I suppose it makes sense
         res
@@ -220,8 +220,8 @@ type TF with
     // Converts a shape to a tensor, to a TFOutput
     //
     static member ShapeTensorOutput (shape : TFShape) =
-        if shape.IsLongArray then TF.Const (shape.ToArray (), TFDataType.Int64)
-        else TF.Const (shape.ToIntArray (), TFDataType.Int32);
+        if shape.IsLongArray then TF.Const (shape.ToArray (), DType.Int64)
+        else TF.Const (shape.ToIntArray (), DType.Int32);
 
     /// <summary>
     /// Computes dropout. 
@@ -316,7 +316,7 @@ type TF with
         // Calculate L2-norm, clip elements by ratio of clip_norm to L2-norm
         let l2norm_inv = TF.Rsqrt (TF.ReduceSum (TF.Mul (x, x), axes, keep_dims: true))
         let intermediate = TF.Mul (x, clip_norm)
-        let tclip = TF.Identity (TF.Mul (intermediate, TF.Minimum (l2norm_inv, TF.Div (TF.Const (new TFTensor (1.0)), clip_norm), name: name)))
+        let tclip = TF.Identity (TF.Mul (intermediate, TF.Minimum (l2norm_inv, TF.Div (TF.Const (new Tensor (1.0)), clip_norm), name: name)))
         tclip
 
     /// <summary>
@@ -358,9 +358,9 @@ type TF with
         use newScope = WithScope (TF.MakeName ("ClipByAverageNorm", name))
         // Calculate L2-norm per element, clip elements by ratio of clip_norm to
         // L2-norm per element
-        let n_element = TF.Cast (TF.Size (x), TFDataType.Float)
+        let n_element = TF.Cast (TF.Size (x), DType.Float)
         let l2norm_inv = TF.Rsqrt (TF.ReduceSum (TF.Mul (x, x), TF.Range (TF.Rank (x))))
-        let tclip = TF.Identity (TF.Mul (TF.Mul (x, clip_norm), TF.Minimum (TF.Mul (l2norm_inv, n_element), TF.Div (TF.Const (new TFTensor (1.0)), clip_norm)), ?name = name))
+        let tclip = TF.Identity (TF.Mul (TF.Mul (x, clip_norm), TF.Minimum (TF.Mul (l2norm_inv, n_element), TF.Div (TF.Const (new Tensor (1.0)), clip_norm)), ?name = name))
         tclip
 
     /// <summary>
@@ -414,7 +414,7 @@ type TF with
     ///   If specified, the created operation in the graph will be this one, otherwise it will be named 'Transpose'.
     /// </param>
     /// <returns>
-    ///   The TFOperation can be fetched from the resulting TFOutput, by fethching the Operation property from the result.
+    ///   The Operation can be fetched from the resulting TFOutput, by fethching the Operation property from the result.
     /// </returns>
     /// <remarks>
     ///   The output `y` has the same rank as `x`. The shapes of `x` and `y` satisfy:
@@ -511,10 +511,10 @@ type TF with
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/math_ops.py#L1156
         let start,limit =
             match limit with 
-            | None -> TF.Cast (TF.Const (new TFTensor (0.0)), start.OutputType), start // TODO: Maybe add dataType as convenience in Const?
+            | None -> TF.Cast (TF.Const (new Tensor (0.0)), start.OutputType), start // TODO: Maybe add dataType as convenience in Const?
             | Some(limit) -> start,limit
 
-        let delta = delta |> Option.orDelay (fun _ -> TF.Cast ( TF.Const (new TFTensor (1.0)), start.OutputType))
+        let delta = delta |> Option.orDelay (fun _ -> TF.Cast ( TF.Const (new Tensor (1.0)), start.OutputType))
         use newScope = TF.WithScope (TF.MakeName ("Range", name))) =
         // infer dtype if not explicitly provided
         let start, limit, delta =
@@ -522,7 +522,7 @@ type TF with
             | Some(_) -> start, limit, delta
             | None -> 
                 // TODO this type inference could be useful in other areas
-                let dtype_hierarchy = [|TFDataType.Int32; TFDataType.Int64; TFDataType.Float; TFDataType.Double |]
+                let dtype_hierarchy = [|DType.Int32; DType.Int64; DType.Float; DType.Double |]
                 if (!dtype_hierarchy.Contains (start.OutputType) // NOTE; When this fails to type check we should extend Array2D<_> to include a contains method
                  || !dtype_hierarchy.Contains (limit.Value.OutputType)
                  || !dtype_hierarchy.Contains (delta.Value.OutputType))

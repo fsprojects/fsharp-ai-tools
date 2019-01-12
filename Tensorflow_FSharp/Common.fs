@@ -1,3 +1,23 @@
+namespace Tensorflow
+// This is common Tensorflow specific types / utils
+
+open System.Runtime.InteropServices
+
+// We use this TF_Xxx as the native "TF_Xxx *" as those are opaque
+type TF_Status = System.IntPtr
+type TF_SessionOptions = System.IntPtr
+type TF_Graph = System.IntPtr
+type TF_OperationDescription = System.IntPtr
+type TF_Operation = System.IntPtr
+type TF_Session = System.IntPtr
+type TF_DeprecatedSession = System.IntPtr
+type TF_Tensor = System.IntPtr
+type TF_ImportGraphDefOptions = System.IntPtr
+type TF_Library = System.IntPtr
+type TF_BufferPtr = System.IntPtr
+type TF_Function = System.IntPtr
+type TF_DeviceList = System.IntPtr
+
 // [<AutoOpen>]
 // module Tensorflow.common
 
@@ -28,7 +48,7 @@
 // type TypeError(msg:string) =
 //     inherit Exception(msg)
 
-// type TFOperation with
+// type Operation with
 //     member this.try_get_output(i:int) = if i >= 0 && i < this.NumOutputs then Some(this.[i]) else None
 //     member this.``type`` = this.OpType
 //     member this.graph = this.Graph
@@ -78,17 +98,17 @@
 
 
 
-// type PendingCount = DictionaryCount<TFOperation>
+// type PendingCount = DictionaryCount<Operation>
  
 // /// This is analogous to replace the 
 // /// type GradientMapping = Map<int,TFOutput>
-// type TFOperationGradients = TFOutput option [] //Map<int,TFOutput>
+// type OperationGradients = TFOutput option [] //Map<int,TFOutput>
 
 // // NOTE: Behaviour here has been modified to hopefully be clearer
-// type GradientDictionary = Dictionary<TFOperation,TFOperationGradients >
+// type GradientDictionary = Dictionary<Operation,OperationGradients >
 // // TODO, check return type here. I think it's a TFOutput
 // // Also, it seems that GradientMapping is optional
-// type GradientFunction = (TFOperation*TFOperationGradients-> TFOutput)
+// type GradientFunction = (Operation*OperationGradients-> TFOutput)
 
 // type ICallable =
 //     abstract member __call__ : unit -> unit

@@ -4,44 +4,20 @@ namespace Tensorflow
 open System
 open System.Runtime.InteropServices
 open System.Text
-open System.Globalization
-open System.Linq
 open Utils
-open Common
 open Microsoft.FSharp.NativeInterop
-open System.Numerics;
-open System.Collections.Generic;
-open System.Linq.Expressions;
-
-// We use this TF_Xxx as the native "TF_Xxx *" as those are opaque
-type TF_Status = System.IntPtr
-type TF_SessionOptions = System.IntPtr
-type TF_Graph = System.IntPtr
-type TF_OperationDescription = System.IntPtr
-type TF_Operation = System.IntPtr
-type TF_Session = System.IntPtr
-type TF_DeprecatedSession = System.IntPtr
-type TF_Tensor = System.IntPtr
-type TF_ImportGraphDefOptions = System.IntPtr
-type TF_Library = System.IntPtr
-type TF_BufferPtr = System.IntPtr
-type TF_Function = System.IntPtr
-type TF_DeviceList = System.IntPtr
-
-type size_t = System.UIntPtr
-
 
 #nowarn "9"
 
 /// <summary>
-/// Represents a computation node in the graph.  Tensorflow operations are attached to a <see cref="T:Tensorflow.TFGraph"/>.
+/// Represents a computation node in the graph.  Tensorflow operations are attached to a <see cref="T:Tensorflow.Graph"/>.
 /// </summary>
 /// <remarks>
 /// Operations are usually created by  invoking one of the methods in 
-/// <see cref="T:Tensorflow.TFGraph"/>, but they can also be constructed
+/// <see cref="T:Tensorflow.Graph"/>, but they can also be constructed
 /// manually using the low-level <see cref="T:Tensorflow.OperationDesc"/> API.
 /// </remarks>
-type Operation((*graph : TFGraph,*) handle : IntPtr)  =
+type Operation((*graph : Graph,*) handle : IntPtr)  =
 
     let attrTypeToString(attrType : TFAttributeType, isList : bool) = 
         let name = 
@@ -130,11 +106,11 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern void TF_OperationGetAttrIntList (TF_Operation oper, string attr_name, int64* values, int max_values, TF_Status status);
 
-    // extern void TF_OperationGetAttrFloat (TF_Operation *oper, const char *attr_name, float *value, TF_Status *status);
+    // extern void TF_OperationGetAttrFloat (TF_Operation *oper, const char *attr_name, float32 *value, TF_Status *status);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern void TF_OperationGetAttrFloat (TF_Operation oper, string attr_name, float32* value, TF_Status status);
 
-    // extern void TF_OperationGetAttrFloatList (TF_Operation *oper, const char *attr_name, float *values, int max_values, TF_Status *status);
+    // extern void TF_OperationGetAttrFloatList (TF_Operation *oper, const char *attr_name, float32 *values, int max_values, TF_Status *status);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern void TF_OperationGetAttrFloatList (TF_Operation oper, string attr_name, float32* values, int max_values, TF_Status status);
 
@@ -211,7 +187,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         if handle = IntPtr.Zero then TFDisposable.ObjectDisposedException ()
         let cstatus = TFStatus.Setup (?incoming=status);
         let res = TF_OperationOutputListLength (handle, argName, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
         res;
 
     /// <summary>
@@ -224,7 +200,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         if handle = IntPtr.Zero then TFDisposable.ObjectDisposedException ()
         let cstatus = TFStatus.Setup (?incoming=status)
         let res = TF_OperationInputListLength (handle, argName, cstatus.Handle)
-        cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
         res
 
     /// <summary>
@@ -255,7 +231,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         if handle = IntPtr.Zero then TFDisposable.ObjectDisposedException ()
         let cstatus = TFStatus.Setup (?incoming=status);
         let x = TF_OperationGetAttrMetadata (handle, attrName, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
         x
 
     member this.GetAttrString (attrName : string, ?status : TFStatus) =
@@ -268,7 +244,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         let buf = Marshal.AllocHGlobal((int) metadata.TotalSize + 1)
         let maxLength = int metadata.TotalSize
         TF_OperationGetAttrString(handle, attrName, buf.ToPointer() |> voidToNativeInt,  maxLength, cstatus.Handle)
-        cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
         let bytes = Array.zeroCreate<byte> maxLength 
         Marshal.Copy(buf, bytes, 0, bytes.Length)
         Encoding.UTF8.GetString(bytes)
@@ -287,7 +263,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         use valuesF = fixed &values.[0]
         use lengthsF = fixed &lengths.[0]
         TF_OperationGetAttrStringList(handle, attrName, valuesF, lengthsF, int metadata.ListSize, storage, storageSize, cstatus.Handle) 
-        cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
         let returnValues = Array.create (int metadata.ListSize) (fun i ->
             let length = int lengths.[i]
             let bytes = Array.zeroCreate<byte> length 
@@ -304,7 +280,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         let metadata = this.GetAttributeMetadata(attrName, cstatus)
         checkAttrType(attrName, metadata, TFAttributeType.Int, false)
         TF_OperationGetAttrInt(handle, attrName, &&value, cstatus.Handle);
-        cstatus.CheckMaybeRaise(?incomingStatus = status) |> ignore
+        cstatus.CheckMaybeRaise(?incoming = status) |> ignore
         value;
 
     // WARN: untested
@@ -317,7 +293,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         let value = Array.zeroCreate<int64> (int metadata.ListSize)
         use data = fixed &value.[0]
         TF_OperationGetAttrIntList(handle, attrName, data, (int) metadata.ListSize, cstatus.Handle)
-        cstatus.CheckMaybeRaise(?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise(?incoming=status) |> ignore
         value
 
     member this.GetAttrFloat(attrName : string, ?status : TFStatus) =
@@ -328,7 +304,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         checkAttrType(attrName, metadata, TFAttributeType.Float, false);
         let mutable value = 0.0f;
         TF_OperationGetAttrFloat(handle, attrName, &&value, cstatus.Handle);
-        cstatus.CheckMaybeRaise(?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise(?incoming=status) |> ignore
         value
 
     // WARN: untested
@@ -341,7 +317,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         let value = Array.zeroCreate<float32>  (int metadata.ListSize)
         use data = fixed  &value.[0]
         TF_OperationGetAttrFloatList(handle, attrName, data, (int) metadata.ListSize, cstatus.Handle);
-        cstatus.CheckMaybeRaise(?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise(?incoming=status) |> ignore
         value
 
     member this.GetAttrBool(attrName : string, ?status : TFStatus) =
@@ -352,7 +328,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         checkAttrType(attrName, metadata, TFAttributeType.Bool, false)
         let mutable value : byte = 0uy
         TF_OperationGetAttrBool(handle, attrName, &&value, cstatus.Handle);
-        cstatus.CheckMaybeRaise(?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise(?incoming=status) |> ignore
         Convert.ToBoolean(value)
 
     // WARN: untested
@@ -365,7 +341,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         let values = Array.zeroCreate<byte> (int metadata.ListSize)
         use valuesF = fixed &values.[0]
         TF_OperationGetAttrBoolList(handle, attrName, valuesF, (int) metadata.ListSize, cstatus.Handle);
-        cstatus.CheckMaybeRaise(?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise(?incoming=status) |> ignore
         values |> Array.map (Convert.ToBoolean)
 
     member this.GetAttrType(attrName : string, ?status : TFStatus) =
@@ -376,7 +352,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         checkAttrType(attrName, metadata, TFAttributeType.Type, false)
         let mutable value = DType.Unknown
         TF_OperationGetAttrType(handle, attrName, &&value, cstatus.Handle);
-        cstatus.CheckMaybeRaise(?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise(?incoming=status) |> ignore
         value
 
     member this.GetAttrTypeList(attrName : string, ?status : TFStatus) =
@@ -388,7 +364,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         let values = Array.zeroCreate<DType> (int metadata.ListSize)
         use valuesF = fixed &values.[0]
         TF_OperationGetAttrTypeList(handle, attrName, valuesF, (int) metadata.ListSize, cstatus.Handle)
-        cstatus.CheckMaybeRaise(?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise(?incoming=status) |> ignore
         values
 
     member this.GetAttrShape(attrName : string, ?status : TFStatus) =
@@ -401,7 +377,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         let value = Array.zeroCreate<int64> (int metadata.TotalSize)
         use data = fixed &value.[0]
         TF_OperationGetAttrShape(handle, attrName, data, (int) metadata.TotalSize, cstatus.Handle)
-        cstatus.CheckMaybeRaise(?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise(?incoming=status) |> ignore
         value
 
     member this.GetAttrShapeList(attrName : string, ?status : TFStatus) =
@@ -418,14 +394,14 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
         use numDimsF = fixed &numDims.[0]
         use storageF = fixed &storage.[0]
         TF_OperationGetAttrShapeList(handle, attrName, dimsF, numDimsF, (int)metadata.ListSize, storageF, (int)metadata.TotalSize, cstatus.Handle);
-        cstatus.CheckMaybeRaise(?incomingStatus=status) |> ignore
-        let returnValues = Array.zeroCreate<TFShape> (int metadata.ListSize)
+        cstatus.CheckMaybeRaise(?incoming=status) |> ignore
+        let returnValues = Array.zeroCreate<Shape> (int metadata.ListSize)
         let mutable offset = 0;
         for i = 0 to int metadata.ListSize - 1 do
             let xs = Array.zeroCreate<int64> numDims.[i]
             for j = 0 to numDims.[i] - 1 do
                 xs.[j] <- storage.[offset + j]
-            returnValues.[i] <- new TFShape(xs)
+            returnValues.[i] <- new Shape(xs)
             offset <- offset + numDims.[i]
         returnValues
 
@@ -438,7 +414,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
        let metadata = this.GetAttributeMetadata(attrName, cstatus)
        if metadata.TotalSize < 0L then raise(Exception("Metadata Error"))
        TF_OperationGetAttrTensorShapeProto(handle, attrName, r.LLBuffer, cstatus.Handle)
-       cstatus.CheckMaybeRaise(?incomingStatus=status) |> ignore
+       cstatus.CheckMaybeRaise(?incoming=status) |> ignore
        r
 
     // NOTE: Commented out for now as we don't have an attribute metadata type associated with TensorShapeProtoList
@@ -451,7 +427,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
        let ls = rs |> Array.map (fun x -> x.LLBuffer |> NativePtr.toNativeInt)
        use data = fixed &ls.[0]
        TF_OperationGetAttrTensorShapeProtoList(handle, attrName, data, (int)metadata.ListSize, cstatus.Handle)
-       cstatus.CheckMaybeRaise(?incomingStatus=status) |> ignore
+       cstatus.CheckMaybeRaise(?incoming=status) |> ignore
        rs
 
     // member this.GetAttrTensor(attrName : string, ?status : TFStatus) =
@@ -461,11 +437,11 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
     //     checkAttrType(attrName, metadata, TFAttributeType.Tensor, false)
     //     let tensor = IntPtr.Zero : TF_Tensor
     //     TF_OperationGetAttrTensor(handle, attrName, &&tensor, cstatus.Handle)
-    //     cstatus.CheckMaybeRaise (?incomingStatus=status)
-    //     new TFTensor(tensor)
+    //     cstatus.CheckMaybeRaise (?incoming=status)
+    //     new Tensor(tensor)
 
     //     // WARN: untested
-    //     public TFTensor[] GetAttrTensorList(string attrName, TFStatus status = null)
+    //     public Tensor[] GetAttrTensorList(string attrName, TFStatus status = null)
     //     {
     //         if (handle == IntPtr.Zero)
     //             TFDisposable.ObjectDisposedException ();
@@ -474,7 +450,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
     //         if (metadata.TotalSize < 0)
     //             throw new Exception("Metadata Error");
     //         checkAttrType(attrName, metadata, TFAttributeType.Tensor, true);
-    //         TFTensor[] returnValue = new TFTensor[metadata.ListSize];
+    //         Tensor[] returnValue = new Tensor[metadata.ListSize];
     //         unsafe
     //         {
     //             TF_Tensor[] tensorPointers = new TF_Tensor[metadata.ListSize];
@@ -482,7 +458,7 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
     //                 TF_OperationGetAttrTensorList(handle, attrName, tensorPointersF, (int) metadata.ListSize, cstatus.Handle);
     //             for (int i = 0; i < metadata.ListSize; i++)
     //             {
-    //                 returnValue[i] = new TFTensor(tensorPointers[i]);
+    //                 returnValue[i] = new Tensor(tensorPointers[i]);
     //             }
     //         }
     //         cstatus.CheckMaybeRaise (status);
@@ -535,8 +511,8 @@ type Operation((*graph : TFGraph,*) handle : IntPtr)  =
                 if box x = null then -1
                 else this.Name.CompareTo(x.Name);
 
-    // /// <summary>
-    // /// Returns the handle to the idx-th output of the operation.
-    // /// </summary>
-    // /// <param name="idx">Index of the output in the operation.</param>
-    // member this.Item(idx:int) : TFOutput = TFOutput (this, idx);
+    override this.Equals(x:obj) = 
+        match x with
+        | :? Operation as other -> this.Handle = other.Handle
+        | _ -> false
+

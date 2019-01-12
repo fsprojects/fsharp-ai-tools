@@ -8,7 +8,6 @@ open System.Text
 open System.Globalization
 open System.Linq
 open Utils
-open Common
 open Microsoft.FSharp.NativeInterop
 open System.Numerics;
 open System.Collections.Generic;
@@ -213,12 +212,12 @@ type TFImportGraphDefOptions() =
         if this.Handle = IntPtr.Zero then raise(ObjectDisposedException ("Handle"))
         TF_ImportGraphDefOptionsSetUniquifyPrefix (this.Handle, if uniquifyPrefix then 1uy else 0uy)
 
-module TFGraphExternal =
+module GraphExternal =
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     extern void TF_GraphSetTensorShape (TF_Graph graph, TF_Output output, IntPtr dims, int num_dims, TF_Status status);
 
 /// <summary>
-/// Signature of the method that will be invoked by the TFGraph.While method to construct a while loop
+/// Signature of the method that will be invoked by the Graph.While method to construct a while loop
 /// </summary>
 /// <remarks>
 /// <para>
@@ -239,17 +238,17 @@ module TFGraphExternal =
 /// You can use the passed status record problems with it.
 /// </para>
 /// </remarks>
-type WhileConstructor = delegate of conditionGraph : TFGraph * condInputs : TF_Output [] * [<Out>] condOutput : TF_Output  * 
-                        bodyGraph : TFGraph * bodyInputs : TF_Output [] * bodyOutpus : TF_Output [] * [<Out>] name : string  -> unit
+type WhileConstructor = delegate of conditionGraph : Graph * condInputs : TF_Output [] * [<Out>] condOutput : TF_Output  * 
+                        bodyGraph : Graph * bodyInputs : TF_Output [] * bodyOutpus : TF_Output [] * [<Out>] name : string  -> unit
 
 
 //
-// A TFGraph that will not release the undelying handle, this is used
-// when we want to surface a TFGraph that we do not own, so we do not
+// A Graph that will not release the undelying handle, this is used
+// when we want to surface a Graph that we do not own, so we do not
 // want to delete the handle when this object is collected
 //
-and TFGraphUnowned internal (handle:IntPtr) = 
-    inherit TFGraph (handle)
+and GraphUnowned internal (handle:IntPtr) = 
+    inherit Graph (handle)
 
     // Nothing, we do not own the handle
     override this.NativeDispose (handle : TF_Status) = ()
@@ -259,7 +258,7 @@ and TFGraphUnowned internal (handle:IntPtr) =
 /// </summary>
 /// <remarks>
 /// <para>
-/// Graphs consist of operations (represented by TFOperation objects), these can be named, or 
+/// Graphs consist of operations (represented by Operation objects), these can be named, or 
 /// the runtime will automatically assign a name.
 /// </para> 
 /// <para>
@@ -272,7 +271,7 @@ and TFGraphUnowned internal (handle:IntPtr) =
 /// "hot", and add a "sub" operation there the result will be "demo/hot/sub".
 /// </para>
 /// </remarks>
-and TFGraph internal (handle) =
+and Graph internal (handle) =
     inherit TFDisposableThreadSafe(handle)
 
     let mutable currentNameScope = ""
@@ -383,9 +382,9 @@ and TFGraph internal (handle) =
 
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="T:TensorFlow.TFGraph"/> class.
+    /// Initializes a new instance of the <see cref="T:TensorFlow.Graph"/> class.
     /// </summary>
-    new () = new TFGraph (TF_NewGraph ())
+    new () = new Graph (TF_NewGraph ())
 
     override this.NativeDispose (handle : IntPtr) = TF_DeleteGraph (handle);
 
@@ -404,7 +403,7 @@ and TFGraph internal (handle) =
     /// Many random operations internally use the two seeds to allow user to change 
     /// the seed globally for a graph, or for only specific operations.
     /// </remarks>
-    member this.GetRandomSeeds (?operationSeed : int) = (seed, operationSeed |> Option.orElse lastId)
+    member this.GetRandomSeeds (?operationSeed : int) = (seed, operationSeed |> Option.orDefault lastId)
 
     /// <summary>
     /// Sets the tensor shape of the tensor referenced by <paramref name="output"/> to the shape described by <paramref name="dims"/>.
@@ -417,10 +416,10 @@ and TFGraph internal (handle) =
         let cstatus = TFStatus.Setup (?incoming=status);
         match dims with
         | None -> 
-            TFGraphExternal.TF_GraphSetTensorShape (handle, output.Struct, IntPtr.Zero, 0, cstatus.Handle);
+            GraphExternal.TF_GraphSetTensorShape (handle, output.Struct, IntPtr.Zero, 0, cstatus.Handle);
         | Some(dims) ->
             TF_GraphSetTensorShape (handle, output.Struct, dims, dims.Length, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incomingStatus=status);
+        cstatus.CheckMaybeRaise (?incoming=status);
 
 
     /// <summary>
@@ -433,7 +432,7 @@ and TFGraph internal (handle) =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status)
         let code = TF_GraphGetTensorNumDims (handle, output.Struct, cstatus.Handle)
-        cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
         code
 
 
@@ -448,13 +447,13 @@ and TFGraph internal (handle) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status)
         let n = TF_GraphGetTensorNumDims (handle, output.Struct, cstatus.Handle)
-        if (not (cstatus.CheckMaybeRaise (?incomingStatus=status, last = false))) then TFShape.Unknown;
-        elif n = -1 then TFShape.Unknown;
+        if (not (cstatus.CheckMaybeRaise (?incoming=status, last = false))) then Shape.Unknown;
+        elif n = -1 then Shape.Unknown;
         else
             let dims = Array.zeroCreate<int64> n
             TF_GraphGetTensorShape (handle, output.Struct, dims, dims.Length, cstatus.Handle);
-            cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
-            new TFShape (dims)
+            cstatus.CheckMaybeRaise (?incoming=status) |> ignore
+            new Shape (dims)
 
     /// <summary>
     /// Write out a serialized representation of the graph (as a GraphDef protocol buffer message) into <paramref name="outputGraphDef"/>.
@@ -466,7 +465,7 @@ and TFGraph internal (handle) =
         if box outputGraphDef = null then raise(ArgumentNullException ("outputGraphDef"))
         let cstatus = TFStatus.Setup (?incoming=status)
         TF_GraphToGraphDef (handle, outputGraphDef.LLBuffer, cstatus.Handle)
-        cstatus.CheckMaybeRaise (?incomingStatus=status)
+        cstatus.CheckMaybeRaise (?incoming=status)
 
     /// <summary>
     /// Import a serialized graph into this graph, using the specified prefix.
@@ -498,7 +497,7 @@ and TFGraph internal (handle) =
         if (box options = null) then raise(ArgumentNullException ("options"))
         let cstatus = TFStatus.Setup (?incoming=status);
         TF_GraphImportGraphDef (handle, graphDef.LLBuffer, options.Handle, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
 
     /// <summary>
     /// Import a serialized graph held in a byte array into this graph, using the specified prefix.
@@ -525,7 +524,7 @@ and TFGraph internal (handle) =
     /// <param name="options">Importing graph options.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
     /// <remarks>
-    ///   If you are tryig to load a file stored using the SavedModel file format, you should use the <see cref="T:TensorFlow.TFSession.FromSavedModel"/> API instead.
+    ///   If you are tryig to load a file stored using the SavedModel file format, you should use the <see cref="T:TensorFlow.Session.FromSavedModel"/> API instead.
     /// </remarks>
     member this.Import (buffer : byte [], options : TFImportGraphDefOptions, ?status : TFStatus) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
@@ -534,10 +533,10 @@ and TFGraph internal (handle) =
         let cstatus = TFStatus.Setup (?incoming=status)
         use  tb = new TFBuffer (buffer, 0, buffer.Length)
         this.Import (tb, options, ?status=status)
-        cstatus.CheckMaybeRaise (?incomingStatus=status)
+        cstatus.CheckMaybeRaise (?incoming=status)
 
     /// <summary>
-    /// Gets the <see cref="T:TensorFlow.TFGraph"/> with the specified name, or None if the named operation does not exist in the graph.
+    /// Gets the <see cref="T:TensorFlow.Graph"/> with the specified name, or None if the named operation does not exist in the graph.
     /// </summary>
     /// <param name="name">Name to lookup.</param>
     member this.TryGet (name : string) = 
@@ -547,7 +546,7 @@ and TFGraph internal (handle) =
             else Some(new Operation (h))
 
     /// <summary>
-    /// Gets the <see cref="T:TensorFlow.TFGraph"/> with the specified name, or null if the named operation does not exist in the graph.
+    /// Gets the <see cref="T:TensorFlow.Graph"/> with the specified name, or null if the named operation does not exist in the graph.
     /// </summary>
     /// <param name="name">Name to lookup.</param>
     member this.Item 
@@ -555,7 +554,7 @@ and TFGraph internal (handle) =
     
 
     /// <summary>
-    /// Returns the enumerator that returns all the TFOperations in a graph.
+    /// Returns the enumerator that returns all the Operations in a graph.
     /// </summary>
     /// <returns>The enumerator.</returns>
     member this.GetEnumerator () : IEnumerable<Operation> =
@@ -577,13 +576,13 @@ and TFGraph internal (handle) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status);
         let ndims = TF_GraphGetTensorNumDims (this.Handle, output.Struct, cstatus.Handle);
-        if not(cstatus.CheckMaybeRaise (?incomingStatus = status, last = false)) || 
+        if not(cstatus.CheckMaybeRaise (?incoming = status, last = false)) || 
             ndims = 0
         then box null :?> Int64 []
         else 
             let ret = Array.zeroCreate<int64> ndims 
             TF_GraphGetTensorShape (handle, output.Struct, ret, ndims, cstatus.Handle);
-            cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+            cstatus.CheckMaybeRaise (?incoming=status) |> ignore
             ret
 
     /// <summary>
@@ -672,7 +671,7 @@ and TFGraph internal (handle) =
     /// <param name="returnOutputs">Array large enough to contain all the return options.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
     /// <remarks>
-    ///   If you are tryig to load a file stored using the SavedModel file format, you should use the <see cref="T:TensorFlow.TFSession.FromSavedModel"/> API instead.
+    ///   If you are tryig to load a file stored using the SavedModel file format, you should use the <see cref="T:TensorFlow.Session.FromSavedModel"/> API instead.
     /// </remarks>
     member this.ImportGraphDef (graphDef : TFBuffer, options :TFImportGraphDefOptions, returnOutputs : Output [], ?status : TFStatus) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
@@ -721,9 +720,9 @@ and TFGraph internal (handle) =
                 let mutable name : string = box null :?> string
                 let n = result.ninputs;
                 let bodyOutputs = Array.zeroCreate<TF_Output> n 
-                let condGraph = new TFGraphUnowned (result.cond_graph) :> TFGraph
-                let bodyGraph = new TFGraphUnowned (result.body_graph) :> TFGraph
-                constructor.Invoke(condGraph, TFGraph.CopyFrom (result.cond_inputs, n), result.cond_output, bodyGraph, TFGraph.CopyFrom (result.body_inputs, n), bodyOutputs, name);
+                let condGraph = new GraphUnowned (result.cond_graph) :> Graph
+                let bodyGraph = new GraphUnowned (result.body_graph) :> Graph
+                constructor.Invoke(condGraph, Graph.CopyFrom (result.cond_inputs, n), result.cond_output, bodyGraph, Graph.CopyFrom (result.body_inputs, n), bodyOutputs, name);
 
                 let name = if box name = null || name = "" then this.MakeUnique ("while") else name
                 // On return, copy the condOutput and bodyOututs
@@ -737,7 +736,7 @@ and TFGraph internal (handle) =
                 let ret = Array.zeroCreate<TF_Output> n 
                 use first = fixed &ret.[0]
                 TF_FinishWhile (&result, cstatus.Handle, first);
-                if (cstatus.CheckMaybeRaise (?incomingStatus=status)) then 
+                if (cstatus.CheckMaybeRaise (?incoming=status)) then 
                     ret |> Array.map Output
                 else null
             with
@@ -777,7 +776,7 @@ and TFGraph internal (handle) =
             let dx = dx |> Array.map (fun x -> x.Struct)
             use pdx = fixed &dx.[0]
             TF_AddGradients (handle, py, y.Length, px, x.Length, pdx, cstatus.Handle, pret);
-        if not(cstatus.CheckMaybeRaise (?incomingStatus=status, last = false)) then
+        if not(cstatus.CheckMaybeRaise (?incoming=status, last = false)) then
              null;
         else
             ret |> Array.map Output
@@ -818,13 +817,13 @@ and TFGraph internal (handle) =
             let dx = dx |> Array.map (fun x -> x.Struct)
             use pdx = fixed &dx.[0] 
             TF_AddGradientsWithPrefix (handle, prefix, py, y.Length, px, x.Length, pdx, cstatus.Handle, pret);
-        if not(cstatus.CheckMaybeRaise (?incomingStatus=status, last = false)) then
+        if not(cstatus.CheckMaybeRaise (?incoming=status, last = false)) then
              null;
         else
             ret |> Array.map Output
 
     /// <summary>
-    /// Creates a TFFunction from a TFGraph
+    /// Creates a TFFunction from a Graph
     /// </summary>
     /// <returns>The function.</returns>
     /// <param name="functionName">Name of the new function.  Should match the operation name (OpDef.name) regexp [A-Z][A-Za-z0-9_.\\-/]*.  If appendHashToFunctioName is false, the name must be unique (at least those registered in graphs where this function will be used).</param>
@@ -926,7 +925,7 @@ and TFGraph internal (handle) =
                                 cstatus.Handle)
 
         if ops <> IntPtr.Zero then Marshal.FreeHGlobal (ops)
-        if not(cstatus.CheckMaybeRaise (?incomingStatus=status, last = false)) then box null :?> TFFunction
+        if not(cstatus.CheckMaybeRaise (?incoming=status, last = false)) then box null :?> TFFunction
         else new TFFunction (fnHandle)
 
 
@@ -941,14 +940,13 @@ and TFGraph internal (handle) =
         if box outputVersionDef = null then raise (ArgumentNullException ("outputVersionDef"))
         let cstatus = TFStatus.Setup (?incoming=status);
         TF_GraphVersions (handle, outputVersionDef.LLBuffer, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incomingStatus=status);
+        cstatus.CheckMaybeRaise (?incoming=status);
 
     /// <summary>
     /// Returns the number of TF_Functions registered in this graph.
     /// </summary>
     /// <value>The number functions.</value>
     member this.NumFunctions : int = TF_GraphNumFunctions (handle)
-
 
     /// <summary>
     /// Returns an the functions that have been defined in the graph.
@@ -983,18 +981,398 @@ and TFGraph internal (handle) =
     /// <returns><c>true</c>, if the evaluation is successful, in which case the result is returned in <paramref name="tensor"/>, <c>false</c> otherwise.</returns>
     /// <param name="output">Output.</param>
     /// <param name="tensor">Tensor.</param>
-    member this.TryEvaluateConstant (output : Output, [<Out>] tensor : TFTensor byref) = // TODO ref?
+    member this.TryEvaluateConstant (output : Output, [<Out>] tensor : Tensor byref) = // TODO ref?
         let cstatus = new TFStatus ()
         let mutable ptr = IntPtr.Zero;
         let ret = TF_TryEvaluateConstant (handle, output.Struct, &ptr, cstatus.Handle); // ref ptr
         cstatus.Dispose ();
         if ret then
-            tensor <- new TFTensor (ptr);
+            tensor <- new Tensor (ptr);
         else
-            tensor <- box null :?> TFTensor
+            tensor <- box null :?> Tensor
         ret
     
     override this.ToString () =
             let mutable len = IntPtr.Zero
             TF_GraphDebugString (this.Handle, len); // ref len
 
+/// <summary>
+/// Low-level TensorFlow operation builder
+/// </summary>
+/// <remarks>
+/// <para>This is the low-level API that is used to create operations by manually specificying all
+/// the parameters of an operation (inputs, outputs, attribute descriptions) that can then
+/// be attached into a graph.
+/// </para>
+/// <para>
+/// Generally, you will instead be using the methods surfaced in <see cref="T:TensorFlow.Graph"/> 
+/// that surfaces a C# high-level API that has already been bound to the built-in TensorFlow
+/// nodes.
+/// </para>
+/// <para>
+/// You create instances bound to a graph, add inputs, attributes and so on, and when you are done
+/// you can call the <see cref="FinishOperation"/> method that will turn this OperationDesc 
+/// into a <see cref="T:TensorFlow.Operation"/>.
+/// </para>
+/// </remarks>
+type OperationDesc private (graph : Graph, opType : string, name : string, handle : IntPtr) =
+    inherit TFDisposable(handle)
+    let mutable handle = handle
+
+    // extern TF_OperationDescription * TF_NewOperation (TF_Graph *graph, const char *op_type, const char *oper_name);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern TF_OperationDescription TF_NewOperation (TF_Graph graph, string opType, string oper_name);
+
+    // extern void TF_AddInputList (TF_OperationDescription *desc, const TF_Output *inputs, int num_inputs);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_AddInputList (TF_OperationDescription desc, TF_Output [] inputs, int num_inputs);
+
+    // extern void TF_SetDevice (TF_OperationDescription *desc, const char *device);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetDevice (TF_OperationDescription desc, string device);
+
+    // extern void TF_AddInput (TF_OperationDescription *desc, TF_Output input);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_AddInput (TF_OperationDescription desc, TF_Output input);
+
+    // extern void TF_AddControlInput (TF_OperationDescription *desc, TF_Operation *input);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_AddControlInput (TF_OperationDescription desc, TF_Operation input);
+
+    // extern void TF_SetAttrString (TF_OperationDescription *desc, const char *attr_name, const void *value, size_t length);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrString (TF_OperationDescription desc, string attr_name, IntPtr value, size_t length);
+
+    // extern void TF_SetAttrStringList (TF_OperationDescription *desc, const char *attr_name, const void *const *values, const size_t *lengths, int num_values);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrStringList (TF_OperationDescription desc, string attr_name, IntPtr [] values, UIntPtr [] lengths, int num_values);
+
+    // extern void TF_ColocateWith (TF_OperationDescription *desc, TF_Operation *op);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_ColocateWith (TF_OperationDescription desc, TF_Operation op);
+
+    // extern void TF_SetAttrInt (TF_OperationDescription *desc, const char *attr_name, int64_t value);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrInt (TF_OperationDescription desc, string attr_name, int64 value);
+    // extern void TF_SetAttrIntList (TF_OperationDescription *desc, const char *attr_name, const int64_t *values, int num_values);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrIntList (TF_OperationDescription desc, string attr_name, int64 [] values, int num_values);
+    // extern void TF_SetAttrFloat (TF_OperationDescription *desc, const char *attr_name, float32 value);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrFloat (TF_OperationDescription desc, string attr_name, float32 value);
+    // extern void TF_SetAttrFloatList (TF_OperationDescription *desc, const char *attr_name, const float32 *values, int num_values);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrFloatList (TF_OperationDescription desc, string attr_name, float32 [] values, int num_values);
+
+    // extern void TF_SetAttrBool (TF_OperationDescription *desc, const char *attr_name, unsigned char value);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrBool (TF_OperationDescription desc, string attr_name, byte value);
+
+    // extern void TF_SetAttrBoolList (TF_OperationDescription *desc, const char *attr_name, const unsigned char *values, int num_values);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrBoolList (TF_OperationDescription desc, string attr_name, bool [] values, int num_values);
+
+    // extern void TF_SetAttrType (TF_OperationDescription *desc, const char *attr_name, TF_DataType value);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrType (TF_OperationDescription desc, string attr_name, DType value);
+
+    // extern void TF_SetAttrTypeList (TF_OperationDescription *desc, const char *attr_name, const TF_DataType *values, int num_values);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrTypeList (TF_OperationDescription desc, string attr_name, DType [] values, int num_values);
+
+    // extern void TF_SetAttrShape (TF_OperationDescription *desc, const char *attr_name, const int64_t *dims, int num_dims);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrShape (TF_OperationDescription desc, string attr_name, int64 [] dims, int num_dims);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrShape (TF_OperationDescription desc, string attr_name, IntPtr dims, int num_dims);
+
+    // extern void TF_SetAttrShapeList (TF_OperationDescription *desc, const char *attr_name, const int64_t *const *dims, const int *num_dims, int num_shapes);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrShapeList (TF_OperationDescription desc, string attr_name, IntPtr[] dims, int[] num_dims, int num_shapes);
+
+    // extern void TF_SetAttrTensorShapeProto (TF_OperationDescription *desc, const char *attr_name, const void *proto, size_t proto_len, TF_Status *status);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrTensorShapeProto (TF_OperationDescription desc, string attr_name, IntPtr proto, size_t proto_len, TF_Status status);
+
+    // extern void TF_SetAttrTensorShapeProtoList (TF_OperationDescription *desc, const char *attr_name, const void *const *protos, const size_t *proto_lens, int num_shapes, TF_Status *status);
+    //[DllImport (NativeBinding.TensorFlowLibrary)]
+    //static extern void TF_SetAttrTensorShapeProtoList (TF_OperationDescription desc, string attr_name, void** protos, size_t* proto_lens, int num_shapes, TF_Status status);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrTensorShapeProtoList (TF_OperationDescription desc, string attr_name, IntPtr[] protos, size_t* proto_lens, int num_shapes, TF_Status status);
+
+    // extern void TF_SetAttrTensor (TF_OperationDescription *desc, const char *attr_name, TF_Tensor *value, TF_Status *status);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrTensor (TF_OperationDescription desc, string attr_name, TF_Tensor value, TF_Status status);
+
+    // extern void TF_SetAttrTensorList (TF_OperationDescription *desc, const char *attr_name, TF_Tensor *const *values, int num_values, TF_Status *status);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrTensorList (TF_OperationDescription desc, string attr_name, IntPtr [] values, int num_values, TF_Status status);
+    // extern void TF_SetAttrValueProto (TF_OperationDescription *desc, const char *attr_name, const void *proto, size_t proto_len, TF_Status *status);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrValueProto (TF_OperationDescription desc, string attr_name, IntPtr proto, size_t proto_len, TF_Status status);
+
+    // extern TF_Operation * TF_FinishOperation (TF_OperationDescription *desc, TF_Status *status);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern TF_Operation TF_FinishOperation (TF_OperationDescription desc, TF_Status status);
+
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetAttrFuncName (TF_OperationDescription desc, string attr_name, string value, IntPtr len);
+
+    new (graph : Graph, opType : string, name: string) =
+        let handle = TF_NewOperation (graph.Handle, opType, name);
+        new OperationDesc(graph, opType, name,handle)
+
+    override this.NativeDispose (handle : IntPtr) =
+        // If you reach this, you never called FinishOperation
+        printf "OperationDescription(%s,%s was never turned into an Operation" opType name
+
+    /// <summary>
+    /// Specifies the device for the operation, if one is not provided, the operation is unconstrained.
+    /// </summary>
+    /// <returns>This instance, allows for chaining operation invocations.</returns>
+    /// <param name="device">The device to constraint to in this operation.</param>
+    member this.SetDevice (device : string) =
+        if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
+        if device = null then raise(ArgumentNullException ("device"))
+        TF_SetDevice (handle, device)
+        this
+
+    /// <summary>
+    /// Adds the specified input to the operation
+    /// </summary>
+    /// <returns>The input.</returns>
+    /// <param name="input">Input.</param>
+    member this.AddInput (input : Output) =
+        if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
+        TF_AddInput (handle, input.Struct);
+        this;
+
+        /// <summary>
+        /// Adds a series of inputs to the operation.
+        /// </summary>
+        /// <param name="inputs">Inputs, this is a params array for your convenience.</param>
+    member this.AddInputs([<ParamArray>] inputs : Output []) =
+            if (handle = IntPtr.Zero) then raise (ObjectDisposedException ("handle"))
+            if not (box inputs = null || inputs.Length = 0) then
+                TF_AddInputList (handle, inputs |> Array.map (fun x -> x.Struct), inputs.Length)
+            this;
+
+    /// <summary>
+    /// Ensure that the operation does not execute before the control operation does.
+    /// </summary>
+    /// <param name="control">Operation that must be executed before running this operation.</param>
+    /// <remarks>
+    /// <para>
+    /// A control input is an Operation that must be executed before running the operation 
+    /// currently being built.  
+    /// </para>
+    /// <para>
+    /// For example, an Assert operation may be added as a control input for this operation. 
+    /// The Assert now behaves as a pre-condition that will always verify itself before
+    /// running the operation.
+    /// </para>
+    /// </remarks>
+    member this.AddControlInput (control : Operation) =
+        if (handle = IntPtr.Zero) then raise (ObjectDisposedException ("handle"))
+        if (box control = null) then raise (ArgumentNullException ("input"))
+        TF_AddControlInput (handle, control.Handle)
+        this
+
+    member this.ColocateWith (op : Operation) = 
+        if (handle = IntPtr.Zero) then (raise (ObjectDisposedException ("handle")))
+        if (box op = null) then raise (ArgumentNullException ("op"))
+        TF_ColocateWith (handle, op.Handle);
+        this;
+
+    member this.SetAttr (attrName : string, value : string) =
+        if (handle = IntPtr.Zero) then raise (ObjectDisposedException ("handle"))
+        if (box attrName = null) then raise (ArgumentNullException ("attrName"))
+        let bytes = Encoding.UTF8.GetBytes (value)
+        let buf = Marshal.AllocHGlobal (bytes.Length + 1);
+        Marshal.Copy (bytes, 0, buf, bytes.Length)
+        TF_SetAttrString (handle, attrName, buf, UIntPtr(uint64 bytes.Length))
+        this
+
+
+    member this.SetAttr (attrName : string, values : string []) =
+        if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
+        if box attrName = null then raise (ArgumentNullException ("attrName"))
+        if box values = null then raise (ArgumentNullException ("values"))
+        let n = values.Length;
+        let unmanaged,lengths = 
+            Array.init n (fun i ->
+                let bytes = Encoding.UTF8.GetBytes (values.[i]);
+                let buf = Marshal.AllocHGlobal (bytes.Length + 1);
+                let bc = bytes.Length;
+                Marshal.Copy (bytes, 0, buf, bc);
+                (buf,UIntPtr(uint64 bc))) |> Array.unzip
+        TF_SetAttrStringList (handle, attrName, unmanaged, lengths, n);
+        this
+
+
+    member this.SetAttr (attrName : string, value : int64) =
+        if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
+        if box attrName = null then raise(ArgumentNullException ("attrName"))
+        TF_SetAttrInt (handle, attrName, value);
+        this;
+
+    member this.SetAttr (attrName : string, values : int64[]) = 
+        if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
+        if box attrName = null then raise(ArgumentNullException ("attrName"))
+        if box values = null then raise(ArgumentNullException ("values"))
+        TF_SetAttrIntList (handle, attrName, values, values.Length);
+        this;
+
+    member this.SetAttr (attrName : string, value : float32) =
+        if handle = IntPtr.Zero then raise( ObjectDisposedException ("handle"))
+        if attrName = null then raise(ArgumentNullException ("attrName"))
+        TF_SetAttrFloat (handle, attrName, value);
+        this;
+
+    member this.SetAttr (attrName : string, values : float32[]) =
+        if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
+        if box attrName = null then raise(ArgumentNullException ("attrname"))
+        if box values = null then raise(ArgumentNullException ("values"))
+        TF_SetAttrFloatList (handle, attrName, values, values.Length);
+        this
+
+
+    member this.SetAttr (attrName : string, value : bool) =
+        if handle = IntPtr.Zero then raise( ObjectDisposedException ("handle"))
+        if attrName = null then raise(ArgumentNullException ("attrName"))
+        TF_SetAttrBool (handle, attrName, if value then 1uy else 0uy);
+        this;
+
+
+    member this.SetAttr (attrName : string, values : bool[]) =
+        if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
+        if box attrName = null then raise(ArgumentNullException ("handle"))
+        if box values = null then raise(ArgumentNullException ("values"))
+        TF_SetAttrBoolList (handle, attrName, values, values.Length);
+        this
+
+    member this.SetAttr (attrName : string, value : DType) =
+        if handle = IntPtr.Zero then raise( ObjectDisposedException ("handle"))
+        if attrName = null then raise(ArgumentNullException ("attrName"))
+        TF_SetAttrType (handle, attrName, value)
+        this;
+
+
+    member this.SetAttr (attrName : string, [<ParamArray>] values : DType[]) =
+        if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
+        if box attrName = null then raise(ArgumentNullException ("handle"))
+        if box values = null then raise(ArgumentNullException ("values"))
+        TF_SetAttrTypeList(handle, attrName, values, values.Length);
+        this
+
+
+    member this.SetAttr (attrName : string, shape : Shape) =
+        if handle = IntPtr.Zero then raise( ObjectDisposedException ("handle"))
+        if attrName = null then raise(ArgumentNullException ("attrName"))
+        if (box shape = null || box shape.Dims = null) then
+            failwith "todo"
+            //TF_SetAttrType (handle, attrName, null, -1)
+        else
+            failwith "todo"
+            //TF_SetAttrType (handle, attrName, shape.dims, shape.dims.Length)
+        this
+
+    // TODO (matt): this originally had the name this.SetAttrShape
+    member this.SetAttr (attrName : string, shapeList : Shape []) =
+        if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
+        if attrName = null then raise(ArgumentNullException ("attrName"))
+        if box shapeList = null then raise(ArgumentNullException ("shapeList"))
+        let num_shapes = shapeList.Length
+        let num_dims = Array.zeroCreate<int> shapeList.Length 
+        let dims = Array.init num_shapes (fun i -> 
+            num_dims.[i] <- shapeList.[i].NumDimensions
+            let array = Marshal.AllocHGlobal(sizeof<int64> * shapeList.[i].Dims.Length)
+            Marshal.Copy(shapeList.[i].Dims, 0, array, shapeList.[i].Dims.Length)
+            array)
+        TF_SetAttrShapeList (handle, attrName, dims, num_dims, num_shapes);
+        this
+
+    member this.SetAttrTensorShapeProto (attrName : string, proto : IntPtr, protoLen : size_t, ?status : TFStatus) = 
+        if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
+        let cstatus = TFStatus.Setup (?incoming=status)
+        TF_SetAttrTensorShapeProto (handle, attrName, proto, protoLen, cstatus.Handle)
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
+        this
+
+
+    // WARN: untested
+    // TODO: consider why ShapeProt is IntPtr and ShapeProtoList is TFBuffer[]
+    member this.SetAttrShapeProtoList (attrName : string, protos : TFBuffer[], ?status : TFStatus) =
+        if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
+        if box attrName = null then raise(ArgumentNullException ("attrName"))
+        if box protos = null then raise(ArgumentNullException ("protos"))
+        let cstatus = TFStatus.Setup (?incoming=status)
+        let lengths = Array.zeroCreate<size_t> protos.Length
+        let unmanaged = Array.init protos.Length (fun i -> protos.[i].Handle)
+        use protoLengths = fixed &lengths.[0]
+        TF_SetAttrTensorShapeProtoList(handle, attrName, unmanaged, protoLengths, unmanaged.Length, cstatus.Handle);
+        // prevent finalization of managed TFBuffer
+        GC.KeepAlive(protos);
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
+        this
+
+    member this.SetAttr (attrName : string, tensor : Tensor, ?status : TFStatus) =
+        if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
+        if box attrName = null then raise (ArgumentNullException ("attrName"))
+        if box tensor = null then raise (ArgumentNullException ("tensor"))
+        let cstatus = TFStatus.Setup (?incoming=status)
+        TF_SetAttrTensor (handle, attrName, tensor.Handle, cstatus.Handle);
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
+        this
+
+
+    member this.SetAttr (attrName : string, tensors : Tensor [], ?status : TFStatus) =
+        if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
+        if box attrName = null then raise (ArgumentNullException ("attrName"))
+        if box tensors = null then raise (ArgumentNullException ("tensors"))
+        let cstatus = TFStatus.Setup (?incoming=status)
+        let unmanaged = Array.init tensors.Length (fun i -> tensors.[i].Handle)
+        TF_SetAttrTensorList (handle, attrName, unmanaged, unmanaged.Length, cstatus.Handle)
+        // prevent finalization of managed Tensors
+        GC.KeepAlive(tensors)
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
+        this
+
+    // WARN: untested
+//    member this.SetAttr(attrName : string, proto : TFProto, ?status : TFStatus) =
+//        if handle = IntPtr.Zero then TFDisposable.ObjectDisposedException ()
+//        if box attrName = null then raise(ArgumentNullException ("attrName"))
+//        if box proto = null then raise(ArgumentNullException ("proto"))
+//        let cstatus = TFStatus.Setup (?incoming=status)
+//        TF_SetAttrValueProto(handle, attrName, proto.LLBuffer.data, proto.LLBuffer.length, cstatus.Handle)
+//        cstatus.CheckMaybeRaise (?incoming=status)
+//        this
+
+    /// <summary>
+    /// Turns the operation description into an actual operation in the graph.
+    /// </summary>
+    /// <returns>The operation on success, or null on error.</returns>
+    /// <param name="status">Optional status, on failure the operation is not added to the graph.  If you pass null (the default), this operation throws on error conditions.</param>
+    member this.FinishOperation (?status : TFStatus) =
+        if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
+        let cstatus = TFStatus.Setup (?incoming=status);
+        let h = TF_FinishOperation (handle, cstatus.Handle);
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
+        handle <- IntPtr.Zero;
+        GC.SuppressFinalize (this);
+        match status with 
+        | None -> failwith "todo error"
+        | Some(status) when status.Error -> box null :?> Operation
+        | _ -> 
+            new Operation (h)
+
+    /// <summary>
+    /// Sets an attribute on the function to the specified value.
+    /// </summary>
+    /// <param name="attrName">The attribute name.</param>
+    /// <param name="value">The value for the attribute.</param>
+    member this.SetAttribute (attrName : string, value : string) =
+        if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
+        if box attrName = null then raise (ArgumentNullException ("attrName"))
+        if box value = null then raise (ArgumentNullException ("value"))
+        TF_SetAttrFuncName (handle, attrName, value, IntPtr(value.Length))

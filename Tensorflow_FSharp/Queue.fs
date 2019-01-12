@@ -17,7 +17,7 @@ open System.Linq;
 /// </summary>
 /// <param name="session">Session instance</param>
 [<AbstractClass>]
-type  QueueBase(session : TFSession) =
+type  QueueBase(session : Session) =
 
 
     /// <summary>
@@ -64,7 +64,7 @@ type  QueueBase(session : TFSession) =
     /// </param>
     /// <returns>
     ///   One or more tensors that were dequeued as a tuple.
-    ///   The TFOperation can be fetched from the resulting TFOutput, by fethching the Operation property from the result.
+    ///   The Operation can be fetched from the resulting TFOutput, by fethching the Operation property from the result.
     /// </returns>
     /// <remarks>
     ///   This operation has k outputs, where k is the number of components
@@ -107,7 +107,7 @@ type  QueueBase(session : TFSession) =
 /// <param name="capacity"> Optional argument. The upper bound on the number of elements in this queue. Negative numbers mean no limit.</param>
 /// <param name="container"> Optional argument. If non-empty, this queue is placed in the given container. Otherwise, a default container is used.</param>
 /// <param name="operationName"> If specified, the created operation in the graph will be this one, otherwise it will be named 'PaddingFIFOQueueV2'.</param>
-type PaddingFIFOQueue(session : TFSession, componentTypes : DType [], shapes : TFShape [], ?capacity : int, ?container : string, ?operationName : string) =
+type PaddingFIFOQueue(session : Session, componentTypes : DType [], shapes : Shape [], ?capacity : int, ?container : string, ?operationName : string) =
     inherit QueueBase(session)
     let handle = session.Graph.PaddingFIFOQueueV2 ( componentTypes, shapes, capacity, container, operationName);
 
@@ -164,7 +164,7 @@ type PaddingFIFOQueue(session : TFSession, componentTypes : DType [], shapes : T
     ///   The components input has k elements, which correspond to the components of
     ///   tuples stored in the given queue.
     /// </remarks>
-    member this.EnqueueExecute (components : Output [], inputValues : TFTensor [], ?timeout_ms : int64, ?operationName : string) : TFTensor [] =
+    member this.EnqueueExecute (components : Output [], inputValues : Tensor [], ?timeout_ms : int64, ?operationName : string) : Tensor [] =
         let enqueueOp = this.Enqueue (components, ?timeout_ms=timeout_ms, ?operationName=operationName);
         session.Run (components, inputValues, [||], [|enqueueOp|]);
 
@@ -182,7 +182,7 @@ type PaddingFIFOQueue(session : TFSession, componentTypes : DType [], shapes : T
     /// </param>
     /// <returns>
     ///   One or more tensors that were dequeued as a tuple.
-    ///   The TFOperation can be fetched from the resulting TFOutput, by fethching the Operation property from the result.
+    ///   The Operation can be fetched from the resulting TFOutput, by fethching the Operation property from the result.
     /// </returns>
     /// <remarks>
     ///   This operation has k outputs, where k is the number of components
@@ -207,14 +207,14 @@ type PaddingFIFOQueue(session : TFSession, componentTypes : DType [], shapes : T
     /// </param>
     /// <returns>
     ///   One or more tensors that were dequeued as a tuple.
-    ///   The TFOperation can be fetched from the resulting TFOutput, by fethching the Operation property from the result.
+    ///   The Operation can be fetched from the resulting TFOutput, by fethching the Operation property from the result.
     /// </returns>
     /// <remarks>
     ///   This operation has k outputs, where k is the number of components
     ///   in the tuples stored in the given queue, and output i is the ith
     ///   component of the dequeued tuple.
     /// </remarks>
-    member this.DequeueExecute (?timeout_ms : int64, ?operationName : string) : TFTensor [] =
+    member this.DequeueExecute (?timeout_ms : int64, ?operationName : string) : Tensor [] =
         failwith "todo"
         //let values = session.Graph.QueueDequeueV2 (_handle, _componentTypes, ?timeout_ms=timeout_ms, ?operationName=operationName);
         //session.Run ([||],[||], values)
@@ -234,7 +234,7 @@ type PaddingFIFOQueue(session : TFSession, componentTypes : DType [], shapes : T
     /// <returns>
     ///   
     /// </returns>
-    member this.DequeueExecute<'T when 'T :> TFTensor > (?timeout_ms : int64, ?operationName : string) =
+    member this.DequeueExecute<'T when 'T :> Tensor > (?timeout_ms : int64, ?operationName : string) =
         this.DequeueExecute (?timeout_ms=timeout_ms, ?operationName=operationName) |> Array.cast<'T>
 
     /// <summary>

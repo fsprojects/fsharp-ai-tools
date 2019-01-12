@@ -96,33 +96,35 @@ module DTypeExtensions =
         /// Returns a non reference `DType` based on this `DType`.
         member this.BaseType with get() = if this.IsRefDtype then (toEnum(ofEnum(this) - 100u)) else this
 
-        member this.ByteSize with get () =
-            match this with
-            | Unknown       -> -1 
-            | Float32       -> 4
-            | Float64       -> 8
-            | Int32         -> 4
-            | UInt8         -> 1
-            | Int16         -> 2
-            | Int8          -> 1
-            | String        -> -1
-            | Complex64     -> 16
-            | Complex       -> 8
-            | Int64         -> 8
-            | Bool          -> 1
-            | QInt8         -> 1
-            | QUInt8        -> 1
-            | QInt32        -> 4
-            | BFloat16      -> 2
-            | QInt16        -> 2
-            | QUInt16       -> 2
-            | UInt16        -> 2
-            | Complex128    -> 32
-            | Float16       -> 2
-            | Resource      -> -1
-            | Variant       -> -1
-            | UInt32        -> 4
-            | UInt64        -> 8
+        member this.ByteSize 
+            with get () =
+                match this with
+                | DType.Unknown       -> -1 
+                | DType.Float32       -> 4
+                | DType.Float64       -> 8
+                | DType.Int32         -> 4
+                | DType.UInt8         -> 1
+                | DType.Int16         -> 2
+                | DType.Int8          -> 1
+                | DType.String        -> -1
+                | DType.Complex64     -> 16
+                //| DType.Complex       -> 16, this will never be used because it's equal to Complex64
+                | DType.Int64         -> 8
+                | DType.Bool          -> 1
+                | DType.QInt8         -> 1
+                | DType.QUInt8        -> 1
+                | DType.QInt32        -> 4
+                | DType.BFloat16      -> 2
+                | DType.QInt16        -> 2
+                | DType.QUInt16       -> 2
+                | DType.UInt16        -> 2
+                | DType.Complex128    -> 32
+                | DType.Float16       -> 2
+                | DType.Resource      -> -1
+                | DType.Variant       -> -1
+                | DType.UInt32        -> 4
+                | DType.UInt64        -> 8
+                | _                   -> -1
 
 
 

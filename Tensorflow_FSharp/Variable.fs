@@ -60,16 +60,13 @@ type Variable internal (variableHandle : TF_Output, readHandle : TF_Output, assi
     /// <value>The variable op.</value>
     member this.VariableOp = variableHandle;
 
-    // /// <summary>
-    // /// Returns the VarHandleOp (the VariableOp property).
-    // /// </summary>
-    // /// <returns>The variable handle created for the variable.</returns>
-    // /// <param name="variable">Variable reference.</param>
-    // /// <remarks>
-    // /// This implicit operator exists to preserve the compatibility with code that
-    // /// created Variables and expected the result to be the VariableOp.
-    // /// </remarks>
-    // public static implicit operator TFOutput (Variable variable)
-    // {
-    //     return variable.VariableOp;
-    // }
+    /// <summary>
+    /// Returns the VarHandleOp (the VariableOp property).
+    /// </summary>
+    /// <returns>The variable handle created for the variable.</returns>
+    /// <param name="variable">Variable reference.</param>
+    /// <remarks>
+    /// This implicit operator exists to preserve the compatibility with code that
+    /// created Variables and expected the result to be the VariableOp.
+    /// </remarks>
+    static member op_Implicit (variable : Variable) : Output = new Output(variable.VariableOp)

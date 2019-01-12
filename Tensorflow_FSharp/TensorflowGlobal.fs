@@ -7,4 +7,4 @@ type TF() =
 
 [<AutoOpen>]
 module Global =
-    let defaultGraph : TFGraph = failwith "todo"
+    let defaultGraph : Graph = failwith "todo"

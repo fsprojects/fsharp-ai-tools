@@ -10,10 +10,10 @@ open System.Runtime.InteropServices
 /// <remarks>
 /// <para>
 /// The runner has a simple API that allows developers to call the AddTarget, AddInput, AddOutput and Fetch
-/// to construct the parameters that will be passed to the TFSession.Run method.
+/// to construct the parameters that will be passed to the Session.Run method.
 /// </para>
 /// <para>
-/// Instances of this class are created by calling the GetRunner method on the TFSession.
+/// Instances of this class are created by calling the GetRunner method on the Session.
 /// </para>
 /// <para>
 /// The various methods in this class return an instance to the Runner itsel, to allow
@@ -33,11 +33,11 @@ open System.Runtime.InteropServices
 /// </code>
 /// </remarks>
 /// 
-type Runner internal (session : TFSession) =
+type Runner internal (session : Session) =
 
     let _inputs = new List<Output> () 
     let _outputs = new List<Output> ();
-    let _inputValues = new List<TFTensor> ();
+    let _inputValues = new List<Tensor> ();
     let _targets = new List<Operation>()
 
     /// <summary>
@@ -46,7 +46,7 @@ type Runner internal (session : TFSession) =
     /// <returns>An instance to the runner, so you can easily chain the operations together.</returns>
     /// <param name="input">Incoming port.</param>
     /// <param name="value">Value to assing to the incoming port.</param>
-    member this.AddInput (input : Output, value : TFTensor) : Runner =
+    member this.AddInput (input : Output, value : Tensor) : Runner =
         if box value = null then  raise(ArgumentNullException("value"))
         _inputs.Add (input);
         _inputValues.Add (value);
@@ -58,7 +58,7 @@ type Runner internal (session : TFSession) =
     /// <returns>An instance to the runner, so you can easily chain the operations together.</returns>
     /// <param name="input">Incoming port, with an optional index separated by a colon.</param>
     /// <param name="value">Value to assing to the incoming port.</param>
-    member this.AddInput(input : string,  value : TFTensor) : Runner  = 
+    member this.AddInput(input : string,  value : Tensor) : Runner  = 
         if box value = null then  raise(ArgumentNullException("value"))
         _inputValues.Add (value)
         this
@@ -87,7 +87,7 @@ type Runner internal (session : TFSession) =
     /// <returns>An instance to the runner, so you can easily chain the operations together.</returns>
     /// <param name="targetNames">One or more target names.</param>
     member this.AddTarget ([<ParamArray>] targetNames : string [])  :  Runner =
-        _targets.AddRange(targetNames |> Array.map session.Graph)
+        _targets.AddRange(targetNames |> Array.map (fun name -> session.Graph.[name]))
         this;
 
     /// <summary>
@@ -138,21 +138,21 @@ type Runner internal (session : TFSession) =
         this;
 
     /// <summary>
-    /// Protocol buffer encoded block containing the metadata passed to the <see cref="M:TensorFlow.TFSession.Run"/> method.
+    /// Protocol buffer encoded block containing the metadata passed to the <see cref="M:TensorFlow.Session.Run"/> method.
     /// </summary>
     member this.RunMetadata : TFBuffer = failwith "todo"
 
     /// <summary>
-    /// Protocol buffer encoded block containing the run options passed to the <see cref="M:TensorFlow.TFSession.Run"/> method.
+    /// Protocol buffer encoded block containing the run options passed to the <see cref="M:TensorFlow.Session.Run"/> method.
     /// </summary>
     member this.RunOptions : TFBuffer = failwith "todo"
 
     /// <summary>
     ///  Execute the graph fragments necessary to compute all requested fetches.
     /// </summary>
-    /// <returns>One TFTensor for each call to Fetch that you made, in the order that you made them.</returns>
+    /// <returns>One Tensor for each call to Fetch that you made, in the order that you made them.</returns>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member this.Run(?status : TFStatus) : TFTensor [] =
+    member this.Run(?status : TFStatus) : Tensor [] =
         session.Run (_inputs.ToArray (), _inputValues.ToArray (), _outputs.ToArray (), _targets.ToArray (), this.RunMetadata, this.RunOptions, ?status=status);
 
     /// <summary>
@@ -165,14 +165,14 @@ type Runner internal (session : TFSession) =
     /// calls that you might have done to Fetch() and use the specified operation to Fetch
     /// instead.
     /// </remarks>
-    member this.Run(operation : Output, ?status : TFStatus) : TFTensor =
+    member this.Run(operation : Output, ?status : TFStatus) : Tensor =
         _outputs.Clear ()
         this.Fetch (operation) |> ignore
         this.Run(?status=status).[0]
 
 
 /// <summary>
-/// Token returned from using one of the Partial Run Setup methods from <see cref="T:TensorFlow.TFSession"/>,
+/// Token returned from using one of the Partial Run Setup methods from <see cref="T:TensorFlow.Session"/>,
 /// and use this token subsequently for other invocations.
 /// </summary>
 /// <remarks>
@@ -196,7 +196,7 @@ and PartialRunToken(token:IntPtr) =
 /// </summary>
 /// <remarks>
 /// <para>
-/// This creates a new context to execute a TFGraph.   You can use the 
+/// This creates a new context to execute a Graph.   You can use the 
 /// constructor to create an empty session, or you can load an existing
 /// model using the <see cref="FromSavedModel"/> static method in this class.
 /// </para>
@@ -211,7 +211,7 @@ and PartialRunToken(token:IntPtr) =
 /// be kept in sync.
 /// </para>
 /// </remarks>
-and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
+and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     inherit TFDisposableThreadSafe(handle:IntPtr)
     // extern TF_Session * TF_NewSession (TF_Graph *graph, const TF_SessionOptions *opts, TF_Status *status);
     [<DllImport(NativeBinding.TensorFlowLibrary)>]
@@ -269,18 +269,20 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
     /// <param name="graph">The Graph to which this session is associated.</param>
     /// <param name="sessionOptions">Session options.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    new (?graph : TFGraph, ?sessionOptions : TFSessionOptions , ?status : TFStatus ) =
-        let graph = graph |> Option.orDefaultDelay (fun () -> new TFGraph())
+    new (?graph : Graph, ?sessionOptions : SessionOptions , ?status : TFStatus ) =
+        let graph = graph |> Option.orDefaultDelay (fun () -> new Graph())
         let cstatus = TFStatus.Setup (?incoming=status)
         let h = 
             match sessionOptions with 
             | Some(sessionOptions) -> TF_NewSession (graph.Handle, sessionOptions.Handle, cstatus.Handle)
             | None ->
-                use empty = new TFSessionOptions()
-                TF_NewSession (graph.Handle, empty.Handle, cstatus.Handle);
-        new TFSession(h,graph,?status=status)
+                let empty = new SessionOptions()
+                let res = TF_NewSession (graph.Handle, empty.Handle, cstatus.Handle);
+                empty.Dispose()
+                res
+        new Session(h,graph,?status=status)
 
-    member this.Graph : TFGraph = graph
+    member this.Graph : Graph = graph
 
     /// <summary>
     /// Lists available devices in this session.
@@ -320,7 +322,7 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
     /// here: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/saved_model/README.md
     /// </para>
     /// </remarks>
-    member this.FromSavedModel (sessionOptions : TFSessionOptions, exportDir : string,tags :  string [], graph : TFGraph,?runOptions : TFBuffer,  ?metaGraphDef : TFBuffer, ?status : TFStatus) : TFSession option =
+    member this.FromSavedModel (sessionOptions : SessionOptions, exportDir : string,tags :  string [], graph : Graph,?runOptions : TFBuffer,  ?metaGraphDef : TFBuffer, ?status : TFStatus) : Session option =
         if (box graph = null) then raise (ArgumentNullException("graph"))
         if (box tags = null) then raise (ArgumentNullException("tags"))
         if (box exportDir = null) then raise (ArgumentNullException ("exportDir"))
@@ -330,8 +332,8 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
                                                 exportDir, tags, tags.Length, graph.Handle, 
                                                 metaGraphDef |> Option.mapOrNull (fun x -> x.LLBuffer) , cstatus.Handle);
 
-        if cstatus.CheckMaybeRaise (?incomingStatus=status) 
-        then Some(new TFSession (h, graph))
+        if cstatus.CheckMaybeRaise (?incoming=status) 
+        then Some(new Session (h, graph))
         else None
 
 
@@ -346,7 +348,7 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status);
         TF_CloseSession (handle, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incomingStatus=status);
+        cstatus.CheckMaybeRaise (?incoming=status);
 
     /// <summary>
     /// Deletes the session.
@@ -356,7 +358,7 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status);
         TF_DeleteSession (handle, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incomingStatus=status);
+        cstatus.CheckMaybeRaise (?incoming=status);
 
     override this.NativeDispose (handle : IntPtr) =
         use s = new TFStatus()
@@ -369,9 +371,9 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
     /// <returns>The runner.</returns>
     /// <remarks>
     /// The runner has a simple API that allows developers to call the AddTarget, AddInput, AddOutput and Fetch
-    /// to construct the parameters that will be passed to the TFSession.Run method.
+    /// to construct the parameters that will be passed to the Session.Run method.
     /// 
-    /// The Run method will return an array of TFTensor values, one for each invocation to the Fetch method.
+    /// The Run method will return an array of Tensor values, one for each invocation to the Fetch method.
     /// </remarks>
     member this.GetRunner () : Runner = new Runner (this)
 
@@ -388,7 +390,7 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
     /// <param name="runMetadata">Run metadata, a buffer containing the protocol buffer encoded value for https://github.com/tensorflow/tensorflow/blob/r1.9/tensorflow/core/protobuf/config.proto.</param>
     /// <param name="runOptions">Run options, a buffer containing the protocol buffer encoded value for https://github.com/tensorflow/tensorflow/blob/r1.9/tensorflow/core/protobuf/config.proto.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member this.Run(inputs : Output [], inputValues : TFTensor [], outputs : Output [] , ?targetOpers : Operation [], ?runMetadata : TFBuffer, ?runOptions : TFBuffer, ?status : TFStatus) : TFTensor [] =
+    member this.Run(inputs : Output [], inputValues : Tensor [], outputs : Output [] , ?targetOpers : Operation [], ?runMetadata : TFBuffer, ?runOptions : TFBuffer, ?status : TFStatus) : Tensor [] =
         if handle = IntPtr.Zero then raise (ObjectDisposedException("handle"))
         if box inputs = null then raise (ArgumentNullException("inputs"))
         if box inputValues = null then raise (ArgumentNullException "inputValues")
@@ -414,12 +416,12 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
                         runOptions |> Option.mapOrNull (fun x -> x.LLBuffer), inputs |> Array.map (fun x -> x.Struct), ivals, iLen, 
                         outputs |> Array.map (fun x -> x.Struct), ovals, oLen, topers, tLen, 
                         runMetadata |> Option.mapOrNull (fun x -> x.LLBuffer), cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
 
-        // prevent finalization of managed TFTensors
+        // prevent finalization of managed Tensors
         GC.KeepAlive(inputValues);
 
-        ovals |> Array.map (fun x -> new TFTensor(x))
+        ovals |> Array.map (fun x -> new Tensor(x))
 
     /// <summary>
     /// Prepares the session for a partial run.
@@ -439,10 +441,10 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
         let tLen = targetOpers.Length;
         let topers = targetOpers |> Array.map (fun x -> x.Handle)
         TF_SessionPRunSetup (handle, inputs |> Array.map (fun x -> x.Struct), inputs.Length, outputs |> Array.map (fun x -> x.Struct), outputs.Length, topers, tLen, returnHandle, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
         PartialRunToken(returnHandle)
 
-    member this.PartialRun (token : PartialRunToken, inputs : Output [], inputValues : TFTensor [], outputs : Output [], targetOpers : Operation [], ?status : TFStatus) : TFTensor [] =
+    member this.PartialRun (token : PartialRunToken, inputs : Output [], inputValues : Tensor [], outputs : Output [], targetOpers : Operation [], ?status : TFStatus) : Tensor [] =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         if box inputs = null then raise(ArgumentNullException("inputs"))
         if box inputValues = null then raise (ArgumentNullException ("inputValues"))
@@ -461,12 +463,12 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
         let tLen = targetOpers.Length;
         let topers = targetOpers |> Array.map (fun x -> x.Handle)
         TF_SessionPRun (handle, token.token, inputs |> Array.map (fun x -> x.Struct), ivals, iLen, outputs |> Array.map (fun x -> x.Struct), ovals, oLen, topers, tLen, cstatus.Handle)
-        cstatus.CheckMaybeRaise (?incomingStatus=status) |> ignore
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
 
-        // prevent finalization of managed TFTensors
+        // prevent finalization of managed Tensors
         GC.KeepAlive(inputValues);
 
-        ovals |> Array.map (fun x -> new TFTensor(x))
+        ovals |> Array.map (fun x -> new Tensor(x))
 
     // TODO Graph operations
     // /// <summary>
@@ -477,7 +479,7 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
     // /// <param name="tensor">The name that was used to save the tensor.</param>
     // /// <param name="type">The data type for the tensor.</param>
     // /// <code>
-    // /// using (var session = new TFSession()){
+    // /// using (var session = new Session()){
     // ///   var a = session.Graph.Const(30, "a");
     // ///   var b = session.Graph.Const(12, "b");
     // ///   var multiplyResults = session.GetRunner().Run(session.Graph.Add(a, b));
@@ -487,8 +489,8 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
     // /// }
     // /// </code>
     // member this.RestoreTensor(filename : string, tensor : string, _type : DType) : Output =
-    //     this.Graph.Restore (this.Graph.Const (TFTensor.CreateString (Encoding.UTF8.GetBytes (filename))),
-    //                        this.Graph.Const (TFTensor.CreateString (Encoding.UTF8.GetBytes (tensor))),
+    //     this.Graph.Restore (this.Graph.Const (Tensor.CreateString (Encoding.UTF8.GetBytes (filename))),
+    //                        this.Graph.Const (Tensor.CreateString (Encoding.UTF8.GetBytes (tensor))),
     //                        _type);
 
     // /// <summary>
@@ -502,7 +504,7 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
     // /// Tensors saved with this method can be loaded by calling <see cref="M:RestoreTensor"/>.
     // /// </para>
     // /// <code>
-    // /// using (var session = new TFSession ()) {
+    // /// using (var session = new Session ()) {
     // ///   var a = session.Graph.Const(30, "a");
     // ///   var b = session.Graph.Const(12, "b");
     // ///   var multiplyResults = session.GetRunner().Run(session.Graph.Add(a, b));
@@ -512,12 +514,12 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
     // /// }
     // /// </code>
     // /// </remarks>
-    // member this.SaveTensors(filename : string, [<ParamArray>] tensors : (string*Output) []) : TFTensor [] =
+    // member this.SaveTensors(filename : string, [<ParamArray>] tensors : (string*Output) []) : Tensor [] =
     //     let clonedTensors = 
     //                 tensors |> Array.map (fun (x,_) ->  
-    //                     let clone = TFTensor.CreateString (Encoding.UTF8.GetBytes (x))
-    //                     this.Graph.Const (new TFTensor(DType.String,  [|1L|], clone.Data, clone.TensorByteSize, null, IntPtr.Zero)))
+    //                     let clone = Tensor.CreateString (Encoding.UTF8.GetBytes (x))
+    //                     this.Graph.Const (new Tensor(DType.String,  [|1L|], clone.Data, clone.TensorByteSize, null, IntPtr.Zero)))
 
     //     this.GetRunner()
-    //         .AddTarget (Graph.Save (Graph.Const (TFTensor.CreateString (Encoding.UTF8.GetBytes (filename)), TFDataType.String),
+    //         .AddTarget (Graph.Save (Graph.Const (Tensor.CreateString (Encoding.UTF8.GetBytes (filename)), DType.String),
     //                       Graph.Concat (Graph.Const (0), clonedTensors), tensors |> Array.map snd)).Run ()

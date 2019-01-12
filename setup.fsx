@@ -14,7 +14,7 @@ let nugetFiles =
         |]
         "TensorFlowSharp/1.11.0",
         [|
-            yield @"lib/netstandard2.0/TensorFlowSharp.dll"
+            //yield @"lib/netstandard2.0/TensorFlowSharp.dll"
             match os with
             | Linux -> yield! [|"libtensorflow_framework.so"; "libtensorflow.so"|] |> Array.map (sprintf @"runtimes/linux/native/%s")
             | Windows -> yield @"runtimes/win7-x64/native/libtensorflow.dll"
@@ -30,16 +30,22 @@ downloadAndExtractNugetFiles nugetFiles
 
 let baseUrl = "https://s3-us-west-1.amazonaws.com/public.data13/Tensorflow_FSharp/"
 
+open System
+open System.IO
+
+let rootDir = __SOURCE_DIRECTORY__
+
 [ "TensorFlowSharpProtoNet.dll"; "TensorFlowSharpProtoNet.xml"; "nativeWorkaround.dll" ] 
-|> Seq.iter (fun x -> downloadFile(sprintf "%s%s" baseUrl x, sprintf "lib/%s" x))
+|> Seq.iter (fun x -> downloadFile(sprintf "%s%s" baseUrl x, sprintf "%s/lib/%s" rootDir x ))
 
 /// This file contains the api_definitions
 "tensorflow_api_def_1.11.zip" 
 |> fun x -> 
-    downloadFile (sprintf "%s%s" baseUrl x, "cache/" + x)
-    extractZipFileAll ("cache/" + x, "data/api_def/")
+    downloadFile (sprintf "%s%s" baseUrl x,rootDir +  "/cache/" + x)
+    extractZipFileAll (rootDir + "/cache/" + x,rootDir + "/data/api_def/")
 
 // Do code generation
+
 #load "OperationCodeGenerationFSharp.fsx"
 open System.IO
 

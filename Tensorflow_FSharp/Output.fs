@@ -6,28 +6,10 @@ open System.Text
 open System.Globalization
 open System.Linq
 open Utils
-open Common
 open Microsoft.FSharp.NativeInterop
 open System.Numerics;
 open System.Collections.Generic;
 open System.Linq.Expressions;
-
-// We use this TF_Xxx as the native "TF_Xxx *" as those are opaque
-type TF_Status = System.IntPtr
-type TF_SessionOptions = System.IntPtr
-type TF_Graph = System.IntPtr
-type TF_OperationDescription = System.IntPtr
-type TF_Operation = System.IntPtr
-type TF_Session = System.IntPtr
-type TF_DeprecatedSession = System.IntPtr
-type TF_Tensor = System.IntPtr
-type TF_ImportGraphDefOptions = System.IntPtr
-type TF_Library = System.IntPtr
-type TF_BufferPtr = System.IntPtr
-type TF_Function = System.IntPtr
-type TF_DeviceList = System.IntPtr
-
-type size_t = System.UIntPtr
 
 [<StructLayout (LayoutKind.Sequential)>]
 [<Struct>]
@@ -42,6 +24,8 @@ type TF_Output = {
     handle : TF_Operation 
     index  : int
 }
+
+#nowarn "9"
 
 /// <summary>
 /// Represents a specific input of an operation.
@@ -88,12 +72,12 @@ type Input(handle : TF_Operation, index : int) =
 /// <remarks>
 /// <para>
 /// TFOutput objects represent one of the outputs of an operation in the graph
-/// (TFGraph).  Outputs have a data type, and eventually a shape that you can 
-/// retrieve by calling the <see cref="M:TensorFlow.TFGraph.GetShape"/> method.
+/// (Graph).  Outputs have a data type, and eventually a shape that you can 
+/// retrieve by calling the <see cref="M:TensorFlow.Graph.GetShape"/> method.
 /// </para>
 /// <para>
 /// These can be passed as an input argument to a function for adding operations 
-/// to a graph, or to the TFSession's Run and GetRunner method as values to be
+/// to a graph, or to the Session's Run and GetRunner method as values to be
 /// fetched.
 /// </para>
 /// </remarks>
@@ -134,7 +118,7 @@ and Output(handle: IntPtr, ?index : int) =
     /// </summary>
     /// <value>The type of the output.</value>
     member this.DType = if this.LLOperation = IntPtr.Zero then DType.Unknown else TF_OperationOutputType (this.Struct)
-    //public TFDataType OutputType => LLOperation == IntPtr.Zero ? TFDataType.Unknown : TF_OperationOutputType (this);
+    //public DType OutputType => LLOperation == IntPtr.Zero ? DType.Unknown : TF_OperationOutputType (this);
 
     /// <summary>
     /// Initializes a new Output instance.
@@ -175,7 +159,6 @@ and Output(handle: IntPtr, ?index : int) =
             use first = fixed &result.[0]
             TF_OperationOutputConsumers (this.Struct, first, result.Length) |> ignore
             result |> Array.map (fun x -> Input(x.operation,x.index))
-            
 
     /// <summary>
     /// The associated operation.
@@ -204,3 +187,18 @@ and Output(handle: IntPtr, ?index : int) =
                 if left <> right then
                     left.CompareTo(right);
                 else this.Index.CompareTo(other.Index);
+
+    override this.Equals(x:obj) = 
+        match x with
+        | :? Output as other -> 
+            (this.LLOperation = other.LLOperation) && (this.Index = other.Index)
+        | _ -> false
+
+[<AutoOpen>]
+module OperationExtensions =
+    type Operation with
+        /// <summary>
+        /// Returns the handle to the idx-th output of the operation.
+        /// </summary>
+        /// <param name="idx">Index of the output in the operation.</param>
+        member this.Item(idx:int) : Output = new Output (this, idx)

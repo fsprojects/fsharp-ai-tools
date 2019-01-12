@@ -7,10 +7,9 @@
     <AssemblyName>TensorFlowSharp</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="lib/Google.Protobuf.dll" />
-    <Reference Include="lib/HDF.PInvoke.dll" />
-    <Reference Include="lib/TensorFlowSharp.dll" />
-    <Reference Include="lib/TensorFlowSharpProto.dll" />
+    <Reference Include="..\lib\Google.Protobuf.dll" />
+    <Reference Include="..\lib\HDF.PInvoke.dll" />
+    <Reference Include="..\lib\TensorFlowSharpProtoNet.dll" />
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
@@ -24,10 +23,9 @@
     <Compile Include="Utils.fs" /> 
     <Compile Include="Common.fs" /> 
     <Compile Include="DType.fs" /> 
-    <Compile Include="Buffer.fs" /> 
     <Compile Include="Tensorflow.fs" /> 
     <Compile Include="Tensor.fs" /> 
-    <!-- <Compile Include="Operation.fs" /> 
+    <Compile Include="Operation.fs" /> 
     <Compile Include="Output.fs" /> 
     <Compile Include="Variable.fs" /> 
     <Compile Include="Graph.fs" /> 
@@ -35,7 +33,7 @@
     <Compile Include="Queue.fs" /> 
     <Compile Include="TensorflowGlobal.fs" /> 
     <Compile Include="Operations.g.fs" /> 
-    <Compile Include="OperationsExtras.fs" />  -->
+    <Compile Include="OperationsExtras.fs" />
   </ItemGroup>
 </Project>
 
