@@ -46,10 +46,10 @@ let rootDir = __SOURCE_DIRECTORY__
 
 // Do code generation
 
-#load "OperationCodeGenerationFSharp.fsx"
-open System.IO
-
-OperationCodeGenerationFSharp.run([|__SOURCE_DIRECTORY__ + "/data/api_def"|]) 
-|> fun res -> File.WriteAllText(__SOURCE_DIRECTORY__ + "/Tensorflow_FSharp/Operations.g.fs", res)
+//#load "OperationCodeGenerationFSharp.fsx"
+//open System.IO
+//
+//OperationCodeGenerationFSharp.run([|__SOURCE_DIRECTORY__ + "/data/api_def"|]) 
+//|> fun res -> File.WriteAllText(__SOURCE_DIRECTORY__ + "/Tensorflow_FSharp/Operations.g.fs", res)
 
 printfn "Setup has finished."

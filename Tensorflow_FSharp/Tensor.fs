@@ -18,6 +18,11 @@ open Microsoft.FSharp.NativeInterop
 /// </summary>
 type Deallocator = delegate of (IntPtr * IntPtr * IntPtr)-> unit
 
+
+module TensorNative =
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    extern TF_Tensor TF_NewTensor (DType dataType, IntPtr zeroDims, int num_dims, IntPtr data, size_t len, Deallocator deallocator, IntPtr deallocator_arg);
+
 /// <summary>
 /// Tensor holds a multi-dimensional array of elements of a single data type.
 /// </summary>
@@ -68,8 +73,6 @@ type Tensor internal (handle : IntPtr) =
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern TF_Tensor TF_NewTensor (DType dataType, int64 [] dims, int num_dims, IntPtr data, size_t len, Deallocator deallocator, IntPtr deallocator_arg);
 
-    // [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    // static extern TF_Tensor TF_NewTensor (DType dataType, IntPtr zeroDims, int num_dims, IntPtr data, size_t len, Deallocator deallocator, IntPtr deallocator_arg);
 
     // extern TF_Tensor * TF_AllocateTensor (TF_DataType, const int64_t *dims, int num_dims, size_t len);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
@@ -105,7 +108,7 @@ type Tensor internal (handle : IntPtr) =
     static let FreeTensorDataDelegate : Deallocator = Deallocator(Tensor.FreeTensorData)
     static let FreeTensorHandleDelegate : Deallocator  = Deallocator(Tensor.FreeTensorHandle)
 
-    let createFromMultidimensionalArrays (array : Array) =
+    static member CreateFromMultidimensionalArrays (array : Array) =
         let t = array.GetType().GetElementType ();
         let tc = Type.GetTypeCode (t);
         let dt, size = 
@@ -125,8 +128,7 @@ type Tensor internal (handle : IntPtr) =
 
         let dims = [|for i = 0 to array.Rank - 1 do yield int64(array.GetLength (i)) |]
         let totalSize = dims |> Array.fold (*) (int64 size)
-        //this.SetupMulti (dt, dims, array, totalSize)
-        failwith "todo"
+        Tensor.SetupMulti (dt, dims, array, totalSize)
 
     [<MonoPInvokeCallback (typeof<Deallocator>)>]
     static member FreeTensorData (data : IntPtr, len : IntPtr, closure : IntPtr) = 
@@ -136,10 +138,6 @@ type Tensor internal (handle : IntPtr) =
     static member FreeTensorHandle (data : IntPtr, len : IntPtr, closure : IntPtr) =
         let gch = GCHandle.FromIntPtr (closure);
         gch.Free ();
-
-
-
-
 
     // General purpose constructor, specifies data type and gets pointer to buffer
     // Is the default good, one where we let the user provide their own deallocator, or should we make a copy in that case?
@@ -224,48 +222,6 @@ type Tensor internal (handle : IntPtr) =
     /// </remarks>
     member this.Shape with get() : int64[] = [|for i = 0 to TF_NumDims (handle) do yield TF_Dim (handle, i)|]
 
-    /// <summary>
-    /// Converts a <see cref="DType"/> to a system type.
-    /// </summary>
-    /// <param name="type">The <see cref="DType"/> to be converted.</param>
-    /// <returns>The system type corresponding to the given <paramref name="type"/>.</returns>
-    static member TypeFromTensorType (dtype:DType) : Type =
-        match dtype with
-        | DType.Float32 -> typeof<single>
-        | DType.Float64 -> typeof<double>
-        | DType.Int32 -> typeof<int32>
-        | DType.UInt8 -> typeof<uint8>
-        | DType.UInt16 -> typeof<uint16>
-        | DType.UInt32 -> typeof<uint32>
-        | DType.UInt64 -> typeof<uint64>
-        | DType.Int16 -> typeof<int16>
-        | DType.Int8 -> typeof<int8> // sbyte?
-        | DType.String -> typeof<string> // TFString?
-        | DType.Complex128 -> typeof<Complex>
-        | DType.Int64 -> typeof<int64>
-        | DType.Bool -> typeof<bool>
-        | _ -> box null :?> Type
-
-    /// <summary>
-    /// Converts a system type to a <see cref="DType"/>.
-    /// </summary>
-    /// <param name="t">The system type to be converted.</param>
-    /// <returns>The <see cref="DType"/> corresponding to the given type.</returns>
-    static member TensorTypeFromType (t:Type) : DType = 
-        //if true then DType.Float32 else DType.Unknown
-        if   t = typeof<float32>     then DType.Float32
-        elif t = typeof<double>    then DType.Float64
-        elif t = typeof<int>       then DType.Int32 
-        elif t = typeof<byte>      then DType.UInt8
-        elif t = typeof<int16>     then DType.Int16
-        elif t = typeof<sbyte>     then DType.Int8
-        elif t = typeof<string>    then DType.String
-        elif t = typeof<int64>     then DType.Int64
-        elif t = typeof<bool>      then DType.Bool
-        elif t = typeof<uint16>    then DType.UInt16
-        elif t = typeof<Complex>   then DType.Complex128
-        else raise(ArgumentOutOfRangeException ("t", sprintf "The given type could not be mapped to an existing DType."))
-
     static member internal FetchSimple (dt : DType, data : obj) : obj =
         match dt with 
         | DType.Float32 -> Convert.ToSingle (data) |> box
@@ -321,145 +277,119 @@ type Tensor internal (handle : IntPtr) =
                 idx.[level] <- idx.[level] + 1
 
     static member Copy(src : IntPtr,  target : voidptr, size : int) =
-        // TODO Double check the NativePtr conversions
-        Buffer.MemoryCopy (src |> NativePtr.ofNativeInt<int64> |> NativePtr.toVoidPtr, target, uint64 size, uint64 size);
+        Buffer.MemoryCopy (src |> NativePtr.intPtrToVoidPtr, target, uint64 size, uint64 size);
 
-    static member Copy(target : Array, dt : DType, shape : int64 [], idx : int [], level : int, data : ref<IntPtr>) =
-        failwith "todo"
-//            if level < shape.Length - 1 then
-//                idx.[level] <- 0
-//                while (idx.[level] < int shape.[level]) do
-//                    Tensor.Copy (target, dt, shape, idx, level + 1, ref data);
-//                    idx.[level] <- idx.[level] + 1
-//            else
-//                idx.[level] <- 0
-//                while (idx.[level] <- int shape.[level]) do
-//                    let offset = dt.ByteSize
-//                    match dt with 
-//                    | DType.Float32
-//                    | DType.Float64
-//                    | DType.Int32
-//                    | DType.UInt32
-//                    | DType.Int16
-//                    | DType.Int8
-//                    | DType.Int64
-//                    | DType.Bool
-//                    | DType.Complex128 -> 
-//                        // TODO note, we may have to cast here value here?, will know more when this can type check
-//                        target.SetValue (value, idx)
-//                        data := !data |> NativePtr.add offset
-//                    | DType.String -> 
-//                        raise(NotImplementedException ("String decoding not implemented for tensor vecotrs yet"))
-//                    | _ ->
-//                        raise(NotImplementedException ())
+    static member Copy(target : Array, dt : DType, shape : int64 [], idx : int [], level : int, data : IntPtr ref) =
+        if level < shape.Length - 1 then
+            idx.[level] <- 0
+            while (idx.[level] < int shape.[level]) do
+                Tensor.Copy (target, dt, shape, idx, level + 1, data);
+                idx.[level] <- idx.[level] + 1
+        else
+            for i = 0 to int shape.[level] - 1 do
+                idx.[level] <- i
+                let offset = dt.ByteSize
+                match dt with 
+                | DType.Float32 ->
+                    target.SetValue (!data |> NativePtr.nativeIntRead<float32>, idx)
+                | DType.Float64 ->
+                    target.SetValue (!data |> NativePtr.nativeIntRead<double>, idx)
+                | DType.Int32 ->
+                    target.SetValue (!data |> NativePtr.nativeIntRead<int32>, idx)
+                | DType.UInt32 ->
+                    target.SetValue (!data |> NativePtr.nativeIntRead<uint32>, idx)
+                | DType.Int16 ->
+                    target.SetValue (!data |> NativePtr.nativeIntRead<int16>, idx)
+                | DType.Int8 ->
+                    target.SetValue (!data |> NativePtr.nativeIntRead<int8>, idx)
+                | DType.Int64 ->
+                    target.SetValue (!data |> NativePtr.nativeIntRead<int64>, idx)
+                | DType.Bool ->
+                    target.SetValue (!data |> NativePtr.nativeIntRead<bool>, idx)
+                | DType.Complex128 -> 
+                    target.SetValue (!data |> NativePtr.nativeIntRead<Complex>, idx)
+                | DType.String -> 
+                    raise(NotImplementedException ("String decoding not implemented for tensor vecotrs yet"))
+                | _ ->
+                    raise(NotImplementedException ())
+                data := (!data).Add(offset)
 
     static member FetchFlatArray (target : Array, dt : DType, data : IntPtr) =
-        failwith "todo"
-//        let len = target.Length;
-//        let size = dt.ByteSize
-//        match dt, target with 
-//        | DType.Int8, (:? array<int8> as asbyte) -> 
-//            use p = fixed &asbyte.[0]
-//            Tensor.Copy (data, p, len * size)
-//        | DType.Bool, (:? array<bool> as abool) ->
-//            use p = fixed &abool.[0]
-//            Tensor.Copy (data, p, len * size)
-//        | DType.UInt16, (:? array<uint16> as ushort) ->
-//            use p = fixed &ushort.[0]
-//            Tensor.Copy (data, p, len * size)
-//        | DType.Complex128, (:? array<Complex> as acomplex) ->
-//            use p = fixed &acomplex.[0]
-//            Tensor.Copy (data, p, len * size)
-//        | DType.Float32, (:? array<float32> as afloat) ->
-//            use p = fixed &afloat.[0]
-//            Tensor.Copy (data, p, len * size)
-//        | DType.Float64, (:? array<double> as adouble) ->
-//            use p = fixed &adouble.[0]
-//            Tensor.Copy (data, p, len * size)
-//        | DType.Int32, (:? array<int32> as aint) ->
-//            use p = fixed &aint.[0]
-//            Tensor.Copy (data, p, len * size)
-//        | DType.UInt8, (:? array<uint8> as abyte) ->
-//            use p = fixed &abyte.[0]
-//            Tensor.Copy (data, p, len * size)
-//        | DType.Int16, (:? array<float16> as ashort) ->
-//            use p = fixed &ashort.[0]
-//            Tensor.Copy (data, p, len * size)
-//        | DType.Int64, (:? array<int64> as along) ->
-//            use p = fixed &along.[0]
-//            Tensor.Copy (data, p, len * size)
-//        | DType.String -> 
-//           // need to return an array of TFStrings []
-//           raise (NotImplementedException ())
-//        | _ -> raise (NotImplementedException ())
+        let len = target.Length;
+        let size = dt.ByteSize
+        match dt, target with 
+        | DType.Int8, (:? array<int8> as asbyte) -> 
+            use p = fixed &asbyte.[0]
+            Tensor.Copy (data, (p |> NativePtr.toVoidPtr), len * size)
+        | DType.Bool, (:? array<bool> as abool) ->
+            use p = fixed &abool.[0]
+            Tensor.Copy (data, (p |> NativePtr.toVoidPtr), len * size)
+        | DType.UInt16, (:? array<uint16> as ushort) ->
+            use p = fixed &ushort.[0]
+            Tensor.Copy (data, (p |> NativePtr.toVoidPtr), len * size)
+        | DType.Complex128, (:? array<Complex> as acomplex) ->
+            use p = fixed &acomplex.[0]
+            Tensor.Copy (data, (p |> NativePtr.toVoidPtr), len * size)
+        | DType.Float32, (:? array<float32> as afloat) ->
+            use p = fixed &afloat.[0]
+            Tensor.Copy (data, (p |> NativePtr.toVoidPtr), len * size)
+        | DType.Float64, (:? array<double> as adouble) ->
+            use p = fixed &adouble.[0]
+            Tensor.Copy (data, (p |> NativePtr.toVoidPtr), len * size)
+        | DType.Int32, (:? array<int32> as aint) ->
+            use p = fixed &aint.[0]
+            Tensor.Copy (data, (p |> NativePtr.toVoidPtr), len * size)
+        | DType.UInt8, (:? array<uint8> as abyte) ->
+            use p = fixed &abyte.[0]
+            Tensor.Copy (data, (p |> NativePtr.toVoidPtr), len * size)
+        | DType.Int16, (:? array<int16> as ashort) ->
+            use p = fixed &ashort.[0]
+            Tensor.Copy (data, (p |> NativePtr.toVoidPtr), len * size)
+        | DType.Int64, (:? array<int64> as along) ->
+            use p = fixed &along.[0]
+            Tensor.Copy (data, (p |> NativePtr.toVoidPtr), len * size)
+        | DType.String ,_-> 
+           // need to return an array of TFStrings []
+           raise (NotImplementedException ())
+        | _ -> raise (NotImplementedException ())
+        
 
-    static member FetchJaggedArray (t : Type, dt : DType, data : ref<IntPtr>, shape : int64 [], ?level : int ) =
-        failwith "todo"
-      //  let level = defaultArg level 0
-      //  let size = dt.ByteSize()
-      //  match dt with 
-      //  // If we are at the last node
-      //  if level = shape.Length - 1 then
-      //      let target = Array.CreateInstance (t, shape [level]);
-      //      for  l = 0L l < shape.[level] - 1L do
-      //          target.SetValue(data,l)
 
-      //          match dt with
-      //          | DType.Float32 ( 
-      //            //target.SetValue (((float32)data), l);
-      //            data += 4;
-      //          case DType.Double:
-      //            target.SetValue ((*(double*)data), l);
-      //            data += 8;
-      //            break;
-      //          case DType.Int32:
-      //            target.SetValue ((*(int*)data), l);
-      //            data += 4;
-      //            break;
-      //          case DType.UInt8:
-      //            target.SetValue ((*(byte*)data), l);
-      //            data += 1;
-      //            break;
-      //          case DType.Int16:
-      //            target.SetValue ((*(short*)data), l);
-      //            data += 2;
-      //            break;
-      //          case DType.Int8:
-      //            target.SetValue ((*(sbyte*)data), l);
-      //            data += 1;
-      //            break;
-      //          case DType.Int64:
-      //            target.SetValue ((*(long*)data), l);
-      //            data += 8;
-      //            break;
-      //          case DType.Bool:
-      //            target.SetValue ((*(bool*)data), l);
-      //            data += 1;
-      //            break;
-      //          case DType.Complex128:
-      //            target.SetValue ((*(Complex*)data), l);
-      //            data += sizeof (Complex);
-      //            break;
-      //          case DType.String:
-      //            throw new NotImplementedException ("String decoding not implemented for tensor vecotrs yet");
-      //          default:
-      //            throw new NotImplementedException ();
-      //      target
-      //  else
-      //      let mutable target = None
-      //      let top = shape.[level]
-      //      if top < Int32.MaxValue then
-      //        let itop = int(top)
-      //        for i = 0 to itop - 1 do
-      //          let childArray = FetchJaggedArray (t, dt, ref data, shape, level + 1)
-      //          match target with | None -> target <- Array.CreateInstance (childArray.GetType (), shape [level])
-      //          target.Value.SetValue (childArray, i)
-      //      else
-      //        for l = 0L to top - 1L do
-      //          let chidArray = this.FetchJaggedArray (t, dt, ref data, shape, level + 1)
-      //          match target with | None -> target <- Array.CreateInstance (childArray.GetType (), shape [level])
-      //          target.SetValue (chidArray, l)
-      //return target
+    static member FetchJaggedArray (t : Type, dt : DType, data : IntPtr ref, shape : int64 [], ?level : int ) =
+        let level = defaultArg level 0
+        let size = dt.ByteSize
+        // If we are at the last node
+        if level = shape.Length - 1 then
+            let target = Array.CreateInstance (t, int(shape.[level]))
+            for  l in  0L .. shape.[level] do
+                match dt with
+                | DType.Float32 ->  target.SetValue((!data) |> NativePtr.nativeIntRead<float32>,l)
+                | DType.Float64 ->  target.SetValue((!data) |> NativePtr.nativeIntRead<double>,l)
+                | DType.Int32 ->    target.SetValue((!data) |> NativePtr.nativeIntRead<int32>,l)
+                | DType.UInt8 ->    target.SetValue((!data) |> NativePtr.nativeIntRead<uint8>,l)
+                | DType.Int16 ->    target.SetValue((!data) |> NativePtr.nativeIntRead<int16>,l)
+                | DType.Int8 ->     target.SetValue((!data) |> NativePtr.nativeIntRead<int8>,l)
+                | DType.Int64 ->        target.SetValue((!data) |> NativePtr.nativeIntRead<int64>,l)
+                | DType.Bool ->         target.SetValue((!data) |> NativePtr.nativeIntRead<bool>,l)
+                | DType.Complex128 ->   target.SetValue((!data) |> NativePtr.nativeIntRead<Complex>,l)
+                | DType.String -> raise(NotImplementedException ("String decoding not implemented for tensor vecotrs yet"))
+                | _ -> raise(NotImplementedException ())
+                data := (!data).Add(size)
+            target
+        else
+            let mutable target = None
+            let top = shape.[level]
+            if top < int64 Int32.MaxValue then
+                for i = 0 to int(top) - 1 do
+                    let childArray = Tensor.FetchJaggedArray (t, dt, data, shape, level + 1)
+                    if target.IsNone then target <- Some(Array.CreateInstance (childArray.GetType (), shape.[level]))
+                    target.Value.SetValue (childArray, i)
+            else
+                for  l in 0L .. shape.[level] do
+                    let childArray = Tensor.FetchJaggedArray (t, dt, data, shape, level + 1)
+                    if target.IsNone then target <- Some(Array.CreateInstance (childArray.GetType (), shape.[level]))
+                    target.Value.SetValue (childArray, l)
+            target.Value
 
 
     static member FetchMultiDimensionalArray (target : Array, dt : DType, data : IntPtr, shape : int64 []) =
@@ -483,139 +413,138 @@ type Tensor internal (handle : IntPtr) =
     /// </remarks>
     /// <returns>The value encodes the contents of the tensor, and could include simple values, arrays and multi-dimensional values.</returns>
     member this.GetValue(?jagged : bool) : obj =
-        failwith "todo"
-//        match Tensor.TypeFromTensorType (this.TensorType) with
-//        | null -> null
-//        | t ->
-//            let jagged = defaultArg jagged false
-//            match this.NumDims with
-//            | 0 -> this.FetchSimple (this.TensorType, Data);
-//            | 1 -> Tensor.FetchFlatArray (Array.CreateInstance (t, Shape.[0]), this.TensorType, Data);
-//            | dims when jagged ->
-//                    IntPtr data = Data;
-//                    FetchJaggedArray (t, this.TensorType, ref data, Shape);
-//            | dims -> 
-//                    let result = Array.CreateInstance (t, Shape);
-//                    Tensor.FetchMultiDimensionalArray (result, this.TensorType, Data, Shape);
-//                    result
+        if this.NumDims = 0 then
+            Tensor.FetchSimple (this.DType, this.Data);
+        else
+            match this.DType.ToType with
+            | null -> null
+            | t ->
+                let jagged = defaultArg jagged false
+                if this.NumDims = 1 then
+                    let result = Array.CreateInstance (t, this.Shape.[0])
+                    Tensor.FetchFlatArray (result, this.DType, this.Data)
+                    box result
+                else
+                    if jagged then
+                        box (Tensor.FetchJaggedArray (t, this.DType, ref this.Data, this.Shape))
+                    else
+                        let result = Array.CreateInstance (t, this.Shape);
+                        Tensor.FetchMultiDimensionalArray (result, this.DType, this.Data, this.Shape);
+                        box result
 
     /// <summary>
     /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.Tensor"/>.
     /// </summary>
     /// <returns>A <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.Tensor"/>.</returns>
     override this.ToString () : string =
-        failwith "todo"
-//        let n = this.NumDims;
-//        if n = 0 then this.GetValue ().ToString ();
-//        else
-//            let sb = new StringBuilder ("[")
-//            for i = 0 to n - 1 do
-//              sb.Append (TF_Dim (handle, i))
-//              if i + 1 < n then
-//                sb.Append ("x")
-//            sb.Append ("]")
-//            sb.ToString ()
+        let n = this.NumDims;
+        if n = 0 then this.GetValue().ToString ();
+        else
+            let sb = new StringBuilder ("[")
+            for i = 0 to n - 1 do
+              sb.Append (TF_Dim (handle, i)) |> ignore
+              if i + 1 < n then
+                sb.Append("x") |> ignore
+            sb.Append ("]") |> ignore
+            sb.ToString ()
   
     static member GetLength (array : Array, ?deep : bool, ?max : bool) : int[] =
-        failwith "todo"
-//      let deep = defaultArg deep true
-//      let max  = defaultArg max false
-//      // This function gets the length of all dimensions in a multidimensional, jagged, or mixed array.
-//      // https://github.com/accord-net/framework/blob/b4990721a61f03602d04c12b148215c7eca1b7ac/Sources/Accord.Math/Matrix/Matrix.Construction.cs#L1118
-//      // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
-//      if array.Rank = 0 then [||]
-//      elif deep && isJagged (array) then
-//        if array.Length = 0 then [||]
-//        else
-//        let rest =
-//            if not(max) then getLength (array.GetValue (0) as Array, deep);
-//            else
-//              // find the max
-//              let rest = getLength (array.GetValue (0) :> Array, deep)
-//              let r = [| for i = 1 to array.Length - 1 do yield getLength (array.GetValue (i) :> Array, deep) |]
-//              for j = 0 to r.Length - 1 do
-//                  if (r.[j] > rest.[j]) then
-//                    rest.[j] = r.[j];
-//         [| yield! array.Length; yield! rest |] // not sure about this
-//      Array.init array.Rank (fun i -> array.GetUpperBound (i) + 1;)
+      let deep = defaultArg deep true
+      let max  = defaultArg max false
+      // This function gets the length of all dimensions in a multidimensional, jagged, or mixed array.
+      // https://github.com/accord-net/framework/blob/b4990721a61f03602d04c12b148215c7eca1b7ac/Sources/Accord.Math/Matrix/Matrix.Construction.cs#L1118
+      // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
+      if array.Rank = 0 then [||]
+      elif deep && Tensor.IsJagged(array) then
+          if array.Length = 0 then [||]
+          else
+            let rest =
+                if not(max) then Tensor.GetLength (array.GetValue (0) :?> Array, deep);
+                else
+                  // find the max
+                  let mutable rest = Tensor.GetLength (array.GetValue (0) :?> Array, deep)
+                  for i = 1 to array.Length - 1 do
+                        let r = Tensor.GetLength (array.GetValue(i) :?> Array, deep)
+                        for j = 0 to r.Length - 1 do
+                          if r.[j] > rest.[j] then
+                            rest.[j] <- r.[j]
+                  rest
+            [| yield array.Length; yield! rest |] // not sure about this
+      else Array.init array.Rank (fun i -> array.GetUpperBound (i) + 1;)
 
     static member deepFlatten (array : Array) : Array =
-        failwith "todo"
       // This function converts multidimensional, jagged, or mixed arrays into a single unidimensional array (i.e. flattens the mixed array).
       // https://github.com/accord-net/framework/blob/f78181b82eb6ee6cc7fd10d2a7a55334982c40df/Sources/Accord.Math/Matrix/Matrix.Common.cs#L1625
       // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
-//      let totalLength = Tensor.getTotalLength (array, deep: true);
-//      let elementType = Tensor.getInnerMostType (array);
-//      let result = Array.CreateInstance (elementType, totalLength);
-//      let mutable k = 0;
-//      for v in Tensor.enumerateJagged (array) do
-//        result.SetValue (v, k)
-//        k <- k + 1
-//      result
+      let totalLength = Tensor.GetTotalLength (array, deep = true);
+      let elementType = Tensor.GetInnerMostType (array);
+      let result = Array.CreateInstance (elementType, totalLength);
+      let mutable k = 0;
+      for v in Tensor.enumerateJagged (array) do
+        result.SetValue (v, k)
+        k <- k + 1
+      result
   
     static member enumerateJagged (array : Array) : IEnumerable =
-        failwith "todo"
-//          // This function can enumerate all elements in a multidimensional ,jagged, or mixed array.
-//          // From https://github.com/accord-net/framework/blob/b4990721a61f03602d04c12b148215c7eca1b7ac/Sources/Accord.Math/Matrix/Jagged.Construction.cs#L1202
-//          // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
-//          let arrays = new Stack<Array> ()
-//          let counters = new Stack<int> ()
-//  
-//          arrays.Push (array)
-//          counters.Push (0)
-//          let mutable depth = 1
-//  
-//          let mutable a = array;
-//          let mutable i = 0;
-//  
-//          [|
-//              while arrays.Count > 0 do
-//                if (i >= a.Length) then
-//                  a <- arrays.Pop ()
-//                  i <- counters.Pop () + 1
-//                  depth <- depth - 1
-//                else
-//                  let e = a.GetValue (i)
-//                  let next = e :> Array
-//                  if next = null then
-//                    yield e 
-//                    i <- i + 1
-//                  else
-//                    arrays.Push (a)
-//                    counters.Push (i)
-//                    a <- next
-//                    i <- 0
-//                    depth <- depth + 1
-//          |]
+          // This function can enumerate all elements in a multidimensional ,jagged, or mixed array.
+          // From https://github.com/accord-net/framework/blob/b4990721a61f03602d04c12b148215c7eca1b7ac/Sources/Accord.Math/Matrix/Jagged.Construction.cs#L1202
+          // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
+          let arrays = new Stack<Array> ()
+          let counters = new Stack<int> ()
   
-    static member GetTotalLength (array : Array, ?deep : bool, ?rectangular : bool) =
+          arrays.Push (array)
+          counters.Push (0)
+          let mutable depth = 1
+  
+          let mutable a = array;
+          let mutable i = 0;
+  
+          [|
+              while arrays.Count > 0 do
+                if (i >= a.Length) then
+                  a <- arrays.Pop ()
+                  i <- counters.Pop () + 1
+                  depth <- depth - 1
+                else
+                  let e = a.GetValue (i)
+                  let next = e :?> Array
+                  if next = null then
+                    yield e 
+                    i <- i + 1
+                  else
+                    arrays.Push (a)
+                    counters.Push (i)
+                    a <- next
+                    i <- 0
+                    depth <- depth + 1
+          |] :> IEnumerable
+  
+    static member GetTotalLength (array : Array, ?deep : bool, ?rectangular : bool) : int =
           // From https://github.com/accord-net/framework/blob/b4990721a61f03602d04c12b148215c7eca1b7ac/Sources/Accord.Math/Matrix/Matrix.Construction.cs#L1087
           // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
-          failwith "todo"
-//          let deep = defaultArg deep true
-//          let rectangular = defaultArg rectangular true
-//          if deep && Tensor.isJagged (array.GetType ()) then
-//            if rectangular then
-//              let rest = Tensor.GetTotalLength (array.GetValue (0) :> Array, deep);
-//              array.Length * rest
-//            else 
-//              let mutable sum = 0;
-//              for i = 0 to array.Length - 1 do
-//                sum <- sum + Tensor.GetTotalLength (array.GetValue (i) :> Array, deep)
-//              sum
-//          else array.Length
+          let deep = defaultArg deep true
+          let rectangular = defaultArg rectangular true
+          if deep && Tensor.IsJagged(array.GetType ()) then
+            if rectangular then
+              let rest = Tensor.GetTotalLength (array.GetValue(0) :?> Array, deep);
+              array.Length * rest
+            else 
+              let mutable sum = 0;
+              for i = 0 to array.Length - 1 do
+                sum <- sum + Tensor.GetTotalLength (array.GetValue(i) :?> Array, deep)
+              sum
+          else array.Length
   
-    static member IsArrayJagged (array : Array) = 
+    static member IsJagged (array : Array) = 
           // From https://github.com/accord-net/framework/blob/f78181b82eb6ee6cc7fd10d2a7a55334982c40df/Sources/Accord.Math/Matrix/Matrix.Construction.cs#L1204
           // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
           if (array.Length = 0) then array.Rank = 1
           else array.Rank = 1 && (array.GetValue (0) |> isAssignableTo<Array>)
   
-    static member IsTypeJagged (_type : Type) =
+    static member IsJagged (_type : Type) =
        // From https://github.com/accord-net/framework/blob/eb371fbc540a41c1a711b6ab1ebd49889316e7f7/Sources/Accord.Math/Matrix/Matrix.Common.cs#L84
        // Relicensed under the MIT license by the original author for inclusion in TensorFlowSharp and any derived projects, see the MIT license for details
-       failwith "todo"
-          //_type.IsArray &&& _type.GetElementType().IsArray;
+          _type.IsArray && _type.GetElementType().IsArray;
   
     static member GetInnerMostType (array : Array) : Type =
        // From https://github.com/accord-net/framework/blob/eb371fbc540a41c1a711b6ab1ebd49889316e7f7/Sources/Accord.Math/Matrix/Matrix.Common.cs#L95
@@ -625,9 +554,7 @@ type Tensor internal (handle : IntPtr) =
              _type <- _type.GetElementType ()
            _type
 
- 
 // Factory methods to create tensors from a constant
-     
 
      /// <summary>
      /// Converts an integer into a 1-dimensional, 1-valued tensor.
@@ -885,26 +812,20 @@ type Tensor internal (handle : IntPtr) =
     new (array : Array) =
       if array = null then raise (new ArgumentNullException ("array"))
       // Ensure that, if we have arrays of arrays, we can handle them accordingly:
-      failwith "todo"
-      new Tensor(IntPtr.Zero)
-  //    if isJagged (array.GetType ()) then
-  //      let elementType = getInnerMostType (array);
-  //      let length = getLength (array);
-  //      let multidimensional = Array.CreateInstance (elementType, length);
-  //      let flatten = deepFlatten (array);
-  //      Buffer.BlockCopy (flatten, 0, multidimensional, 0, flatten.Length * Marshal.SizeOf (elementType));
-  //      createFromMultidimensionalArrays (multidimensional);
-  //    else
-  //      createFromMultidimensionalArrays (array);
+      if Tensor.IsJagged(array.GetType ()) then
+        let elementType = Tensor.GetInnerMostType (array)
+        let length : int[] = Tensor.GetLength (array);
+        let multidimensional = Array.CreateInstance (elementType, length);
+        let flatten : Array = Tensor.deepFlatten (array)
+        Buffer.BlockCopy (flatten, 0, multidimensional, 0, flatten.Length * Marshal.SizeOf (elementType))
+        new Tensor(Tensor.CreateFromMultidimensionalArrays (multidimensional))
+      else
+        new Tensor(Tensor.CreateFromMultidimensionalArrays (array))
   
-      // TODO clean this up
     static member TFCreate(x:'a)  : IntPtr =
-        failwith "todo"
-        //let v = valueToIntPtr x
-        //TF_NewTensor (DType.Int32, zeroDims: IntPtr.Zero, num_dims: 0, data: v, len: UIntPtr(sizeof<'a>), deallocator = FreeTensorDataDelegate, deallocator_arg = IntPtr.Zero)
-        let handle  : IntPtr = failwith "todo" ///TF_NewTensor (DType.Int32, IntPtr.Zero, 0, v,  UIntPtr(sizeof<'a>), FreeTensorDataDelegate, IntPtr.Zero)
-        handle
-
+        // TODO does this create a memory leak?
+        let v = valueToIntPtr x
+        TensorNative.TF_NewTensor (DType.FromType(typeof<'a>), IntPtr.Zero, 0,  v,  UIntPtr(uint64 sizeof<'a>),  FreeTensorDataDelegate,  IntPtr.Zero)
   
     // Creates a constant tensor with a single dimension from an integer value.
     new (value : int) = new Tensor(Tensor.TFCreate(value))
@@ -942,62 +863,25 @@ type Tensor internal (handle : IntPtr) =
   
     // Convenience function to factor out the setup of a new tensor from an array
     static member SetupTensor (dt : DType, data : Array, size : int) : IntPtr =
-        failwith "todo"
-//      let dims = Array.init dims.Length (fun i -> data.GetLength (i))
-//      Tensor.SetupTensor (dt, dims, data, start = 0, count = data.Length, size = size)
+      let dims = Array.init data.Rank (fun i -> int64( data.GetLength (i)))
+      Tensor.SetupTensor (dt, dims, data, start = 0, count = data.Length, size = size)
   
-    // Use for single dimension arrays 
-    // TODO add shape
-//    static member SetupTensor (dt : DType, shape : Shape, data : Array, start : int, count : int, size : int) : IntPtr =
-//      if box shape = null then raise (ArgumentNullException "shape")
-//      Tensor.SetupTensor (dt, shape.dims, data, start, count, size);
-    
     // Use for single dimension arrays 
     static member SetupTensor (dt : DType, dims : int64[], data : Array, start : int, count : int, size : int) : IntPtr  =
       if start < 0 || start > data.Length - count then raise(ArgumentException ("start + count > Array size"))
       let dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
       if box dims = null then
-          failwith "todo"
-          //TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject () + start * size, UIntPtr((count * size)), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+          TensorNative.TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject().Add(start * size), UIntPtr(uint64 (count * size)), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
       else 
-          failwith "todo"
-          //TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject () + start * size, UIntPtr((count * size)), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+          TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject().Add(start * size), UIntPtr(uint64 (count * size)), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
   
     // Use for multiple dimension arrays 
     static member SetupMulti (dt : DType, dims : int64 [], data : Array, bytes : int64) : IntPtr =
       let dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
       if box dims = null then 
-          failwith "todo"
-  //        TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject (), UIntPtr(uint64 bytes), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+          TensorNative.TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject (), UIntPtr(uint64 bytes), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
       else
           TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject (), UIntPtr(uint64 bytes), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
-  
-    // Convenience, should I add T[,] and T[,,] as more convenience ones?
-    /// <summary>
-    /// Creates a single-dimension tensor from a byte buffer.  This is different than creating a tensor from a byte array that produces a tensor with as many elements as the byte array.
-    /// </summary>
-    // TODO perhaps do an extension method?
-//    static member CreateString (buffer : byte []) : Tensor =
-//      if box buffer = null then raise(ArgumentNullException ("buffer"))
-//      //
-//      // TF_STRING tensors are encoded with a table of 8-byte offsets followed by
-//      // TF_StringEncode-encoded bytes.
-//      //
-//      let size = TFString.TF_StringEncodedSize (UIntPtr(buffer.Length))
-//      let handle = TF_AllocateTensor (DType.String, IntPtr.Zero, 0, UIntPtr((uint64(size) + 8L)))
-//  
-//      // Clear offset table
-//      let dst = TF_TensorData (handle)
-//      Marshal.WriteInt64 (dst, 0)
-//      // TODO Could we not use a normal status here?
-//      let status = TFStatus.TF_NewStatus ()
-//      use src = fixed &buffer.[0]
-//      failwith "todo - figure out what to do with int8*" 
-//      //TFString.TF_StringEncode (src, UIntPtr(buffer.Length), (int8*)(dst + 8), size, status);
-//      let ok = TFStatus.TF_GetCode (status) = TFCode.Ok;
-//      TFStatus.TF_DeleteStatus (status);
-//      if not ok then null
-//      else new Tensor (handle)
   
     /// <summary>
     /// Converts a C# array into a tensor.

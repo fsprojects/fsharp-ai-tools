@@ -516,6 +516,44 @@ type Shape(dims:int64[] option) =
      /// <returns>The result of the conversion.</returns>
      static member op_Implicit (shape : Shape) : Tensor = shape.AsTensor ()
 
+    // Use for single dimension arrays 
+    // TODO add shape
+[<AutoOpen>]
+module TensorExtension =
+    // extern void * TF_TensorData (const TF_Tensor *);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    extern IntPtr TF_TensorData (TF_Tensor tensor);
+
+    // [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    extern TF_Tensor TF_AllocateTensor (DType dataType, IntPtr zeroDim, int num_dims, size_t len);
+
+    type Tensor with
+        static member SetupTensor (dt : DType, shape : Shape, data : Array, start : int, count : int, size : int) : IntPtr =
+         if box shape = null then raise (ArgumentNullException "shape")
+         Tensor.SetupTensor (dt, shape.Dims, data, start, count, size);
+
+        // Convenience, should I add T[,] and T[,,] as more convenience ones?
+        /// <summary>
+        /// Creates a single-dimension tensor from a byte buffer.  This is different than creating a tensor from a byte array that produces a tensor with as many elements as the byte array.
+        /// </summary>
+        static member CreateString (buffer : byte []) : Tensor =
+          if box buffer = null then raise(ArgumentNullException ("buffer"))
+          //
+          // TF_STRING tensors are encoded with a table of 8-byte offsets followed by
+          // TF_StringEncode-encoded bytes.
+          //
+          let size = TFString.TF_StringEncodedSize (UIntPtr(uint64 buffer.Length))
+          let handle = TF_AllocateTensor (DType.String, IntPtr.Zero, 0, UIntPtr((uint64(size) + 8uL)))
+      
+          // Clear offset table
+          let dst = TF_TensorData (handle)
+          Marshal.WriteInt64 (dst, 0L)
+          use status = new TFStatus()
+          use src = fixed &buffer.[0]
+          TFString.TF_StringEncode (src, UIntPtr(uint64 buffer.Length), dst.Add(8) |> NativePtr.ofNativeInt<int8>, size, status.Handle) |> ignore
+          if status.Ok then
+              new Tensor (handle)
+          else box null :?> Tensor
 
 /// <summary>
 /// A grouping of operations with defined inputs and outputs.

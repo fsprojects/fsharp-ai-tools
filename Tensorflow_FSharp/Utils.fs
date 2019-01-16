@@ -51,7 +51,7 @@ module NativePtr =
     let nativeIntWrite<'a when 'a : unmanaged> (ptr:IntPtr) (x:'a) = NativePtr.write (ptr |> NativePtr.ofNativeInt) x
     let nativeIntGet<'a when 'a : unmanaged> (ptr:IntPtr) (i:int) =  NativePtr.get<'a> (ptr |> NativePtr.ofNativeInt) i
     let nativeIntSet<'a when 'a : unmanaged> (ptr:IntPtr)(i:int) (x:'a) =  NativePtr.set (ptr |> NativePtr.ofNativeInt) i x 
-
+    let intPtrToVoidPtr (ptr:IntPtr) = ptr |> NativePtr.ofNativeInt<int64> |> NativePtr.toVoidPtr
 let (|Integer|_|) (str: string) =
    let mutable intvalue = 0
    if System.Int32.TryParse(str, &intvalue) then Some(intvalue)
@@ -81,3 +81,15 @@ let valueToIntPtr (v:'a) =
     let intPtr = Marshal.AllocHGlobal (sizeof<'a>)
     NativePtr.nativeIntWrite intPtr v
     intPtr
+
+// Not sure how to do this in a more type safe way, i.e. require contains parameter to be of same type as array
+type System.Collections.Generic.IEnumerable<'b> with
+    member this.Contains(x:'a) = seq { for x in this -> x} |> Seq.exists (fun y -> x.Equals(y))
+
+// Not sure how to do this in a more type safe way, i.e. require contains parameter to be of same type as array
+type System.Collections.IEnumerable with
+    member this.Contains(x:'a) = seq { for x in this -> x} |> Seq.exists (fun y -> x.Equals(y))
+
+type IntPtr with 
+    member this.Add(x:int) = IntPtr(int64 this + int64 x)
+    member this.Add(x:int64) = IntPtr(int64 this + x)

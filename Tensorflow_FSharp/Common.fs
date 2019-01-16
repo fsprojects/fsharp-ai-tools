@@ -68,7 +68,7 @@ type TF_DeviceList = System.IntPtr
 
 // let isSameObject = LanguagePrimitives.PhysicalEquality
 
-// type TFOutput with
+// type Output with
 //     member this.name : string = failwith "todo"
 //     member this.device : string = failwith "todo"
 
@@ -92,23 +92,17 @@ type TF_DeviceList = System.IntPtr
 //     let t = typeof<'a>
 //     x.GetType().IsSubclassOf(t) || x.GetType() = t
 
-
-
-
-
-
-
 // type PendingCount = DictionaryCount<Operation>
  
 // /// This is analogous to replace the 
-// /// type GradientMapping = Map<int,TFOutput>
-// type OperationGradients = TFOutput option [] //Map<int,TFOutput>
+// /// type GradientMapping = Map<int,Output>
+// type OperationGradients = Output option [] //Map<int,Output>
 
 // // NOTE: Behaviour here has been modified to hopefully be clearer
 // type GradientDictionary = Dictionary<Operation,OperationGradients >
-// // TODO, check return type here. I think it's a TFOutput
+// // TODO, check return type here. I think it's a Output
 // // Also, it seems that GradientMapping is optional
-// type GradientFunction = (Operation*OperationGradients-> TFOutput)
+// type GradientFunction = (Operation*OperationGradients-> Output)
 
 // type ICallable =
 //     abstract member __call__ : unit -> unit

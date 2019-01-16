@@ -3,30 +3,7 @@
 // TODO: Figure out how to incorporate func into the type structure
 // TODO: Figure out if we need status for Tensor operations
 
-// SkipType: FilterDataset due to attribute (func predicate lacking a mapping to C#
-// SkipType: FlatMapDataset due to attribute (func f lacking a mapping to C#
-// SkipType: For due to attribute (func body lacking a mapping to C#
-// SkipType: GeneratorDataset due to attribute (func init_func lacking a mapping to C#
-// SkipType: GroupByReducerDataset due to attribute (func key_func lacking a mapping to C#
-// SkipType: GroupByWindowDataset due to attribute (func key_func lacking a mapping to C#
-// SkipType: If due to attribute (func then_branch lacking a mapping to C#
-// SkipType: InterleaveDataset due to attribute (func f lacking a mapping to C#
-// SkipType: MapAndBatchDataset due to attribute (func f lacking a mapping to C#
-// SkipType: MapAndBatchDatasetV2 due to attribute (func f lacking a mapping to C#
-// SkipType: MapDataset due to attribute (func f lacking a mapping to C#
-// SkipType: MapDefun due to attribute (func f lacking a mapping to C#
-// SkipType: OneShotIterator due to attribute (func dataset_factory lacking a mapping to C#
-// SkipType: ParallelInterleaveDataset due to attribute (func f lacking a mapping to C#
-// SkipType: ParallelMapDataset due to attribute (func f lacking a mapping to C#
-// SkipType: PartitionedCall due to attribute (func f lacking a mapping to C#
-// SkipType: RemoteCall due to attribute (func f lacking a mapping to C#
-// SkipType: ScanDataset due to attribute (func f lacking a mapping to C#
-// SkipType: StatefulPartitionedCall due to attribute (func f lacking a mapping to C#
-// SkipType: StatelessIf due to attribute (func then_branch lacking a mapping to C#
-// SkipType: StatelessWhile due to attribute (func cond lacking a mapping to C#
-// SkipType: SymbolicGradient due to attribute (func f lacking a mapping to C#
-// SkipType: TPUReplicate due to attribute (func computation lacking a mapping to C#
-// SkipType: While due to attribute (func cond lacking a mapping to C#)
+
 
 #r @"lib/Google.Protobuf.dll"
 #r @"lib/TensorFlowSharpProtoNet.dll"
@@ -41,28 +18,14 @@ open NativeWorkaround.Native
 open Microsoft.FSharp.NativeInterop
 open System.Collections.Generic
 open System.Runtime.InteropServices
-open Google.Protobuf.Collections
-open System.Collections.Generic
 open Tensorflow
 
 let deserialize<'a> = Serializer.Deserialize<'a>
-
-open System
-open System.Collections.Generic
-open System.IO
-//open Google.Protobuf
-open System.Linq
-open System.Text
-open System.Runtime.InteropServices
-//open Tensorflow
-
 
 #nowarn "9"
 
 let newNames = true
 
-let tfoutput = if newNames then "Output" else "TFOutput"
-let Operation = if newNames then "Operation" else "TFOpeartion"
 
 type Status() = 
     let mutable handle = TF_NewStatus()
@@ -120,10 +83,10 @@ let fsharptype (tfType : string) =
     let list, tfType = if tfType.StartsWith "list(" then true, tfType.Substring(5, tfType.Length - 6) else false, tfType
     match tfType with
     | "int"     -> "int64"     |> Some
-    | "float"   -> "float"     |> Some
+    | "float"   -> "float32"     |> Some
     | "bool"    -> "bool"      |> Some
     | "type"    -> "DType"     |> Some
-    | "shape"   -> "TFShape"   |> Some
+    | "shape"   -> "Shape"   |> Some
     | "tensor"  -> "Tensor"  |> Some
     | "string"  -> "string"    |> Some
     | _ -> printfn "Unknown data TensorFlow type %s" tfType; None
@@ -253,13 +216,13 @@ let run(dirs : string []) =
         if hasReturnValue then
             if oper.OutputArgs.Count = 1 then
                 api.OutArgs |> Seq.tryHead |> Option.iter (fun x -> comment x.Description)
-                comment "The Operation can be fetched from the resulting TFOutput, by fetching the Operation property from the result."
+                comment "The Operation can be fetched from the resulting Output, by fetching the Operation property from the result."
             else
                 comment "Returns a tuple with multiple values, as follows:"
                 oper.OutputArgs |> Seq.iter (fun arg ->
                     api.OutArgs |> Seq.filter (fun x -> x.Name = arg.Name) 
                     |> Seq.tryHead |> Option.iter (fun oapi -> comment (sprintf "%s : %s" (paramMap arg.Name) oapi.Description)))
-                comment "The Operation can be fetched from any of the TFOutputs returned in the tuple values, by fetching the Operation property."
+                comment "The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property."
         else
             comment "Returns the description of the operation"
         p "/// </returns>"
@@ -270,31 +233,31 @@ let run(dirs : string []) =
 
 
     let setAttribute (_type : string, attrName : string, csAttrName : string) : string =
-        if _type = "shape" then sprintf "desc.SetAttrShape (\"%s\", %s)" attrName csAttrName
-        elif _type.StartsWith ("list(shape") then sprintf "desc.SetAttrShape (\"%s\", %s)" attrName csAttrName
+        if _type = "shape" then sprintf "desc.SetAttr (\"%s\", %s) |> ignore" attrName csAttrName
+        elif _type.StartsWith ("list(shape") then sprintf "desc.SetAttr (\"%s\", %s) |> ignore" attrName csAttrName
         else
             match fsharptype _type |> Option.get with
             | "int64"
             | "int64[]"
             | "string"
             | "string[]"
-            | "float"
-            | "float[]"
+            | "float32"
+            | "float32[]"
             | "bool"
-            | "bool[]" -> sprintf "desc.SetAttr (\"%s\", %s)" attrName csAttrName
+            | "bool[]" -> sprintf "desc.SetAttr (\"%s\", %s) |> ignore" attrName csAttrName
             | "DType"
-            | "DType[]" -> sprintf "desc.SetAttrType (\"%s\", %s)" attrName csAttrName
+            | "DType[]" -> sprintf "desc.SetAttr (\"%s\", %s) |> ignore" attrName csAttrName
             // this should pass the cstatus, but requries the
             // function to take a TFStatus as well, so need to weave that
             // in the parameters
             | "Tensor"
-            | "Tensor[]" -> sprintf "desc.SetAttr (\"%s\", %s (* cstatus *));" attrName csAttrName
+            | "Tensor[]" -> sprintf "desc.SetAttr (\"%s\", %s (* cstatus *)) |> ignore;" attrName csAttrName
             | fstype -> failwithf "Unexpected type: %s" fstype
 
 
     let fillArguments (oper : OpDef, requiredAttrs : OpDef.AttrDef[], optionalAttrs : OpDef.AttrDef[]) =
         [|
-            yield! oper.InputArgs |> Seq.toArray |> Array.map (fun inarg -> sprintf "%s : %s" (paramMap inarg.Name) (if isListArg inarg then "TFOutput[]" else "TFOutput") ) 
+            yield! oper.InputArgs |> Seq.toArray |> Array.map (fun inarg -> sprintf "%s : %s" (paramMap inarg.Name) (if isListArg inarg then "Output[]" else "Output") ) 
             yield! requiredAttrs |> Array.map (fun attr -> sprintf "%s : %s" (paramMap attr.Name) (fsharptype attr.Type |> Option.get) ) 
             yield! optionalAttrs |> Array.map (fun attr -> 
                 //let reftype = isReferenceType attr.Type
@@ -311,17 +274,18 @@ let run(dirs : string []) =
             if hasReturnValue then
                 match oper.OutputArgs |> Seq.toArray with
                 | [||] -> failwith "should have at least one return value"
-                | [|x|] -> if isListArg x then "TFOutput[]" else "TFOutput"
-                | xs -> xs |> Array.map (fun arg ->  (if isListArg arg then "TFOutput[]" else "TFOutput")) |> String.concat "*" |> sprintf "(%s)"
+                | [|x|] -> if isListArg x then "Output[]" else "Output"
+                | xs -> xs |> Array.map (fun arg ->  (if isListArg arg then "Output[]" else "Output")) |> String.concat "*" |> sprintf "(%s)"
             else "Operation"
         let fillArgs = (fillArguments(oper, requiredAttrs, optionalAttrs))
         pi (sprintf "static member %s (%s%s ?name : string) : %s =" name fillArgs (if String.IsNullOrWhiteSpace(fillArgs) then "" else ", ") retType )
         // NOTE: All defaults are None, as the default is set by the op
         let needStatus = [|yield! requiredAttrs; yield! optionalAttrs|] |> Array.exists (fun x -> x.Type.Contains("Tensor"))
         // NOTE: needStatus is not used anywhere
-        p (sprintf "let desc = new OperationDesc (defaultGraph(), \"%s\", MakeName (\"%s\", name))" oper.Name oper.Name)
-        oper.InputArgs |> Seq.iter (fun arg -> p (sprintf "desc.AddInput%s (%s)" ( if isListArg arg then "s" else "")  (paramMap arg.Name)))
-        p "currentDependencies |> Seq.iter desc.AddControlInput"
+        p (sprintf "let name = defaultArg name \"\"")
+        p (sprintf "let desc = new OperationDesc (defaultGraph, \"%s\", defaultGraph.MakeName (\"%s\", name))" oper.Name oper.Name)
+        oper.InputArgs |> Seq.iter (fun arg -> p (sprintf "desc.AddInput%s (%s) |> ignore" ( if isListArg arg then "s" else "")  (paramMap arg.Name)))
+        p "currentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)"
         // If we have attributes
         if requiredAttrs.Length > 0 || optionalAttrs.Length > 0 then
             for attr in requiredAttrs do
@@ -339,9 +303,9 @@ let run(dirs : string []) =
         for arg in oper.OutputArgs do
             if isListArg arg then
                 let n = (sprintf "(op.OutputListLength (\"%s\"))" (paramMap arg.Name))
-                p (sprintf "let %s = [| for i = 0 to %s - 1 do yield new TFOutput(op, _idx); _idx <- _idx + 1; |]" (paramMap arg.Name) n)
+                p (sprintf "let %s = [| for i = 0 to %s - 1 do yield new Output(op, _idx); _idx <- _idx + 1; |]" (paramMap arg.Name) n)
             else
-                p (sprintf "let %s = new TFOuptut (op, _idx)" (paramMap arg.Name))
+                p (sprintf "let %s = new Output (op, _idx)" (paramMap arg.Name))
                 p "_idx <- _idx + 1"
         
         if hasReturnValue then
@@ -352,7 +316,8 @@ let run(dirs : string []) =
         else p "op"
         pd "\n"
             
-    p "namespace Tensorflow\n"
+    p "[<AutoOpen>]"
+    p "module Tensorflow.GeneratedOpeartions\n"
     p "open System\n"
     pi "type TF with"
 
@@ -374,3 +339,6 @@ let run(dirs : string []) =
 
 
 
+
+run([|__SOURCE_DIRECTORY__ + "/data/api_def"|]) 
+|> fun res -> File.WriteAllText(__SOURCE_DIRECTORY__ + "/Tensorflow_FSharp/Operations.g.fs", res)

@@ -1,5 +1,6 @@
 namespace Tensorflow
 open System
+open System.Numerics
 
 
 /// <summary>
@@ -126,6 +127,49 @@ module DTypeExtensions =
                 | DType.UInt64        -> 8
                 | _                   -> -1
 
+
+        /// <summary>
+        /// Converts a <see cref="DType"/> to a system type.
+        /// </summary>
+        /// <param name="type">The <see cref="DType"/> to be converted.</param>
+        /// <returns>The system type corresponding to the given <paramref name="type"/>.</returns>
+        member this.ToType
+            with get() : Type =
+                match this with
+                | DType.Float32 -> typeof<single>
+                | DType.Float64 -> typeof<double>
+                | DType.Int32 -> typeof<int32>
+                | DType.UInt8 -> typeof<uint8>
+                | DType.UInt16 -> typeof<uint16>
+                | DType.UInt32 -> typeof<uint32>
+                | DType.UInt64 -> typeof<uint64>
+                | DType.Int16 -> typeof<int16>
+                | DType.Int8 -> typeof<int8> // sbyte?
+                | DType.String -> typeof<string> // TFString?
+                | DType.Complex128 -> typeof<Complex>
+                | DType.Int64 -> typeof<int64>
+                | DType.Bool -> typeof<bool>
+                | _ -> box null :?> Type
+
+        /// <summary>
+        /// Converts a system type to a <see cref="DType"/>.
+        /// </summary>
+        /// <param name="t">The system type to be converted.</param>
+        /// <returns>The <see cref="DType"/> corresponding to the given type.</returns>
+        static member FromType (t:Type) : DType = 
+            //if true then DType.Float32 else DType.Unknown
+            if   t = typeof<float32>     then DType.Float32
+            elif t = typeof<double>    then DType.Float64
+            elif t = typeof<int>       then DType.Int32 
+            elif t = typeof<byte>      then DType.UInt8
+            elif t = typeof<int16>     then DType.Int16
+            elif t = typeof<sbyte>     then DType.Int8
+            elif t = typeof<string>    then DType.String
+            elif t = typeof<int64>     then DType.Int64
+            elif t = typeof<bool>      then DType.Bool
+            elif t = typeof<uint16>    then DType.UInt16
+            elif t = typeof<Complex>   then DType.Complex128
+            else raise(ArgumentOutOfRangeException ("t", sprintf "The given type could not be mapped to an existing DType."))
 
 
 

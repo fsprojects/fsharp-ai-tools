@@ -1,35 +1,14 @@
 namespace Tensorflow
-open System.Reflection
 
-#nowarn "9"
 open System
 open System.Runtime.InteropServices
 open System.Text
-open System.Globalization
-open System.Linq
 open Utils
 open Microsoft.FSharp.NativeInterop
-open System.Numerics;
 open System.Collections.Generic;
-open System.Linq.Expressions;
 
-// We use this TF_Xxx as the native "TF_Xxx *" as those are opaque
-type TF_Status = System.IntPtr
-type TF_SessionOptions = System.IntPtr
-type TF_Graph = System.IntPtr
-type TF_OperationDescription = System.IntPtr
-type TF_Operation = System.IntPtr
-type TF_Session = System.IntPtr
-type TF_DeprecatedSession = System.IntPtr
-type TF_Tensor = System.IntPtr
-type TF_ImportGraphDefOptions = System.IntPtr
-type TF_Library = System.IntPtr
-type TF_BufferPtr = System.IntPtr
-type TF_Function = System.IntPtr
-type TF_DeviceList = System.IntPtr
 
-type size_t = System.UIntPtr
-
+#nowarn "9"
 
 [<StructLayout (LayoutKind.Sequential)>]
 [<Struct>]
@@ -389,7 +368,7 @@ and Graph internal (handle) =
     override this.NativeDispose (handle : IntPtr) = TF_DeleteGraph (handle);
 
     member this.PendingInitVariables with get() = pending_init_variables
-    member this.TrainingVariables with get() = pending_init_variables
+    member this.TrainingVariables with get() = trainable_variables
 
 
     /// <summary>
@@ -419,7 +398,7 @@ and Graph internal (handle) =
             GraphExternal.TF_GraphSetTensorShape (handle, output.Struct, IntPtr.Zero, 0, cstatus.Handle);
         | Some(dims) ->
             TF_GraphSetTensorShape (handle, output.Struct, dims, dims.Length, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incoming=status);
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
 
 
     /// <summary>
@@ -481,8 +460,7 @@ and Graph internal (handle) =
         if box prefix =null then raise (ArgumentNullException ("prefix"))
         use options = new TFImportGraphDefOptions()
         options.SetPrefix (prefix)
-        //this.Import (graphDef, options, status)
-        failwith "todo"
+        this.Import (graphDef, options, ?status=status)
 
     /// <summary>
     /// Import a serialized graph into this graph, using the specified importing options.
@@ -513,8 +491,7 @@ and Graph internal (handle) =
         if box prefix = null then raise(ArgumentNullException ("prefix"))
         use options = new TFImportGraphDefOptions()
         options.SetPrefix prefix
-        //this.Import (buffer, options, status)
-        failwith "todo"
+        this.Import (buffer, options, ?status=status)
 
     /// <summary>
     /// Import a serialized graph held in a byte array into this graph, using the specified import options.
@@ -560,7 +537,6 @@ and Graph internal (handle) =
     member this.GetEnumerator () : IEnumerable<Operation> =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         let mutable token = IntPtr.Zero;
-        failwith "todo - token pointer needs to be address"
         Seq.unfold (fun _ -> 
             match TF_GraphNextOperation (handle, &token) with
             | operll when operll = IntPtr.Zero -> None
@@ -654,7 +630,6 @@ and Graph internal (handle) =
             if this.CurrentNameScope = "" then name else this.CurrentNameScope + "/" + name
             |> this.MakeUnique
         | _ -> 
-            // TODO make sure we don't need to make this unique as well
             if this.CurrentNameScope = "" then userName else this.CurrentNameScope + "/" + name 
 
 
@@ -981,10 +956,10 @@ and Graph internal (handle) =
     /// <returns><c>true</c>, if the evaluation is successful, in which case the result is returned in <paramref name="tensor"/>, <c>false</c> otherwise.</returns>
     /// <param name="output">Output.</param>
     /// <param name="tensor">Tensor.</param>
-    member this.TryEvaluateConstant (output : Output, [<Out>] tensor : Tensor byref) = // TODO ref?
+    member this.TryEvaluateConstant (output : Output, [<Out>] tensor : Tensor byref) = 
         let cstatus = new TFStatus ()
         let mutable ptr = IntPtr.Zero;
-        let ret = TF_TryEvaluateConstant (handle, output.Struct, &ptr, cstatus.Handle); // ref ptr
+        let ret = TF_TryEvaluateConstant (handle, output.Struct, &ptr, cstatus.Handle)
         cstatus.Dispose ();
         if ret then
             tensor <- new Tensor (ptr);
@@ -995,6 +970,11 @@ and Graph internal (handle) =
     override this.ToString () =
             let mutable len = IntPtr.Zero
             TF_GraphDebugString (this.Handle, len); // ref len
+
+module OperationDescNative = 
+    // extern void TF_SetAttrShape (TF_OperationDescription *desc, const char *attr_name, const int64_t *dims, int num_dims);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    extern void TF_SetAttrShape (TF_OperationDescription desc, string attr_name, int64 [] dims, int num_dims);
 
 /// <summary>
 /// Low-level TensorFlow operation builder
@@ -1080,9 +1060,7 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern void TF_SetAttrTypeList (TF_OperationDescription desc, string attr_name, DType [] values, int num_values);
 
-    // extern void TF_SetAttrShape (TF_OperationDescription *desc, const char *attr_name, const int64_t *dims, int num_dims);
-    [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_SetAttrShape (TF_OperationDescription desc, string attr_name, int64 [] dims, int num_dims);
+
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern void TF_SetAttrShape (TF_OperationDescription desc, string attr_name, IntPtr dims, int num_dims);
 
@@ -1270,14 +1248,11 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
         if handle = IntPtr.Zero then raise( ObjectDisposedException ("handle"))
         if attrName = null then raise(ArgumentNullException ("attrName"))
         if (box shape = null || box shape.Dims = null) then
-            failwith "todo"
-            //TF_SetAttrType (handle, attrName, null, -1)
+            TF_SetAttrShape (handle, attrName, box null :?> IntPtr, -1)
         else
-            failwith "todo"
-            //TF_SetAttrType (handle, attrName, shape.dims, shape.dims.Length)
+            OperationDescNative.TF_SetAttrShape (handle, attrName, shape.Dims, shape.Dims.Length)
         this
 
-    // TODO (matt): this originally had the name this.SetAttrShape
     member this.SetAttr (attrName : string, shapeList : Shape []) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         if attrName = null then raise(ArgumentNullException ("attrName"))
@@ -1301,7 +1276,6 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
 
 
     // WARN: untested
-    // TODO: consider why ShapeProt is IntPtr and ShapeProtoList is TFBuffer[]
     member this.SetAttrShapeProtoList (attrName : string, protos : TFBuffer[], ?status : TFStatus) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         if box attrName = null then raise(ArgumentNullException ("attrName"))
@@ -1339,14 +1313,16 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
         this
 
     // WARN: untested
-//    member this.SetAttr(attrName : string, proto : TFProto, ?status : TFStatus) =
-//        if handle = IntPtr.Zero then TFDisposable.ObjectDisposedException ()
-//        if box attrName = null then raise(ArgumentNullException ("attrName"))
-//        if box proto = null then raise(ArgumentNullException ("proto"))
-//        let cstatus = TFStatus.Setup (?incoming=status)
-//        TF_SetAttrValueProto(handle, attrName, proto.LLBuffer.data, proto.LLBuffer.length, cstatus.Handle)
-//        cstatus.CheckMaybeRaise (?incoming=status)
-//        this
+    // NOTE was proto originally had type TFProto
+    member this.SetAttr(attrName : string, proto : TFBuffer, ?status : TFStatus) =
+        if handle = IntPtr.Zero then TFDisposable.ObjectDisposedException ()
+        if box attrName = null then raise(ArgumentNullException ("attrName"))
+        if box proto = null then raise(ArgumentNullException ("proto"))
+        let cstatus = TFStatus.Setup (?incoming=status)
+        let buff = proto.LLBuffer |> NativePtr.read
+        TF_SetAttrValueProto(handle, attrName, buff.data, buff.length, cstatus.Handle)
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
+        this
 
     /// <summary>
     /// Turns the operation description into an actual operation in the graph.
@@ -1361,10 +1337,8 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
         handle <- IntPtr.Zero;
         GC.SuppressFinalize (this);
         match status with 
-        | None -> failwith "todo error"
         | Some(status) when status.Error -> box null :?> Operation
-        | _ -> 
-            new Operation (h)
+        | _ -> new Operation (h)
 
     /// <summary>
     /// Sets an attribute on the function to the specified value.

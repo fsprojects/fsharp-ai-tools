@@ -68,7 +68,7 @@ type Runner internal (session : Session) =
     /// </summary>
     /// <returns>An instance to the runner, so you can easily chain the operations together.</returns>
     /// <param name="targets">One or more targets.</param>
-    member this.AddTarget ([<ParamArray>] targets : Operation []) : Runner =
+    member this.AddTarget ([<ParamArray>] targets : Operation[]) : Runner =
         _targets.AddRange(targets)
         this
 
@@ -79,7 +79,7 @@ type Runner internal (session : Session) =
         match operation.Split(':') with
         | [|op;Integer(idx)|] -> session.Graph.[op].[idx]
         | [|op|] -> session.Graph.[operation].[0];
-        | _ -> failwith "error parsing %s" operation
+        | _ -> failwithf "error parsing %s" operation
 
     /// <summary>
     /// Adds the specified operation names as the ones to be retrieved.
@@ -140,12 +140,12 @@ type Runner internal (session : Session) =
     /// <summary>
     /// Protocol buffer encoded block containing the metadata passed to the <see cref="M:TensorFlow.Session.Run"/> method.
     /// </summary>
-    member this.RunMetadata : TFBuffer = failwith "todo"
+    member val RunMetadata : TFBuffer option = None with get, set
 
     /// <summary>
     /// Protocol buffer encoded block containing the run options passed to the <see cref="M:TensorFlow.Session.Run"/> method.
     /// </summary>
-    member this.RunOptions : TFBuffer = failwith "todo"
+    member val RunOptions : TFBuffer option = None with get, set
 
     /// <summary>
     ///  Execute the graph fragments necessary to compute all requested fetches.
@@ -153,7 +153,7 @@ type Runner internal (session : Session) =
     /// <returns>One Tensor for each call to Fetch that you made, in the order that you made them.</returns>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
     member this.Run(?status : TFStatus) : Tensor [] =
-        session.Run (_inputs.ToArray (), _inputValues.ToArray (), _outputs.ToArray (), _targets.ToArray (), this.RunMetadata, this.RunOptions, ?status=status);
+        session.Run (_inputs.ToArray (), _inputValues.ToArray (), _outputs.ToArray (), _targets.ToArray (), ?runMetadata=this.RunMetadata, ?runOptions=this.RunOptions, ?status=status);
 
     /// <summary>
     /// Run the specified operation, by adding it implicity to the output, single return value
@@ -469,57 +469,3 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
         GC.KeepAlive(inputValues);
 
         ovals |> Array.map (fun x -> new Tensor(x))
-
-    // TODO Graph operations
-    // /// <summary>
-    // /// Restores a tensor from a serialized tensorflor file.
-    // /// </summary>
-    // /// <returns>The deserialized tensor from the file.</returns>
-    // /// <param name="filename">File containing your saved tensors.</param>
-    // /// <param name="tensor">The name that was used to save the tensor.</param>
-    // /// <param name="type">The data type for the tensor.</param>
-    // /// <code>
-    // /// using (var session = new Session()){
-    // ///   var a = session.Graph.Const(30, "a");
-    // ///   var b = session.Graph.Const(12, "b");
-    // ///   var multiplyResults = session.GetRunner().Run(session.Graph.Add(a, b));
-    // ///   var multiplyResultValue = multiplyResults.GetValue();
-    // ///   Console.WriteLine("a*b={0}", multiplyResultValue);
-    // ///   session.SaveTensors($"saved.tsf", ("a", a), ("b", b));
-    // /// }
-    // /// </code>
-    // member this.RestoreTensor(filename : string, tensor : string, _type : DType) : Output =
-    //     this.Graph.Restore (this.Graph.Const (Tensor.CreateString (Encoding.UTF8.GetBytes (filename))),
-    //                        this.Graph.Const (Tensor.CreateString (Encoding.UTF8.GetBytes (tensor))),
-    //                        _type);
-
-    // /// <summary>
-    // /// Saves the tensors in the session to a file.
-    // /// </summary>
-    // /// <returns>The tensors.</returns>
-    // /// <param name="filename">File to store the tensors in (for example: tensors.tsf).</param>
-    // /// <param name="tensors">An array of tuples that include the name you want to give the tensor on output, and the tensor you want to save.</param>
-    // /// <remarks>
-    // /// <para>
-    // /// Tensors saved with this method can be loaded by calling <see cref="M:RestoreTensor"/>.
-    // /// </para>
-    // /// <code>
-    // /// using (var session = new Session ()) {
-    // ///   var a = session.Graph.Const(30, "a");
-    // ///   var b = session.Graph.Const(12, "b");
-    // ///   var multiplyResults = session.GetRunner().Run(session.Graph.Add(a, b));
-    // ///   var multiplyResultValue = multiplyResults.GetValue();
-    // ///   Console.WriteLine("a*b={0}", multiplyResultValue);
-    // ///   session.SaveTensors($"saved.tsf", ("a", a), ("b", b));
-    // /// }
-    // /// </code>
-    // /// </remarks>
-    // member this.SaveTensors(filename : string, [<ParamArray>] tensors : (string*Output) []) : Tensor [] =
-    //     let clonedTensors = 
-    //                 tensors |> Array.map (fun (x,_) ->  
-    //                     let clone = Tensor.CreateString (Encoding.UTF8.GetBytes (x))
-    //                     this.Graph.Const (new Tensor(DType.String,  [|1L|], clone.Data, clone.TensorByteSize, null, IntPtr.Zero)))
-
-    //     this.GetRunner()
-    //         .AddTarget (Graph.Save (Graph.Const (Tensor.CreateString (Encoding.UTF8.GetBytes (filename)), DType.String),
-    //                       Graph.Concat (Graph.Const (0), clonedTensors), tensors |> Array.map snd)).Run ()

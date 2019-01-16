@@ -13,7 +13,7 @@ type size_t = System.UIntPtr
 type TF_Tensor = System.IntPtr
 
 /// <summary>
-/// The Variable class holds the TFOutput nodes that are used to initialize, read and assign a value to a variable.   
+/// The Variable class holds the Output nodes that are used to initialize, read and assign a value to a variable.   
 /// </summary>
 /// <remarks>
 /// A variable maintains state in the graph across calls to `run()`. You add a
@@ -46,13 +46,13 @@ type Variable internal (variableHandle : TF_Output, readHandle : TF_Output, assi
     /// Returns the ReadVariableOp that is used to fetch the value of the variable from the graph.
     /// </summary>
     /// <value>The read op.</value>
-    member this.Read = readHandle
+    member this.Read = new Output(readHandle)
 
     /// <summary>
     /// Returns the AssignVariableOp that is used to assign the initial value to the variable from the graph.
     /// </summary>
     /// <value>The assign op.</value>
-    member this.Assign = assignOp
+    member this.Assign = new Operation(assignOp)
 
     /// <summary>
     /// Returns the VarHandleOp that was created using the shape of the initial value.

@@ -71,7 +71,7 @@ type Input(handle : TF_Operation, index : int) =
 /// </summary>
 /// <remarks>
 /// <para>
-/// TFOutput objects represent one of the outputs of an operation in the graph
+/// Output objects represent one of the outputs of an operation in the graph
 /// (Graph).  Outputs have a data type, and eventually a shape that you can 
 /// retrieve by calling the <see cref="M:TensorFlow.Graph.GetShape"/> method.
 /// </para>

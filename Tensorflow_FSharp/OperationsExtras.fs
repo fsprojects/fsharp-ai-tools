@@ -1,11 +1,8 @@
-namespace Tensorflow
+[<AutoOpen>]
+module Tensorflow.OperationExtras
 
-type F() = 
-    let x = 10
-
-// type F with
-//     member this.x = 10
-//     member this.y = this.x
+open System.Runtime.InteropServices
+open System
 
 type TF with
     /// <summary>
@@ -17,23 +14,21 @@ type TF with
     /// Since Tensor have implicit conversion operators, you can call this method with
     /// a constant like this: graph.Const (23)
     /// </remarks>
-    /// TODO: given that tensor type is optional is this really needed?
-    static member Const (value : Tensor, ?name : string) = TF.Const (value, value.TensorType, name)
+    static member Const (value : Tensor, ?name : string) = TF.Const (value, value.DType, ?name = name)
 
     // Returns range(0, rank(x)) if reduction_indices is null
-    static member ReduceDims (input : TFOutput, ?axis : TFOutput) =
+    static member ReduceDims (input : Output, ?axis : Output) =
         match axis with
         | Some(axis) -> axis
         | None ->
             // Fast path: avoid creating Rank and Range ops if ndims is known.
             let shape = TF.GetTensorShape (input)
             if shape.IsFullySpecified then
-                // The python code distinguishes between tensor and sparsetensor
-                // TODO; this will need to be extended to enable subtypes
-                TF.Const ([|0..array.Length|], DType.Int32)
+                // NOTE: The python code distinguishes between tensor and sparsetensor
+                TF.Const (new Tensor([|0 .. shape.NumDimensions|]), DType.Int32)
             else
                 // Otherwise, we rely on Range and Rank to do the right thing at run-time.
-                TF.Range (TF.Const (0), TF.Rank (input), TF.Const (1))
+                TF.Range (TF.Const (new Tensor(0)), TF.Rank (input), TF.Const (new Tensor(1)))
 
     /// <summary>
     /// Computes the sum of elements across dimensions of a tensor.
@@ -52,9 +47,9 @@ type TF with
     /// If axis has no entries, all dimensions are reduced, and a
     /// tensor with a single element is returned.
     /// </remarks>
-    static member ReduceSum (input : TFOutput, ?axis : TFOutput, ?keep_dims : bool, ?name : string) =
+    static member ReduceSum (input : Output, ?axis : Output, ?keep_dims : bool, ?name : string) =
         let keep_dims = defaultArg keep_dims false
-        TF.Sum (input, TF.ReduceDims (input, axis), keep_dims, name)
+        TF.Sum (input, TF.ReduceDims (input, ?axis=axis), keep_dims, ?name=name)
 
     /// <summary>
     /// Computes the product of elements across dimensions of a tensor.
@@ -73,11 +68,10 @@ type TF with
     /// If axis has no entries, all dimensions are reduced, and a
     /// tensor with a single element is returned.
     /// </remarks>
-    static member ReduceProd (input : TFOutput, ?axis : TFOutput, ?keep_dims : bool, name : string) =
+    static member ReduceProd (input : Output, ?axis : Output, ?keep_dims : bool, ?name : string) =
         let keep_dims = defaultArg keep_dims false
-        TF.Prod (input, TF.ReduceDims (input, axis), keep_dims, name);
+        TF.Prod (input, TF.ReduceDims (input, ?axis=axis), keep_dims, ?name=name);
         
-
     /// <summary>
     /// Computes the mean of elements across dimensions of a tensor.
     /// </summary>
@@ -97,33 +91,30 @@ type TF with
     /// If axis has no entries, all dimensions are reduced, and a
     /// tensor with a single element is returned.</para>
     /// </remarks>
-    static member ReduceMean (input : TFOutput, ?axis : TFOutput, ?keep_dims : bool, ?name: string) =
+    static member ReduceMean (input : Output, ?axis : Output, ?keep_dims : bool, ?name: string) =
         let keep_dims = defaultArg keep_dims false
-        let boolToInt8Cast (x:TFOutput) = if input.OutputType = DType.Bool then TF.Cast (x, DType.Int8) else x
-        TF.Mean (input, this.ReduceDims (boolToInt8Cast(input), axis), keep_dims, name);
+        let boolToInt8Cast (x:Output) = if input.DType = DType.Bool then TF.Cast (x, DType.Int8) else x
+        TF.Mean (input, TF.ReduceDims (boolToInt8Cast(input), ?axis=axis), keep_dims, ?name=name);
 
 
     // Helper method to create a variable and track it.
-    static member MakeVariable (initialValue : TFOutput, trainable : bool, string name) : Variable =
-        let scopeName = TF.MakeName ("Variable", name)
-        use newScope = TF.WithScope (scopeName)
-        let Type = initialValue.OutputType
-        let variableHandle = VarHandleOp (Type, new TFShape (GetShape (initialValue)))
+    static member MakeVariable (initialValue : Output, trainable : bool, ?name : string) : Variable =
+        use newScope = TF.WithScope (TF.MakeName ("Variable", ?userName=name))
+        let Type = initialValue.DType
+        let variableHandle = TF.VarHandleOp (Type, new Shape (TF.GetShape (initialValue)))
         use aScope = TF.WithScope ("Assign")
         let assignOp = TF.AssignVariableOp (variableHandle, initialValue)
         use rScope = TF.WithScope ("Read")
         let readHandle = TF.ReadVariableOp (variableHandle, Type)
-        let nv = new Variable (variableHandle, readHandle, assignOp)
+        let nv = new Variable (variableHandle.Struct, readHandle.Struct, assignOp.Handle)
         if trainable then TF.AddTrainableVariable (nv)
-        TF.AddInitVariable (assignOp);
-        nv;
+        TF.AddInitVariable (assignOp)
+        nv
 
     /// <summary>
     /// Variable node, with a starting initial value.
     /// </summary>
     /// <param name="initialValue">Initial value.</param>
-    /// <param name="init">Returns the operation that initializes the value of the variable.</param>
-    /// <param name="value">Returns the value of the variable.</param>
     /// <param name="trainable">If true, this add the variable to the graph's TrainableVariables, this collection is intended to be used by the Optimizer classes.</param>
     /// <param name="name">Operation name, optional.</param>
     /// <returns>The returning Variable contains the variable, with three nodes with the operations making up the variable assignment.</returns>
@@ -131,14 +122,9 @@ type TF with
     /// Variables need to be initialized before the main execution so you will typically want to
     /// run the session on the variable
     /// </remarks>
-    /// TODO: Check up on how init and value are used here, it may be best to 
-    static member Variable (initialValue : TFOutput, [<Out>] init : Operation, [<Out>] value : TFOutput , ?trainable : bool, ?name : string) =
+    static member Variable (initialValue : Output, ?trainable : bool, ?name : string) =
         let trainable = defaultArg trainable true
-        let nv = TF.MakeVariable (initialValue, trainable, name)
-        init <- nv.Assign
-        value <- nv.Read
-        nv
-
+        TF.MakeVariable (initialValue, trainable, ?name=name)
 
     /// <summary>
     /// Registers a specified variable as an initialization variable.
@@ -159,9 +145,8 @@ type TF with
     static member AddInitVariable (variable : Operation) =
         defaultGraph.PendingInitVariables.Add (variable)
 
-    // TODO: finalize semantics, when should we clear these?
     static member AddTrainableVariable (variable : Variable) =
-        defaultGraph.TrainableVariables.Add (variable)
+        defaultGraph.TrainingVariables.Add (variable)
 
     /// <summary>
     /// Gets the list of all registered global variables.
@@ -176,52 +161,11 @@ type TF with
         defaultGraph.PendingInitVariables.Clear () // NOTE: (matt) I'm not sure about this, I suppose it makes sense
         res
 
-    /// <summary>
-    /// Variable node, with a starting initial value.  Convenience that registers the init variable to a global queue.
-    /// </summary>
-    /// <param name="initialValue">Initial value.</param>
-    /// <param name="value">Returns the value of the variable.</param>
-    /// <param name="trainable">If true, this add the variable to the graph's TrainableVariables, this collection is intended to be used by the Optimizer classes.</param>
-    /// <param name="name">Operation name, optional.</param>
-    /// <returns>The returning Variable contains the variable, with three nodes with the operations making up the variable assignment.</returns>
-    /// <remarks>
-    /// Variables need to be initialized before the main execution so you will typically want to
-    /// run the session on the variable.
-    /// 
-    /// The init sequence for the variable is stored in the graph, you must manually initialize 
-    /// those by running the session on the global variables.
-    /// </remarks>
-    /// TODO (matt): Thiss shold probably be converted into a tuple return
-    static member Variable (initialValue : TFOutput, [<Out>] value : TFOutput , ?trainable : bool, ?name : string) : Variable =
-        let trainable = defaultArg trainable
-        let nv = TF.MakeVariable (initialValue, trainable, name)
-        value <- nv.Read
-        nv
-
-    /// <summary>
-    /// Variable node, with a starting initial value.  Convenience that registers the init variable to a global queue.
-    /// </summary>
-    /// <param name="initialValue">Initial value.</param>
-    /// <param name="trainable">If true, this add the variable to the graph's TrainableVariables, this collection is intended to be used by the Optimizer classes.</param>
-    /// <param name="name">Operation name, optional.</param>
-    /// <returns>The returning Variable contains the variable, with three nodes with the operations making up the variable assignment.</returns>
-    /// <remarks>
-    /// Variables need to be initialized before the main execution so you will typically want to
-    /// run the session on the variable.
-    /// 
-    /// The init sequence for the variable is stored in the graph, you must manually initialize 
-    /// those by running the session on the global variables.
-    /// </remarks>
-    static member this.Variable (initialValue : TFOutput, ?trainable : bool, ?name : string) =
-        let trainable = defaultArg trainable true
-        TF.MakeVariable (initialValue, trainable, name);
-
     //
-    // Converts a shape to a tensor, to a TFOutput
+    // Converts a shape to a tensor, to a Output
     //
-    static member ShapeTensorOutput (shape : TFShape) =
-        if shape.IsLongArray then TF.Const (shape.ToArray (), DType.Int64)
-        else TF.Const (shape.ToIntArray (), DType.Int32);
+    static member ShapeTensorOutput (shape : Shape) =
+        TF.Const (new Tensor(shape.ToArray ()), if shape.IsLongArray then DType.Int64 else DType.Int32)
 
     /// <summary>
     /// Computes dropout. 
@@ -235,19 +179,17 @@ type TF with
     /// With probability keep_prob, outputs the input element scaled up by 1 / keep_prob, 
     /// otherwise outputs 0. The scaling is so that the expected sum is unchanged.
     /// </remarks>
-    static member Dropout (x : TFOutput, keep_prob : TFOutput, ?noise_shape : TFShape, ?seed : int, ?name : string) =
-        use newScope = TF.WithScope (TF.MakeName ("dropout", name))
-        let noiseShape = noise_shape |> Option.orDelay (fun _ -> new TFShape (TF.GetShape (x)))
-        let shapeTensor = TF.ShapeTensorOutput (noise_shape)
-
+    static member Dropout (x : Output, keep_prob : Output, ?noise_shape : Shape, ?seed : int, ?name : string) =
+        use newScope = TF.WithScope (TF.MakeName ("dropout", ?userName = name))
+        let noiseShape = noise_shape |> Option.orDefaultDelay (fun _ -> new Shape (TF.GetShape (x)))
+        let shapeTensor = TF.ShapeTensorOutput (noiseShape)
         // uniform [keep_prob, 1.0 + keep_prob)
         let random_tensor = keep_prob
-        let random_tensor = TF.Add (random_tensor, TF.RandomUniform (shapeTensor, ?seed = seed, dtype = x.OutputType))
-
+        let random_tensor = TF.Add (random_tensor, TF.RandomUniform (shapeTensor, ?seed = (seed |> Option.map int64), dtype = x.DType))
         // 0. if [keep_prob, 1.0) and 1. if [1.0, 1.0 + keep_prob)
         let binary_tensor = TF.Floor (random_tensor)
         let ret = TF.Mul (TF.Div (x, keep_prob), binary_tensor)
-        TF.SetTensorShape (ret, GetShape (x))
+        TF.SetTensorShape (ret, TF.GetShape (x))
         ret
 
     /// <summary>
@@ -262,13 +204,13 @@ type TF with
     /// With probability keep_prob, outputs the input element scaled up by 1 / keep_prob, 
     /// otherwise outputs 0. The scaling is so that the expected sum is unchanged.
     /// </remarks>
-    static member Dropout (x : TFOutput, keep_prob : double, ?noise_shape : TFShape, seed : int, ?name : string) =
-        if (keep_prob < 0 || keep_prob >= 1) then raise(ArgumentOutOfRangeException ("keep_prob must be a scalar tensor or a float in the range (0, 1], got " + keep_prob))
+    static member Dropout (x : Output, keep_prob : double, ?noise_shape : Shape, ?seed : int, ?name : string) =
+        if (keep_prob < 0.0 || keep_prob >= 1.0) then raise(ArgumentOutOfRangeException (sprintf "keep_prob must be a scalar tensor or a float in the range (0, 1], got %f"  keep_prob))
         if keep_prob = 1.0 then x
         else
-            use newScope = TF.WithScope (TF.MakeName ("dropout", name))
-            let tkeep_prob = TF.Const (keep_prob)
-            TF.Dropout (x, tkeep_prob, noise_shape, seed, name)
+            use newScope = TF.WithScope (TF.MakeName ("dropout", ?userName = name))
+            let tkeep_prob = TF.Const (new Tensor(keep_prob))
+            TF.Dropout (x, tkeep_prob, ?noise_shape=noise_shape, ?seed=seed, ?name=name)
 
     /// <summary>
     /// Clips tensor values to a specified min and max.
@@ -283,10 +225,10 @@ type TF with
     /// <param name="clip_value_min">The minimum value to clip by. A 0 - D(scalar) tensor, or a tensor with the same shape as <paramref name="x"/>.</param>
     /// <param name="clip_value_max">The minimum value to clip by. A 0 - D(scalar) tensor, or a tensor with the same shape as <paramref name="x"/>.</param>
     /// <param name="name">Operation name, optional.</param>
-    /// <returns>A clipped <see cref="TFOutput">tensor</see>.</returns>
-    static member ClipByValue2 (x : TFOutput, clip_value_min : TFOutput, clip_value_max : TFOutput, name : string) =
+    /// <returns>A clipped <see cref="Output">tensor</see>.</returns>
+    static member ClipByValue2 (x : Output, clip_value_min : Output, clip_value_max : Output, ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/clip_ops.py#L33
-        use newScope = TF.WithScope (TF.MakeName ("ClipByValue", name))
+        use newScope = TF.WithScope (TF.MakeName ("ClipByValue", ?userName=name))
         // Go through list of tensors, for each value in each tensor clip
         let t_min = TF.Minimum (x, clip_value_max)
         let t_max = TF.Maximum (t_min, clip_value_min, ?name = name)
@@ -308,15 +250,15 @@ type TF with
     /// <param name="clip_norm">The minimum value to clip by. A 0 - D(scalar) tensor, or a tensor with the same shape as <paramref name="x"/>.</param>
     /// <param name="axes">The minimum value to clip by. A 0 - D(scalar) tensor, or a tensor with the same shape as <paramref name="x"/>.</param>
     /// <param name="name">Operation name, optional.</param>
-    /// <returns>A clipped <see cref="TFOutput">tensor</see>.</returns>
-    static member ClipByNorm (x : TFOutput, clip_norm :TFOutput, ?axes : TFOutput, ?name : string) =
+    /// <returns>A clipped <see cref="Output">tensor</see>.</returns>
+    static member ClipByNorm (x : Output, clip_norm :Output, ?axes : Output, ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/clip_ops.py#L73
-        let scopeName = TF.MakeName ("ClipByNorm", name)
+        let scopeName = TF.MakeName ("ClipByNorm", ?userName = name)
         use newScope = TF.WithScope (scopeName)
         // Calculate L2-norm, clip elements by ratio of clip_norm to L2-norm
-        let l2norm_inv = TF.Rsqrt (TF.ReduceSum (TF.Mul (x, x), axes, keep_dims: true))
+        let l2norm_inv = TF.Rsqrt (TF.ReduceSum (TF.Mul (x, x), ?axis = axes, keep_dims = true))
         let intermediate = TF.Mul (x, clip_norm)
-        let tclip = TF.Identity (TF.Mul (intermediate, TF.Minimum (l2norm_inv, TF.Div (TF.Const (new Tensor (1.0)), clip_norm), name: name)))
+        let tclip = TF.Identity (TF.Mul (intermediate, TF.Minimum (l2norm_inv, TF.Div (TF.Const (new Tensor (1.0)), clip_norm), ?name = name)))
         tclip
 
     /// <summary>
@@ -330,13 +272,13 @@ type TF with
     /// </remarks>
     /// <param name="tensors">The input tensors.</param>
     /// <param name="name">Operation name, optional.</param>
-    /// <returns>A clipped <see cref="TFOutput">tensor</see>.</returns>
-    static member GlobalNorm (tensors : TFOutput [], ?name : string) =
+    /// <returns>A clipped <see cref="Output">tensor</see>.</returns>
+    static member GlobalNorm (tensors : Output [], ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/clip_ops.py#L122
-        use newScope = WithScope (TF.MakeName ("GlobalNorm", name))
-        let half_squared_norms = Array.init half_squared_norms.Length (fun i -> TF.L2Loss (tensors.[i]))
+        use newScope = TF.WithScope (TF.MakeName ("GlobalNorm", ?userName = name))
+        let half_squared_norms = Array.init tensors.Length (fun i -> TF.L2Loss (tensors.[i]))
         let half_squared_norm = TF.ReduceSum (TF.Stack (half_squared_norms))
-        let norm = TF.Sqrt (TF.Mul (half_squared_norm, TF.Const (2.0)), ?name = "global_norm")
+        let norm = TF.Sqrt (TF.Mul (half_squared_norm, TF.Const (new Tensor(2.0))), name = "global_norm")
         norm
 
     /// <summary>
@@ -353,12 +295,12 @@ type TF with
     /// <param name="x">The input tensor.</param>
     /// <param name="clip_norm">A maximum clipping value.</param>
     /// <param name="name">Name of the oper.</param>
-    static member ClipByAverageNorm (x : TFOutput, clip_norm :TFOutput , ?name : string) =
+    static member ClipByAverageNorm (x : Output, clip_norm :Output , ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/clip_ops.py#L251
-        use newScope = WithScope (TF.MakeName ("ClipByAverageNorm", name))
+        use newScope = TF.WithScope (TF.MakeName ("ClipByAverageNorm", ?userName = name))
         // Calculate L2-norm per element, clip elements by ratio of clip_norm to
         // L2-norm per element
-        let n_element = TF.Cast (TF.Size (x), DType.Float)
+        let n_element = TF.Cast (TF.Size (x), DType.Float32)
         let l2norm_inv = TF.Rsqrt (TF.ReduceSum (TF.Mul (x, x), TF.Range (TF.Rank (x))))
         let tclip = TF.Identity (TF.Mul (TF.Mul (x, clip_norm), TF.Minimum (TF.Mul (l2norm_inv, n_element), TF.Div (TF.Const (new Tensor (1.0)), clip_norm)), ?name = name))
         tclip
@@ -374,11 +316,11 @@ type TF with
     ///    and a dog at the same time.
     /// </remarks>
     /// 
-    static member SigmoidCrossEntropyWithLogits (labels : TFOuput, logits : TFOutput, ?name : string) =
+    static member SigmoidCrossEntropyWithLogits (labels : Output, logits : Output, ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/r1.3/tensorflow/python/ops/nn_impl.py#L100
-        use newScope = this.WithScope (TF.MakeName ("logistic_loss", name ))
+        use newScope = TF.WithScope (TF.MakeName ("logistic_loss", ?userName = name ))
         // Note: The following lines have not been ported from the original TF implementation since 
-        // TensorFlowSharp API should guarantee that logits and labels are of type TFOutput by design:
+        // TensorFlowSharp API should guarantee that logits and labels are of type Output by design:
         //
         //   logits = ops.convert_to_tensor(logits, name: "logits");
         //   labels = ops.convert_to_tensor(labels, name: "labels");
@@ -403,7 +345,7 @@ type TF with
         let cond = TF.GreaterEqual (logits, zeros)
         let relu_logits = TF.Where (cond, logits, zeros)
         let neg_abs_logits = TF.Where (cond, TF.Neg (logits), logits)
-        return TF.Add ( TF.Sub (relu_logits, TF.Mul (logits, labels)), TF.Log1p (TF.Exp (neg_abs_logits)), ?name = name)
+        TF.Add ( TF.Sub (relu_logits, TF.Mul (logits, labels)), TF.Log1p (TF.Exp (neg_abs_logits)), ?name = name)
 
     /// <summary>
     ///   Shuffle dimensions of x according to a permutation.
@@ -414,15 +356,15 @@ type TF with
     ///   If specified, the created operation in the graph will be this one, otherwise it will be named 'Transpose'.
     /// </param>
     /// <returns>
-    ///   The Operation can be fetched from the resulting TFOutput, by fethching the Operation property from the result.
+    ///   The Operation can be fetched from the resulting Output, by fethching the Operation property from the result.
     /// </returns>
     /// <remarks>
     ///   The output `y` has the same rank as `x`. The shapes of `x` and `y` satisfy:
     ///     `y.shape[i] == x.shape[perm[i]] for i in [0, 1, ..., rank(x) - 1]`
     /// </remarks>
-    static member Transpose (x : TFOutput, ?name : string) =
+    static member Transpose (x : Output, ?name : string) =
         let rank = TF.Rank (x);
-        let perm = TF.Sub (TF.Sub (TF.rank, TF.Const (1)), TF.Range (TF.Const (0), rank, TF.Const (1)));
+        let perm = TF.Sub (TF.Sub (rank, TF.Const (new Tensor(1))), TF.Range (TF.Const (new Tensor(0)), rank, TF.Const (new Tensor(1))));
         TF.Transpose (x = x, perm = perm, ?name = name)
 
     /// <summary>
@@ -432,9 +374,9 @@ type TF with
     /// <param name="true_fn">The callable to be performed if pred is true.</param>
     /// <param name="false_fn">The callable to be performed if pred is false.</param>
     /// <param name="name">Optional name prefix for the returned tensors.</param>
-    /// <returns>TFOutput.</returns>
-    static member Cond (pred : TFOutput, true_fn : Func<TFOutput>, false_fn : Func<TFOutput>, ?name : string) =
-        use newScope = TF.WithScope (TF.MakeName ("cond", name))
+    /// <returns>Output.</returns>
+    static member Cond (pred : Output, true_fn : unit -> Output, false_fn : unit -> Output, ?name : string) =
+        use newScope = TF.WithScope (TF.MakeName ("cond", ?userName = name))
         // Add the Switch to the graph.
         let (p_2, p_1) = TF.Switch (pred, pred);
         let pivot_t = TF.Identity (p_1, name = "switch_t");
@@ -450,7 +392,7 @@ type TF with
             false_fn ()
 
         // Add the final merge to the graph.
-        let merges, idnex = TF.Merge ([|res_t; res_f|])
+        let merges, idnex = TF.Merge ([|res_t; res_f|],2L)
         merges
 
     /// <summary>
@@ -464,13 +406,12 @@ type TF with
     /// 
     /// <returns>The labeled tensor with values according to condition.</returns>
     /// 
-    static member Where (condition : TFOutput , ?x : TFOutput, ?y : TFOutput, ?name : string) =
+    static member Where (condition : Output , ?x : Output, ?y : Output, ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/d4ce3b4681b3a550c095b2cd18a79494d1cc4039/tensorflow/python/ops/array_ops.py#L2342
         match x,y with 
         | None,None -> TF.Where (input = condition, ?name = name)
         | Some(x),Some(y) -> TF.Select(condition = condition, t = x, e = y, ?name = name)
         | _ -> raise(ArgumentException ("x and y must both be non-None or both be None."))
-    }
 
     /// <summary>
     /// Stacks a list of rank-`R` tensors into one rank-`(R+1)` tensor.
@@ -483,16 +424,17 @@ type TF with
     ///  tensor will have the shape <c>(A, N, B, C)</c>; etc.
     /// </remarks>
     /// 
-    static member Stack (values : TFOutput [], ?axis : int, ?name : string) =
+    static member Stack (values : Output [], ?axis : int, ?name : string) =
         let axis = defaultArg axis 0
-        let stack = defaultArg name "stack"
+        let name = defaultArg name "stack"
         // https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/ops/array_ops.py#L804
-        let ndims = TF.GetTensorNumDims (values. [0])
+        let ndims = TF.GetTensorNumDims (values.[0])
         let expanded_num_dims = ndims + 1
         if axis < -expanded_num_dims || axis >= expanded_num_dims then
-            raise (InvalidOperationException (spritnf "axis = %i not in [-%i, %i]" axis expanded_num_dims expanded_num_dims))
+            raise (InvalidOperationException (sprintf "axis = %i not in [-%i, %i]" axis expanded_num_dims expanded_num_dims))
         else
-            TF.Pack (values, axis = axis, ?name = name);
+            failwith "todo figure out what the N parameter means and if we can make it optional"
+            TF.Pack (values,-1L, int64 axis, name);
 
     /// <summary>
     /// Creates a sequence of numbers.
@@ -506,35 +448,69 @@ type TF with
     /// <param name="delta">A 0 - D `Tensor` (scalar).Number that increments `start`. Defaults to 1.</param>
     /// <param name="dataType">The type of the elements of the resulting tensor.</param>
     /// <param name="name">A name for the operation.Defaults to "range".</param>
-    static member Range (start : TFOutput, ?limit : TFOutput, ?delta : TFOutput, ?dataType : DataType, ?name : string) =
-        let name = defaultArg range 
+    static member Range (start : Output, ?limit : Output, ?delta : Output, ?dataType : DataType, ?name : string) =
+        let name = defaultArg name "range"
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/math_ops.py#L1156
         let start,limit =
             match limit with 
-            | None -> TF.Cast (TF.Const (new Tensor (0.0)), start.OutputType), start // TODO: Maybe add dataType as convenience in Const?
+            | None -> TF.Cast (TF.Const (new Tensor (0.0)), start.DType), start // TODO: Maybe add dataType as convenience in Const?
             | Some(limit) -> start,limit
 
-        let delta = delta |> Option.orDelay (fun _ -> TF.Cast ( TF.Const (new Tensor (1.0)), start.OutputType))
-        use newScope = TF.WithScope (TF.MakeName ("Range", name))) =
+        let delta = delta |> Option.orDefaultDelay (fun _ -> TF.Cast ( TF.Const (new Tensor (1.0)), start.DType))
+        use newScope = TF.WithScope (TF.MakeName ("Range", name))
         // infer dtype if not explicitly provided
         let start, limit, delta =
             match dataType with 
             | Some(_) -> start, limit, delta
             | None -> 
                 // TODO this type inference could be useful in other areas
-                let dtype_hierarchy = [|DType.Int32; DType.Int64; DType.Float; DType.Double |]
-                if (!dtype_hierarchy.Contains (start.OutputType) // NOTE; When this fails to type check we should extend Array2D<_> to include a contains method
-                 || !dtype_hierarchy.Contains (limit.Value.OutputType)
-                 || !dtype_hierarchy.Contains (delta.Value.OutputType))
+                let dtype_hierarchy = [|DType.Int32; DType.Int64; DType.Float32; DType.Float64|]
+                // NOTE; When this fails to type check we should extend Array2D<_> to include a contains method
+                if not (dtype_hierarchy.Contains (start.DType))  ||
+                   not(dtype_hierarchy.Contains (limit.DType)) ||
+                   not(dtype_hierarchy.Contains (delta.DType)) then
                     raise( ArgumentException ("Unexpected type"))
-
-                let dtypes = [|start.OutputType; limit.Value.OutputType; delta.Value.OutputType|]
-                let imax = dtypes |> Array.maxBy (fun x -> dtype_hierarchy |> Array.findIndex ((=) x))
+                let dtypes = [|start.DType; limit.DType; delta.DType|]
+                let imax = dtypes |> Array.map (fun x -> dtype_hierarchy |> Array.findIndex ((=) x)) |> Array.max
                 let inferred_dtype = dtype_hierarchy.[imax]
-
                 let start = TF.Cast (start, inferred_dtype)
                 let limit = TF.Cast (limit, inferred_dtype)
                 let delta = TF.Cast (delta, inferred_dtype)
                 (start, limit, delta)
+        TF.Range(start, limit, delta, name)
 
-        (start, limit.Value, delta.Value, ?name = name)
+    /// <summary>
+    ///    Concatenates tensors along one dimension.
+    /// </summary>
+    /// <param name="concat_dim">
+    ///    0-D.  The dimension along which to concatenate.  Must be in the
+    ///    range [0, rank(values)).
+    /// </param>
+    /// <param name="values">
+    ///    The <c>N<c> Tensors to concatenate. Their ranks and types must match,
+    ///    and their sizes must match in all dimensions except <c>concat_dim<c>.
+    /// </param>
+    /// <param name="name">
+    /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Concat'.
+    /// <param>
+    /// <param name="N">
+    ///    Optional argument
+    /// </param>
+    /// <returns>
+    ///    A <c>Tensor<c> with the concatenation of values stacked along the
+    ///    <c>concat_dim<c> dimension.  This tensor's shape matches that of <c>values<c> except
+    ///    in <c>concat_dim<c> where it has the sum of the sizes.
+    ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
+    /// </returns>
+    static member Concat (concat_dim : Output, values : Output[], ?N : int64,  ?name : string) : Output =
+        let name = defaultArg name ""
+        let desc = new OperationDesc (defaultGraph, "Concat", defaultGraph.MakeName ("Concat", name))
+        desc.AddInput (concat_dim) |> ignore
+        desc.AddInputs (values) |> ignore
+        currentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
+        N |> Option.iter (fun x -> desc.SetAttr ("N", x) |> ignore)
+        let op = desc.FinishOperation ()
+        let mutable _idx = 0
+        let output = new Output (op, _idx)
+        _idx <- _idx + 1
+        output

@@ -37,6 +37,52 @@ type LLBuffer =
     val mutable data_deallocator : IntPtr
 
 /// <summary>
+/// Contains TensorFlow fundamental methods and utility functions.
+/// </summary>
+module TFCore =     
+    let UseCPU = true
+
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    extern IntPtr TF_Version();
+
+    /// <summary>
+    /// Returns the version of the TensorFlow runtime in use.
+    /// </summary>
+    /// <value>The version.</value>
+    let Version() = TF_Version().GetStr()
+
+    // extern size_t TF_DataTypeSize (TF_DataType dt);
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    extern IntPtr TF_DataTypeSize (DType dt);
+
+    /// <summary>
+    /// Gets the size in bytes of the specified TensorFlow data type.
+    /// </summary>
+    /// <returns>The data type size.</returns>
+    /// <param name="dt">Dt.</param>
+    let GetDataTypeSize (dt:DType) = int64 (TF_DataTypeSize (dt))
+
+    // extern TF_Buffer * TF_GetAllOpList ();
+    //[<DllImport (NativeBinding.TensorFlowLibrary)>]
+    //extern IntPtr TF_GetAllOpList ();
+
+    /// <summary>
+    /// Retrieves the ProtocolBuffer describing all of the available operations in
+    /// the TensorFlow library in current use.
+    /// </summary>
+    /// <returns>The buffer contains a ProtocolBuffer encoded payload, you need a ProtocolBuffer reader to process the contents.</returns>
+    //let GetAllOpList () : TFBuffer = new TFBuffer (TF_GetAllOpList ());
+
+    let Init () = 
+        if sizeof<IntPtr> = 4 then
+            Console.Error.WriteLine (
+                "The TensorFlow native libraries were compiled in 64 bit mode, you must run in 64 bit mode\n" +
+                "With Mono, do that with mono --arch=64 executable.exe, if using an IDE like MonoDevelop,\n" +
+                "Xamarin Studio or Visual Studio for Mac, Build/Compiler settings, make sure that " +
+                "\"Platform Target\" has x64 selected.");
+            raise(Exception())
+
+/// <summary>
 /// Signature of the method that is invoked to release the data.  
 /// </summary>
 /// <remarks>
@@ -178,57 +224,10 @@ type TFBuffer internal (handle:IntPtr) =
             let lb = handle |> NativePtr.ofNativeInt<LLBuffer> |> NativePtr.read;
             let result = Array.zeroCreate<byte> (int lb.length)
             Marshal.Copy (lb.data, result, 0, (int lb.length))
-            result;
+            result
+
     member internal this.LLBuffer : nativeptr<LLBuffer> =  handle |> NativePtr.ofNativeInt
 
-//TODO recover this.
-///// <summary>
-///// Contains TensorFlow fundamental methods and utility functions.
-///// </summary>
-//module TFCore =     
-//    let UseCPU = true
-//
-//    [<DllImport (NativeBinding.TensorFlowLibrary)>]
-//    extern IntPtr TF_Version();
-//
-//    do
-//        if sizeof<IntPtr> = 4 then
-//            Console.Error.WriteLine (
-//                "The TensorFlow native libraries were compiled in 64 bit mode, you must run in 64 bit mode\n" +
-//                "With Mono, do that with mono --arch=64 executable.exe, if using an IDE like MonoDevelop,\n" +
-//                "Xamarin Studio or Visual Studio for Mac, Build/Compiler settings, make sure that " +
-//                "\"Platform Target\" has x64 selected.");
-//            raise(Exception())
-//    /// <summary>
-//    /// Returns the version of the TensorFlow runtime in use.
-//    /// </summary>
-//    /// <value>The version.</value>
-//    let Version() = TF_Version().GetStr()
-//
-//    // extern size_t TF_DataTypeSize (TF_DataType dt);
-//    [<DllImport (NativeBinding.TensorFlowLibrary)>]
-//    extern IntPtr TF_DataTypeSize (DType dt);
-//
-//    /// <summary>
-//    /// Gets the size in bytes of the specified TensorFlow data type.
-//    /// </summary>
-//    /// <returns>The data type size.</returns>
-//    /// <param name="dt">Dt.</param>
-//    let GetDataTypeSize (dt:DType) = int64 (TF_DataTypeSize (dt))
-//
-//
-//    // extern TF_Buffer * TF_GetAllOpList ();
-//    [<DllImport (NativeBinding.TensorFlowLibrary)>]
-//    extern IntPtr TF_GetAllOpList ();
-//
-//    /// <summary>
-//    /// Retrieves the ProtocolBuffer describing all of the available operations in
-//    /// the TensorFlow library in current use.
-//    /// </summary>
-//    /// <returns>The buffer contains a ProtocolBuffer encoded payload, you need a ProtocolBuffer reader to process the contents.</returns>
-//    let GetAllOpList () : TFBuffer = new TFBuffer (TF_GetAllOpList ());
-//
-//    let Init () = failwith "todo"
 
 /// <summary>
 /// Base class for many TensorFlow data types that provides a common idiom to dispose and
@@ -247,8 +246,7 @@ and
     [<AbstractClass>]
     TFDisposable (handle:IntPtr) = 
     let mutable handle = handle
-    // TODO
-    //static do TFCore.Init ()
+    static do TFCore.Init ()
 
     new () = new TFDisposable(IntPtr.Zero)
 

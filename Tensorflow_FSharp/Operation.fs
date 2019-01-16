@@ -430,55 +430,38 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
        cstatus.CheckMaybeRaise(?incoming=status) |> ignore
        rs
 
-    // member this.GetAttrTensor(attrName : string, ?status : TFStatus) =
-    //     if handle = IntPtr.Zero then TFDisposable.ObjectDisposedException ()
-    //     let cstatus = TFStatus.Setup (?incoming=status)
-    //     let metadata = this.GetAttributeMetadata(attrName, cstatus)
-    //     checkAttrType(attrName, metadata, TFAttributeType.Tensor, false)
-    //     let tensor = IntPtr.Zero : TF_Tensor
-    //     TF_OperationGetAttrTensor(handle, attrName, &&tensor, cstatus.Handle)
-    //     cstatus.CheckMaybeRaise (?incoming=status)
-    //     new Tensor(tensor)
+    member this.GetAttrTensor(attrName : string, ?status : TFStatus) =
+        if handle = IntPtr.Zero then TFDisposable.ObjectDisposedException ()
+        let cstatus = TFStatus.Setup (?incoming=status)
+        let metadata = this.GetAttributeMetadata(attrName, cstatus)
+        checkAttrType(attrName, metadata, TFAttributeType.Tensor, false)
+        let tensor = IntPtr.Zero : TF_Tensor
+        TF_OperationGetAttrTensor(handle, attrName, &&tensor, cstatus.Handle)
+        cstatus.CheckMaybeRaise (?incoming=status) |> ignore
+        new Tensor(tensor)
 
-    //     // WARN: untested
-    //     public Tensor[] GetAttrTensorList(string attrName, TFStatus status = null)
-    //     {
-    //         if (handle == IntPtr.Zero)
-    //             TFDisposable.ObjectDisposedException ();
-    //         var cstatus = TFStatus.Setup (status);
-    //         var metadata = GetAttributeMetadata(attrName, cstatus);
-    //         if (metadata.TotalSize < 0)
-    //             throw new Exception("Metadata Error");
-    //         checkAttrType(attrName, metadata, TFAttributeType.Tensor, true);
-    //         Tensor[] returnValue = new Tensor[metadata.ListSize];
-    //         unsafe
-    //         {
-    //             TF_Tensor[] tensorPointers = new TF_Tensor[metadata.ListSize];
-    //             fixed (TF_Tensor* tensorPointersF = &tensorPointers[0])
-    //                 TF_OperationGetAttrTensorList(handle, attrName, tensorPointersF, (int) metadata.ListSize, cstatus.Handle);
-    //             for (int i = 0; i < metadata.ListSize; i++)
-    //             {
-    //                 returnValue[i] = new Tensor(tensorPointers[i]);
-    //             }
-    //         }
-    //         cstatus.CheckMaybeRaise (status);
-    //         return returnValue;
-    //     }
-    //     // NOTE: Commented out for now as we don't have an attribute metadata type associated with Proto
-    //     // WARN: untested
-    //     //public TFBuffer GetAttrValueProto(string attrName, TFStatus status = null)
-    //     //{
-    //     //    if (handle == IntPtr.Zero)
-    //     //        TFDisposable.ObjectDisposedException();
-    //     //    var cstatus = TFStatus.Setup(status);
-    //     //    var r = new TFBuffer();
-    //     //    unsafe
-    //     //    {
-    //     //        TF_OperationGetAttrValueProto(handle, attrName, r.LLBuffer, cstatus.Handle);
-    //     //    }
-    //     //    cstatus.CheckMaybeRaise(status);
-    //     //    return r;
-    //     //}
+
+    // WARN: untested
+    member this.GetAttrTensorList(attrName : string, ?status : TFStatus) =
+         if handle = IntPtr.Zero then raise (TFDisposable.ObjectDisposedException ())
+         let cstatus = TFStatus.Setup (?incoming=status)
+         let metadata = this.GetAttributeMetadata(attrName, cstatus)
+         if metadata.TotalSize < 0L then raise (Exception("Metadata Error"))
+         checkAttrType(attrName, metadata, TFAttributeType.Tensor, true);
+         let tensorPointers = Array.zeroCreate<TF_Tensor> (int metadata.ListSize)
+         use tensorPointersF = fixed &tensorPointers.[0]
+         TF_OperationGetAttrTensorList(handle, attrName, tensorPointersF, (int) metadata.ListSize, cstatus.Handle);
+         cstatus.CheckMaybeRaise (?incoming=status) |> ignore
+         tensorPointers |> Array.map (fun x -> new Tensor(x))
+
+     // WARN: untested 
+    member this.GetAttrValueProto(attrName : string, ?status : TFStatus) =
+        if handle = IntPtr.Zero then raise (TFDisposable.ObjectDisposedException())
+        let cstatus = TFStatus.Setup(?incoming=status);
+        use buff = new TFBuffer()
+        TF_OperationGetAttrValueProto(handle, attrName, buff.LLBuffer, cstatus.Handle);
+        cstatus.CheckMaybeRaise(?incoming=status) |> ignore
+        buff.ToArray()
 
     /// <summary>
     /// Encodes the Operation as a protocol buffer payload

@@ -20,20 +20,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Utils.fs" /> 
+    <None Include="..\setup.fsx" Link="setup.fsx" />
+    <None Include="..\OperationCodeGenerationFSharp.fsx" Link="OperationCodeGenerationFSharp.fsx" />
+    <Compile Include="Utils.fs" />
     <Compile Include="Common.fs" /> 
     <Compile Include="DType.fs" /> 
-    <Compile Include="Tensorflow.fs" /> 
+    <Compile Include="Disposable.fs" /> 
     <Compile Include="Tensor.fs" /> 
+    <Compile Include="Tensorflow.fs" /> 
     <Compile Include="Operation.fs" /> 
     <Compile Include="Output.fs" /> 
     <Compile Include="Variable.fs" /> 
     <Compile Include="Graph.fs" /> 
     <Compile Include="Session.fs" /> 
-    <Compile Include="Queue.fs" /> 
-    <Compile Include="TensorflowGlobal.fs" /> 
-    <Compile Include="Operations.g.fs" /> 
-    <Compile Include="OperationsExtras.fs" />
+    <Compile Include="TensorflowGlobal.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 </Project>
 
