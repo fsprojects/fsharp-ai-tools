@@ -223,22 +223,21 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
             let n = this.NumControlOutputs
             let arr = Array.zeroCreate<IntPtr> n
             TF_OperationGetControlOutputs (handle, arr, n) |> ignore
-            Array.create n (fun i -> new Operation((*graph,*) arr.[i]))
+            Array.init n (fun i -> new Operation((*graph,*) arr.[i]))
 
     /// <summary>
     /// Get the list of operations that have this operation as a control input.
     /// </summary>
     /// <value>The control outputs.</value>
-    member this.ControlInputs
-        with get() = 
+    member this.ControlInputs =
             let n = this.NumControlOutputs;
             let arr = Array.zeroCreate<IntPtr> n
             TF_OperationGetControlInputs(handle, arr, n) |> ignore
-            Array.create n (fun i -> new Operation((*graph,*) arr.[i]))
+            Array.init n (fun i -> new Operation((*graph,*) arr.[i]))
 
-    member this.Device = (TF_OperationDevice (handle)).GetStr()
+    member __.Device = (TF_OperationDevice (handle)).GetStr()
 
-    member this.OpType = (TF_OperationOpType(handle)).GetStr()
+    member __.OpType = (TF_OperationOpType(handle)).GetStr()
 
     member __.GetAttributeMetadata (attrName : string, ?status : TFStatus) : TFAttributeMetadata =
         if handle = IntPtr.Zero then TFDisposable.ObjectDisposedException ()

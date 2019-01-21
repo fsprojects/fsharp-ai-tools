@@ -10,13 +10,12 @@
 
 open Tensorflow
 open System
-open System.Runtime.InteropServices
 
-let c1 = TF.Const(new Tensor([|1;4|]))
+let c1 = TF.Const(new Tensor([|14|]))
 let c2 = TF.Const(new Tensor(3))
 let c3 = TF.Mul(c1,c2)
 
-let Run([<ParamArray>] output:Output[]) =
+let Run(output:Output[]) =
     TF.DefaultSession.Run([||],[||],output)
 
 Run([|c3|])
@@ -73,9 +72,9 @@ let private RaiseNoGradWrtInitialLoopValError(op:TFOperation, from_ops:Set<TFOpe
 //let [<Literal>] tflib = "C:\EE\Git\Tensorflow_FSharp\lib\libtensorflow.dll"
 
 //module Native = 
-//    // extern const char * TF_OperationOpType (TF_Operation *oper);
+//    // extern const char * TF_OperationOpType (TF_Operation *oper)
 //    [<DllImport(tflib)>]
-//    extern IntPtr TF_OperationOpType(TF_Operation oper);
+//    extern IntPtr TF_OperationOpType(TF_Operation oper)
 //
 //let res = Native.TF_OperationOpType(x.Operation.Handle)
 //
