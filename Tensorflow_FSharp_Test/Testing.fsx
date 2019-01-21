@@ -25,7 +25,7 @@ let x = TF.Placeholder(DType.Int32,name="p2")
 
 x.Operation.ControlInputs
 x.Operation.ControlOutputs
-//x.Operation.OpType
+x.Operation.OpType
 
 /// Breadth first search through a graph, returns first found node if there is one
 /// Skipping previously visited nodes
