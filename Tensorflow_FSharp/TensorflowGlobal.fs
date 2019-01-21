@@ -1,4 +1,5 @@
 namespace Tensorflow
+
 open System
 
 
@@ -6,7 +7,9 @@ open System
 module Global =
 
     let mutable defaultSession : Session option = None
+
     let mutable defaultGraph : Graph option = None
+
     let resetSession() =
         let sess = new Session()
         defaultSession <- Some(sess)
@@ -27,11 +30,17 @@ type TF() =
         let oldGraph = defaultGraph
         defaultGraph <- Some(graph)
         {new IDisposable with member this.Dispose() = defaultGraph <- oldGraph}
-    
+
     static member WithScope(nameScopeDesc : string) = TF.DefaultGraph.WithScope(nameScopeDesc)
+
     static member MakeName(name : string, ?userName : string) = TF.DefaultGraph.MakeName(name, userName |> Option.orDefault "")
+
     static member GetShape(x:Output, ?status:TFStatus) = TF.DefaultGraph.GetShape(x,?status=status)
+
     static member SetTensorShape(x:Output,?dims : int64[], ?status:TFStatus) = TF.DefaultGraph.SetTensorShape(x,?dims=dims, ?status=status)
+
     static member GetTensorShape(x:Output,?status:TFStatus) : Shape = TF.DefaultGraph.GetTensorShape(x,?status=status)
+
     static member WithDependencies([<ParamArray>] xs : Operation[]) = TF.DefaultGraph.WithDependencies(xs)
+
     static member GetTensorNumDims(x:Output, ?status:TFStatus) = TF.DefaultGraph.GetTensorNumDims(x, ?status=status)

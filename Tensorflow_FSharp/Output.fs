@@ -7,9 +7,9 @@ open System.Globalization
 open System.Linq
 open Utils
 open Microsoft.FSharp.NativeInterop
-open System.Numerics;
-open System.Collections.Generic;
-open System.Linq.Expressions;
+open System.Numerics
+open System.Collections.Generic
+open System.Linq.Expressions
 
 [<StructLayout (LayoutKind.Sequential)>]
 [<Struct>]
@@ -32,13 +32,13 @@ type TF_Output = {
 /// </summary>
 type Input(handle : TF_Operation, index : int) =
 
-    //extern TF_Output TF_OperationInput (TF_Input oper_in);
+    //extern TF_Output TF_OperationInput (TF_Input oper_in)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern TF_Output TF_OperationInput (TF_Input oper_in);
+    static extern TF_Output TF_OperationInput (TF_Input oper_in)
 
-    //extern TF_DataType TF_OperationInputType (TF_Input oper_in);
+    //extern TF_DataType TF_OperationInputType (TF_Input oper_in)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern DType TF_OperationInputType (TF_Input oper_in);
+    static extern DType TF_OperationInputType (TF_Input oper_in)
 
 
     /// <summary>
@@ -50,20 +50,20 @@ type Input(handle : TF_Operation, index : int) =
     /// <summary>
     /// The operation that this input is for
     /// </summary>
-    member this.Operation = handle
+    member __.Operation = handle
 
     /// <summary>
     /// The index of the output within the Operation
     /// </summary>
-    member this.Index = index
+    member __.Index = index
 
-    member this.GetOutput (operIn : TF_Input) : Output = 
+    member __.GetOutput (operIn : TF_Input) : Output = 
         let tfOut = TF_OperationInput operIn
         new Output(tfOut.handle,tfOut.index)
 
-    member this.DType : DType = TF_OperationInputType ({operation = handle; index = index})
+    member __.DType : DType = TF_OperationInputType ({operation = handle; index = index})
 
-    member internal this.Struct with get () : TF_Input = { operation = handle; index = index }
+    member internal __.Struct with get () : TF_Input = { operation = handle; index = index }
 
 /// <summary>
 /// Represents a specific output of an operation on a tensor.
@@ -81,27 +81,28 @@ type Input(handle : TF_Operation, index : int) =
 /// </para>
 /// </remarks>
 and Output(handle: IntPtr, ?index : int) =
-    // extern int TF_OperationOutputNumConsumers (TF_Output oper_out);
-    [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern int TF_OperationOutputNumConsumers (Output oper_out);
 
-    // extern TF_DataType TF_OperationOutputType (TF_Output oper_out);
+    // extern int TF_OperationOutputNumConsumers (TF_Output oper_out)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern DType TF_OperationOutputType (TF_Output oper_out);
+    static extern int TF_OperationOutputNumConsumers (Output oper_out)
 
-    // extern int TF_OperationOutputConsumers (TF_Output oper_out, TF_Input *consumers, int max_consumers);
+    // extern TF_DataType TF_OperationOutputType (TF_Output oper_out)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern int TF_OperationOutputConsumers (TF_Output oper_out, TF_Input* consumers, int max_consumers);
+    static extern DType TF_OperationOutputType (TF_Output oper_out)
 
-    member internal this.Struct with get () = { handle = handle; index = index |> Option.orDefault 0}
+    // extern int TF_OperationOutputConsumers (TF_Output oper_out, TF_Input *consumers, int max_consumers)
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern int TF_OperationOutputConsumers (TF_Output oper_out, TF_Input* consumers, int max_consumers)
+
+    member internal __.Struct with get () = { handle = handle; index = index |> Option.orDefault 0}
 
     //do if handle = null then raise(ArgumentNullException ("Outputs does not have a valid operation pointer"))
-    member this.LLOperation = handle
+    member __.LLOperation = handle
 
     /// <summary>
     /// The index of the output within the operation.
     /// </summary>
-    member this.Index = index.Value
+    member __.Index = index.Value
 
     /// <summary>
     /// Gets the number consumers.
@@ -110,14 +111,14 @@ and Output(handle: IntPtr, ?index : int) =
     /// <remarks>
     /// This number can change when new operations are added to the graph.
     /// </remarks>
-    member this.NumConsumers = TF_OperationOutputNumConsumers (this);
+    member this.NumConsumers = TF_OperationOutputNumConsumers (this)
 
     /// <summary>
     /// Gets the type of the output.
     /// </summary>
     /// <value>The type of the output.</value>
     member this.DType = if this.LLOperation = IntPtr.Zero then DType.Unknown else TF_OperationOutputType (this.Struct)
-    //public DType OutputType => LLOperation == IntPtr.Zero ? DType.Unknown : TF_OperationOutputType (this);
+    //public DType OutputType => LLOperation == IntPtr.Zero ? DType.Unknown : TF_OperationOutputType (this)
 
     /// <summary>
     /// Initializes a new Output instance.
@@ -172,20 +173,18 @@ and Output(handle: IntPtr, ?index : int) =
     override this.ToString () =
         sprintf "[%O Index=%i Operation=%O (0x%i)]"  this.DType this.Index this.Operation this.LLOperation 
 
-    interface IComparable
-        with 
-            member this.CompareTo(x : obj) = 
-                if (x.GetType() <> this.GetType()) then -1
-                else (this :> IComparable<Output>).CompareTo(x :?> Output);
+    interface IComparable with 
+        member this.CompareTo(x : obj) = 
+            if (x.GetType() <> this.GetType()) then -1
+            else (this :> IComparable<Output>).CompareTo(x :?> Output)
 
-    interface IComparable<Output>
-        with 
-            member this.CompareTo(other : Output) =
-                let left = this.Operation.Handle.ToInt64();
-                let right = other.Operation.Handle.ToInt64();
-                if left <> right then
-                    left.CompareTo(right);
-                else this.Index.CompareTo(other.Index);
+    interface IComparable<Output> with 
+        member this.CompareTo(other : Output) =
+            let left = this.Operation.Handle.ToInt64()
+            let right = other.Operation.Handle.ToInt64()
+            if left <> right then
+                left.CompareTo(right)
+            else this.Index.CompareTo(other.Index)
 
     override this.Equals(x:obj) = 
         match x with
@@ -197,7 +196,9 @@ and Output(handle: IntPtr, ?index : int) =
 
 [<AutoOpen>]
 module OperationExtensions =
+
     type Operation with
+
         /// <summary>
         /// Returns the handle to the idx-th output of the operation.
         /// </summary>

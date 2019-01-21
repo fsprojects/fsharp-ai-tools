@@ -7,9 +7,9 @@ open System.Globalization
 open System.Linq
 open Utils
 open Microsoft.FSharp.NativeInterop
-open System.Numerics;
-open System.Collections.Generic;
-open System.Linq.Expressions;
+open System.Numerics
+open System.Collections.Generic
+open System.Linq.Expressions
 
 #nowarn "9"
 
@@ -22,33 +22,41 @@ type TFException(message:string) =
 /// Status code for invoking a tensorflow operation
 [<RequireQualifiedAccess>]
 type TFCode = 
+
     /// Not an error; return on success
     | Ok = 0u
+
     /// The operation was cancelled (typically by the caller).
     | Cancelled = 1u
+
     /// Unknown error.  An example of where this error may be returned is
     /// if a Status value received from another address space belongs to
     /// an error-space that is not known in this address space.  Also
     /// errors raised by APIs that do not return enough error information
     /// may be converted to this error.
     | Unknown = 2u
+
     /// Client specified an invalid argument.  Note that this differs
     /// from FailedPrecondition.  InvalidArgumentindicates arguments
     /// that are problematic regardless of the state of the system
     /// (e.g., a malformed file name).
     | InvalidArgument = 3u
+
     /// Deadline expired before operation could complete.  For operations
     /// that change the state of the system, this error may be returned
     /// even if the operation has completed successfully.  For example, a
     /// successful response from a server could have been delayed long
     /// enough for the deadline to expire.
     | DeadlineExceeded = 4u
+
     /// Some requested entity (e.g., file or directory) was not found.
     /// For privacy reasons, this code may be returned when the client
     /// does not have the access right to the entity.
     | NotFound = 5u
+
     /// Some entity that we attempted to create (e.g., file or directory) already exists.
     | AlreadyExists = 6u
+
     /// The caller does not have permission to execute the specified
     /// operation.  PermissionDenied must not be used for rejections
     /// caused by exhausting some resource (use ResourceExhausted
@@ -56,12 +64,15 @@ type TFCode =
     /// used if the caller can not be identified (use Unauthenticated
     /// instead for those errors).
     | PermissionDenied = 7u
+
     /// The request does not have valid authentication credentials for the
     /// operation.
     | Unauthenticated = 16u
+
     /// Some resource has been exhausted, perhaps a per-user quota, or
     /// perhaps the entire file system is out of space.
     | ResourceExhausted = 8u
+
     /// Operation was rejected because the system is not in a state
     /// required for the operation's execution.  For example, directory
     /// to be deleted may be non-empty, an rmdir operation is applied to
@@ -83,12 +94,14 @@ type TFCode =
     ///      server does not match the condition. E.g., conflicting
     ///      read-modify-write on the same resource.
     | FailedPrecondition = 9u
+
     /// The operation was aborted, typically due to a concurrency issue
     /// like sequencer check failures, transaction aborts, etc.
     ///
     /// See litmus test above for deciding between FailedPrecondition,
     /// Aborted and Unavailable
     | Aborted = 10u
+
     /// Operation tried to iterate past the valid input range.  E.g., seeking or
     /// reading past end of file.
     ///
@@ -105,12 +118,15 @@ type TFCode =
     /// a space can easily look for an OutOfRange error to detect when
     /// they are done.
     | OutOfRange = 11u
+
     /// Operation is not implemented or not supported/enabled in this service.
     | Unimplemented = 12u
+
     /// Internal errors.  Means some invariants expected by underlying
     /// system has been broken.  If you see one of these errors,
     /// something is very broken.
     | Internal = 13u
+
     /// The service is currently unavailable.  This is a most likely a
     /// transient condition and may be corrected by retrying with
     /// a backoff.
@@ -118,22 +134,23 @@ type TFCode =
     /// See litmus test above for deciding between FailedPrecondition,
     /// Aborted, and Unavailable.
     | Unavailable = 14u
+
     /// Unrecoverable data loss or corruption.
     | DataLoss = 15u
 
 
 module internal TFString = 
-    // extern size_t TF_StringEncode (const char *src, size_t src_len, char *dst, size_t dst_len, TF_Status *status);
+    // extern size_t TF_StringEncode (const char *src, size_t src_len, char *dst, size_t dst_len, TF_Status *status)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern size_t TF_StringEncode (byte* src, size_t src_len, sbyte* dst, size_t dst_len, TF_Status status);
+    extern size_t TF_StringEncode (byte* src, size_t src_len, sbyte* dst, size_t dst_len, TF_Status status)
 
-    // extern size_t TF_StringDecode (const char *src, size_t src_len, const char **dst, size_t *dst_len, TF_Status *status);
+    // extern size_t TF_StringDecode (const char *src, size_t src_len, const char **dst, size_t *dst_len, TF_Status *status)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern size_t TF_StringDecode (sbyte* src, size_t src_len, IntPtr* dst, size_t* dst_len, TF_Status status);
+    extern size_t TF_StringDecode (sbyte* src, size_t src_len, IntPtr* dst, size_t* dst_len, TF_Status status)
 
-    // extern size_t TF_StringEncodedSize (size_t len);
+    // extern size_t TF_StringEncodedSize (size_t len)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern size_t TF_StringEncodedSize (size_t len);
+    extern size_t TF_StringEncodedSize (size_t len)
 
 /// <summary>
 /// Used to track the result of TensorFlow operations.
@@ -155,25 +172,26 @@ module internal TFString =
 /// </remarks>
 type TFStatus(handle) =
     inherit TFDisposable(handle)
-    // extern TF_Status * TF_NewStatus ();
-    [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern TF_Status TF_NewStatus ();
 
-    // extern void TF_DeleteStatus (TF_Status *);
+    // extern TF_Status * TF_NewStatus ()
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_DeleteStatus (TF_Status status);
+    static extern TF_Status TF_NewStatus ()
 
-    // extern void TF_SetStatus (TF_Status *s, TF_Code code, const char *msg);
+    // extern void TF_DeleteStatus (TF_Status *)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_SetStatus (TF_Status s, TFCode code, string msg);
+    static extern void TF_DeleteStatus (TF_Status status)
 
-    // extern TF_Code TF_GetCode (const TF_Status *s);
+    // extern void TF_SetStatus (TF_Status *s, TF_Code code, const char *msg)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern TFCode TF_GetCode (TF_Status s);
+    static extern void TF_SetStatus (TF_Status s, TFCode code, string msg)
 
-    // extern const char * TF_Message (const TF_Status *s);
+    // extern TF_Code TF_GetCode (const TF_Status *s)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern IntPtr TF_Message (TF_Status s);
+    static extern TFCode TF_GetCode (TF_Status s)
+
+    // extern const char * TF_Message (const TF_Status *s)
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern IntPtr TF_Message (TF_Status s)
 
     static let tfstatus = new System.Threading.ThreadLocal<_>(fun () -> new TFStatus())
 
@@ -211,14 +229,13 @@ type TFStatus(handle) =
         with get() = 
             if handle = IntPtr.Zero then
                 raise(ObjectDisposedException ("TFStatus"))
-            TF_GetCode (handle);
-
+            TF_GetCode (handle)
 
     /// <summary>
     /// Gets a human-readable status message.
     /// </summary>
     /// <value>The status message.</value>
-    member this.StatusMessage = (TF_Message (handle)).GetStr ();
+    member this.StatusMessage = (TF_Message (handle)).GetStr ()
 
     /// <summary>
     /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.TFStatus"/>.
@@ -233,13 +250,13 @@ type TFStatus(handle) =
     /// Gets a value indicating whether this <see cref="T:TensorFlow.TFStatus"/> state has been set to ok.
     /// </summary>
     /// <value><c>true</c> if ok; otherwise, <c>false</c>.</value>
-    member this.Ok = this.StatusCode = TFCode.Ok;
+    member this.Ok = this.StatusCode = TFCode.Ok
 
     /// <summary>
     /// Gets a value indicating whether this <see cref="T:TensorFlow.TFStatus"/> state has been set to an error.
     /// </summary>
     /// <value><c>true</c> if error; otherwise, <c>false</c>.</value>
-    member this.Error = this.StatusCode <> TFCode.Ok;
+    member this.Error = this.StatusCode <> TFCode.Ok
 
     /// <summary>
     /// Convenience method that raises an exception if the current status is an error.
@@ -268,10 +285,10 @@ type TFStatus(handle) =
                     this.Dispose ()
                 raise e
             if last then
-                this.Dispose ();
-            true;
+                this.Dispose ()
+            true
         | Some(_) ->
-            this.StatusCode = TFCode.Ok;
+            this.StatusCode = TFCode.Ok
 
     static member (*internal*) Setup (?incoming : TFStatus) = 
         match incoming with | None -> new TFStatus() | Some(x) -> x
@@ -282,21 +299,22 @@ type TFStatus(handle) =
 /// </summary>
 type SessionOptions(handle) =
     inherit TFDisposable(handle)
-    // extern TF_SessionOptions * TF_NewSessionOptions ();
-    [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern TF_SessionOptions TF_NewSessionOptions ();
 
-    // extern void TF_DeleteSessionOptions (TF_SessionOptions *);
+    // extern TF_SessionOptions * TF_NewSessionOptions ()
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_DeleteSessionOptions (TF_SessionOptions options);
+    static extern TF_SessionOptions TF_NewSessionOptions ()
 
-    // extern void TF_SetTarget (TF_SessionOptions *options, const char *target);
+    // extern void TF_DeleteSessionOptions (TF_SessionOptions *)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_SetTarget (TF_SessionOptions options, string target);
+    static extern void TF_DeleteSessionOptions (TF_SessionOptions options)
 
-    // extern void TF_SetConfig (TF_SessionOptions *options, const void *proto, size_t proto_len, TF_Status *status);
+    // extern void TF_SetTarget (TF_SessionOptions *options, const char *target)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_SetConfig (TF_SessionOptions options, IntPtr proto, size_t proto_len, TF_Status status);
+    static extern void TF_SetTarget (TF_SessionOptions options, string target)
+
+    // extern void TF_SetConfig (TF_SessionOptions *options, const void *proto, size_t proto_len, TF_Status *status)
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SetConfig (TF_SessionOptions options, IntPtr proto, size_t proto_len, TF_Status status)
 
     /// <summary>
     /// Initializes a new instance of the <see cref="T:TensorFlow.SessionOptions"/> class.
@@ -312,7 +330,7 @@ type SessionOptions(handle) =
     /// Each entry is in one of the following formats: "local", ip:port, host:port.</param>
     member this.SetTarget (target : string) =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("SessionOptions"))
-        else TF_SetTarget (handle, target);
+        else TF_SetTarget (handle, target)
 
     /// <summary>
     /// Sets the configuration information for the session.
@@ -326,33 +344,41 @@ type SessionOptions(handle) =
     member this.SetConfig (protoData : IntPtr, length : int, ?status : TFStatus) = 
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("SessionOptions"))
         let cstatus = TFStatus.Setup (?incoming=status)
-        TF_SetConfig (handle, protoData, UIntPtr(uint32 length), cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incoming=status);
+        TF_SetConfig (handle, protoData, UIntPtr(uint32 length), cstatus.Handle)
+        cstatus.CheckMaybeRaise (?incoming=status)
     
     member this.Handle = handle
 
 /// Low-level: Enumeration describing the types of a metadata attribute
 [<RequireQualifiedAccess>]
 type TFAttributeType =
+
     /// The type of the attribute is a string
     | String = 0u
+
     /// The type of the attribute is an int.
     | Int = 1u
+
     /// The type of the attribute is a float32
     | Float = 2u
+
     /// The type of the attribute is a bool.
     | Bool = 3u
+
     /// The type of the attribute is a type.
     | Type = 4u
+
     /// The type of the attribute is a tensor shape
     | Shape = 5u
+
     /// The type of the attribute is a tensor
     | Tensor = 6u
+
     /// The type of the attribute is a placeholder
     | Placeholder = 7u
+
     /// The type of the attribute is a function
     | Func = 8u
-
 
 /// <summary>
 /// Low-level: this describes the tensorflow type information for an attribute in the low-level attributes used by operations.
@@ -365,14 +391,15 @@ type TFAttributeType =
 [<StructLayout (LayoutKind.Sequential)>]
 [<Struct>]
 type TFAttributeMetadata =
-    //byte isList;
-    //val IsLbool IsList => isList != 0;
+    //byte isList
+    //val IsLbool IsList => isList != 0
     val private isList : byte
     val ListSize : int64
     val Type : TFAttributeType
     val TotalSize : int64
 
     member this.IsList = this.isList = 0uy
+
     /// <summary>
     /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.TFAttributeMetadata"/>.
     /// </summary>
@@ -441,58 +468,58 @@ type Shape(dims:int64[] option) =
     /// </summary>
     /// <returns>The length, -1 for shapes that have an unknown dimension.</returns>
     /// <param name="dimension">Dimension.</param>
-    member this.GetLength (dimension : int) = match dims with | None -> -1L | Some(dims) -> dims.[dimension]
+    member __.GetLength (dimension : int) = match dims with | None -> -1L | Some(dims) -> dims.[dimension]
 
     /// <summary>
     /// Number of dimensions represented by this shape.
     /// </summary>
     /// <value>The number dimensions, -1 if the number of dimensions is unknown, 0 if the shape represent a scalar, 1 for a vector, 2 for a matrix and so on..</value>
-    member this.NumDimensions = match dims with | None -> -1 | Some(dims) -> dims.Length
+    member __.NumDimensions = match dims with | None -> -1 | Some(dims) -> dims.Length
 
     /// <summary>
     /// Gets a value indicating whether all the dimensions in the <see cref="T:TensorFlow.TFShape"/> are fully specified.
     /// </summary>
     /// <value><c>true</c> if is fully specified; otherwise, <c>false</c>.</value>
-    member this.IsFullySpecified  
+    member __.IsFullySpecified  
         with get() = match dims with | Some(dims) when dims |> Array.exists ((=) -1L) |> not -> true | _ -> false
 
     /// <summary>
     /// Returns the shape as an array
     /// </summary>
     /// <returns>null if the shape represents an unknown shape, otherwise an array with N elements, one per dimension, and each element can be either -1 (if the dimension size is unspecified) or the size of the dimension.</returns>
-    member this.ToArray () =
+    member __.ToArray () =
         match dims with
-        | Some(dims) -> dims
+        | Some dims -> dims
         | None -> null
     
-    member this.Dims = dims |> Option.orDefault [||]
+    member __.Dims = dims |> Option.orDefault [||]
 
     /// <summary>
     /// Returns the shape as an array
     /// </summary>
     /// <returns>null if the shape represents an unknown shape, otherwise an array with N elements, one per dimension, and each element can be either -1 (if the dimension size is unspecified) or the size of the dimension.</returns>
-    member this.ToIntArray () = dims |> Option.map (Array.map int) |> Option.orDefault null
+    member __.ToIntArray () = dims |> Option.map (Array.map int) |> Option.orDefault null
 
     /// <summary>
     /// Gets a value indicating whether one of the dimensions <see cref="T:TensorFlow.TFShape"/> in the shape is larger than Int32.MaxValue.
     /// </summary>
     /// <value><c>true</c> if is long array; otherwise, <c>false</c>.</value>
-    member this.IsLongArray with get() = dims |> Option.map (Array.exists (fun x -> x > int64 Int32.MaxValue)) |> Option.orDefault false
+    member __.IsLongArray with get() = dims |> Option.map (Array.exists (fun x -> x > int64 Int32.MaxValue)) |> Option.orDefault false
 
     /// <summary>
     /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.TFShape"/>.
     /// </summary>
     /// <returns>A <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.TFShape"/>.</returns>
-    override this.ToString () =
+    override __.ToString () =
         match dims with 
-        | Some(dims) -> dims |> Array.map (function | -1L -> "?" | x -> string x) |> String.concat "," |> sprintf "[%s]"
-        | None -> "unknown";
+        | Some dims -> dims |> Array.map (function | -1L -> "?" | x -> string x) |> String.concat "," |> sprintf "[%s]"
+        | None -> "unknown"
 
     /// <summary>
     /// Gets the dimensions for the specified index.
     /// </summary>
     /// <param name="idx">Index.</param>
-    member this.Index (idx:int) = dims.Value.[idx]
+    member __.Index (idx:int) = dims.Value.[idx]
 
     /// <summary>
     /// Adds a <see cref="TensorFlow.TFShape"/> to a <see cref="TensorFlow.TFShape"/>, yielding a shape made up of the concatenation of the first and the second shapes.
@@ -516,20 +543,23 @@ type Shape(dims:int64[] option) =
      /// <returns>The result of the conversion.</returns>
      static member op_Implicit (shape : Shape) : Tensor = shape.AsTensor ()
 
-    // Use for single dimension arrays 
+// Use for single dimension arrays 
+
 [<AutoOpen>]
 module TensorExtension =
-    // extern void * TF_TensorData (const TF_Tensor *);
+
+    // extern void * TF_TensorData (const TF_Tensor *)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern IntPtr TF_TensorData (TF_Tensor tensor);
+    extern IntPtr TF_TensorData (TF_Tensor tensor)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern TF_Tensor TF_AllocateTensor (DType dataType, IntPtr zeroDim, int num_dims, size_t len);
+    extern TF_Tensor TF_AllocateTensor (DType dataType, IntPtr zeroDim, int num_dims, size_t len)
 
     type Tensor with
+
         static member SetupTensor (dt : DType, shape : Shape, data : Array, start : int, count : int, size : int) : IntPtr =
          if box shape = null then raise (ArgumentNullException "shape")
-         Tensor.SetupTensor (dt, shape.Dims, data, start, count, size);
+         Tensor.SetupTensor (dt, shape.Dims, data, start, count, size)
 
         // Convenience, should I add T[,] and T[,,] as more convenience ones?
         /// <summary>
@@ -563,30 +593,29 @@ type TFFunction internal (handle : IntPtr) =
     inherit TFDisposable (handle)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern unit TF_FunctionToFunctionDef (IntPtr func, IntPtr buffer, TF_Status status);
+    static extern unit TF_FunctionToFunctionDef (IntPtr func, IntPtr buffer, TF_Status status)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern unit TF_DeleteFunction (IntPtr handle);
+    static extern unit TF_DeleteFunction (IntPtr handle)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern IntPtr TF_FunctionImportFunctionDef (byte* proto, IntPtr len, TF_Status status);
+    static extern IntPtr TF_FunctionImportFunctionDef (byte* proto, IntPtr len, TF_Status status)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern IntPtr TF_FunctionName (IntPtr handle);
+    static extern IntPtr TF_FunctionName (IntPtr handle)
 
     /// <summary>
     /// Write out a serialized representation of the function as a FunctionDef protocol message to the provided <paramref name="outputFuncDef"/>
     /// </summary>
     /// <param name="outputFuncDef">An allocated buffer where the function will be serialized.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member this.ToFunctionDef (outputFuncDef : TFBuffer, ?status : TFStatus) =
+    member __.ToFunctionDef (outputFuncDef : TFBuffer, ?status : TFStatus) =
         if box outputFuncDef = null then raise(ArgumentNullException ("outputFuncDef"))
-        let cstatus = TFStatus.Setup (?incoming=status);
-        TF_FunctionToFunctionDef (handle, outputFuncDef.Handle, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incoming = status, last = false);
+        let cstatus = TFStatus.Setup (?incoming=status)
+        TF_FunctionToFunctionDef (handle, outputFuncDef.Handle, cstatus.Handle)
+        cstatus.CheckMaybeRaise (?incoming = status, last = false)
 
-    override this.NativeDispose (handle : TF_Status) = TF_DeleteFunction (handle);
-
+    override __.NativeDispose (handle : TF_Status) = TF_DeleteFunction (handle)
 
     /// <summary>
     /// Construct and return the function whose FunctionDef representation is
@@ -595,12 +624,12 @@ type TFFunction internal (handle : IntPtr) =
     /// <returns>The function definition, or null on failure.</returns>
     /// <param name="proto">Array containing the serialized FunctionDef in a protocol buffer.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member this.ImportFunctionDef (proto : byte [], ?status : TFStatus) : TFFunction  =
+    member __.ImportFunctionDef (proto : byte [], ?status : TFStatus) : TFFunction  =
         if box proto = null then raise(ArgumentNullException ("proto"))
         let cstatus = TFStatus.Setup (?incoming=status)
         use p = fixed &proto.[0] 
-        //let res = TF_FunctionImportFunctionDef (p, (IntPtr)proto.Length, cstatus.Handle);
-        let res = TF_FunctionImportFunctionDef (p, IntPtr(proto.Length), cstatus.Handle);
+        //let res = TF_FunctionImportFunctionDef (p, (IntPtr)proto.Length, cstatus.Handle)
+        let res = TF_FunctionImportFunctionDef (p, IntPtr(proto.Length), cstatus.Handle)
         if (not(cstatus.CheckMaybeRaise (?incoming=status, last= false))) then
             box null :?> TFFunction
         else
@@ -616,17 +645,17 @@ type TFFunction internal (handle : IntPtr) =
 type TFLibrary private (handle : IntPtr) = 
     inherit TFDisposable(handle)
 
-    // extern TF_Library * TF_LoadLibrary (const char *library_filename, TF_Status *status);
+    // extern TF_Library * TF_LoadLibrary (const char *library_filename, TF_Status *status)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern TF_Library TF_LoadLibrary (string library_filename, TF_Status  status);
+    static extern TF_Library TF_LoadLibrary (string library_filename, TF_Status  status)
 
-    // extern void TF_DeleteLibraryHandle (TF_Library *lib_handle);
+    // extern void TF_DeleteLibraryHandle (TF_Library *lib_handle)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_DeleteLibraryHandle (TF_Library lib_handle);
+    static extern void TF_DeleteLibraryHandle (TF_Library lib_handle)
 
-    // extern TF_Buffer TF_GetOpList (TF_Library *lib_handle);
+    // extern TF_Buffer TF_GetOpList (TF_Library *lib_handle)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern LLBuffer TF_GetOpList (TF_Library lib_handle);
+    static extern LLBuffer TF_GetOpList (TF_Library lib_handle)
 
     /// <summary>
     /// Load the library specified by and register the operations and
@@ -641,15 +670,15 @@ type TFLibrary private (handle : IntPtr) =
     /// </remarks>
     static member FromFile (libraryFile : string, ?status : TFStatus) : TFLibrary  =
         let cstatus = TFStatus.Setup (?incoming=status)
-        let h = TF_LoadLibrary (libraryFile, cstatus.Handle);
+        let h = TF_LoadLibrary (libraryFile, cstatus.Handle)
         cstatus.CheckMaybeRaise (?incoming=status) |> ignore
-        new TFLibrary (h);
+        new TFLibrary (h)
 
     /// <summary>
     /// Retrieves the ProtocolBuffer describing the available operations in
     /// the loaded TensorFlow library.
     /// </summary>
     /// <returns>The buffer contains a ProtocolBuffer encoded payload, you need a ProtocolBuffer reader to process the contents.</returns>
-    member this.GetOpList () : TFBuffer = new TFBuffer ((TF_GetOpList (handle)).data)
+    member __.GetOpList () : TFBuffer = new TFBuffer ((TF_GetOpList (handle)).data)
 
-    override this.NativeDispose (handle : IntPtr) = TF_DeleteLibraryHandle (handle);
+    override __.NativeDispose (handle : IntPtr) = TF_DeleteLibraryHandle (handle)

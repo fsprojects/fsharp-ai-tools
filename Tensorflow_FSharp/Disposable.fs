@@ -43,7 +43,7 @@ module TFCore =
     let UseCPU = true
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern IntPtr TF_Version();
+    extern IntPtr TF_Version()
 
     /// <summary>
     /// Returns the version of the TensorFlow runtime in use.
@@ -51,9 +51,9 @@ module TFCore =
     /// <value>The version.</value>
     let Version() = TF_Version().GetStr()
 
-    // extern size_t TF_DataTypeSize (TF_DataType dt);
+    // extern size_t TF_DataTypeSize (TF_DataType dt)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern IntPtr TF_DataTypeSize (DType dt);
+    extern IntPtr TF_DataTypeSize (DType dt)
 
     /// <summary>
     /// Gets the size in bytes of the specified TensorFlow data type.
@@ -62,16 +62,16 @@ module TFCore =
     /// <param name="dt">Dt.</param>
     let GetDataTypeSize (dt:DType) = int64 (TF_DataTypeSize (dt))
 
-    // extern TF_Buffer * TF_GetAllOpList ();
+    // extern TF_Buffer * TF_GetAllOpList ()
     //[<DllImport (NativeBinding.TensorFlowLibrary)>]
-    //extern IntPtr TF_GetAllOpList ();
+    //extern IntPtr TF_GetAllOpList ()
 
     /// <summary>
     /// Retrieves the ProtocolBuffer describing all of the available operations in
     /// the TensorFlow library in current use.
     /// </summary>
     /// <returns>The buffer contains a ProtocolBuffer encoded payload, you need a ProtocolBuffer reader to process the contents.</returns>
-    //let GetAllOpList () : TFBuffer = new TFBuffer (TF_GetAllOpList ());
+    //let GetAllOpList () : TFBuffer = new TFBuffer (TF_GetAllOpList ())
 
     let Init () = 
         if sizeof<IntPtr> = 4 then
@@ -79,7 +79,7 @@ module TFCore =
                 "The TensorFlow native libraries were compiled in 64 bit mode, you must run in 64 bit mode\n" +
                 "With Mono, do that with mono --arch=64 executable.exe, if using an IDE like MonoDevelop,\n" +
                 "Xamarin Studio or Visual Studio for Mac, Build/Compiler settings, make sure that " +
-                "\"Platform Target\" has x64 selected.");
+                "\"Platform Target\" has x64 selected.")
             raise(Exception("Requries 64 bit"))
 
 /// <summary>
@@ -124,25 +124,25 @@ type BufferReleaseFunc = delegate of IntPtr * IntPtr -> unit
 // TODO: perhaps we should have an implicit byte [] conversion that just calls ToArray?
 type TFBuffer internal (handle:IntPtr) =
     inherit TFDisposable(handle) 
-    // extern TF_Buffer * TF_NewBufferFromString (const void *proto, size_t proto_len);
+    // extern TF_Buffer * TF_NewBufferFromString (const void *proto, size_t proto_len)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern LLBuffer* TF_NewBufferFromString (IntPtr proto, IntPtr proto_len)
 
-    // extern TF_Buffer * TF_NewBuffer ();
+    // extern TF_Buffer * TF_NewBuffer ()
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern LLBuffer* TF_NewBuffer ()
 
-    // extern void TF_DeleteBuffer (TF_Buffer *);
+    // extern void TF_DeleteBuffer (TF_Buffer *)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_DeleteBuffer (LLBuffer* buffer);
+    static extern void TF_DeleteBuffer (LLBuffer* buffer)
 
-    // extern TF_Buffer TF_GetBuffer (TF_Buffer *buffer);
+    // extern TF_Buffer TF_GetBuffer (TF_Buffer *buffer)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern LLBuffer TF_GetBuffer (LLBuffer* buffer);
+    static extern LLBuffer TF_GetBuffer (LLBuffer* buffer)
 
-    static let FreeBlockDelegate = TFBuffer.FreeBlock;
+    static let FreeBlockDelegate = TFBuffer.FreeBlock
 
-    static let FreeBufferFunc = Marshal.GetFunctionPointerForDelegate<BufferReleaseFunc> (BufferReleaseFunc(fun x y -> FreeBlockDelegate(x,y)));
+    static let FreeBufferFunc = Marshal.GetFunctionPointerForDelegate<BufferReleaseFunc> (BufferReleaseFunc(fun x y -> FreeBlockDelegate(x,y)))
 
     /// <summary>
     /// Initializes a new instance of the <see cref="T:TensorFlow.TFBuffer"/> class.
@@ -164,17 +164,17 @@ type TFBuffer internal (handle:IntPtr) =
     new (buffer : IntPtr, size : int64, release : BufferReleaseFunc) = 
         let handle = TF_NewBuffer ()
         let mutable buf = NativePtr.get handle 0  //handle |> NativePtr.ofNativeInt<LLBuffer>
-        buf.data <- buffer;
+        buf.data <- buffer
         buf.length <- UIntPtr(uint64(size))
         if release = null then
-            buf.data_deallocator <- IntPtr.Zero;
+            buf.data_deallocator <- IntPtr.Zero
         else
-            buf.data_deallocator <- Marshal.GetFunctionPointerForDelegate (release);
+            buf.data_deallocator <- Marshal.GetFunctionPointerForDelegate (release)
         new TFBuffer (handle |> NativePtr.toNativeInt)
 
     [<MonoPInvokeCallback (typeof<BufferReleaseFunc>)>]
     static member internal FreeBlock (data:IntPtr, length:IntPtr) =
-        Marshal.FreeHGlobal (data);
+        Marshal.FreeHGlobal (data)
 
     /// <summary>
     /// Initializes a new instance of the <see cref="T:TensorFlow.TFBuffer"/> by making a copy of the provided byte array.
@@ -211,7 +211,7 @@ type TFBuffer internal (handle:IntPtr) =
 
 
     override this.NativeDispose (handle:IntPtr) =
-        TF_DeleteBuffer (handle |> NativePtr.ofNativeInt);
+        TF_DeleteBuffer (handle |> NativePtr.ofNativeInt)
 
     /// <summary>
     /// Returns a byte array representing the data wrapped by this buffer.
@@ -219,9 +219,9 @@ type TFBuffer internal (handle:IntPtr) =
     /// <returns>The array.</returns>
     member this.ToArray() =
         if (handle = IntPtr.Zero) then
-            null;
+            null
         else
-            let lb = handle |> NativePtr.ofNativeInt<LLBuffer> |> NativePtr.read;
+            let lb = handle |> NativePtr.ofNativeInt<LLBuffer> |> NativePtr.read
             let result = Array.zeroCreate<byte> (int lb.length)
             Marshal.Copy (lb.data, result, 0, (int lb.length))
             result
@@ -273,7 +273,10 @@ and
     /// Dispose method leaves the <see cref="T:TensorFlow.TFDisposable"/> in an unusable state. After
     /// calling Dispose, you must release all references to the <see cref="T:TensorFlow.TFDisposable"/> so
     /// the garbage collector can reclaim the memory that the <see cref="T:TensorFlow.TFDisposable"/> was occupying.</remarks>
-    member this.Dispose () = this.Dispose(true); GC.SuppressFinalize (this)
+    member this.Dispose () = 
+        this.Dispose(true)
+        GC.SuppressFinalize (this)
+
     override this.Finalize () = this.Dispose(false)
 
     interface IDisposable with
@@ -312,6 +315,6 @@ type TFDisposableThreadSafe(handle:IntPtr) =
     /// <param name="disposing">If set to <c>true</c> disposing.</param>
     override this.Dispose (disposing:bool) =
         if handle <> IntPtr.Zero then
-            this.NativeDispose (handle);
-            this.Handle <- IntPtr.Zero;
+            this.NativeDispose (handle)
+            this.Handle <- IntPtr.Zero
 
