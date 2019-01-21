@@ -212,6 +212,7 @@ and PartialRunToken(token:IntPtr) =
 /// </remarks>
 and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     inherit TFDisposableThreadSafe(handle:IntPtr)
+
     // extern TF_Session * TF_NewSession (TF_Graph *graph, const TF_SessionOptions *opts, TF_Status *status)
     [<DllImport(NativeBinding.TensorFlowLibrary)>]
     static extern TF_Session TF_NewSession (TF_Graph graph, TF_SessionOptions opts, TF_Status status)
@@ -343,7 +344,7 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// <remarks>
     /// Can not be called after calling DeleteSession.
     /// </remarks>
-    member this.CloseSession (?status : TFStatus) =
+    member __.CloseSession (?status : TFStatus) =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status)
         TF_CloseSession (handle, cstatus.Handle)
@@ -353,16 +354,15 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// Deletes the session.
     /// </summary>
     /// <param name="status">Status.</param>
-    member this.DeleteSession (?status : TFStatus) = 
+    member __.DeleteSession (?status : TFStatus) = 
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status)
         TF_DeleteSession (handle, cstatus.Handle)
         cstatus.CheckMaybeRaise (?incoming=status)
 
-    override this.NativeDispose (handle : IntPtr) =
+    override __.NativeDispose (handle : IntPtr) =
         use s = new TFStatus()
         TF_DeleteSession (handle, s.Handle)
-
 
     /// <summary>
     /// Gets a new runner, this provides a simpler API to prepare the inputs to run on a session
@@ -432,9 +432,9 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
     member __.PartialRunSetup (inputs : Output [], outputs : Output [], targetOpers : Operation [], ?status : TFStatus) : PartialRunToken =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
-        if box inputs = null then raise (ArgumentNullException ("inputs"))
-        if box outputs = null then raise (ArgumentNullException ("outputs"))
-        if box targetOpers = null then raise (ArgumentNullException ("targetOpers"))
+        if isNull inputs then raise (ArgumentNullException ("inputs"))
+        if isNull outputs then raise (ArgumentNullException ("outputs"))
+        if isNull targetOpers then raise (ArgumentNullException ("targetOpers"))
         let mutable returnHandle = IntPtr.Zero
         let cstatus = TFStatus.Setup (?incoming=status)
         let tLen = targetOpers.Length
@@ -445,10 +445,10 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
 
     member __.PartialRun (token : PartialRunToken, inputs : Output [], inputValues : Tensor [], outputs : Output [], targetOpers : Operation [], ?status : TFStatus) : Tensor [] =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
-        if box inputs = null then raise(ArgumentNullException("inputs"))
-        if box inputValues = null then raise (ArgumentNullException ("inputValues"))
-        if box outputs = null then raise (ArgumentNullException ("outputs"))
-        if box targetOpers = null then raise (ArgumentNullException ("targetOpers"))
+        if isNull inputs then raise(ArgumentNullException("inputs"))
+        if isNull inputValues then raise (ArgumentNullException ("inputValues"))
+        if isNull outputs then raise (ArgumentNullException ("outputs"))
+        if isNull targetOpers then raise (ArgumentNullException ("targetOpers"))
         let iLen = inputs.Length
         if iLen <> inputValues.Length then raise (ArgumentException ("inputs and inputValues have different lengths", "inputs"))
         let oLen = outputs.Length
