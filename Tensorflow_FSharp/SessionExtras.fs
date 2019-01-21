@@ -65,3 +65,4 @@ type Session with
          let save : Operation = TF.Save (TF.Const (Tensor.CreateString (Encoding.UTF8.GetBytes (filename)), DType.String), TF.Concat (TF.Const (new Tensor(0)), clonedTensors), tensors |> Array.map snd)
 
          this.GetRunner().AddTarget(save).Run ()
+

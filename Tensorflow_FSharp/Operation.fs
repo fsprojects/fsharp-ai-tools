@@ -7,7 +7,7 @@ open System.Text
 open Utils
 open Microsoft.FSharp.NativeInterop
 
-#nowarn "9"
+#nowarn "9" "51"
 
 /// <summary>
 /// Represents a computation node in the graph.  Tensorflow operations are attached to a <see cref="T:Tensorflow.Graph"/>.
@@ -54,7 +54,6 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern IntPtr TF_OperationDevice (TF_Operation oper);
 
-
     // extern int TF_OperationNumOutputs (TF_Operation *oper);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern int TF_OperationNumOutputs (TF_Operation oper);
@@ -70,13 +69,14 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
     // extern int TF_OperationInputListLength (TF_Operation *oper, const char *arg_name, TF_Status *status);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern int TF_OperationInputListLength (TF_Operation oper, string arg_name, TF_Status status);
+
     // extern int TF_OperationNumControlInputs (TF_Operation *oper);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern int TF_OperationNumControlInputs (TF_Operation oper);
 
     // extern int TF_OperationGetControlInputs (TF_Operation *oper, TF_Operation **control_inputs, int max_control_inputs);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern int TF_OperationGetControlInputs (TF_Operation oper, TF_Operation control_inputs, int max_control_inputs);
+    static extern int TF_OperationGetControlInputs (TF_Operation oper, [<Out>] [<MarshalAs (UnmanagedType.LPArray, SizeParamIndex = 2s)>] IntPtr [] control_inputs, int max_control_inputs);
 
     // extern int TF_OperationNumControlOutputs (TF_Operation *oper);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
@@ -225,7 +225,20 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
             TF_OperationGetControlOutputs (handle, arr, n) |> ignore
             Array.create n (fun i -> new Operation((*graph,*) arr.[i]))
 
-    member this.Device = (TF_OperationDevice (handle)).GetStr ();
+    /// <summary>
+    /// Get the list of operations that have this operation as a control input.
+    /// </summary>
+    /// <value>The control outputs.</value>
+    member this.ControlInputs
+        with get() = 
+            let n = this.NumControlOutputs;
+            let arr = Array.zeroCreate<IntPtr> n
+            TF_OperationGetControlInputs(handle, arr, n) |> ignore
+            Array.create n (fun i -> new Operation((*graph,*) arr.[i]))
+
+    member this.Device = (TF_OperationDevice (handle)).GetStr()
+
+    member this.OpType = (TF_OperationOpType(handle)).GetStr()
 
     member this.GetAttributeMetadata (attrName : string, ?status : TFStatus) : TFAttributeMetadata =
         if handle = IntPtr.Zero then TFDisposable.ObjectDisposedException ()
@@ -498,4 +511,6 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
         match x with
         | :? Operation as other -> this.Handle = other.Handle
         | _ -> false
+
+    override this.GetHashCode() = this.Handle.GetHashCode()
 

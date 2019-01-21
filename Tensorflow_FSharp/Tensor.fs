@@ -7,7 +7,6 @@ open System.Numerics;
 open System.Runtime.InteropServices;
 open System.Text;
 type size_t = System.UIntPtr
-type TF_Tensor = System.IntPtr
 open Microsoft.FSharp.NativeInterop
 
 
@@ -16,12 +15,12 @@ open Microsoft.FSharp.NativeInterop
 /// <summary>
 /// Signature that methods must conform to to be used to release memory that was passed to a manually allocated Tensor
 /// </summary>
-type Deallocator = delegate of (IntPtr * IntPtr * IntPtr)-> unit
+type Deallocator = delegate of IntPtr * IntPtr * IntPtr -> unit
 
 
 module TensorNative =
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern TF_Tensor TF_NewTensor (DType dataType, IntPtr zeroDims, int num_dims, IntPtr data, size_t len, Deallocator deallocator, IntPtr deallocator_arg);
+    extern TF_Tensor TF_NewTensor (uint32 dataType, IntPtr zeroDims, int num_dims, IntPtr data, size_t len, Deallocator deallocator, IntPtr deallocator_arg);
 
 /// <summary>
 /// Tensor holds a multi-dimensional array of elements of a single data type.
@@ -71,15 +70,15 @@ type Tensor internal (handle : IntPtr) =
 
     // extern TF_Tensor * TF_NewTensor (TF_DataType, const int64_t *dims, int num_dims, void *data, size_t len, void (* deallocator)(void *, size_t, void *), void *deallocator_arg);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern TF_Tensor TF_NewTensor (DType dataType, int64 [] dims, int num_dims, IntPtr data, size_t len, Deallocator deallocator, IntPtr deallocator_arg);
+    static extern TF_Tensor TF_NewTensor (uint32 dataType, int64 [] dims, int num_dims, IntPtr data, size_t len, Deallocator deallocator, IntPtr deallocator_arg);
 
 
     // extern TF_Tensor * TF_AllocateTensor (TF_DataType, const int64_t *dims, int num_dims, size_t len);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern TF_Tensor TF_AllocateTensor (DType dataType, int64 [] dims, int num_dims, size_t len);
+    static extern TF_Tensor TF_AllocateTensor (uint32 dataType, int64 [] dims, int num_dims, size_t len);
 
     // [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    // static extern TF_Tensor TF_AllocateTensor (DType dataType, IntPtr zeroDim, int num_dims, size_t len);
+    // static extern TF_Tensor TF_AllocateTensor (uint32 dataType, IntPtr zeroDim, int num_dims, size_t len);
 
     // extern void TF_DeleteTensor (TF_Tensor *);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
@@ -131,11 +130,11 @@ type Tensor internal (handle : IntPtr) =
         Tensor.SetupMulti (dt, dims, array, totalSize)
 
     [<MonoPInvokeCallback (typeof<Deallocator>)>]
-    static member FreeTensorData (data : IntPtr, len : IntPtr, closure : IntPtr) = 
+    static member FreeTensorData (data : IntPtr) (len : IntPtr) (closure : IntPtr) = 
         Marshal.FreeHGlobal (data);
 
     [<MonoPInvokeCallback (typeof<Deallocator>)>]
-    static member FreeTensorHandle (data : IntPtr, len : IntPtr, closure : IntPtr) =
+    static member FreeTensorHandle (data : IntPtr) (len : IntPtr) (closure : IntPtr) =
         let gch = GCHandle.FromIntPtr (closure);
         gch.Free ();
 
@@ -152,7 +151,7 @@ type Tensor internal (handle : IntPtr) =
     /// <param name="deallocatorData">An optional argument of data that is passed to the deallocator method when the tensor is destroyed, you can use this to pass context information.</param>
     new (dataType : DType, dims : int64 [], data : IntPtr, dataSize : size_t, deallocator : Deallocator, deallocatorData : IntPtr) =
         if box dims = null then raise (ArgumentNullException ("dims"))
-        let handle = TF_NewTensor (dataType, dims, dims.Length, data, dataSize, deallocator, deallocatorData);
+        let handle = TF_NewTensor (uint32 dataType, dims, dims.Length, data, dataSize, deallocator, deallocatorData);
         new Tensor (handle)
 
 
@@ -170,7 +169,7 @@ type Tensor internal (handle : IntPtr) =
     /// </remarks>
     new (dataType : DType, dims : int64 [], size : int) =
       if dims = null then raise (ArgumentNullException ("dims"))
-      let handle = TF_AllocateTensor (dataType, dims, dims.Length, UIntPtr(uint64 size))
+      let handle = TF_AllocateTensor (uint32 dataType, dims, dims.Length, UIntPtr(uint64 size))
       new Tensor (handle)
 
 
@@ -220,35 +219,36 @@ type Tensor internal (handle : IntPtr) =
     ///     for single-dimension arrays, where the dimension is the value of the
     ///     first element.   And so on.
     /// </remarks>
-    member this.Shape with get() : int64[] = [|for i = 0 to TF_NumDims (handle) do yield TF_Dim (handle, i)|]
+    member this.Shape with get() : int64[] = [|for i = 0 to TF_NumDims (handle) - 1 do yield TF_Dim (handle, i)|]
 
-    static member internal FetchSimple (dt : DType, data : obj) : obj =
-        match dt with 
-        | DType.Float32 -> Convert.ToSingle (data) |> box
-        | DType.Float64 -> Convert.ToDouble (data) |> box
-        | DType.Int32   -> Convert.ToInt32 (data) |> box
-        | DType.UInt8   -> Convert.ToByte (data) |> box
-        | DType.Int16   -> Convert.ToInt16 (data) |> box
-        | DType.Int8    -> Convert.ToSByte (data) |> box // ?
-        | DType.String  -> raise(NotImplementedException())
-        | DType.Int64   -> Convert.ToInt64 (data) |> box
-        | DType.Bool    -> Convert.ToBoolean (data) |> box
-        | DType.UInt16  -> Convert.ToUInt16 (data) |> box
-        | DType.Complex128 -> data :?> Complex |> box
-        | _ -> box null
-
+// This automatically is used for IntPtr as well which is not desired behavior
+//    static member internal FetchSimple (dt : DType, data : obj) : obj =
+//        match dt with 
+//        | DType.Float32 -> Convert.ToSingle (data) |> box
+//        | DType.Float64 -> Convert.ToDouble (data) |> box
+//        | DType.Int32   -> Convert.ToInt32 (data) |> box
+//        | DType.UInt8   -> Convert.ToByte (data) |> box
+//        | DType.Int16   -> Convert.ToInt16 (data) |> box
+//        | DType.Int8    -> Convert.ToSByte (data) |> box 
+//        | DType.String  -> raise(NotImplementedException())
+//        | DType.Int64   -> Convert.ToInt64 (data) |> box
+//        | DType.Bool    -> Convert.ToBoolean (data) |> box
+//        | DType.UInt16  -> Convert.ToUInt16 (data) |> box
+//        | DType.Complex128 -> data :?> Complex |> box
+//        | _ -> box null
+//
     static member FetchSimple (dt : DType, data : IntPtr ) : obj =
         match dt with 
-        | DType.Float32 -> data |> NativePtr.ofNativeInt<float32> |> box
-        | DType.Float64 -> data |> NativePtr.ofNativeInt<double> |> box
-        | DType.Int32   -> data |> NativePtr.ofNativeInt<int32> |> box
-        | DType.UInt8   -> data |> NativePtr.ofNativeInt<uint8> |> box
-        | DType.Int16   -> data |> NativePtr.ofNativeInt<int16>|> box
+        | DType.Float32 -> data |> NativePtr.nativeIntRead<float32> |> box
+        | DType.Float64 -> data |> NativePtr.nativeIntRead<double> |> box
+        | DType.Int32   -> data |> NativePtr.nativeIntRead<int32> |> box
+        | DType.UInt8   -> data |> NativePtr.nativeIntRead<uint8> |> box
+        | DType.Int16   -> data |> NativePtr.nativeIntRead<int16>|> box
         | DType.String  -> raise(NotImplementedException())
-        | DType.Int64   -> data |> NativePtr.ofNativeInt<int64> |> box
-        | DType.Bool    -> data |> NativePtr.ofNativeInt<bool> |> box
-        | DType.UInt16  -> data |> NativePtr.ofNativeInt<uint16> |> box
-        | DType.Complex128 -> data |> NativePtr.ofNativeInt<Complex>  |> box
+        | DType.Int64   -> data |> NativePtr.nativeIntRead<int64> |> box
+        | DType.Bool    -> data |> NativePtr.nativeIntRead<bool> |> box
+        | DType.UInt16  -> data |> NativePtr.nativeIntRead<uint16> |> box
+        | DType.Complex128 -> data |> NativePtr.nativeIntRead<Complex>  |> box
         | _ -> box null
 
     //used to create multidementional arrays / tensor with a constant value
@@ -361,7 +361,7 @@ type Tensor internal (handle : IntPtr) =
         // If we are at the last node
         if level = shape.Length - 1 then
             let target = Array.CreateInstance (t, int(shape.[level]))
-            for  l in  0L .. shape.[level] do
+            for  l in  0L .. shape.[level] - 1L do
                 match dt with
                 | DType.Float32 ->  target.SetValue((!data) |> NativePtr.nativeIntRead<float32>,l)
                 | DType.Float64 ->  target.SetValue((!data) |> NativePtr.nativeIntRead<double>,l)
@@ -385,7 +385,7 @@ type Tensor internal (handle : IntPtr) =
                     if target.IsNone then target <- Some(Array.CreateInstance (childArray.GetType (), shape.[level]))
                     target.Value.SetValue (childArray, i)
             else
-                for  l in 0L .. shape.[level] do
+                for  l in 0L .. shape.[level] - 1L do
                     let childArray = Tensor.FetchJaggedArray (t, dt, data, shape, level + 1)
                     if target.IsNone then target <- Some(Array.CreateInstance (childArray.GetType (), shape.[level]))
                     target.Value.SetValue (childArray, l)
@@ -393,7 +393,7 @@ type Tensor internal (handle : IntPtr) =
 
 
     static member FetchMultiDimensionalArray (target : Array, dt : DType, data : IntPtr, shape : int64 []) =
-        let idx = Array.zeroCreate<int> target.Length
+        let idx = Array.zeroCreate<int> shape.Length
         for i = 0 to shape.Length - 1 do
             if (shape.[i] > int64(Int32.MaxValue)) then raise(ArgumentOutOfRangeException ("Shape can not be longer than 32 bits"))
         Tensor.Copy (target, dt, shape, idx, 0, ref data);
@@ -440,7 +440,7 @@ type Tensor internal (handle : IntPtr) =
         let n = this.NumDims;
         if n = 0 then this.GetValue().ToString ();
         else
-            let sb = new StringBuilder ("[")
+            let sb = new StringBuilder ("shpae [")
             for i = 0 to n - 1 do
               sb.Append (TF_Dim (handle, i)) |> ignore
               if i + 1 < n then
@@ -494,8 +494,8 @@ type Tensor internal (handle : IntPtr) =
   
           arrays.Push (array)
           counters.Push (0)
-          let mutable depth = 1
   
+          let mutable depth = 1
           let mutable a = array;
           let mutable i = 0;
   
@@ -507,11 +507,11 @@ type Tensor internal (handle : IntPtr) =
                   depth <- depth - 1
                 else
                   let e = a.GetValue (i)
-                  let next = e :?> Array
-                  if next = null then
+                  match e |> Option.ofType<Array> with
+                  | None -> 
                     yield e 
                     i <- i + 1
-                  else
+                  | Some(next) ->
                     arrays.Push (a)
                     counters.Push (i)
                     a <- next
@@ -825,10 +825,14 @@ type Tensor internal (handle : IntPtr) =
     static member TFCreate(x:'a)  : IntPtr =
         // TODO does this create a memory leak?
         let v = valueToIntPtr x
-        TensorNative.TF_NewTensor (DType.FromType(typeof<'a>), IntPtr.Zero, 0,  v,  UIntPtr(uint64 sizeof<'a>),  FreeTensorDataDelegate,  IntPtr.Zero)
+        TensorNative.TF_NewTensor (uint32 <| DType.FromType(typeof<'a>), IntPtr.Zero, 0,  v,  UIntPtr(uint64 sizeof<'a>),  FreeTensorDataDelegate,  IntPtr.Zero)
   
     // Creates a constant tensor with a single dimension from an integer value.
     new (value : int) = new Tensor(Tensor.TFCreate(value))
+//        let intPtr = Marshal.AllocHGlobal (sizeof<int>)
+//        NativePtr.nativeIntWrite intPtr value
+//        new Tensor(TensorNative.TF_NewTensor (uint32 <| DType.FromType(typeof<int>), IntPtr.Zero, 0,  intPtr,  UIntPtr(uint64 sizeof<'a>),  FreeTensorDataDelegate,  IntPtr.Zero))
+  
   
     /// Creates a constant tensor with a single dimension from a boolean value.
     new (value : bool) = new Tensor(Tensor.TFCreate(value))
@@ -871,17 +875,17 @@ type Tensor internal (handle : IntPtr) =
       if start < 0 || start > data.Length - count then raise(ArgumentException ("start + count > Array size"))
       let dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
       if box dims = null then
-          TensorNative.TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject().Add(start * size), UIntPtr(uint64 (count * size)), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+          TensorNative.TF_NewTensor (uint32 dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject().Add(start * size), UIntPtr(uint64 (count * size)), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
       else 
-          TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject().Add(start * size), UIntPtr(uint64 (count * size)), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+          TF_NewTensor (uint32 dt, dims, dims.Length, dataHandle.AddrOfPinnedObject().Add(start * size), UIntPtr(uint64 (count * size)), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
   
     // Use for multiple dimension arrays 
     static member SetupMulti (dt : DType, dims : int64 [], data : Array, bytes : int64) : IntPtr =
       let dataHandle = GCHandle.Alloc (data, GCHandleType.Pinned);
       if box dims = null then 
-          TensorNative.TF_NewTensor (dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject (), UIntPtr(uint64 bytes), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+          TensorNative.TF_NewTensor (uint32 dt, IntPtr.Zero, 0, dataHandle.AddrOfPinnedObject (), UIntPtr(uint64 bytes), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
       else
-          TF_NewTensor (dt, dims, dims.Length, dataHandle.AddrOfPinnedObject (), UIntPtr(uint64 bytes), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
+          TF_NewTensor (uint32 dt, dims, dims.Length, dataHandle.AddrOfPinnedObject (), UIntPtr(uint64 bytes), FreeTensorHandleDelegate, GCHandle.ToIntPtr (dataHandle));
   
     /// <summary>
     /// Converts a C# array into a tensor.

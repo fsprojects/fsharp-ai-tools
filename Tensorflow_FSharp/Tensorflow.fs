@@ -273,7 +273,7 @@ type TFStatus(handle) =
         | Some(_) ->
             this.StatusCode = TFCode.Ok;
 
-    static member internal Setup (?incoming : TFStatus) = 
+    static member (*internal*) Setup (?incoming : TFStatus) = 
         match incoming with | None -> new TFStatus() | Some(x) -> x
 
 
@@ -301,7 +301,7 @@ type SessionOptions(handle) =
     /// <summary>
     /// Initializes a new instance of the <see cref="T:TensorFlow.SessionOptions"/> class.
     /// </summary>
-    new() = new SessionOptions(TF_SessionOptions ())
+    new() = new SessionOptions(TF_NewSessionOptions ())
 
     override this.NativeDispose (handle : IntPtr) = TF_DeleteSessionOptions (handle)
 
@@ -517,14 +517,13 @@ type Shape(dims:int64[] option) =
      static member op_Implicit (shape : Shape) : Tensor = shape.AsTensor ()
 
     // Use for single dimension arrays 
-    // TODO add shape
 [<AutoOpen>]
 module TensorExtension =
     // extern void * TF_TensorData (const TF_Tensor *);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     extern IntPtr TF_TensorData (TF_Tensor tensor);
 
-    // [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
     extern TF_Tensor TF_AllocateTensor (DType dataType, IntPtr zeroDim, int num_dims, size_t len);
 
     type Tensor with
@@ -601,7 +600,6 @@ type TFFunction internal (handle : IntPtr) =
         let cstatus = TFStatus.Setup (?incoming=status)
         use p = fixed &proto.[0] 
         //let res = TF_FunctionImportFunctionDef (p, (IntPtr)proto.Length, cstatus.Handle);
-        // TODO Double check that this function takes length as IntPtr
         let res = TF_FunctionImportFunctionDef (p, IntPtr(proto.Length), cstatus.Handle);
         if (not(cstatus.CheckMaybeRaise (?incoming=status, last= false))) then
             box null :?> TFFunction

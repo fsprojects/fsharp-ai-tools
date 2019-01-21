@@ -9,8 +9,6 @@ open System
 open System.Numerics
 open System.Runtime.InteropServices
 open System.Text
-type size_t = System.UIntPtr
-type TF_Tensor = System.IntPtr
 
 /// <summary>
 /// The Variable class holds the Output nodes that are used to initialize, read and assign a value to a variable.   
