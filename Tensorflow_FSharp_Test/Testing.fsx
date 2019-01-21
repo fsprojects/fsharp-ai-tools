@@ -1,12 +1,13 @@
 ﻿// System.TypeLoadException: Could not load type 'System.Runtime.InteropServices.GCHandle' from assembly 'System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'.
 
 
-#I @"..\Tensorflow_FSharp\bin\Debug\net472"
+#I @"..\Tensorflow_FSharp\bin\Debug\netstandard2.0"
 #r "Google.Protobuf.dll"
 #r "HDF.PInvoke.dll"
 #r "protobuf-net.dll"
 #r "TensorFlowSharpProtoNet.dll"
 #r "TensorFlow_FSharp.dll"
+#r "netstandard"
 
 open Tensorflow
 open System
