@@ -1,12 +1,12 @@
 ﻿// System.TypeLoadException: Could not load type 'System.Runtime.InteropServices.GCHandle' from assembly 'System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'.
 
 
-#I @"C:\EE\Git\Tensorflow_FSharp\Tensorflow_FSharp\bin\Debug\net472"
+#I @"..\Tensorflow_FSharp\bin\Debug\net472"
 #r "Google.Protobuf.dll"
 #r "HDF.PInvoke.dll"
 #r "protobuf-net.dll"
 #r "TensorFlowSharpProtoNet.dll"
-#r "TensorFlowSharp.exe"
+#r "TensorFlow_FSharp.dll"
 
 open Tensorflow
 open System
@@ -58,7 +58,7 @@ let private RaiseNoGradWrtInitialLoopValError(op:TFOperation, from_ops:Set<TFOpe
          |> ValueError |> raise
 *)
 
-TF_OperationGetControlInputs
+//TF_OperationGetControlInputs
 // TODO recursivly traverse upwards
 
 //type Operation with

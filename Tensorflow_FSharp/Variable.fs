@@ -44,19 +44,19 @@ type Variable internal (variableHandle : TF_Output, readHandle : TF_Output, assi
     /// Returns the ReadVariableOp that is used to fetch the value of the variable from the graph.
     /// </summary>
     /// <value>The read op.</value>
-    member this.Read = new Output(readHandle)
+    member __.Read = new Output(readHandle)
 
     /// <summary>
     /// Returns the AssignVariableOp that is used to assign the initial value to the variable from the graph.
     /// </summary>
     /// <value>The assign op.</value>
-    member this.Assign = new Operation(assignOp)
+    member __.Assign = new Operation(assignOp)
 
     /// <summary>
     /// Returns the VarHandleOp that was created using the shape of the initial value.
     /// </summary>
     /// <value>The variable op.</value>
-    member this.VariableOp = variableHandle;
+    member __.VariableOp = variableHandle;
 
     /// <summary>
     /// Returns the VarHandleOp (the VariableOp property).
