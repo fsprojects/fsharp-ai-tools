@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <!--<UseNETCoreGenerator>true</UseNETCoreGenerator> -->
     <RootNamespace>TensorFlowSharp</RootNamespace>
     <AssemblyName>Tensorflow_FSharp</AssemblyName>
@@ -14,13 +14,13 @@
     <Reference Include="..\lib\Google.Protobuf.dll" />
     <Reference Include="..\lib\HDF.PInvoke.dll" />
     <Reference Include="..\lib\TensorFlowSharpProtoNet.dll" />
-    <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
+    <!--<Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.IO.Compression" />
-    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.IO.Compression.FileSystem" />-->
   </ItemGroup>
 
   <ItemGroup>

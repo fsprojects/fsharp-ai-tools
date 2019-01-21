@@ -9,3 +9,4 @@ data/
 cache/
 nuget/
 notes.txt
+Tensorflow_FSharp/packages/
