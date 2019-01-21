@@ -72,8 +72,6 @@ module Array =
 
     let all (f:'a -> bool ) (xs:'a[]) : bool = xs |> Array.exists (f >> not) |> not
 
-    let enumerate (xs:'a[]) = xs |> Array.mapi (fun i x -> (i,x))
-
     let update (i:int) (x:'a) (xs:'a[]) = xs |> Array.mapi (fun j y -> if i = j then x else y)
 
     // Not sure what to do with the warning here...
@@ -145,5 +143,4 @@ type IntPtr with
 
     member this.Add(x:int64) = IntPtr(int64 this + x)
 
-let enumerate (xs:'a seq) = xs |> Seq.mapi (fun i x -> (i,x))
 
