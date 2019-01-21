@@ -5,17 +5,29 @@ open System.Runtime.InteropServices
 
 // We use this TF_Xxx as the native "TF_Xxx *" as those are opaque
 type TF_Status = System.IntPtr
+
 type TF_SessionOptions = System.IntPtr
+
 type TF_Graph = System.IntPtr
+
 type TF_OperationDescription = System.IntPtr
+
 type TF_Operation = System.IntPtr
+
 type TF_Session = System.IntPtr
+
 type TF_DeprecatedSession = System.IntPtr
+
 type TF_Tensor = System.IntPtr
+
 type TF_ImportGraphDefOptions = System.IntPtr
+
 type TF_Library = System.IntPtr
+
 type TF_BufferPtr = System.IntPtr
+
 type TF_Function = System.IntPtr
+
 type TF_DeviceList = System.IntPtr
 
 // [<AutoOpen>]

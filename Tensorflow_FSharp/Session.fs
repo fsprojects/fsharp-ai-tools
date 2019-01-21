@@ -20,25 +20,25 @@ open System.Runtime.InteropServices
 /// to easily construct chains of execution like this:
 /// </para>
 /// <code>
-/// var result = session.GetRunner ().AddINput (myInput).Fetch (MyOutput).Run ();
+/// var result = session.GetRunner ().AddINput (myInput).Fetch (MyOutput).Run ()
 /// </code>
 /// <para>
 /// You do not need to chain the operations, this works just the same:
 /// </para>
 /// <code>
-/// runner = session.GetRunner ();
-/// runner.AddInput(myInput);
-/// runner.Fetch(myOutput);
-/// var results = runner.Run();
+/// runner = session.GetRunner ()
+/// runner.AddInput(myInput)
+/// runner.Fetch(myOutput)
+/// var results = runner.Run()
 /// </code>
 /// </remarks>
 /// 
 type Runner internal (session : Session) =
 
-    let _inputs = new List<Output> () 
-    let _outputs = new List<Output> ();
-    let _inputValues = new List<Tensor> ();
-    let _targets = new List<Operation>()
+    let inputs = new List<Output> () 
+    let outputs = new List<Output> ()
+    let inputValues = new List<Tensor> ()
+    let targets = new List<Operation>()
 
     /// <summary>
     /// Adds an input to the session
@@ -48,8 +48,8 @@ type Runner internal (session : Session) =
     /// <param name="value">Value to assing to the incoming port.</param>
     member this.AddInput (input : Output, value : Tensor) : Runner =
         if box value = null then  raise(ArgumentNullException("value"))
-        _inputs.Add (input);
-        _inputValues.Add (value);
+        inputs.Add (input)
+        inputValues.Add (value)
         this
 
     /// <summary>
@@ -60,7 +60,7 @@ type Runner internal (session : Session) =
     /// <param name="value">Value to assing to the incoming port.</param>
     member this.AddInput(input : string,  value : Tensor) : Runner  = 
         if box value = null then  raise(ArgumentNullException("value"))
-        _inputValues.Add (value)
+        inputValues.Add (value)
         this
 
     /// <summary>
@@ -68,8 +68,8 @@ type Runner internal (session : Session) =
     /// </summary>
     /// <returns>An instance to the runner, so you can easily chain the operations together.</returns>
     /// <param name="targets">One or more targets.</param>
-    member this.AddTarget ([<ParamArray>] targets : Operation[]) : Runner =
-        _targets.AddRange(targets)
+    member this.AddTarget ([<ParamArray>] newTargets : Operation[]) : Runner =
+        targets.AddRange(newTargets)
         this
 
 
@@ -78,7 +78,7 @@ type Runner internal (session : Session) =
         // TODO, wrap this in an option
         match operation.Split(':') with
         | [|op;Integer(idx)|] -> session.Graph.[op].[idx]
-        | [|op|] -> session.Graph.[operation].[0];
+        | [|op|] -> session.Graph.[operation].[0]
         | _ -> failwithf "error parsing %s" operation
 
     /// <summary>
@@ -87,8 +87,8 @@ type Runner internal (session : Session) =
     /// <returns>An instance to the runner, so you can easily chain the operations together.</returns>
     /// <param name="targetNames">One or more target names.</param>
     member this.AddTarget ([<ParamArray>] targetNames : string [])  :  Runner =
-        _targets.AddRange(targetNames |> Array.map (fun name -> session.Graph.[name]))
-        this;
+        targets.AddRange(targetNames |> Array.map (fun name -> session.Graph.[name]))
+        this
 
     /// <summary>
     /// Makes the Run method return the index-th output of the tensor referenced by operation.
@@ -97,7 +97,7 @@ type Runner internal (session : Session) =
     /// <param name="operation">The name of the operation in the graph.</param>
     /// <param name="index">The index of the output in the operation.</param>
     member this.Fetch (operation : string, index : int) : Runner =
-        _outputs.Add (session.Graph.[operation].[index])
+        outputs.Add (session.Graph.[operation].[index])
         this
 
     /// <summary>
@@ -107,7 +107,7 @@ type Runner internal (session : Session) =
     /// <param name="operation">The name of the operation in the graph, which might be a simple name, or it might be name:index, 
     /// where the index is the .</param>
     member this.Fetch(operation : string) : Runner = 
-        _outputs.Add (this.ParseOutput(operation))
+        outputs.Add (this.ParseOutput(operation))
         this
 
     /// <summary>
@@ -116,7 +116,7 @@ type Runner internal (session : Session) =
     /// <returns>The instance of runner, to allow chaining operations.</returns>
     /// <param name="output">The output referencing a specified tensor.</param>
     member this.Fetch (output : Output) : Runner =
-        _outputs.Add (output)
+        outputs.Add (output)
         this
 
     /// <summary>
@@ -124,8 +124,8 @@ type Runner internal (session : Session) =
     /// </summary>
     /// <returns>The instance of runner, to allow chaining operations.</returns>
     /// <param name="outputs">The outputs referencing a specified tensor.</param>
-    member this.Fetch ([<ParamArray>] outputs : Output []) : Runner =
-        _outputs.AddRange(outputs)
+    member this.Fetch ([<ParamArray>] outputsToFetch : Output []) : Runner =
+        outputs.AddRange(outputsToFetch)
         this
 
     /// <summary>
@@ -133,9 +133,9 @@ type Runner internal (session : Session) =
     /// </summary>
     /// <returns>The instance of runner, to allow chaining operations.</returns>
     /// <param name="outputs">The output sreferencing a specified tensor.</param>
-    member this.Fetch ([<ParamArray>] outputs : string []) : Runner =
-        _outputs.AddRange(outputs |> Array.map this.ParseOutput)
-        this;
+    member this.Fetch ([<ParamArray>] outputsToFetch : string []) : Runner =
+        outputs.AddRange(outputsToFetch |> Array.map this.ParseOutput)
+        this
 
     /// <summary>
     /// Protocol buffer encoded block containing the metadata passed to the <see cref="M:TensorFlow.Session.Run"/> method.
@@ -153,7 +153,7 @@ type Runner internal (session : Session) =
     /// <returns>One Tensor for each call to Fetch that you made, in the order that you made them.</returns>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
     member this.Run(?status : TFStatus) : Tensor [] =
-        session.Run (_inputs.ToArray (), _inputValues.ToArray (), _outputs.ToArray (), _targets.ToArray (), ?runMetadata=this.RunMetadata, ?runOptions=this.RunOptions, ?status=status);
+        session.Run (inputs.ToArray (), inputValues.ToArray (), outputs.ToArray (), targets.ToArray (), ?runMetadata=this.RunMetadata, ?runOptions=this.RunOptions, ?status=status)
 
     /// <summary>
     /// Run the specified operation, by adding it implicity to the output, single return value
@@ -166,7 +166,7 @@ type Runner internal (session : Session) =
     /// instead.
     /// </remarks>
     member this.Run(operation : Output, ?status : TFStatus) : Tensor =
-        _outputs.Clear ()
+        outputs.Clear ()
         this.Fetch (operation) |> ignore
         this.Run(?status=status).[0]
 
@@ -180,16 +180,15 @@ type Runner internal (session : Session) =
 /// a partial run.
 /// </remarks>
 and PartialRunToken(token:IntPtr) =
-    let mutabel token = token
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_DeletePRunHandle (IntPtr partialRunHandle);
+    static extern void TF_DeletePRunHandle (IntPtr partialRunHandle)
 
-    member this.Dispose() =
+    member __.Dispose() =
         if token <> IntPtr.Zero then
-            TF_DeletePRunHandle (token);
+            TF_DeletePRunHandle (token)
 
-    member this.token = token
+    member __.Token = token
 
 /// <summary>
 /// Drives the execution of a graph
@@ -213,54 +212,54 @@ and PartialRunToken(token:IntPtr) =
 /// </remarks>
 and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     inherit TFDisposableThreadSafe(handle:IntPtr)
-    // extern TF_Session * TF_NewSession (TF_Graph *graph, const TF_SessionOptions *opts, TF_Status *status);
+    // extern TF_Session * TF_NewSession (TF_Graph *graph, const TF_SessionOptions *opts, TF_Status *status)
     [<DllImport(NativeBinding.TensorFlowLibrary)>]
-    static extern TF_Session TF_NewSession (TF_Graph graph, TF_SessionOptions opts, TF_Status status);
+    static extern TF_Session TF_NewSession (TF_Graph graph, TF_SessionOptions opts, TF_Status status)
 
-    // extern TF_Session * TF_LoadSessionFromSavedModel (const TF_SessionOptions *session_options, const TF_Buffer *run_options, const char *export_dir, const char *const *tags, int tags_len, TF_Graph *graph, TF_Buffer *meta_graph_def, TF_Status *status);
+    // extern TF_Session * TF_LoadSessionFromSavedModel (const TF_SessionOptions *session_options, const TF_Buffer *run_options, const char *export_dir, const char *const *tags, int tags_len, TF_Graph *graph, TF_Buffer *meta_graph_def, TF_Status *status)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern TF_Session TF_LoadSessionFromSavedModel (TF_SessionOptions session_options, LLBuffer* run_options, string export_dir, string [] tags, int tags_len, TF_Graph graph, LLBuffer* meta_graph_def, TF_Status status);
-
-    [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern TF_DeviceList TF_SessionListDevices (TF_Session session, TF_Status status);
+    static extern TF_Session TF_LoadSessionFromSavedModel (TF_SessionOptions session_options, LLBuffer* run_options, string export_dir, string [] tags, int tags_len, TF_Graph graph, LLBuffer* meta_graph_def, TF_Status status)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern int TF_DeviceListCount (TF_DeviceList list);
+    static extern TF_DeviceList TF_SessionListDevices (TF_Session session, TF_Status status)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern IntPtr TF_DeviceListName (TF_DeviceList list, int index, TF_Status status);
+    static extern int TF_DeviceListCount (TF_DeviceList list)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern IntPtr TF_DeviceListType (TF_DeviceList list, int index, TF_Status status);
+    static extern IntPtr TF_DeviceListName (TF_DeviceList list, int index, TF_Status status)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern int64 TF_DeviceListMemoryBytes (TF_DeviceList list, int index, TF_Status status);
+    static extern IntPtr TF_DeviceListType (TF_DeviceList list, int index, TF_Status status)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_DeleteDeviceList (TF_DeviceList list);
-
-    // extern void TF_CloseSession (TF_Session *, TF_Status *status);
-    [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_CloseSession (TF_Session session, TF_Status status);
-
-    // extern void TF_SessionPRunSetup (TF_Session, const TF_Output *inputs, int ninputs, const TF_Output *outputs, int noutputs, const TF_Operation *const *target_opers, int ntargets, const char **handle, TF_Status *);
-    [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_SessionPRunSetup (TF_Session session, TF_Output [] inputs, int ninputs, TF_Output [] outputs, int noutputs, TF_Operation [] target_opers, int ntargets, [<Out>] IntPtr returnHandle, TF_Status status);
+    static extern int64 TF_DeviceListMemoryBytes (TF_DeviceList list, int index, TF_Status status)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_DeletePRunHandle (IntPtr partialRunHandle);
+    static extern void TF_DeleteDeviceList (TF_DeviceList list)
 
-    // extern void TF_SessionPRun (TF_Session *, const char *handle, const TF_Output *inputs, TF_Tensor *const *input_values, int ninputs, const TF_Output *outputs, TF_Tensor **output_values, int noutputs, const TF_Operation *const *target_opers, int ntargets, TF_Status *);
+    // extern void TF_CloseSession (TF_Session *, TF_Status *status)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_SessionPRun (TF_Session session, IntPtr partialHandle, TF_Output [] inputs, TF_Tensor [] input_values, int ninputs, TF_Output [] outputs, TF_Tensor [] output_values, int noutputs, TF_Operation [] target_opers, int ntargets, TF_Status status);
+    static extern void TF_CloseSession (TF_Session session, TF_Status status)
 
-    // extern void TF_DeleteSession (TF_Session *, TF_Status *status);
+    // extern void TF_SessionPRunSetup (TF_Session, const TF_Output *inputs, int ninputs, const TF_Output *outputs, int noutputs, const TF_Operation *const *target_opers, int ntargets, const char **handle, TF_Status *)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_DeleteSession (TF_Session session, TF_Status status);
+    static extern void TF_SessionPRunSetup (TF_Session session, TF_Output [] inputs, int ninputs, TF_Output [] outputs, int noutputs, TF_Operation [] target_opers, int ntargets, [<Out>] IntPtr returnHandle, TF_Status status)
 
-    // extern void TF_SessionRun (TF_Session *session, const TF_Buffer *run_options, const TF_Output *inputs, TF_Tensor *const *input_values, int ninputs, const TF_Output *outputs, TF_Tensor **output_values, int noutputs, const TF_Operation *const *target_opers, int ntargets, TF_Buffer *run_metadata, TF_Status *);
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_SessionRun (TF_Session session, LLBuffer* run_options, TF_Output [] inputs, TF_Tensor [] input_values, int ninputs, TF_Output [] outputs, TF_Tensor [] output_values, int noutputs, TF_Operation [] target_opers, int ntargets, LLBuffer* run_metadata, TF_Status status);
+    static extern void TF_DeletePRunHandle (IntPtr partialRunHandle)
+
+    // extern void TF_SessionPRun (TF_Session *, const char *handle, const TF_Output *inputs, TF_Tensor *const *input_values, int ninputs, const TF_Output *outputs, TF_Tensor **output_values, int noutputs, const TF_Operation *const *target_opers, int ntargets, TF_Status *)
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SessionPRun (TF_Session session, IntPtr partialHandle, TF_Output [] inputs, TF_Tensor [] input_values, int ninputs, TF_Output [] outputs, TF_Tensor [] output_values, int noutputs, TF_Operation [] target_opers, int ntargets, TF_Status status)
+
+    // extern void TF_DeleteSession (TF_Session *, TF_Status *status)
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_DeleteSession (TF_Session session, TF_Status status)
+
+    // extern void TF_SessionRun (TF_Session *session, const TF_Buffer *run_options, const TF_Output *inputs, TF_Tensor *const *input_values, int ninputs, const TF_Output *outputs, TF_Tensor **output_values, int noutputs, const TF_Operation *const *target_opers, int ntargets, TF_Buffer *run_metadata, TF_Status *)
+    [<DllImport (NativeBinding.TensorFlowLibrary)>]
+    static extern void TF_SessionRun (TF_Session session, LLBuffer* run_options, TF_Output [] inputs, TF_Tensor [] input_values, int ninputs, TF_Output [] outputs, TF_Tensor [] output_values, int noutputs, TF_Operation [] target_opers, int ntargets, LLBuffer* run_metadata, TF_Status status)
 
 
     /// <summary>
@@ -277,7 +276,7 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
             | Some(sessionOptions) -> TF_NewSession (graph.Handle, sessionOptions.Handle, cstatus.Handle)
             | None ->
                 let empty = new SessionOptions()
-                let res = TF_NewSession (graph.Handle, empty.Handle, cstatus.Handle);
+                let res = TF_NewSession (graph.Handle, empty.Handle, cstatus.Handle)
                 empty.Dispose()
                 res
         new Session(h,graph,?status=status)
@@ -289,16 +288,16 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// </summary>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
     member this.ListDevices(?status : TFStatus) : DeviceAttributes[] =
-        let cstatus = TFStatus.Setup (?incoming=status);
-        let rawDeviceList = TF_SessionListDevices (this.Handle, cstatus.Handle);
-        let size = TF_DeviceListCount (rawDeviceList);
+        let cstatus = TFStatus.Setup (?incoming=status)
+        let rawDeviceList = TF_SessionListDevices (this.Handle, cstatus.Handle)
+        let size = TF_DeviceListCount (rawDeviceList)
         let list = Array.init<DeviceAttributes> size (fun i ->
             let name = Marshal.PtrToStringAnsi (TF_DeviceListName (rawDeviceList, i, cstatus.Handle))
             let deviceType  = Enum.Parse (typeof<DeviceType>, Marshal.PtrToStringAnsi (TF_DeviceListType (rawDeviceList, i, cstatus.Handle))) :?> DeviceType
             let memory = TF_DeviceListMemoryBytes (rawDeviceList, i, cstatus.Handle)
             DeviceAttributes(name,deviceType,memory)
         )
-        TF_DeleteDeviceList (rawDeviceList);
+        TF_DeleteDeviceList (rawDeviceList)
         list
 
     /// <summary>
@@ -327,10 +326,10 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
         if (box tags = null) then raise (ArgumentNullException("tags"))
         if (box exportDir = null) then raise (ArgumentNullException ("exportDir"))
         if (box metaGraphDef = null) then raise (ArgumentNullException ("metaGraphDef"))
-        let cstatus = TFStatus.Setup (?incoming=status);
+        let cstatus = TFStatus.Setup (?incoming=status)
         let h = TF_LoadSessionFromSavedModel (sessionOptions.Handle, runOptions |> Option.mapOrNull (fun x -> x.LLBuffer), 
                                                 exportDir, tags, tags.Length, graph.Handle, 
-                                                metaGraphDef |> Option.mapOrNull (fun x -> x.LLBuffer) , cstatus.Handle);
+                                                metaGraphDef |> Option.mapOrNull (fun x -> x.LLBuffer) , cstatus.Handle)
 
         if cstatus.CheckMaybeRaise (?incoming=status) 
         then Some(new Session (h, graph))
@@ -346,9 +345,9 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// </remarks>
     member this.CloseSession (?status : TFStatus) =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
-        let cstatus = TFStatus.Setup (?incoming=status);
-        TF_CloseSession (handle, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incoming=status);
+        let cstatus = TFStatus.Setup (?incoming=status)
+        TF_CloseSession (handle, cstatus.Handle)
+        cstatus.CheckMaybeRaise (?incoming=status)
 
     /// <summary>
     /// Deletes the session.
@@ -356,13 +355,13 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// <param name="status">Status.</param>
     member this.DeleteSession (?status : TFStatus) = 
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
-        let cstatus = TFStatus.Setup (?incoming=status);
-        TF_DeleteSession (handle, cstatus.Handle);
-        cstatus.CheckMaybeRaise (?incoming=status);
+        let cstatus = TFStatus.Setup (?incoming=status)
+        TF_DeleteSession (handle, cstatus.Handle)
+        cstatus.CheckMaybeRaise (?incoming=status)
 
     override this.NativeDispose (handle : IntPtr) =
         use s = new TFStatus()
-        TF_DeleteSession (handle, s.Handle);
+        TF_DeleteSession (handle, s.Handle)
 
 
     /// <summary>
@@ -390,7 +389,7 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// <param name="runMetadata">Run metadata, a buffer containing the protocol buffer encoded value for https://github.com/tensorflow/tensorflow/blob/r1.9/tensorflow/core/protobuf/config.proto.</param>
     /// <param name="runOptions">Run options, a buffer containing the protocol buffer encoded value for https://github.com/tensorflow/tensorflow/blob/r1.9/tensorflow/core/protobuf/config.proto.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member this.Run(inputs : Output [], inputValues : Tensor [], outputs : Output [] , ?targetOpers : Operation [], ?runMetadata : TFBuffer, ?runOptions : TFBuffer, ?status : TFStatus) : Tensor [] =
+    member __.Run(inputs : Output [], inputValues : Tensor [], outputs : Output [] , ?targetOpers : Operation [], ?runMetadata : TFBuffer, ?runOptions : TFBuffer, ?status : TFStatus) : Tensor [] =
         if handle = IntPtr.Zero then raise (ObjectDisposedException("handle"))
         if box inputs = null then raise (ArgumentNullException("inputs"))
         if box inputValues = null then raise (ArgumentNullException "inputValues")
@@ -399,7 +398,7 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
         if iLen <> inputValues.Length then raise (ArgumentException ("inputs and inputValues have different lengths", "inputs"))
         let oLen = outputs.Length
         // runOptions and runMetadata might be null
-        let cstatus = TFStatus.Setup (?incoming=status);
+        let cstatus = TFStatus.Setup (?incoming=status)
 
         // Create arrays for the unmanaged versions
         let ivals = inputValues |> Array.map (fun x -> x.Handle)
@@ -415,11 +414,11 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
         TF_SessionRun (handle, 
                         runOptions |> Option.mapOrNull (fun x -> x.LLBuffer), inputs |> Array.map (fun x -> x.Struct), ivals, iLen, 
                         outputs |> Array.map (fun x -> x.Struct), ovals, oLen, topers, tLen, 
-                        runMetadata |> Option.mapOrNull (fun x -> x.LLBuffer), cstatus.Handle);
+                        runMetadata |> Option.mapOrNull (fun x -> x.LLBuffer), cstatus.Handle)
         cstatus.CheckMaybeRaise (?incoming=status) |> ignore
 
         // prevent finalization of managed Tensors
-        GC.KeepAlive(inputValues);
+        GC.KeepAlive(inputValues)
 
         ovals |> Array.map (fun x -> new Tensor(x))
 
@@ -431,41 +430,41 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// <param name="outputs">Outputs.</param>
     /// <param name="targetOpers">Target operations to run.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member this.PartialRunSetup (inputs : Output [], outputs : Output [], targetOpers : Operation [], ?status : TFStatus) : PartialRunToken =
+    member __.PartialRunSetup (inputs : Output [], outputs : Output [], targetOpers : Operation [], ?status : TFStatus) : PartialRunToken =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
         if box inputs = null then raise (ArgumentNullException ("inputs"))
         if box outputs = null then raise (ArgumentNullException ("outputs"))
         if box targetOpers = null then raise (ArgumentNullException ("targetOpers"))
         let mutable returnHandle = IntPtr.Zero
-        let cstatus = TFStatus.Setup (?incoming=status);
-        let tLen = targetOpers.Length;
+        let cstatus = TFStatus.Setup (?incoming=status)
+        let tLen = targetOpers.Length
         let topers = targetOpers |> Array.map (fun x -> x.Handle)
-        TF_SessionPRunSetup (handle, inputs |> Array.map (fun x -> x.Struct), inputs.Length, outputs |> Array.map (fun x -> x.Struct), outputs.Length, topers, tLen, returnHandle, cstatus.Handle);
+        TF_SessionPRunSetup (handle, inputs |> Array.map (fun x -> x.Struct), inputs.Length, outputs |> Array.map (fun x -> x.Struct), outputs.Length, topers, tLen, returnHandle, cstatus.Handle)
         cstatus.CheckMaybeRaise (?incoming=status) |> ignore
         PartialRunToken(returnHandle)
 
-    member this.PartialRun (token : PartialRunToken, inputs : Output [], inputValues : Tensor [], outputs : Output [], targetOpers : Operation [], ?status : TFStatus) : Tensor [] =
+    member __.PartialRun (token : PartialRunToken, inputs : Output [], inputValues : Tensor [], outputs : Output [], targetOpers : Operation [], ?status : TFStatus) : Tensor [] =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         if box inputs = null then raise(ArgumentNullException("inputs"))
         if box inputValues = null then raise (ArgumentNullException ("inputValues"))
         if box outputs = null then raise (ArgumentNullException ("outputs"))
         if box targetOpers = null then raise (ArgumentNullException ("targetOpers"))
-        let iLen = inputs.Length;
+        let iLen = inputs.Length
         if iLen <> inputValues.Length then raise (ArgumentException ("inputs and inputValues have different lengths", "inputs"))
-        let oLen = outputs.Length;
+        let oLen = outputs.Length
 
         // runOptions and runMetadata might be null
-        let cstatus = TFStatus.Setup (?incoming=status);
+        let cstatus = TFStatus.Setup (?incoming=status)
 
         // Create arrays for the unmanaged versions
         let ivals = inputValues |> Array.map (fun x -> x.Handle) 
         let ovals = Array.zeroCreate<IntPtr> oLen
-        let tLen = targetOpers.Length;
+        let tLen = targetOpers.Length
         let topers = targetOpers |> Array.map (fun x -> x.Handle)
-        TF_SessionPRun (handle, token.token, inputs |> Array.map (fun x -> x.Struct), ivals, iLen, outputs |> Array.map (fun x -> x.Struct), ovals, oLen, topers, tLen, cstatus.Handle)
+        TF_SessionPRun (handle, token.Token, inputs |> Array.map (fun x -> x.Struct), ivals, iLen, outputs |> Array.map (fun x -> x.Struct), ovals, oLen, topers, tLen, cstatus.Handle)
         cstatus.CheckMaybeRaise (?incoming=status) |> ignore
 
         // prevent finalization of managed Tensors
-        GC.KeepAlive(inputValues);
+        GC.KeepAlive(inputValues)
 
         ovals |> Array.map (fun x -> new Tensor(x))
