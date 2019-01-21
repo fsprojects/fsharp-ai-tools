@@ -4,6 +4,7 @@ open System.Collections.Generic
 open System
 open System.Runtime.InteropServices
 
+#nowarn "9"
 /// <summary>
 /// Use the runner class to easily configure inputs, outputs and targets to be passed to the session runner.
 /// </summary>
@@ -411,10 +412,13 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
             | Some(targetOpers) -> targetOpers |> Array.map (fun x -> x.Handle), targetOpers.Length
             | None -> null, 0
 
+                
+        let f (x:TFBuffer option) = x |> Option.map (fun x -> x.LLBuffer) |> NativePtr.ofOption
         TF_SessionRun (handle, 
-                        runOptions |> Option.mapOrNull (fun x -> x.LLBuffer), inputs |> Array.map (fun x -> x.Struct), ivals, iLen, 
+                        f(runOptions) , inputs |> Array.map (fun x -> x.Struct), ivals, iLen, 
                         outputs |> Array.map (fun x -> x.Struct), ovals, oLen, topers, tLen, 
-                        runMetadata |> Option.mapOrNull (fun x -> x.LLBuffer), cstatus.Handle)
+                        //runMetadata |> Option.mapOrNull (fun x -> x.LLBuffer), cstatus.Handle)
+                        f(runMetadata), cstatus.Handle)
         cstatus.CheckMaybeRaise (?incoming=status) |> ignore
 
         // prevent finalization of managed Tensors

@@ -80,7 +80,7 @@ module TFCore =
                 "With Mono, do that with mono --arch=64 executable.exe, if using an IDE like MonoDevelop,\n" +
                 "Xamarin Studio or Visual Studio for Mac, Build/Compiler settings, make sure that " +
                 "\"Platform Target\" has x64 selected.")
-            raise(Exception())
+            raise(Exception("Requries 64 bit"))
 
 /// <summary>
 /// Signature of the method that is invoked to release the data.  
@@ -246,7 +246,7 @@ and
     [<AbstractClass>]
     TFDisposable (handle:IntPtr) = 
     let mutable handle = handle
-    static do TFCore.Init ()
+    //static do TFCore.Init ()
 
     new () = new TFDisposable(IntPtr.Zero)
 
@@ -285,7 +285,7 @@ and
     static member internal ObjectDisposedException () =
         raise (ObjectDisposedException ("The object was disposed"))
     
-    member internal this.Handle with set(x) = handle <- x and get() = handle
+    member (*internal*) this.Handle with set(x) = handle <- x and get() = handle
 
 
 /// <summary>

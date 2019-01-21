@@ -357,7 +357,7 @@ and Graph internal (handle) =
     static extern bool TF_TryEvaluateConstant (TF_Graph graph, TF_Output output, IntPtr& result, TF_Status status) // ref result
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern string TF_GraphDebugString (TF_Graph graph, [<Out>] IntPtr len)
+    static extern string TF_GraphDebugString (TF_Graph graph, IntPtr& len) //[<Out>]
 
 
     /// <summary>
@@ -969,7 +969,7 @@ and Graph internal (handle) =
     
     override this.ToString () =
             let mutable len = IntPtr.Zero
-            TF_GraphDebugString (this.Handle, len) // ref len
+            TF_GraphDebugString (this.Handle, &len)
 
 module OperationDescNative = 
     // extern void TF_SetAttrShape (TF_OperationDescription *desc, const char *attr_name, const int64_t *dims, int num_dims)
@@ -1054,11 +1054,11 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
 
     // extern void TF_SetAttrType (TF_OperationDescription *desc, const char *attr_name, TF_DataType value)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_SetAttrType (TF_OperationDescription desc, string attr_name, DType value)
+    static extern void TF_SetAttrType (TF_OperationDescription desc, string attr_name, uint32 value)
 
     // extern void TF_SetAttrTypeList (TF_OperationDescription *desc, const char *attr_name, const TF_DataType *values, int num_values)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_SetAttrTypeList (TF_OperationDescription desc, string attr_name, DType [] values, int num_values)
+    static extern void TF_SetAttrTypeList (TF_OperationDescription desc, string attr_name, uint32[] values, int num_values)
 
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
@@ -1100,6 +1100,7 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
         let handle = TF_NewOperation (graph.Handle, opType, name)
         new OperationDesc(graph, opType, name,handle)
 
+    member this.OpType = opType
     override this.NativeDispose (handle : IntPtr) =
         // If you reach this, you never called FinishOperation
         printf "OperationDescription(%s,%s was never turned into an Operation" opType name
@@ -1232,17 +1233,15 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
     member this.SetAttr (attrName : string, value : DType) =
         if handle = IntPtr.Zero then raise( ObjectDisposedException ("handle"))
         if attrName = null then raise(ArgumentNullException ("attrName"))
-        TF_SetAttrType (handle, attrName, value)
+        TF_SetAttrType (handle, attrName, uint32 value)
         this
-
 
     member this.SetAttr (attrName : string, [<ParamArray>] values : DType[]) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         if box attrName = null then raise(ArgumentNullException ("handle"))
         if box values = null then raise(ArgumentNullException ("values"))
-        TF_SetAttrTypeList(handle, attrName, values, values.Length)
+        TF_SetAttrTypeList(handle, attrName, values |> Array.map uint32, values.Length)
         this
-
 
     member this.SetAttr (attrName : string, shape : Shape) =
         if handle = IntPtr.Zero then raise( ObjectDisposedException ("handle"))

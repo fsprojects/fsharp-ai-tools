@@ -11,7 +11,7 @@ open System.Runtime.InteropServices
 module Option =
     let orNull (x:'a option) = match x with | None -> box null :?> 'a | Some(x) -> x
 
-    let mapOrNull (f:'a->'b) (x:'a option)  = match x with | None -> box null :?> 'b | Some(x) -> f(x)
+    let mapOrNull (f:'a->'b) (x:'a option)  = match x with | None -> box null :?> 'b | Some(x) when box x = null -> box null :?> 'b | Some(x) -> f(x)
 
     let orDefault (default_:'a) (x:'a option)  = match x with | None -> default_ | Some(x) -> x
 
@@ -26,7 +26,21 @@ module Option =
     let ofRef (result:bool,byref:'a) = if result then Some(byref) else None
 
     let collect (x:'a[] option) = match x with | None -> [||] | Some(xs) -> xs; 
-        
+    /// nullable
+    let ofNullable (x : 'a) = if box x <> null then Some x else None
+    /// System.Nullable
+    let ofSystemNullable (x : System.Nullable<'a>) = if x.HasValue then Some x.Value else None
+    let tryGetAll (xs:'a option []) =
+        if xs |> Array.exists (function | None -> true | _ -> false)
+        then None
+        else xs |> Array.map (Option.get) |> Some
+    let ofType<'Out> : obj -> 'Out option = function | :? 'Out as x -> Some x | _ -> None
+    let tryNullOfType<'Out>(x:obj) : 'Out option = x |> tryNull |> ofType<'Out>
+    let ofUnrelatedType<'In, 'Out> (x : 'In) = box x |> ofType<'Out>
+    let isOfType<'a> (x:obj) = match x with | :? 'a -> true | _ -> false
+    let orElse (second:'a option) (first:'a option)  = match first with | Some(x) -> Some(x) | None -> match second with | Some(y) -> Some(y) | None -> None
+    let tryFind (predicate:'a -> bool) (x:'a option) = match x with | Some(x) when predicate x -> Some(x) | _ -> None
+    let dispose<'a when 'a :> IDisposable> (x:'a option) = x |> Option.iter (fun x -> x.Dispose())
 
 type Dictionary<'a,'b> with 
 
@@ -77,6 +91,9 @@ module NativePtr =
 
     let intPtrToVoidPtr (ptr:IntPtr) = ptr |> NativePtr.ofNativeInt<int64> |> NativePtr.toVoidPtr
 
+    /// This returns 
+    let ofOption (x:Option<nativeptr<'a>>) = match x with | Some(x) -> x | None -> IntPtr.Zero |> NativePtr.ofNativeInt
+
 let (|Integer|_|) (str: string) =
    let mutable intvalue = 0
    if System.Int32.TryParse(str, &intvalue) then Some(intvalue)
@@ -91,7 +108,7 @@ type DictionaryCount<'a when 'a : equality>() =
     /// NOTE: it would be nice to be able to override Item
     member this.Item 
         with get(x:'a) = if dict.ContainsKey(x) then dict.[x] else 0
-        and set (x:'a) (v:int)  = dict.Add(x,v)
+        and set (x:'a) (v:int)  = dict.[x] <- v
 
     member this.Increment(x:'a) = this.[x] <- this.[x] + 1
 
@@ -127,3 +144,6 @@ type IntPtr with
     member this.Add(x:int) = IntPtr(int64 this + int64 x)
 
     member this.Add(x:int64) = IntPtr(int64 this + x)
+
+let enumerate (xs:'a seq) = xs |> Seq.mapi (fun i x -> (i,x))
+

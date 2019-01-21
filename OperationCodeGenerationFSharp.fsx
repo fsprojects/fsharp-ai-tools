@@ -22,7 +22,7 @@ open Tensorflow
 
 let deserialize<'a> = Serializer.Deserialize<'a>
 
-#nowarn "9"
+#nowarn "9" "51"
 
 let newNames = true
 
@@ -101,10 +101,15 @@ let paramMap (paramName : string) =
     | "params" -> "parameters"
     | "ref" -> "reference"
     | "event" -> "evnt"
-    | "type" -> "T"
+    | "type" -> "_type"
     | "begin" -> "_begin" // Maybe start/finish?
     | "end" -> "_end"
-    | _ -> paramName
+    | _ -> 
+        // semingly when the parameter starts with an upper the second leter should be uppercase (first letter lower)
+        // unless 
+        if Char.IsUpper(paramName.[0]) 
+        then paramName |> String.mapi (fun i c -> match i with | 0 -> Char.ToLower(c) | 1 -> Char.ToUpper(c) | _ -> c)
+        else paramName
 
 
 // Determines if the specified ArgDef represents a TensorFlow list
@@ -283,9 +288,9 @@ let run(dirs : string []) =
         let needStatus = [|yield! requiredAttrs; yield! optionalAttrs|] |> Array.exists (fun x -> x.Type.Contains("Tensor"))
         // NOTE: needStatus is not used anywhere
         p (sprintf "let name = defaultArg name \"\"")
-        p (sprintf "let desc = new OperationDesc (defaultGraph, \"%s\", defaultGraph.MakeName (\"%s\", name))" oper.Name oper.Name)
+        p (sprintf "let desc = new OperationDesc (TF.DefaultGraph, \"%s\", TF.DefaultGraph.MakeName (\"%s\", name))" oper.Name oper.Name)
         oper.InputArgs |> Seq.iter (fun arg -> p (sprintf "desc.AddInput%s (%s) |> ignore" ( if isListArg arg then "s" else "")  (paramMap arg.Name)))
-        p "currentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)"
+        p "TF.DefaultGraph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)"
         // If we have attributes
         if requiredAttrs.Length > 0 || optionalAttrs.Length > 0 then
             for attr in requiredAttrs do
@@ -336,7 +341,6 @@ let run(dirs : string []) =
                     // Generate
                     generate(oper)
     text |> List.rev |> String.concat "\n"
-
 
 
 

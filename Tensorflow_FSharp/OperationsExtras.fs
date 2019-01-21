@@ -143,10 +143,10 @@ type TF with
     /// </para>
     /// </remarks>
     static member AddInitVariable (variable : Operation) =
-        defaultGraph.PendingInitVariables.Add (variable)
+        TF.DefaultGraph.PendingInitVariables.Add (variable)
 
     static member AddTrainableVariable (variable : Variable) =
-        defaultGraph.TrainingVariables.Add (variable)
+        TF.DefaultGraph.TrainingVariables.Add (variable)
 
     /// <summary>
     /// Gets the list of all registered global variables.
@@ -157,8 +157,8 @@ type TF with
     /// is cleared.
     /// </remarks>
     static member GetGlobalVariablesInitializer () : Operation [] =
-        let res = defaultGraph.PendingInitVariables.ToArray ()
-        defaultGraph.PendingInitVariables.Clear () // NOTE: (matt) I'm not sure about this, I suppose it makes sense
+        let res = TF.DefaultGraph.PendingInitVariables.ToArray ()
+        TF.DefaultGraph.PendingInitVariables.Clear () // NOTE: (matt) I'm not sure about this, I suppose it makes sense
         res
 
     //
@@ -504,10 +504,10 @@ type TF with
     /// </returns>
     static member Concat (concat_dim : Output, values : Output[], ?N : int64,  ?name : string) : Output =
         let name = defaultArg name ""
-        let desc = new OperationDesc (defaultGraph, "Concat", defaultGraph.MakeName ("Concat", name))
+        let desc = new OperationDesc (TF.DefaultGraph, "Concat", TF.DefaultGraph.MakeName ("Concat", name))
         desc.AddInput (concat_dim) |> ignore
         desc.AddInputs (values) |> ignore
-        currentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
+        TF.DefaultGraph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         N |> Option.iter (fun x -> desc.SetAttr ("N", x) |> ignore)
         let op = desc.FinishOperation ()
         let mutable _idx = 0

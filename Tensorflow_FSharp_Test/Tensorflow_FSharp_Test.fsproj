@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="..\lib\Google.Protobuf.dll" />
+    <Reference Include="..\lib\HDF.PInvoke.dll" />
+    <Reference Include="..\lib\TensorFlowSharpProtoNet.dll" />
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="NugetDeployment.fsx" />
+    <None Include="Testing.fsx" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup />
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tensorflow_FSharp\Tensorflow_FSharp.fsproj" />
+  </ItemGroup>
+
+</Project>

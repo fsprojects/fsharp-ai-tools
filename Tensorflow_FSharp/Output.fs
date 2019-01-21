@@ -57,7 +57,6 @@ type Input(handle : TF_Operation, index : int) =
     /// </summary>
     member __.Index = index
 
-    /// TODO - I'm not sure why this is needed
     member __.GetOutput (operIn : TF_Input) : Output = 
         let tfOut = TF_OperationInput operIn
         new Output(tfOut.handle,tfOut.index)
@@ -192,6 +191,8 @@ and Output(handle: IntPtr, ?index : int) =
         | :? Output as other -> 
             (this.LLOperation = other.LLOperation) && (this.Index = other.Index)
         | _ -> false
+    
+    override this.GetHashCode() = (this.Operation.Handle , this.Index).GetHashCode()
 
 [<AutoOpen>]
 module OperationExtensions =
@@ -203,3 +204,5 @@ module OperationExtensions =
         /// </summary>
         /// <param name="idx">Index of the output in the operation.</param>
         member this.Item(idx:int) : Output = new Output (this, idx)
+        member this.Outputs = [|for i in 0..this.NumOutputs - 1 -> Output(this.Handle,i)|]
+        member this.Inputs  = [|for i in 0..this.NumInputs - 1 -> Input(this.Handle,i)|]

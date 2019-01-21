@@ -1,10 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
-    <UseNETCoreGenerator>true</UseNETCoreGenerator>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <!--<UseNETCoreGenerator>true</UseNETCoreGenerator> -->
     <RootNamespace>TensorFlowSharp</RootNamespace>
-    <AssemblyName>TensorFlowSharp</AssemblyName>
+    <AssemblyName>Tensorflow_FSharp</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DocumentationFile>Tensorflow_FSharp.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="..\lib\Google.Protobuf.dll" />
@@ -20,6 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\lib\libtensorflow.dll" Link="libtensorflow.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="..\setup.fsx" Link="setup.fsx" />
     <None Include="..\OperationCodeGenerationFSharp.fsx" Link="OperationCodeGenerationFSharp.fsx" />
     <Compile Include="Utils.fs" />
@@ -33,9 +40,16 @@
     <Compile Include="Variable.fs" /> 
     <Compile Include="Graph.fs" /> 
     <Compile Include="Session.fs" /> 
-    <Compile Include="TensorflowGlobal.fs" />
+    <Compile Include="TensorflowGlobal.fs" /> 
+    <Compile Include="Operations.g.fs" /> 
+    <Compile Include="OperationsExtras.fs" /> 
+    <Compile Include="Queue.fs" /> 
+    <Compile Include="SessionExtras.fs" />
   </ItemGroup>
 
-  <ItemGroup />
+  <ItemGroup>
+    <PackageReference Include="System.Runtime" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
+  </ItemGroup>
 </Project>
 
