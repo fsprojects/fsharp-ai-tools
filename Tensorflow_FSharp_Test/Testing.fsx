@@ -11,7 +11,7 @@
 open Tensorflow
 open System
 
-let c1 = TF.Const(new Tensor([|14|]))
+let c1 = TF.Const(new Tensor([|1;4|]))
 let c2 = TF.Const(new Tensor(3))
 let c3 = TF.Mul(c1,c2)
 
