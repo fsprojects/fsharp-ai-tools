@@ -65,7 +65,7 @@ for file in compilerResult.Files do
 
 (*
 # previous bash commands for reference
-csc -langversion:latest -target:library -reference:./lib/protobuf-net.dll -reference:./lib/Google.Protobuf.dll -out:TensorFlowSharpProtoNet.dll -doc:TensorFlowSharpProtoNet.xml ./protogen/*.cs
+csc -langversion:latest -target:library -reference:./lib/protobuf-net.dll -reference:./lib/Google.Protobuf.dll -out:Tensorflow.Proto.dll -doc:Tensorflow.Proto.xml ./protogen/*.cs
 *)
 
 //let requireRunProcessWithEnvs (name:string) (envs:(string*string)[]) (args:string)  = if runProcess None name envs args   <> 0 then failwith (sprintf "%s failed to exit correctly" name)
@@ -76,7 +76,12 @@ let libDir = Path.Combine(__SOURCE_DIRECTORY__, "..", "lib")
 
 let csc  = 
     match os with
-    | Windows -> @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn\csc.exe"
+    | Windows -> 
+        let tryDir dir f = if File.Exists dir then dir else f()
+        tryDir @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn\csc.exe" (fun () -> 
+            tryDir @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\Roslyn\csc.exe" (fun () -> 
+               failwith "replace csc.exe path with one which works on your computer"))
+
     | Linux -> "csc"
     | OSX -> failwith "todo - support Mac OSX"
 

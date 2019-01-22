@@ -13,3 +13,5 @@ notes.txt
 /tests/pretrained/
 /setup/protogen/
 **/.vs/*
+tests/pretrained/
+setup/protogen/

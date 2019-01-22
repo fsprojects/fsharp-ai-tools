@@ -29,8 +29,8 @@
     <PackageId>Tensorflow.FSharp</PackageId>
     <PackageVersion>1.11.0-pre1</PackageVersion>
     <Authors>moloneymb</Authors>
-    <PackageLicense>https://github.com/moloneymb/Tensorflow_FSharp/blob/master/LICENSE</PackageLicense>
-    <PackageProjectUrl>https://github.com/moloneymb/Tensorflow_FSharp/</PackageProjectUrl>
+    <PackageLicense>https://github.com/moloneymb/Tensorflow.FSharp/blob/master/LICENSE</PackageLicense>
+    <PackageProjectUrl>https://github.com/moloneymb/Tensorflow.FSharp/</PackageProjectUrl>
     <PackageTags>machine-learning, tensorflow, f#</PackageTags>
     <Description>F# .NET Bindings for TensorFlow</Description>
     <Owners>Miguel de Icaza, moloneymb</Owners>
