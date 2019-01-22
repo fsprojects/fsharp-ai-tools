@@ -2,9 +2,12 @@
 **/lib/*
 **/obj/*
 *.swp
+*.suo
+**/packages/*
 
 data/
 cache/
 nuget/
 notes.txt
-Tensorflow_FSharp/packages/
+Tensorflow_FSharp_Test/pretrained/
+setup/protogen/

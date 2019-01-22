@@ -1,33 +1,40 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net472</TargetFramework>
+    <OutputType>Library</OutputType>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <!--<UseNETCoreGenerator>true</UseNETCoreGenerator> -->
+    <RootNamespace>TensorFlowSharp_Test</RootNamespace>
+    <AssemblyName>Tensorflow_FSharp_Test</AssemblyName>
   </PropertyGroup>
-
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DocumentationFile>Tensorflow_FSharp.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup />
   <ItemGroup>
     <Reference Include="..\lib\Google.Protobuf.dll" />
     <Reference Include="..\lib\HDF.PInvoke.dll" />
     <Reference Include="..\lib\TensorFlowSharpProtoNet.dll" />
-    <Reference Include="mscorlib" />
+    <Reference Include="..\lib\Ionic.Zlib.dll" />
     <Reference Include="FSharp.Core" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="System.IO.Compression.FileSystem" />
+    <PackageReference Include="System.Runtime" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
+    <ProjectReference Include="..\Tensorflow_FSharp\Tensorflow_FSharp.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="examples\chicago.jpg" />
+    <None Include="examples\example_0.jpeg" />
+    <None Include="examples\example_1.jpeg" />
+    <None Include="examples\example_2.jpeg" />
+    <None Include="examples\example_3.jpeg" />
+    <None Include="examples\example_4.jpeg" />
+    <None Include="examples\example_5.jpeg" />
+    <Compile Include="Tests.fs" />
+    <None Include="ImageClassifier.fsx" />
+    <None Include="NeuralStyleTransfer.fsx" />
     <None Include="NugetDeployment.fsx" />
     <None Include="Testing.fsx" />
-    <Compile Include="Program.fs" />
-  </ItemGroup>
-
-  <ItemGroup />
-
-  <ItemGroup>
-    <ProjectReference Include="..\Tensorflow_FSharp\Tensorflow_FSharp.fsproj" />
   </ItemGroup>
 
 </Project>

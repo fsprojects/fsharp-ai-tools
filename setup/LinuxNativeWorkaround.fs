@@ -1,13 +1,7 @@
 // This is to work around https://github.com/fsharp/fsharp/issues/794
-//fsharpc nativeWorkaround.fs -o nativeWorkaround.dll
+//fsharpc LinuxNativeWorkaround.fs -o LinuxNativeWorkaround.dll
 open System
-open System.Collections.Generic
-open System.IO
-//open Google.Protobuf
-open System.Linq
-open System.Text
 open System.Runtime.InteropServices
-//open Tensorflow
 
 
 [<Struct>]

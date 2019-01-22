@@ -78,3 +78,43 @@ let downloadAndExtractNugetFiles(nugetFiles:(string*string[])[]) =
         downloadFile(url,nugetFullFileName)
         let archiveFiles = [|for file in files -> (file, Path.Combine(libPath,Path.GetFileName(file)))|]
         extractZipFile(nugetFullFileName,archiveFiles)
+
+
+open System.Diagnostics
+
+let runProcess  (name:string) (args:string)  =
+        printfn "Running: %s %s" name args
+        let psi = ProcessStartInfo()
+        psi.FileName <- name
+        psi.Arguments <- args
+        psi.ErrorDialog <- true
+        psi.UseShellExecute <-false
+        let p = new Process()
+        p.StartInfo <- psi
+        p.ErrorDataReceived.Add(fun e -> printfn "Error %s" e.Data)
+        p.OutputDataReceived.Add(fun e -> printfn "Output %s" e.Data)
+        p.Start() |> ignore
+        p.WaitForExit()
+        p.ExitCode
+
+
+
+// TODO extend this to other versions of Visual Studio
+let fsharpFolderCandidates = 
+    [|
+        yield! ["Community";"Professional"; "Enterprise"] 
+        |> Seq.map (sprintf @"C:\Program Files (x86)\Microsoft Visual Studio\2017\%s\Common7\IDE\CommonExtensions\Microsoft\FSharp")
+    |]
+
+let private exeInDirCandiates exe candidates args = 
+   candidates 
+    |> Array.tryFind (fun x -> File.Exists(Path.Combine(x,exe)))
+    |> function
+    | None -> failwithf "%s not found" exe
+    | Some(dir) ->
+        runProcess (Path.Combine(dir, exe)) args
+
+let runFSI (args:string) = exeInDirCandiates "fsiAnyCpu.exe" fsharpFolderCandidates args
+
+let runFSC (args:string) = exeInDirCandiates "fsc.exe" fsharpFolderCandidates args
+

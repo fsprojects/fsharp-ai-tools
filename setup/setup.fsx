@@ -1,5 +1,7 @@
-#load "shared/NugetDownload.fsx"
+#load "NugetDownload.fsx"
 open NugetDownload
+
+// TODO extract all OS specific files for Tensorflow
 
 let nugetFiles = 
     [| 
@@ -25,33 +27,35 @@ let nugetFiles =
         "Google.Protobuf/3.6.1", [|"dll";"xml"|] |> Array.map (sprintf "lib/net45/Google.Protobuf.%s")
         "protobuf-net/2.4.0",[|"dll";"xml"|] |> Array.map (sprintf "lib/net40/protobuf-net.%s")
         "nuget.core/2.14.0",[|"lib/net40-Client/NuGet.Core.dll"|]
-        "microsoft.web.xdt/3.0.0.0", [|"lib/net40/Microsoft.Web.XmlTransform.dll"|]
+        //"microsoft.web.xdt/3.0.0.0", [|"lib/net40/Microsoft.Web.XmlTransform.dll"|] // This is needed for scritped deployment of Nuget
+        "protobuf-net.protogen/2.3.17", [| for x in [|"protobuf-net";"protobuf-net.Reflection"|] do for y in [|"dll";"xml"|] -> sprintf "tools/netcoreapp2.1/any/%s.%s" x y |]
     |]
 
 downloadAndExtractNugetFiles nugetFiles
 
-let baseUrl = "https://s3-us-west-1.amazonaws.com/public.data13/Tensorflow_FSharp/"
-
-open System
 open System.IO
 
-let rootDir = __SOURCE_DIRECTORY__
+let dir = __SOURCE_DIRECTORY__
+let lib = Path.Combine(dir, "..","lib")
 
-[ "TensorFlowSharpProtoNet.dll"; "TensorFlowSharpProtoNet.xml"; "nativeWorkaround.dll" ] 
-|> Seq.iter (fun x -> downloadFile(sprintf "%s%s" baseUrl x, sprintf "%s/lib/%s" rootDir x ))
+printfn "Building Tensorflow Proto"
+runFSI (Path.Combine(dir,"BuildTensorflowProto.fsx"))
+printfn "Finished building Tensorflow Proto"
 
-/// This file contains the api_definitions
-"tensorflow_api_def_1.11.zip" 
-|> fun x -> 
-    downloadFile (sprintf "%s%s" baseUrl x,rootDir +  "/cache/" + x)
-    extractZipFileAll (rootDir + "/cache/" + x,rootDir + "/data/api_def/")
+printfn "Code genearting operations"
+runFSC (sprintf "%s -o %s" (Path.Combine(dir,"LinuxNativeWorkaround.fs")) (Path.Combine(lib,"LinuxNativeWorkaround.dll")))
+runFSI (Path.Combine(dir,"OperationCodeGenerationFSharp.fsx"))
+printfn "Finished code genearting operations"
 
-// Do code generation
-
-//#load "OperationCodeGenerationFSharp.fsx"
-//open System.IO
-//
-//OperationCodeGenerationFSharp.run([|__SOURCE_DIRECTORY__ + "/data/api_def"|]) 
-//|> fun res -> File.WriteAllText(__SOURCE_DIRECTORY__ + "/Tensorflow_FSharp/Operations.g.fs", res)
+printfn "Fetching pre-trained weights for testing"
+[| 
+  yield! ["rain"; "starry_night"; "wave"] |> Seq.map (sprintf "fast_style_weights_%s.npz")
+  yield "imagenet1000.txt"
+  yield "resnet_classifier_1000.npz"
+|]
+|> Seq.iter (fun file -> 
+    downloadFile(sprintf "https://s3-us-west-1.amazonaws.com/public.data13/TF_examples/%s" file, 
+                 System.IO.Path.Combine(dir,"..","Tensorflow_FSharp_Test","pretrained",file)))
+printfn "Finished fetching pre-trained weights for testing"
 
 printfn "Setup has finished."
