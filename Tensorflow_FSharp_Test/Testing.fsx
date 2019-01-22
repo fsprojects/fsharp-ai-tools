@@ -1,5 +1,5 @@
 ﻿// System.TypeLoadException: Could not load type 'System.Runtime.InteropServices.GCHandle' from assembly 'System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'.
-
+(*
 
 #I @"..\Tensorflow_FSharp\bin\Debug\netstandard2.0"
 #r "Google.Protobuf.dll"
@@ -80,3 +80,4 @@ let private RaiseNoGradWrtInitialLoopValError(op:TFOperation, from_ops:Set<TFOpe
 //let res = Native.TF_OperationOpType(x.Operation.Handle)
 //
 //Marshal.PtrToStringAnsi(res)
+*)

@@ -2,31 +2,25 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <!--<UseNETCoreGenerator>true</UseNETCoreGenerator> -->
-    <RootNamespace>TensorFlowSharp</RootNamespace>
-    <AssemblyName>Tensorflow_FSharp</AssemblyName>
+    <RootNamespace>Tensorflow</RootNamespace>
+    <AssemblyName>Tensorflow.FSharp</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <PlatformTarget>x64</PlatformTarget>
-    <DocumentationFile>Tensorflow_FSharp.XML</DocumentationFile>
+    <DocumentationFile>Tensorflow.FSharp.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="..\lib\Google.Protobuf.dll" />
     <Reference Include="..\lib\HDF.PInvoke.dll" />
     <Reference Include="..\lib\TensorFlowSharpProtoNet.dll" />
+    <Reference Include="..\lib\Ionic.Zlib.dll" />
     <Reference Include="FSharp.Core" />
-    <!--<Reference Include="mscorlib" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="System.IO.Compression.FileSystem" />-->
   </ItemGroup>
 
   <ItemGroup>
     <None Include="..\lib\libtensorflow.dll" Link="libtensorflow.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\setup.fsx" Link="setup.fsx" />
-    <None Include="..\OperationCodeGenerationFSharp.fsx" Link="OperationCodeGenerationFSharp.fsx" />
     <Compile Include="Utils.fs" />
     <Compile Include="Common.fs" /> 
     <Compile Include="DType.fs" /> 
@@ -42,7 +36,12 @@
     <Compile Include="Operations.g.fs" /> 
     <Compile Include="OperationsExtras.fs" /> 
     <Compile Include="Queue.fs" /> 
-    <Compile Include="SessionExtras.fs" />
+    <Compile Include="SessionExtras.fs" /> 
+    <Compile Include="Operations.NN.fs" /> 
+    <Compile Include="HDF5ReaderWriter.fs" /> 
+    <Compile Include="NPYReaderWriter.fs" /> 
+    <Compile Include="ImageWriter.fs" /> 
+    <Compile Include="Datasets.fs" />
   </ItemGroup>
 
   <ItemGroup>
