@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <doc>
-<assembly><name>Tensorflow_FSharp</name></assembly>
+<assembly><name>TensorFlow.FSharp</name></assembly>
 <members>
 <member name="T:Tensorflow.DType">
  <summary>

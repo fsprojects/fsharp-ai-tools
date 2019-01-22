@@ -58,7 +58,7 @@ printfn "Fetching pre-trained weights for testing"
 |]
 |> Seq.iter (fun file -> 
     downloadFile(sprintf "https://s3-us-west-1.amazonaws.com/public.data13/TF_examples/%s" file, 
-                 System.IO.Path.Combine(dir,"..","Tensorflow_FSharp_Test","pretrained",file)))
+                 System.IO.Path.Combine(dir,"..","tests","pretrained",file)))
 printfn "Finished fetching pre-trained weights for testing"
 
 printfn "Setup has finished."

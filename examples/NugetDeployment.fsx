@@ -69,7 +69,7 @@ filename=\"%s\"\r\n" filename filename |> toBytes
 #r @"..\lib\Microsoft.Web.XmlTransform.dll"
 #r @"..\lib\NuGet.Core.dll"
 
-let name = "Tensorflow_FSharp"
+let name = "TensorFlow.FSharp"
 let version = "0.0.0.1"
 let description = "Tensorflow bindings for F#. Code ported from TensorFlowSharp (C#) and from Tensorflow (python)"
 let releaseNotes = "Alpha"
@@ -82,7 +82,7 @@ let mm = NuGet.ManifestMetadata(
             Description = description,
             Summary = description,
             ReleaseNotes = releaseNotes,
-            ProjectUrl = "https://github.com/moloneymb/Tensorflow_FSharp",
+            ProjectUrl = "https://github.com/moloneymb/TensorFlow.FSharp",
             Copyright = "moloneymb",
             Authors = "moloneymb",
             Owners = "moloneymb",
@@ -120,7 +120,7 @@ sprintf @"C:\Users\moloneymb\AppData\Local\Statfactory\FCell\%s"
 let dependecies =  [ ("ionic.zlib","1.9.1.5"); ("HDF.PInvoke.NETStandard","1.10.200"); ("Argu","5.1.0");("Google.Protobuf","3.6.1"); ("protobuf-net","2.4.0")]
 
 [|
-    for file in ["Tensorflow_FSharp.dll";"Tensorflow_FSharp.XML"; "libtensorflow.dll";
+    for file in ["TensorFlow.FSharp.dll";"TensorFlow.FSharp.XML"; "libtensorflow.dll";
 "TensorFlowSharpProtoNet.dll";"TensorFlowSharpProtoNet.xml"]  ->
         MPackageFile(file,@"lib\net40\" + file, net40,[|net40|], File.ReadAllBytes(__SOURCE_DIRECTORY__ + sprintf "\\bin\\Debug\\%s"
 file))
