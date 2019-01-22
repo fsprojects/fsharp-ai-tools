@@ -7,6 +7,7 @@
     <AssemblyName>TensorFlow.FSharp.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="..\lib\Google.Protobuf.dll" />
     <Reference Include="..\lib\HDF.PInvoke.dll" />
