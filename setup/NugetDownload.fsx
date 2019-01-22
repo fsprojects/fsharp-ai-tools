@@ -114,7 +114,14 @@ let private exeInDirCandiates exe candidates args =
     | Some(dir) ->
         runProcess (Path.Combine(dir, exe)) args
 
-let runFSI (args:string) = exeInDirCandiates "fsiAnyCpu.exe" fsharpFolderCandidates args
+let runFSI (args:string) = 
+        match os with
+        | Windows -> exeInDirCandiates "fsiAnyCpu.exe" fsharpFolderCandidates args
+        | Linux -> runProcess "fsharpi" args
+        | OSX -> failwith "todo - extend setup support to Mac OSX"
 
-let runFSC (args:string) = exeInDirCandiates "fsc.exe" fsharpFolderCandidates args
-
+let runFSC (args:string) = 
+        match os with 
+        | Windows -> exeInDirCandiates "fsc.exe" fsharpFolderCandidates args
+        | Linux -> runProcess "fsharpc" args
+        | OSX -> failwith "todo - extend setup support to Mac OSX"

@@ -49,11 +49,13 @@ codeFiles |> Array.rev |> Array.map (fun x -> x.Name)
 
 let compilerResult = CSharpCodeGenerator.Default.Compile(codeFiles)
 
+compilerResult.Errors
+
 if compilerResult.Errors |> Array.filter (fun x -> not(x.IsWarning)) |> Array.length > 0 then failwith "Too many proto compiler errors"
 
 let outDirectory = Path.Combine(__SOURCE_DIRECTORY__,  "protogen")
 
-Directory.Delete(outDirectory,true) |> ignore
+if Directory.Exists(outDirectory) then Directory.Delete(outDirectory,true) |> ignore
 Directory.CreateDirectory(outDirectory) |> ignore
 
 for file in compilerResult.Files do 
@@ -72,14 +74,19 @@ csc -langversion:latest -target:library -reference:./lib/protobuf-net.dll -refer
 
 let libDir = Path.Combine(__SOURCE_DIRECTORY__, "..", "lib")
 
-let csc  = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn\csc.exe"
+let csc  = 
+    match os with
+    | Windows -> @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn\csc.exe"
+    | Linux -> "csc"
+    | OSX -> failwith "todo - support Mac OSX"
+
 if not(File.Exists(csc)) then failwith "replace csc.exe path with one which works on your computer"
 
-let references = ["protobuf-net.dll"; "Google.Protobuf.dll"] |> List.map (sprintf @"-reference:%s\%s" libDir) |> String.concat  " " 
+let references = ["protobuf-net.dll"; "Google.Protobuf.dll"] |> List.map (sprintf @"-reference:%s%c%s" libDir Path.DirectorySeparatorChar) |> String.concat  " " 
 
 // NOTE: documentation xml is empty
 Directory.GetFiles(outDirectory, "*.cs") |> String.concat " "
-|> sprintf @"-langversion:latest -target:library %s -out:%s\Tensorflow.Proto.dll %s" references libDir
+|> sprintf @"-langversion:latest -target:library %s -out:%s%cTensorflow.Proto.dll %s" references libDir Path.DirectorySeparatorChar
 |> runProcess csc 
 
 // Clean up generated C# code
