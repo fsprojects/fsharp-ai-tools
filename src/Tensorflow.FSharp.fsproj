@@ -11,7 +11,7 @@
     <Reference Include="..\lib\HDF.PInvoke.dll" />
     <Reference Include="..\lib\TensorFlowSharpProtoNet.dll" />
     <Reference Include="..\lib\Ionic.Zlib.dll" />
-    <Reference Include="FSharp.Core" />
+    <PackageReference Update="FSharp.Core" Version="4.5.2" />
   </ItemGroup>
 
   <ItemGroup>
