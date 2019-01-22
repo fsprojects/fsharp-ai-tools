@@ -76,7 +76,12 @@ let libDir = Path.Combine(__SOURCE_DIRECTORY__, "..", "lib")
 
 let csc  = 
     match os with
-    | Windows -> @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn\csc.exe"
+    | Windows -> 
+        let tryDir dir f = if File.Exists dir then dir else f()
+        tryDir @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Roslyn\csc.exe" (fun () -> 
+            tryDir @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\Roslyn\csc.exe" (fun () -> 
+               failwith "replace csc.exe path with one which works on your computer"))
+
     | Linux -> "csc"
     | OSX -> failwith "todo - support Mac OSX"
 

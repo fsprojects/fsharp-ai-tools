@@ -82,10 +82,10 @@ let mm = NuGet.ManifestMetadata(
             Description = description,
             Summary = description,
             ReleaseNotes = releaseNotes,
-            ProjectUrl = "https://github.com/moloneymb/TensorFlow.FSharp",
-            Copyright = "moloneymb",
-            Authors = "moloneymb",
-            Owners = "moloneymb",
+            ProjectUrl = "https://github.com/fsprojects/TensorFlow.FSharp",
+            Copyright = "Microsoft and contributors",
+            Authors = "Microsoft",
+            Owners = "moloneymb, dsyme",
             Tags = "fsharp tensorflow machine deep learning "
     )
 
