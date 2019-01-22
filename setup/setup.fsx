@@ -7,7 +7,6 @@ let nugetFiles =
     [| 
         "HDF.PInvoke.NETStandard/1.10.200",
         [|
-            yield @"lib/netstandard2.0/HDF.PInvoke.dll"
             match os with
             | Linux -> yield! [|"libhdf5_hl.so";"libhdf5_hl.so.101";"libhdf5.so";"libhdf5.so.101"|] |> Array.map (sprintf @"runtimes/linux-x64/native/%s")
             | Windows -> yield! [|"hdf5_hl.dll";"hdf5.dll";"zlib1.dll"|] |> Array.map (sprintf @"runtimes/win-x64/native/%s")
