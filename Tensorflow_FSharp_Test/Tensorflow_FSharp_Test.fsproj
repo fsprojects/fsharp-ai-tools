@@ -10,11 +10,13 @@
     <PlatformTarget>x64</PlatformTarget>
     <DocumentationFile>Tensorflow_FSharp.XML</DocumentationFile>
   </PropertyGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Remove="native\**" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="..\lib\Google.Protobuf.dll" />
     <Reference Include="..\lib\HDF.PInvoke.dll" />
-    <Reference Include="..\lib\TensorFlowSharpProtoNet.dll" />
+    <Reference Include="..\lib\Tensorflow.Proto.dll" />
     <Reference Include="..\lib\Ionic.Zlib.dll" />
     <Reference Include="FSharp.Core" />
     <PackageReference Include="System.Runtime" Version="4.3.0" />

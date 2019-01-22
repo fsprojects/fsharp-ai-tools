@@ -11,3 +11,5 @@ nuget/
 notes.txt
 Tensorflow_FSharp_Test/pretrained/
 setup/protogen/
+Tensorflow_FSharp/Tensorflow.FSharp.XML
+Tensorflow_FSharp/.vs/config/applicationhost.config

@@ -448,7 +448,7 @@ type TF with
     /// <param name="delta">A 0 - D `Tensor` (scalar).Number that increments `start`. Defaults to 1.</param>
     /// <param name="dataType">The type of the elements of the resulting tensor.</param>
     /// <param name="name">A name for the operation.Defaults to "range".</param>
-    static member Range (start : Output, ?limit : Output, ?delta : Output, ?dataType : DataType, ?name : string) =
+    static member Range (start : Output, ?limit : Output, ?delta : Output, ?dataType : DType, ?name : string) =
         let name = defaultArg name "range"
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/math_ops.py#L1156
         let start,limit =

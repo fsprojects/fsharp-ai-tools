@@ -17,10 +17,13 @@ let nugetFiles =
         "TensorFlowSharp/1.11.0",
         [|
             //yield @"lib/netstandard2.0/TensorFlowSharp.dll"
-            match os with
-            | Linux -> yield! [|"libtensorflow_framework.so"; "libtensorflow.so"|] |> Array.map (sprintf @"runtimes/linux/native/%s")
-            | Windows -> yield @"runtimes/win7-x64/native/libtensorflow.dll"
-            | OSX -> yield! [|"libtensorflow_framework.dylib"; "libtensorflow.dylib"|] |> Array.map (sprintf @"runtimes/osx/native/%s")
+//            match os with
+//            | Linux -> yield! [|"libtensorflow_framework.so"; "libtensorflow.so"|] |> Array.map (sprintf @"runtimes/linux/native/%s")
+//            | Windows -> yield @"runtimes/win7-x64/native/libtensorflow.dll"
+//            | OSX -> yield! [|"libtensorflow_framework.dylib"; "libtensorflow.dylib"|] |> Array.map (sprintf @"runtimes/osx/native/%s")
+              yield! [|"libtensorflow_framework.so"; "libtensorflow.so"|] |> Array.map (sprintf @"runtimes/linux/native/%s")
+              yield @"runtimes/win7-x64/native/libtensorflow.dll"
+              yield! [|"libtensorflow_framework.dylib"; "libtensorflow.dylib"|] |> Array.map (sprintf @"runtimes/osx/native/%s")
         |]
         // https://eiriktsarpalis.wordpress.com/2013/03/27/a-declarative-argument-parser-for-f/ 
         "Argu/5.1.0",[|"lib/netstandard2.0/Argu.dll"|]

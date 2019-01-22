@@ -1,26 +1,109 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Tensorflow</RootNamespace>
     <AssemblyName>Tensorflow.FSharp</AssemblyName>
+    <ReleaseVersion>0.1</ReleaseVersion>
+    <TensorFlowRuntimeVersion>1.11.0</TensorFlowRuntimeVersion>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <PlatformTarget>x64</PlatformTarget>
     <DocumentationFile>Tensorflow.FSharp.XML</DocumentationFile>
   </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="..\lib\Google.Protobuf.dll" />
-    <Reference Include="..\lib\HDF.PInvoke.dll" />
-    <Reference Include="..\lib\TensorFlowSharpProtoNet.dll" />
-    <Reference Include="..\lib\Ionic.Zlib.dll" />
+    <!--<Reference Include="..\lib\Google.Protobuf.dll" />-->
+    <!--<Reference Include="..\lib\HDF.PInvoke.dll" />-->
+    <Reference Include="..\lib\Tensorflow.Proto.dll" />
+    <!--<Reference Include="..\lib\Ionic.Zlib.dll" />-->
     <Reference Include="FSharp.Core" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <GeneratePackageOnBuild Condition=" '$(Configuration)' == 'Release' ">true</GeneratePackageOnBuild>
+    <PackageId>Tensorflow.FSharp</PackageId>
+    <PackageVersion>1.11.0-pre1</PackageVersion>
+    <Authors>moloneymb</Authors>
+    <PackageLicense>https://github.com/moloneymb/Tensorflow_FSharp/blob/master/LICENSE</PackageLicense>
+    <PackageProjectUrl>https://github.com/moloneymb/Tensorflow_FSharp/</PackageProjectUrl>
+    <PackageTags>machine-learning, tensorflow, f#</PackageTags>
+    <Description>F# .NET Bindings for TensorFlow</Description>
+    <Owners>Miguel de Icaza, moloneymb</Owners>
+    <Summary>F# .NET API for TensorFlow, Google's Machine Intelligence framework</Summary>
+    <PackageReleaseNotes>1.11.0 adds support for the TensorFlow 1.11 release</PackageReleaseNotes>
+  </PropertyGroup>
+
   <ItemGroup>
-    <None Include="..\lib\libtensorflow.dll" Link="libtensorflow.dll">
+    <None Remove="nuget\Tensorflow.FSharp.targets" />
+    <None Include="nuget\Tensorflow.FSharp.targets" PackagePath="build\netstandard2.0\TensorFlowSharp.targets" Pack="true" />
+    <None Include="..\lib\libtensorflow.dll" Link="nuget\runtimes\win7-x64\native\libtensorflow.dll" PackagePath="runtimes\win7-x64\native\libtensorflow.dll" Pack="true" />
+    <None Include="..\lib\libtensorflow.dylib" Link="nuget\runtimes\osx\native\libtensorflow.dylib" PackagePath="runtimes\osx\native\libtensorflow.dylib" Pack="true" />
+    <None Include="..\lib\libtensorflow_framework.dylib" Link="nuget\runtimes\osx\native\libtensorflow_framework.dylib" PackagePath="runtimes\osx\native\libtensorflow_framework.dylib" Pack="true" />
+    <None Include="..\lib\libtensorflow.so" Link="nuget\runtimes\linux\native\libtensorflow.so" PackagePath="runtimes\linux\native\libtensorflow.so" Pack="true" />
+    <None Include="..\lib\libtensorflow_framework.so" Link="nuget\runtimes\linux\native\libtensorflow_framework.so" PackagePath="runtimes\linux\native\libtensorflow_framework.so" Pack="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.200" />
+    <!--<PackageReference Include="ionic.zlib" Version="1.9.1.5" />-->
+    <PackageReference Include="Iconic.Zlib.Netstandard" Version="1.0.0" />
+    <!--<PackageReference Include="Argu" Version="1.0" />-->
+    <PackageReference Include="Google.Protobuf" Version="3.6.1" />
+    <PackageReference Include="protobuf-net" Version="2.4.0" />
+    <!--<PackageReference Include="protobuf-net.protogen" Version="2.3.17" />-->
+  </ItemGroup>
+<!--
+        "ionic.zlib/1.9.1.5", [|"lib/Ionic.Zlib.dll"|]
+        "HDF.PInvoke.NETStandard/1.10.200",
+        [|
+            yield @"lib/netstandard2.0/HDF.PInvoke.dll"
+            match os with
+            | Linux -> yield! [|"libhdf5_hl.so";"libhdf5_hl.so.101";"libhdf5.so";"libhdf5.so.101"|] |> Array.map (sprintf @"runtimes/linux-x64/native/%s")
+            | Windows -> yield! [|"hdf5_hl.dll";"hdf5.dll";"zlib1.dll"|] |> Array.map (sprintf @"runtimes/win-x64/native/%s")
+            | OSX -> yield! [|"libhdf5_hl.dylib"; "libhdf5.dylib"|] |> Array.map (sprintf @"runtimes/osx-x64/native/%s")
+        |]
+        "TensorFlowSharp/1.11.0",
+        [|
+            //yield @"lib/netstandard2.0/TensorFlowSharp.dll"
+//            match os with
+//            | Linux -> yield! [|"libtensorflow_framework.so"; "libtensorflow.so"|] |> Array.map (sprintf @"runtimes/linux/native/%s")
+//            | Windows -> yield @"runtimes/win7-x64/native/libtensorflow.dll"
+//            | OSX -> yield! [|"libtensorflow_framework.dylib"; "libtensorflow.dylib"|] |> Array.map (sprintf @"runtimes/osx/native/%s")
+              yield! [|"libtensorflow_framework.so"; "libtensorflow.so"|] |> Array.map (sprintf @"runtimes/linux/native/%s")
+              yield @"runtimes/win7-x64/native/libtensorflow.dll"
+              yield! [|"libtensorflow_framework.dylib"; "libtensorflow.dylib"|] |> Array.map (sprintf @"runtimes/osx/native/%s")
+        |]
+        // https://eiriktsarpalis.wordpress.com/2013/03/27/a-declarative-argument-parser-for-f/ 
+        "Argu/5.1.0",[|"lib/netstandard2.0/Argu.dll"|]
+        "Google.Protobuf/3.6.1", [|"dll";"xml"|] |> Array.map (sprintf "lib/net45/Google.Protobuf.%s")
+        "protobuf-net/2.4.0",[|"dll";"xml"|] |> Array.map (sprintf "lib/net40/protobuf-net.%s")
+        "nuget.core/2.14.0",[|"lib/net40-Client/NuGet.Core.dll"|]
+        //"microsoft.web.xdt/3.0.0.0", [|"lib/net40/Microsoft.Web.XmlTransform.dll"|] // This is needed for scritped deployment of Nuget
+        "protobuf-net.protogen/2.3.17", [| for x in [|"protobuf-net";"protobuf-net.Reflection"|] do for y in [|"dll";"xml"|] -> sprintf "tools/netcoreapp2.1/any/%s.%s" x y |]
+        -->
+  <!--
+  <ItemGroup>
+    <None Include="..\lib\libtensorflow.dll" Link="native\libtensorflow.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\lib\libtensorflow_framework.so" Link="native\libtensorflow_framework.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\lib\libtensorflow.so" Link="native\libtensorflow.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\lib\libtensorflow_framework.dylib" Link="native\libtensorflow_framework.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\lib\libtensorflow.dylib" Link="native\libtensorflow.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup> -->
+
+  <ItemGroup>
     <Compile Include="Utils.fs" />
     <Compile Include="Common.fs" /> 
     <Compile Include="DType.fs" /> 
