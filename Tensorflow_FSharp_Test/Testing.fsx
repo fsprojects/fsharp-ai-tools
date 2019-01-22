@@ -1,22 +1,22 @@
 ﻿// System.TypeLoadException: Could not load type 'System.Runtime.InteropServices.GCHandle' from assembly 'System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'.
 (*
 
-#I @"..\Tensorflow_FSharp\bin\Debug\net472"
+#I @"..\Tensorflow_FSharp\bin\Debug\netstandard2.0"
 #r "Google.Protobuf.dll"
 #r "HDF.PInvoke.dll"
 #r "protobuf-net.dll"
 #r "TensorFlowSharpProtoNet.dll"
 #r "TensorFlow_FSharp.dll"
+#r "netstandard"
 
 open Tensorflow
 open System
-open System.Runtime.InteropServices
 
 let c1 = TF.Const(new Tensor([|1;4|]))
 let c2 = TF.Const(new Tensor(3))
 let c3 = TF.Mul(c1,c2)
 
-let Run([<ParamArray>] output:Output[]) =
+let Run(output:Output[]) =
     TF.DefaultSession.Run([||],[||],output)
 
 Run([|c3|])
@@ -26,7 +26,7 @@ let x = TF.Placeholder(DType.Int32,name="p2")
 
 x.Operation.ControlInputs
 x.Operation.ControlOutputs
-//x.Operation.OpType
+x.Operation.OpType
 
 /// Breadth first search through a graph, returns first found node if there is one
 /// Skipping previously visited nodes
@@ -73,9 +73,9 @@ let private RaiseNoGradWrtInitialLoopValError(op:TFOperation, from_ops:Set<TFOpe
 //let [<Literal>] tflib = "C:\EE\Git\Tensorflow_FSharp\lib\libtensorflow.dll"
 
 //module Native = 
-//    // extern const char * TF_OperationOpType (TF_Operation *oper);
+//    // extern const char * TF_OperationOpType (TF_Operation *oper)
 //    [<DllImport(tflib)>]
-//    extern IntPtr TF_OperationOpType(TF_Operation oper);
+//    extern IntPtr TF_OperationOpType(TF_Operation oper)
 //
 //let res = Native.TF_OperationOpType(x.Operation.Handle)
 //
