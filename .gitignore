@@ -9,5 +9,5 @@ data/
 cache/
 nuget/
 notes.txt
-Tensorflow_FSharp_Test/pretrained/
+tests/pretrained/
 setup/protogen/

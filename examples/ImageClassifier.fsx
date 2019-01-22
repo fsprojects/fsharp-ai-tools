@@ -1,4 +1,4 @@
-﻿(* TODO Port from TensorFlowSharp to Tensorflow_FSharp
+﻿(* TODO Port from TensorFlowSharp to TensorFlow.FSharp
 #r "netstandard"
 #r "lib/TensorFlowSharp.dll"
 #load "shared/NPYReaderWriter.fsx"

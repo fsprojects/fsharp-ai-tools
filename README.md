@@ -1,2 +1,2 @@
-# Tensorflow_FSharp
+# TensorFlow.FSharp
 TensorFlow API for the FSharp Programming Language

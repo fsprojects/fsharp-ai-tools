@@ -1,16 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net472</TargetFrameworks>
     <!--<UseNETCoreGenerator>true</UseNETCoreGenerator> -->
-    <RootNamespace>TensorFlowSharp_Test</RootNamespace>
-    <AssemblyName>Tensorflow_FSharp_Test</AssemblyName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <PlatformTarget>x64</PlatformTarget>
-    <DocumentationFile>Tensorflow_FSharp.XML</DocumentationFile>
-  </PropertyGroup>
-  <ItemGroup />
+    <RootNamespace>TensorFlow.FSharp.Tests</RootNamespace>
+    <AssemblyName>TensorFlow.FSharp.Tests</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+ </PropertyGroup>
   <ItemGroup>
     <Reference Include="..\lib\Google.Protobuf.dll" />
     <Reference Include="..\lib\HDF.PInvoke.dll" />
@@ -19,7 +16,10 @@
     <Reference Include="FSharp.Core" />
     <PackageReference Include="System.Runtime" Version="4.3.0" />
     <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
-    <ProjectReference Include="..\Tensorflow_FSharp\Tensorflow_FSharp.fsproj" />
+    <ProjectReference Include="..\src\TensorFlow.FSharp.fsproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.6.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.9.0" />
+    <PackageReference Include="NUnit" Version="3.9.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,9 +31,10 @@
     <None Include="examples\example_4.jpeg" />
     <None Include="examples\example_5.jpeg" />
     <Compile Include="Tests.fs" />
-    <None Include="ImageClassifier.fsx" />
-    <None Include="NeuralStyleTransfer.fsx" />
-    <None Include="NugetDeployment.fsx" />
+    <None Include="..\examples\shared\dsl.fsx" />
+    <None Include="..\examples\ImageClassifier.fsx" />
+    <None Include="..\examples\NeuralStyleTransfer.fsx" />
+    <None Include="..\examples\NugetDeployment.fsx" />
     <None Include="Testing.fsx" />
   </ItemGroup>
 
