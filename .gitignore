@@ -6,11 +6,10 @@
 **/packages/*
 *~
 
-data/
-cache/
-nuget/
+/data/
+/cache/
+/nuget/
 notes.txt
-tests/pretrained/
-setup/protogen/
-Tensorflow_FSharp/Tensorflow.FSharp.XML
-Tensorflow_FSharp/.vs/config/applicationhost.config
+/tests/pretrained/
+/setup/protogen/
+**/.vs/*

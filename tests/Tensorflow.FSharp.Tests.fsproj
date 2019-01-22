@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFrameworks>net472</TargetFrameworks>
@@ -8,18 +9,21 @@
     <IsPackable>false</IsPackable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="..\lib\Google.Protobuf.dll" />
-    <Reference Include="..\lib\TensorFlowSharpProtoNet.dll" />
+    <Reference Include="..\lib\Tensorflow.Proto.dll" />
+    <PackageReference Include="Argu" Version="5.1.0" />
+    <PackageReference Include="protobuf-net" Version="2.4.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.6.1" />
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
     <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.200" />
     <PackageReference Update="FSharp.Core" Version="4.5.2" />
     <PackageReference Include="System.Runtime" Version="4.3.0" />
     <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
-    <ProjectReference Include="..\src\TensorFlow.FSharp.fsproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.6.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.9.0" />
     <PackageReference Include="NUnit" Version="3.9.0" />
+    <ProjectReference Include="..\src\TensorFlow.FSharp.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

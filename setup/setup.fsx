@@ -27,8 +27,6 @@ let nugetFiles =
         "Argu/5.1.0",[|"lib/netstandard2.0/Argu.dll"|]
         "Google.Protobuf/3.6.1", [|"dll";"xml"|] |> Array.map (sprintf "lib/net45/Google.Protobuf.%s")
         "protobuf-net/2.4.0",[|"dll";"xml"|] |> Array.map (sprintf "lib/net40/protobuf-net.%s")
-        "nuget.core/2.14.0",[|"lib/net40-Client/NuGet.Core.dll"|]
-        //"microsoft.web.xdt/3.0.0.0", [|"lib/net40/Microsoft.Web.XmlTransform.dll"|] // This is needed for scritped deployment of Nuget
         "protobuf-net.protogen/2.3.17", [| for x in [|"protobuf-net";"protobuf-net.Reflection"|] do for y in [|"dll";"xml"|] -> sprintf "tools/netcoreapp2.1/any/%s.%s" x y |]
     |]
 
