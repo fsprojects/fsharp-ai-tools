@@ -271,7 +271,7 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// <param name="sessionOptions">Session options.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
     new (?graph : Graph, ?sessionOptions : SessionOptions , ?status : TFStatus ) =
-        let graph = graph |> Option.orDefaultDelay (fun () -> new Graph())
+        let graph = graph |> Option.defaultWith (fun () -> new Graph())
         let cstatus = TFStatus.Setup (?incoming=status)
         let h = 
             match sessionOptions with 

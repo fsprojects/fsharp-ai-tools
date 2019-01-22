@@ -181,7 +181,7 @@ type TF with
     /// </remarks>
     static member Dropout (x : Output, keep_prob : Output, ?noise_shape : Shape, ?seed : int, ?name : string) =
         use newScope = TF.WithScope (TF.MakeName ("dropout", ?userName = name))
-        let noiseShape = noise_shape |> Option.orDefaultDelay (fun _ -> new Shape (TF.GetShape (x)))
+        let noiseShape = noise_shape |> Option.defaultWith (fun () -> new Shape (TF.GetShape (x)))
         let shapeTensor = TF.ShapeTensorOutput (noiseShape)
         // uniform [keep_prob, 1.0 + keep_prob)
         let random_tensor = keep_prob
@@ -456,7 +456,7 @@ type TF with
             | None -> TF.Cast (TF.Const (new Tensor (0.0)), start.DType), start // TODO: Maybe add dataType as convenience in Const?
             | Some(limit) -> start,limit
 
-        let delta = delta |> Option.orDefaultDelay (fun _ -> TF.Cast ( TF.Const (new Tensor (1.0)), start.DType))
+        let delta = delta |> Option.defaultWith (fun () -> TF.Cast ( TF.Const (new Tensor (1.0)), start.DType))
         use newScope = TF.WithScope (TF.MakeName ("Range", name))
         // infer dtype if not explicitly provided
         let start, limit, delta =

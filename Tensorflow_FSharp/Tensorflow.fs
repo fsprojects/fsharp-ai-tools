@@ -492,19 +492,19 @@ type Shape(dims:int64[] option) =
         | Some dims -> dims
         | None -> null
     
-    member __.Dims = dims |> Option.orDefault [||]
+    member __.Dims = dims |> Option.defaultValue [||]
 
     /// <summary>
     /// Returns the shape as an array
     /// </summary>
     /// <returns>null if the shape represents an unknown shape, otherwise an array with N elements, one per dimension, and each element can be either -1 (if the dimension size is unspecified) or the size of the dimension.</returns>
-    member __.ToIntArray () = dims |> Option.map (Array.map int) |> Option.orDefault null
+    member __.ToIntArray () = dims |> Option.map (Array.map int) |> Option.defaultValue null
 
     /// <summary>
     /// Gets a value indicating whether one of the dimensions <see cref="T:TensorFlow.TFShape"/> in the shape is larger than Int32.MaxValue.
     /// </summary>
     /// <value><c>true</c> if is long array; otherwise, <c>false</c>.</value>
-    member __.IsLongArray with get() = dims |> Option.map (Array.exists (fun x -> x > int64 Int32.MaxValue)) |> Option.orDefault false
+    member __.IsLongArray with get() = dims |> Option.map (Array.exists (fun x -> x > int64 Int32.MaxValue)) |> Option.defaultValue false
 
     /// <summary>
     /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.TFShape"/>.

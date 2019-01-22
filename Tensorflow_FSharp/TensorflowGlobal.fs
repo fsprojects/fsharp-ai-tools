@@ -33,7 +33,7 @@ type TF() =
 
     static member WithScope(nameScopeDesc : string) = TF.DefaultGraph.WithScope(nameScopeDesc)
 
-    static member MakeName(name : string, ?userName : string) = TF.DefaultGraph.MakeName(name, userName |> Option.orDefault "")
+    static member MakeName(name : string, ?userName : string) = TF.DefaultGraph.MakeName(name, userName |> Option.defaultValue "")
 
     static member GetShape(x:Output, ?status:TFStatus) = TF.DefaultGraph.GetShape(x,?status=status)
 
