@@ -382,7 +382,7 @@ and Graph internal (handle) =
     /// Many random operations internally use the two seeds to allow user to change 
     /// the seed globally for a graph, or for only specific operations.
     /// </remarks>
-    member this.GetRandomSeeds (?operationSeed : int) = (seed, operationSeed |> Option.orDefault lastId)
+    member this.GetRandomSeeds (?operationSeed : int) = (seed, operationSeed |> Option.defaultValue lastId)
 
     /// <summary>
     /// Sets the tensor shape of the tensor referenced by <paramref name="output"/> to the shape described by <paramref name="dims"/>.

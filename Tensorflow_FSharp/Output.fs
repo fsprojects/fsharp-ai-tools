@@ -94,7 +94,7 @@ and Output(handle: IntPtr, ?index : int) =
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern int TF_OperationOutputConsumers (TF_Output oper_out, TF_Input* consumers, int max_consumers)
 
-    member internal __.Struct with get () = { handle = handle; index = index |> Option.orDefault 0}
+    member internal __.Struct with get () = { handle = handle; index = index |> Option.defaultValue 0}
 
     //do if handle = null then raise(ArgumentNullException ("Outputs does not have a valid operation pointer"))
     member __.LLOperation = handle
