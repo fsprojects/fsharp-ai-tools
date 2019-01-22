@@ -8,9 +8,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="..\lib\Google.Protobuf.dll" />
-    <Reference Include="..\lib\HDF.PInvoke.dll" />
     <Reference Include="..\lib\TensorFlowSharpProtoNet.dll" />
-    <Reference Include="..\lib\Ionic.Zlib.dll" />
+    <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
+    <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.200" />
     <PackageReference Update="FSharp.Core" Version="4.5.2" />
   </ItemGroup>
 

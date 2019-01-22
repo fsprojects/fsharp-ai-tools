@@ -5,7 +5,6 @@ open NugetDownload
 
 let nugetFiles = 
     [| 
-        "ionic.zlib/1.9.1.5", [|"lib/Ionic.Zlib.dll"|]
         "HDF.PInvoke.NETStandard/1.10.200",
         [|
             yield @"lib/netstandard2.0/HDF.PInvoke.dll"
