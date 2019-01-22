@@ -28,7 +28,7 @@
 
 #I "../lib"
 #r @"Google.Protobuf.dll"
-#r @"TensorFlowSharpProtoNet.dll"
+#r @"Tensorflow.Proto.dll"
 #r @"nativeWorkaround.dll"
 #r @"protobuf-net.dll"
 

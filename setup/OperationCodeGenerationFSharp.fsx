@@ -5,11 +5,11 @@
 
 
 
-#I "../lib"
-#r @"Google.Protobuf.dll"
-#r @"Tensorflow.Proto.dll"
-#r @"LinuxNativeWorkaround.dll"
-#r @"protobuf-net.dll"
+#I __SOURCE_DIRECTORY__
+#r @"../lib/Google.Protobuf.dll"
+#r @"../lib/Tensorflow.Proto.dll"
+#r @"../lib/LinuxNativeWorkaround.dll"
+#r @"../lib/protobuf-net.dll"
 
 open System
 open ProtoBuf
@@ -346,4 +346,4 @@ let run(dirs : string []) =
 
 let root = Path.Combine(__SOURCE_DIRECTORY__, "..")
 run([|Path.Combine(root, "tensorflow", "api_def")|]) 
-|> fun res -> File.WriteAllText(Path.Combine(root,"TensorFlow.FSharp", "Operations.g.fs"), res)
+|> fun res -> File.WriteAllText(Path.Combine(root,"src", "Operations.g.fs"), res)

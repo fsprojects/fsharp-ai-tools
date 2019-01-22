@@ -82,10 +82,10 @@ let mm = NuGet.ManifestMetadata(
             Description = description,
             Summary = description,
             ReleaseNotes = releaseNotes,
-            ProjectUrl = "https://github.com/moloneymb/TensorFlow.FSharp",
-            Copyright = "moloneymb",
-            Authors = "moloneymb",
-            Owners = "moloneymb",
+            ProjectUrl = "https://github.com/fsprojects/TensorFlow.FSharp",
+            Copyright = "Microsoft and contributors",
+            Authors = "Microsoft",
+            Owners = "moloneymb, dsyme",
             Tags = "fsharp tensorflow machine deep learning "
     )
 
@@ -121,7 +121,7 @@ let dependecies =  [ ("ionic.zlib","1.9.1.5"); ("HDF.PInvoke.NETStandard","1.10.
 
 [|
     for file in ["TensorFlow.FSharp.dll";"TensorFlow.FSharp.XML"; "libtensorflow.dll";
-"TensorFlowSharpProtoNet.dll";"TensorFlowSharpProtoNet.xml"]  ->
+"Tensorflow.Proto.dll";"Tensorflow.Proto.xml"]  ->
         MPackageFile(file,@"lib\net40\" + file, net40,[|net40|], File.ReadAllBytes(__SOURCE_DIRECTORY__ + sprintf "\\bin\\Debug\\%s"
 file))
 |] |> Seq.iter pb.Files.Add

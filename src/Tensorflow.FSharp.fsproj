@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <Reference Include="..\lib\Google.Protobuf.dll" />
-    <Reference Include="..\lib\TensorFlowSharpProtoNet.dll" />
+    <Reference Include="..\lib\Tensorflow.Proto.dll" />
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
     <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.200" />
     <PackageReference Update="FSharp.Core" Version="4.5.2" />
@@ -27,8 +27,8 @@
     <PackageId>Tensorflow.FSharp</PackageId>
     <PackageVersion>1.11.0-pre1</PackageVersion>
     <Authors>moloneymb</Authors>
-    <PackageLicense>https://github.com/moloneymb/Tensorflow_FSharp/blob/master/LICENSE</PackageLicense>
-    <PackageProjectUrl>https://github.com/moloneymb/Tensorflow_FSharp/</PackageProjectUrl>
+    <PackageLicense>https://github.com/moloneymb/Tensorflow.FSharp/blob/master/LICENSE</PackageLicense>
+    <PackageProjectUrl>https://github.com/moloneymb/Tensorflow.FSharp/</PackageProjectUrl>
     <PackageTags>machine-learning, tensorflow, f#</PackageTags>
     <Description>F# .NET Bindings for TensorFlow</Description>
     <Owners>Miguel de Icaza, moloneymb</Owners>
