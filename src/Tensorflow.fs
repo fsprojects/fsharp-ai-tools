@@ -1,15 +1,9 @@
-namespace TensorFlow
+namespace TensorFlow.FSharp
 
 open System
 open System.Runtime.InteropServices
-open System.Text
-open System.Globalization
-open System.Linq
-open Utils
-open Microsoft.FSharp.NativeInterop
-open System.Numerics
-open System.Collections.Generic
-open System.Linq.Expressions
+open TensorFlow.FSharp.Utils
+open FSharp.NativeInterop
 
 #nowarn "9"
 
@@ -211,14 +205,14 @@ type TFStatus(handle) =
     /// </summary>
     new() = new TFStatus(TF_NewStatus ())
 
-    override this.NativeDispose(handle:IntPtr) = TF_DeleteStatus (handle)
+    override __.NativeDispose(handle:IntPtr) = TF_DeleteStatus (handle)
 
     /// <summary>
     /// Sets the status code on this TFStatus.
     /// </summary>
     /// <param name="code">Code.</param>
     /// <param name="msg">Message.</param>
-    member this.SetStatusCode (code : TFCode, msg : string) = TF_SetStatus (handle, code, msg)
+    member __.SetStatusCode (code : TFCode, msg : string) = TF_SetStatus (handle, code, msg)
 
 
     /// <summary>
@@ -449,19 +443,19 @@ type TFAttributeMetadata =
 /// <remarks>
 /// 
 /// </remarks>
-type Shape(dims:int64[] option) =
-    new ([<ParamArray>] dims : int64[]) = Shape(Some(dims))
+type TFShape(dims:int64[] option) =
+    new ([<ParamArray>] dims : int64[]) = TFShape(Some(dims))
     /// <summary>
     /// Represents an unknown number of dimensions in the tensor.
     /// </summary>
     /// <value>The unknown.</value>
-    static member Unknown = new Shape ([||])
+    static member Unknown = new TFShape ([||])
 
     /// <summary>
     /// This shape is used to represent scalar values.
     /// </summary>
     /// <value>The scalar.</value>
-    static member Scalar = new Shape ([|0L|])
+    static member Scalar = new TFShape ([|0L|])
 
     /// <summary>
     /// Gets the length of the specified dimension in the tensor
@@ -522,26 +516,26 @@ type Shape(dims:int64[] option) =
     member __.Index (idx:int) = dims.Value.[idx]
 
     /// <summary>
-    /// Adds a <see cref="TensorFlow.TFShape"/> to a <see cref="TensorFlow.TFShape"/>, yielding a shape made up of the concatenation of the first and the second shapes.
+    /// Adds a <see cref="TensorFlow.FSharp.TFShape"/> to a <see cref="TensorFlow.FSharp.TFShape"/>, yielding a shape made up of the concatenation of the first and the second shapes.
     /// </summary>
-    /// <param name="left">The first <see cref="TensorFlow.TFShape"/> to add.</param>
-    /// <param name="right">The second <see cref="TensorFlow.TFShape"/> to add.</param>
+    /// <param name="left">The first <see cref="TensorFlow.FSharp.TFShape"/> to add.</param>
+    /// <param name="right">The second <see cref="TensorFlow.FSharp.TFShape"/> to add.</param>
     /// <returns>The <see cref="T:TensorFlow.TFShape"/> that is the sum of the values of <c>left</c> and <c>right</c>.</returns>
-    static member (+) (left:Shape,right:Shape) =
-        new Shape ([|yield! left.Dims; yield! right.Dims|])
+    static member (+) (left:TFShape,right:TFShape) =
+        new TFShape ([|yield! left.Dims; yield! right.Dims|])
 
     /// <summary>
     /// Returns the shape as a 1-dimensional tensor with each element corresponding to the specified shape dimension.
     /// </summary>
     /// <returns>The tensor.</returns>
-    member this.AsTensor () = new Tensor (this.ToIntArray ())
+    member this.AsTensor () = new TFTensor (this.ToIntArray ())
 
      /// <summary>
-     /// Performs an implicit conversion from <see cref="TFShape"/> to <see cref="Tensor"/>.
+     /// Performs an implicit conversion from <see cref="TFShape"/> to <see cref="TFTensor"/>.
      /// </summary>
      /// <param name="shape">The shape.</param>
      /// <returns>The result of the conversion.</returns>
-     static member op_Implicit (shape : Shape) : Tensor = shape.AsTensor ()
+     static member op_Implicit (shape : TFShape) : TFTensor = shape.AsTensor ()
 
 // Use for single dimension arrays 
 
@@ -553,26 +547,26 @@ module TensorExtension =
     extern IntPtr TF_TensorData (TF_Tensor tensor)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern TF_Tensor TF_AllocateTensor (DType dataType, IntPtr zeroDim, int num_dims, size_t len)
+    extern TF_Tensor TF_AllocateTensor (TFDataType dataType, IntPtr zeroDim, int num_dims, size_t len)
 
-    type Tensor with
+    type TFTensor with
 
-        static member SetupTensor (dt : DType, shape : Shape, data : Array, start : int, count : int, size : int) : IntPtr =
+        static member SetupTensor (dt : TFDataType, shape : TFShape, data : Array, start : int, count : int, size : int) : IntPtr =
          if box shape = null then raise (ArgumentNullException "shape")
-         Tensor.SetupTensor (dt, shape.Dims, data, start, count, size)
+         TFTensor.SetupTensor (dt, shape.Dims, data, start, count, size)
 
         // Convenience, should I add T[,] and T[,,] as more convenience ones?
         /// <summary>
         /// Creates a single-dimension tensor from a byte buffer.  This is different than creating a tensor from a byte array that produces a tensor with as many elements as the byte array.
         /// </summary>
-        static member CreateString (buffer : byte []) : Tensor =
+        static member CreateString (buffer : byte []) : TFTensor =
           if box buffer = null then raise(ArgumentNullException ("buffer"))
           //
           // TF_STRING tensors are encoded with a table of 8-byte offsets followed by
           // TF_StringEncode-encoded bytes.
           //
           let size = TFString.TF_StringEncodedSize (UIntPtr(uint64 buffer.Length))
-          let handle = TF_AllocateTensor (DType.String, IntPtr.Zero, 0, UIntPtr((uint64(size) + 8uL)))
+          let handle = TF_AllocateTensor (TFDataType.String, IntPtr.Zero, 0, UIntPtr((uint64(size) + 8uL)))
       
           // Clear offset table
           let dst = TF_TensorData (handle)
@@ -581,8 +575,8 @@ module TensorExtension =
           use src = fixed &buffer.[0]
           TFString.TF_StringEncode (src, UIntPtr(uint64 buffer.Length), dst.Add(8) |> NativePtr.ofNativeInt<int8>, size, status.Handle) |> ignore
           if status.Ok then
-              new Tensor (handle)
-          else box null :?> Tensor
+              new TFTensor (handle)
+          else box null :?> TFTensor
 
 /// <summary>
 /// A grouping of operations with defined inputs and outputs.

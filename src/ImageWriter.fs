@@ -130,7 +130,7 @@ module (*private*) PNG =
     let decompress = ZlibStream.UncompressBuffer
     let compress   = ZlibStream.CompressBuffer
 
-open Microsoft.FSharp.NativeInterop
+open FSharp.NativeInterop
 
 /// This only supports TruecolorAlpha
 let RGBAToPNG(height:int, width:int, pixels:int[]) : byte[] =

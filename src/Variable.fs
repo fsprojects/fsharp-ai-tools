@@ -1,4 +1,4 @@
-namespace TensorFlow
+namespace TensorFlow.FSharp
 //
 // TensorFlow.cs; Bindings to the TensorFlow C API for .NET
 // 
@@ -38,19 +38,19 @@ open System.Text
 /// There is an implicit conversion from the Variable into the VarHandleOp if
 /// used.
 /// </remarks>
-type Variable internal (variableHandle : TF_Output, readHandle : TF_Output, assignOp : TF_Operation) = 
+type TFVariable internal (variableHandle : TF_Output, readHandle : TF_Output, assignOp : TF_Operation) = 
 
     /// <summary>
     /// Returns the ReadVariableOp that is used to fetch the value of the variable from the graph.
     /// </summary>
     /// <value>The read op.</value>
-    member __.Read = new Output(readHandle)
+    member __.Read = new TFOutput(readHandle)
 
     /// <summary>
     /// Returns the AssignVariableOp that is used to assign the initial value to the variable from the graph.
     /// </summary>
     /// <value>The assign op.</value>
-    member __.Assign = new Operation(assignOp)
+    member __.Assign = new TFOperation(assignOp)
 
     /// <summary>
     /// Returns the VarHandleOp that was created using the shape of the initial value.
@@ -67,4 +67,4 @@ type Variable internal (variableHandle : TF_Output, readHandle : TF_Output, assi
     /// This implicit operator exists to preserve the compatibility with code that
     /// created Variables and expected the result to be the VariableOp.
     /// </remarks>
-    static member op_Implicit (variable : Variable) : Output = new Output(variable.VariableOp)
+    static member op_Implicit (variable : TFVariable) : TFOutput = new TFOutput(variable.VariableOp)

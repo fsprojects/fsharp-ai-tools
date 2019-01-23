@@ -1,146 +1,268 @@
 namespace TensorFlow.FSharp 
 
+#I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../lib/TensorFlowSharp.dll"
-#load "NNImpl.fsx"
-#load "NNOps.fsx"
-#load "NPYReaderWriter.fsx"
-#load "ImageWriter.fsx"
+#r "../../tests/bin/Debug/net472/TensorFlow.FSharp.dll"
 
 open System
-open TensorFlow
+open TensorFlow.FSharp
 
-type Shape(shape: int[]) =
+type Dim =
+    | DimMulInt of Dim * int
+    | DimVar of Dim option ref
+    | Dim of int
+    override dim.ToString() = 
+        match dim with 
+        | DimMulInt (dim, n) -> 
+            match dim.TryValue with 
+            | Some v -> string v
+            | None -> dim.ToString() + "*" + string n 
+        | Dim n -> string n 
+        | DimVar v -> 
+            match v.Value with 
+            | None -> "?" 
+            | Some v -> v.ToString()
 
-    member __.Item with get v = shape.[v]
+    member dim.TryValue = 
+        match dim with 
+        | DimMulInt (dim,n) -> match dim.TryValue with None -> None | Some dimv -> Some (dimv*n) 
+        | Dim n -> Some n 
+        | DimVar v -> 
+            match v.Value with 
+            | None -> None 
+            | Some v -> v.TryValue
 
-    member __.Dimensions = shape
+    member dim.Value = 
+        match dim.TryValue with 
+        | Some v -> v
+        | None -> -1
 
-    override __.ToString() = sprintf "%A" shape
+    static member ( * ) (dim: Dim, stride: int) = DimMulInt (dim, stride)
 
-    member shape.AsTFShape() = TFShape(shape.Dimensions |> Array.map int64)
+    static member Inferred = DimVar (ref None)
+
+    static member Unify (dim1: Dim) (dim2: Dim) = 
+        match dim1, dim2 with 
+        | DimVar ({ contents = None } as v1), DimVar ({ contents = None } as v2) when Object.ReferenceEquals(v1,v2) -> ()
+        | DimVar ({ contents = None } as v1), _ -> v1 := Some dim2
+        | _, DimVar ({ contents = None } as v2) -> v2 := Some dim1
+        | DimVar { contents = Some soln1}, _ -> Dim.Unify soln1 dim2
+        | _, DimVar { contents = Some soln2} -> Dim.Unify dim1 soln2
+        | Dim d1, Dim d2 -> 
+            if d1 <> d2 then 
+                failwithf "mismatched dimensions, d1 = %d, d2 = %d" d1 d2
+        | DimMulInt (d1, n1), Dim d2 -> 
+            if d2 % n1 <> 0 then 
+                failwithf "mismatched dimension %d and multiplier %d" d2 n1
+            Dim.Unify d1 (Dim (d2 / n1))
+        | Dim d1, DimMulInt (d2, n2) -> 
+            if d1 % n2 <> 0 then 
+                failwithf "mismatched dimension %d and multiplier %d" d1 n2
+            Dim.Unify (Dim (d1 / n2)) d2
+        | DimMulInt (d1, n1), DimMulInt (d2, n2) -> 
+            if n1 <> n2 then 
+                failwithf "mismatched dimension multipliers %d and %d" n1 n2
+            Dim.Unify d1 d2
+
+type Shape =
+    | ShapeVar of Shape option ref
+    | Shape of Dim[] 
+
+    member shape.Item 
+        with get idx = 
+            match shape with 
+            | Shape dims -> dims.[idx]
+            | ShapeVar v -> 
+                match v.Value with 
+                | None -> Dim.Inferred
+                | Some sln -> sln.[idx]
+
+    member shape.Dimensions = 
+        match shape with 
+        | Shape n -> n 
+        | ShapeVar v -> 
+            match v.Value with 
+            | None -> failwith "unsolved shape variable" 
+            | Some sln -> sln.Dimensions
+
+    override shape.ToString() = 
+        match shape with 
+        | Shape n -> sprintf "shape %A" [ for i in n -> i.ToString() ] 
+        | ShapeVar v -> 
+            match v.Value with 
+            | None -> "shape ?" 
+            | Some sln -> sln.ToString()
+
+    member shape.AsTFShape() = TFShape(shape.Dimensions |> Array.map (fun dim -> int64 dim.Value))
 
     member shape.AsTFTensor() = shape.AsTFShape().AsTensor()
 
-    static member NewInferred() = failwith "tbd"
-    static member DimInferred() = failwith "tbd"
+    static member Inferred = ShapeVar (ref None)
+
+    static member UnifyShapes (shape1: Shape) (shape2: Shape) = 
+        match shape1, shape2 with 
+        | ShapeVar ({ contents = None } as v1), ShapeVar ({ contents = None } as v2) when Object.ReferenceEquals(v1,v2) -> ()
+        | ShapeVar ({ contents = None } as v1), _ -> v1 := Some shape2
+        | _, ShapeVar ({ contents = None } as v2) -> v2 := Some shape1
+        | ShapeVar { contents = Some soln1}, _ -> Shape.UnifyShapes soln1 shape2
+        | _, ShapeVar { contents = Some soln2} -> Shape.UnifyShapes shape1 soln2
+        | Shape dims1, Shape dims2 -> 
+            if dims1.Length <> dims2.Length then 
+                failwithf "mismatched shapes: %A and %A, dims1.Length = %d, dims2.Length = %d" shape1 shape2 dims1.Length dims2.Length
+            (dims1, dims2) ||> Array.iter2 (fun d1 d2 -> Dim.Unify d1 d2)
 
     static member EquivShapes (shape1: Shape) (shape2: Shape) = 
-        if shape1.Dimensions = shape2.Dimensions then 
-            shape1 
-        else 
-            failwithf "mismatched shapes: %A and %A" shape1 shape2 
+        Shape.UnifyShapes shape1 shape2
+        shape1
 
-// tf { ... }  is a computational DSL (not using ReflectedDefinition) that does a layer of shape inference 
-// in the first runtime phase, and then the actual graph construction in the second runtime phase.   
-type V<'T>(shape: Shape, eval: (TFGraph -> TFOutput)) =
+[<AutoOpen>]
+module ShapeHelpers = 
 
-    member __.Apply(graph) = eval graph
+    let shape (ints: seq<int>) = Shape(Array.map Dim (Array.ofSeq ints))
 
-    static member (+) (v1: V<'T>, v2: V<'T>) : V<'T> = 
+type DT() = class end
+
+/// A differentiable tensor value
+type Ctxt = 
+    { Graph: TFGraph 
+      Values: Map<string,DT> }
+
+type DT<'T>(shape: Shape, eval: (Ctxt -> TFOutput)) =
+    inherit DT()
+
+    member __.Apply(ctxt) = eval ctxt
+
+    static member (+) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
         let outputShape = Shape.EquivShapes v1.Shape v2.Shape
-        V (outputShape, fun graph -> graph.Add(v1.Apply(graph), v2.Apply(graph)))
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.Add(v1.Apply(ctxt), v2.Apply(ctxt)))
 
-    static member (-) (v1: V<'T>, v2: V<'T>) : V<'T> = 
-        V (Shape.EquivShapes v1.Shape v2.Shape, fun graph -> graph.Sub(v1.Apply(graph), v2.Apply(graph)))
+    static member (-) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
+        let outputShape = Shape.EquivShapes v1.Shape v2.Shape
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.Sub(v1.Apply(ctxt), v2.Apply(ctxt)))
 
-    static member ( * ) (v1: V<'T>, v2: V<'T>) : V<'T> = 
-        V (Shape.EquivShapes v1.Shape v2.Shape, fun graph -> graph.Mul(v1.Apply(graph), v2.Apply(graph)))
+    static member ( * ) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
+        let outputShape = Shape.EquivShapes v1.Shape v2.Shape
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.Mul(v1.Apply(ctxt), v2.Apply(ctxt)))
 
-    static member (/) (v1: V<'T>, v2: V<'T>) : V<'T> = 
-        V (Shape.EquivShapes v1.Shape v2.Shape, fun graph -> graph.Div(v1.Apply(graph), v2.Apply(graph)))
+    static member (/) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
+        let outputShape = Shape.EquivShapes v1.Shape v2.Shape
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.Div(v1.Apply(ctxt), v2.Apply(ctxt)))
 
-    static member Sqrt (v: V<'T>) : V<'T> = 
-        V (v.Shape, fun graph -> graph.Sqrt(v.Apply(graph)))
+    static member Sqrt (v: DT<'T>) : DT<'T> = 
+        DT<_> (v.Shape, fun ctxt -> ctxt.Graph.Sqrt(v.Apply(ctxt)))
 
-    static member Tanh (v: V<'T>) : V<'T> = 
-        V (v.Shape, fun graph -> graph.Tanh(v.Apply(graph)))
+    static member Tanh (v: DT<'T>) : DT<'T> = 
+        DT<_> (v.Shape, fun ctxt -> ctxt.Graph.Tanh(v.Apply(ctxt)))
 
-    static member Tan (v: V<'T>) : V<'T> =  
-        V (v.Shape, fun graph -> graph.Tan(v.Apply(graph)))
+    static member Tan (v: DT<'T>) : DT<'T> =  
+        DT<_> (v.Shape, fun ctxt -> ctxt.Graph.Tan(v.Apply(ctxt)))
 
     member __.Shape : Shape = shape
 
-type TF() =
+    override dt.ToString() = dt.Shape.ToString()
 
-    static member Const (shape: Shape, value: 'T) : V<'T> = 
-        V (shape, fun graph -> graph.Reshape(graph.Const(new TFTensor(value)), graph.Const(shape.AsTFTensor())))
+type DT with
 
-    static member ConstArray (shape: Shape, value: 'T[]) : V<'T> = 
-        V (shape, fun graph -> graph.Reshape(graph.Const(new TFTensor(value)), graph.Const(shape.AsTFTensor())))
+    static member Const (value: 'T, ?shape: Shape) : DT<'T> = 
+        let shape = shape |> Option.defaultWith (fun () -> Shape.Inferred)
+        DT<_> (shape, fun ctxt -> ctxt.Graph.Reshape(ctxt.Graph.Const(new TFTensor(value)), ctxt.Graph.Const(shape.AsTFTensor())))
 
-    static member TruncatedNormal (shape: Shape) : V<double> = 
-        V (shape, fun graph -> graph.TruncatedNormal(graph.Const(shape.AsTFTensor()), TFDataType.Double ))
+    static member ConstArray (value: 'T[], ?shape: Shape) : DT<'T> = 
+        let shape = shape |> Option.defaultWith (fun () -> Shape.Inferred)
+        DT<_> (shape, fun ctxt -> ctxt.Graph.Reshape(ctxt.Graph.Const(new TFTensor(value)), ctxt.Graph.Const(shape.AsTFTensor())))
 
-    static member Variable (value: V<'T>) : V<'T> = 
-        V (value.Shape, fun graph -> graph.Variable(value.Apply(graph)).Read)
+    static member TruncatedNormal (shape: Shape) : DT<double> = 
+        DT<_> (shape, fun ctxt -> ctxt.Graph.TruncatedNormal(ctxt.Graph.Const(shape.AsTFTensor()), TFDataType.Float64 ))
 
-    static member Conv2D (input: V<'T>, filters: V<'T>, ?stride: int, ?padding: string) : V<'T> = 
+    static member Variable (value: DT<'T>, ?name: string) : DT<'T> = 
+        DT<_> (value.Shape, fun ctxt -> 
+                     let name2 = defaultArg name ""
+                     match ctxt.Values.TryFind name2 with 
+                     | None -> 
+                         printf "variable nodes not yet supported, and weight '%s' not found in Values, assuming constant" name2
+                         //ctxt.Graph.Variable(value.Apply(ctxt),name=name2).Read
+                         value.Apply(ctxt)
+                     | Some t -> 
+                         match t with 
+                         | :? DT<'T> as vt -> vt.Apply(ctxt)
+                         | _ -> 
+                         printf "incorrect type in values, got '%A' expected '%A', assuming variable node is constant" (t.GetType()) (typeof<DT<'T>>)
+                         value.Apply(ctxt)
+                         )
+
+    static member Conv2D (input: DT<'T>, filters: DT<'T>, ?stride: int, ?padding: string) : DT<'T> = 
     //[N,H,W,C], filters: V[C;COut;F]) -> V[N,H,W,COut] 
         let stride = defaultArg stride 1
         let padding = defaultArg padding "SAME"
         let inputShape = input.Shape
         let filtersShape = filters.Shape
         let outputShape = Shape [| inputShape.[0]; inputShape.[1]; inputShape.[2]; filtersShape.[1] |]
-        V (outputShape, fun graph -> graph.Conv2D(input.Apply(graph), filters.Apply(graph),strides = [|1L;int64 stride;int64 stride;1L|], padding=padding))
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.Conv2D(input.Apply(ctxt), filters.Apply(ctxt),strides = [|1L;int64 stride;int64 stride;1L|], padding=padding))
 
-    static member Conv2DBackpropInput(filters: V<'T>, out_backprop: V<'T>, ?stride: int, ?padding: string) : V<'T> = 
+    static member Conv2DBackpropInput(filters: DT<'T>, out_backprop: DT<'T>, ?stride: int, ?padding: string) : DT<'T> = 
         let stride = defaultArg stride 1
         let padding = defaultArg padding "SAME"
         let shape = out_backprop.Shape
         let filtersShape = filters.Shape
-        let outputShape = Shape [| shape.[0]; shape.[1]; shape.[2]; filtersShape.[1] |]
-        V (outputShape, fun graph -> 
-           let batch_size = shape.[0]
-           let rows = shape.[1]
-           let cols = shape.[2]
-           let num_filters = filtersShape.[2]
-           let output_shape = Shape [|batch_size; rows*stride; cols*stride; num_filters |]
-           let input_sizes = graph.Const(output_shape.AsTFTensor())
-           graph.Conv2DBackpropInput(input_sizes, filters.Apply(graph), out_backprop.Apply(graph), strides = [|1L;int64 stride;int64 stride;1L|], padding=padding))
+        let outputShape = Shape [| shape.[0]; shape.[1]*stride; shape.[2]*stride; filtersShape.[2] |]
+        DT<_> (outputShape, fun ctxt -> 
+           let input_sizes = ctxt.Graph.Const(outputShape.AsTFTensor())
+           ctxt.Graph.Conv2DBackpropInput(input_sizes, filters.Apply(ctxt), out_backprop.Apply(ctxt), strides = [|1L;int64 stride;int64 stride;1L|], padding=padding))
          // , output_shape=[input.Shape.[0],H*Stride,W*Stride,filters.Shape.[3]]
 
-    static member ClipByValue (input: V<'T>, low: V<'T>, high: V<'T>) : V<'T> = 
+    static member ClipByValue (input: DT<'T>, low: DT<'T>, high: DT<'T>) : DT<'T> = 
         let outputShape = Shape.EquivShapes (Shape.EquivShapes input.Shape low.Shape) high.Shape
-        V (outputShape, fun graph -> graph.ClipByValue(input.Apply(graph), low.Apply(graph), high.Apply(graph)))
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.ClipByValue(input.Apply(ctxt), low.Apply(ctxt), high.Apply(ctxt)))
 
-    static member Moments(shape: Shape, input: V<'T>) : V<'T> * V<'T> = 
-        let outputShape = shape
-        // TODO: we make two Moments nodes here
-        // TODO: keep_dims
-        V (outputShape, fun graph -> fst (graph.Moments(input.Apply(graph), graph.Const(shape.AsTFTensor())))),
-        V (outputShape, fun graph -> snd (graph.Moments(input.Apply(graph), graph.Const(shape.AsTFTensor()))))
-
-    static member Relu(input: V<'T>) : V<'T> = 
+    static member Moments(dims: seq<int>, input: DT<'T>) : DT<'T> * DT<'T> = 
+        // Note: keep_dims = true
         let outputShape = input.Shape
-        V (outputShape, fun graph -> graph.Relu(input.Apply(graph)))
+        // Note: avoid making two Moments here
+        let mutable cache = None
+        let compute (ctxt: Ctxt) = 
+            match cache with 
+            | Some (ctxt2, res) when Object.ReferenceEquals(ctxt, ctxt2) -> res
+            | _ -> 
+                let res = ctxt.Graph.Moments(input.Apply(ctxt), ctxt.Graph.Const((shape dims).AsTFTensor()),keep_dims=true)
+                cache <- Some (ctxt, res)
+                res
 
-    static member DecodeJpeg(contents:V<string>, ?channels: int) : V<int> = // V[int,H,W,C]
+        DT<_> (outputShape, fun ctxt -> fst (compute ctxt)),
+        DT<_> (outputShape, fun ctxt -> snd (compute ctxt))
+
+    static member Relu(input: DT<'T>) : DT<'T> = 
+        let outputShape = input.Shape
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.Relu(input.Apply(ctxt)))
+
+    static member DecodeJpeg(contents:DT<string>, ?channels: int) : DT<int> = // V[int,H,W,C]
         let channels = defaultArg channels 3 // CHECK ME
-        let outputShape = Shape [| -1; -1; channels |]
-        V (outputShape, fun graph -> graph.DecodeJpeg(contents=contents.Apply(graph), channels=Nullable(3L)))
+        let outputShape = Shape [| Dim.Inferred; Dim.Inferred; Dim channels |]
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.DecodeJpeg(contents=contents.Apply(ctxt), channels=3L))
 
-    static member Cast<'T, 'T2>(input: V<'T>, dt) : V<'T2> = 
+    static member Cast<'T, 'T2>(input: DT<'T>, dt) : DT<'T2> = 
         let outputShape = input.Shape
-        V (outputShape, fun graph -> graph.Cast(input.Apply(graph), dt))
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.Cast(input.Apply(ctxt), dt))
 
-    static member CreateString(value: byte[]) : V<string> = 
-        let outputShape = Shape [| 1 |]
-        V (outputShape, fun graph -> graph.Const(TFTensor.CreateString(value)))
+    static member CreateString(value: byte[]) : DT<string> = 
+        let outputShape = shape [ 1 ]
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.Const(TFTensor.CreateString(value)))
 
-    static member ExpandDims(value: V<'T>, [<ParamArray>] dims: int[]) : V<'T> = 
-        let outputShape = Shape dims
-        V (outputShape, fun graph -> graph.ExpandDims(value.Apply(graph), graph.Const(outputShape.AsTFTensor())))
+    static member ExpandDims(value: DT<'T>, [<ParamArray>] dims: int[]) : DT<'T> = 
+        let outputShape = shape dims
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.ExpandDims(value.Apply(ctxt), ctxt.Graph.Const(outputShape.AsTFTensor())))
     //TF.ExpandDims[Dim](value: V[shape]) : V[Expanded(Dim,shape)]
 
-    static member Run(value: V<'T>) : TFTensor = 
+    static member Run(value: DT<'T>, ?weights: seq<string * DT>) : TFTensor = 
         let sess = new TFSession()
         let graph = sess.Graph
-        let node = value.Apply(graph)
+        let ctxt = { Graph = graph; Values = Map.ofSeq (defaultArg weights Seq.empty)}
+        let node = value.Apply(ctxt)
         sess.Run([||],[||],[|node|]).[0]
 
 type TensorFlow = ReflectedDefinitionAttribute
 
+/// tf { ... }  is a computational DSL (not yet using ReflectedDefinition) that does a layer of shape inference 
+/// in the first runtime phase, and then the actual graph construction in the second runtime phase.   
 type TFBuilder() =
     member x.Return(v: 'T) = v
     //member x.Zero() = V()
@@ -150,12 +272,21 @@ type TFBuilder() =
 //    member x.FromString(s: string) : V<double> = failwith "tbd"
     
 [<AutoOpen>]
-module DSLHelpers = 
+module TFHelpers = 
     let tf = TFBuilder()
 
-    let shape (ints: int list) = Shape(Array.ofSeq ints)
+    let shape (ints: int list) = Shape(Array.map Dim (Array.ofSeq ints))
 
-    let v (d:double) : V<double> = 
-        let shape = Shape.NewInferred ()
-        V (shape, (fun graph -> graph.Const(new TFTensor(d))))
+    let v (d:double) : DT<double> = 
+        let shape = Shape.Inferred 
+        DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(d))))
 
+    let vec (d:seq<double>) : DT<double> = 
+        let d = Array.ofSeq d
+        let shape = shape [ d.Length ]
+        DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(d))))
+
+    let matrix (d: seq<seq<'T>>) : DT<'T> = 
+        let d = array2D d 
+        let shape = shape [ d.GetLength(0); d.GetLength(1)  ]
+        DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor( d))))

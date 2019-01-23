@@ -117,7 +117,7 @@ let graph = sess.Graph
 
 let weights_path = Path.Combine(pretrained_dir, sprintf "fast_style_weights_%s.npz" style)
 
-let weights_map = 
+let weights = 
             readFromNPZ((File.ReadAllBytes(weights_path)))
             |> Map.toArray 
             |> Array.map (fun (k,(metadata, arr)) -> 
@@ -128,7 +128,7 @@ let weights_map =
 //let input = graph.Placeholder(TFDataType.Float, TFShape(-1L,-1L,-1L,3L),"input")
 let input = graph.Placeholder(TFDataType.Float, TFShape(1L,474L,712L,3L),"input")
 
-let output = PretrainedFFStyleVGG.net(graph,weights_map,input)
+let output = PretrainedFFStyleVGG.net(graph,weights,input)
 let input_string = graph.Placeholder(TFDataType.String)
 let mean_pixel = graph.Const(new TFTensor([|123.68f; 116.778f; 103.939f|]))
 

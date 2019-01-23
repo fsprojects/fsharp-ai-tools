@@ -1,11 +1,12 @@
-namespace TensorFlow
+namespace TensorFlow.FSharp
+
 // TODO as we've remove graph from Operations we should figure out how to make sure we prevent the graph from disposing when operations are live
 
 open System
 open System.Runtime.InteropServices
 open System.Text
-open Utils
-open Microsoft.FSharp.NativeInterop
+open TensorFlow.FSharp.Utils
+open FSharp.NativeInterop
 
 #nowarn "9" "51"
 
@@ -15,9 +16,9 @@ open Microsoft.FSharp.NativeInterop
 /// <remarks>
 /// Operations are usually created by  invoking one of the methods in 
 /// <see cref="T:TensorFlow.Graph"/>, but they can also be constructed
-/// manually using the low-level <see cref="T:TensorFlow.OperationDesc"/> API.
+/// manually using the low-level <see cref="T:TensorFlow.TFOperationDesc"/> API.
 /// </remarks>
-type Operation((*graph : Graph,*) handle : IntPtr)  =
+type TFOperation((*graph : Graph,*) handle : IntPtr)  =
 
     let attrTypeToString(attrType : TFAttributeType, isList : bool) = 
         let name = 
@@ -124,11 +125,11 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
 
     // extern void TF_OperationGetAttrType (TF_Operation *oper, const char *attr_name, TF_DataType *value, TF_Status *status)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_OperationGetAttrType (TF_Operation oper, string attr_name, DType* value, TF_Status status)
+    static extern void TF_OperationGetAttrType (TF_Operation oper, string attr_name, TFDataType* value, TF_Status status)
     
     // extern void TF_OperationGetAttrTypeList (TF_Operation *oper, const char *attr_name, TF_DataType *values, int max_values, TF_Status *status)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_OperationGetAttrTypeList (TF_Operation oper, string attr_name, DType* values, int max_values, TF_Status status)
+    static extern void TF_OperationGetAttrTypeList (TF_Operation oper, string attr_name, TFDataType* values, int max_values, TF_Status status)
 
     // extern void TF_OperationGetAttrShape (TF_Operation *oper, const char *attr_name, int64_t *value, int num_dims, TF_Status *status)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
@@ -223,7 +224,7 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
             let n = this.NumControlOutputs
             let arr = Array.zeroCreate<IntPtr> n
             TF_OperationGetControlOutputs (handle, arr, n) |> ignore
-            Array.init n (fun i -> new Operation((*graph,*) arr.[i]))
+            Array.init n (fun i -> new TFOperation((*graph,*) arr.[i]))
 
     /// <summary>
     /// Get the list of operations that have this operation as a control input.
@@ -233,7 +234,7 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
             let n = this.NumControlOutputs;
             let arr = Array.zeroCreate<IntPtr> n
             TF_OperationGetControlInputs(handle, arr, n) |> ignore
-            Array.init n (fun i -> new Operation((*graph,*) arr.[i]))
+            Array.init n (fun i -> new TFOperation((*graph,*) arr.[i]))
 
     member __.Device = (TF_OperationDevice (handle)).GetStr()
 
@@ -362,7 +363,7 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
         let cstatus = TFStatus.Setup(?incoming=status)
         let metadata = this.GetAttributeMetadata(attrName, cstatus)
         checkAttrType(attrName, metadata, TFAttributeType.Type, false)
-        let mutable value = DType.Unknown
+        let mutable value = TFDataType.Unknown
         TF_OperationGetAttrType(handle, attrName, &&value, cstatus.Handle)
         cstatus.CheckMaybeRaise(?incoming=status) |> ignore
         value
@@ -373,7 +374,7 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
         let cstatus = TFStatus.Setup(?incoming=status)
         let metadata = this.GetAttributeMetadata(attrName, cstatus)
         checkAttrType(attrName, metadata, TFAttributeType.Type, true)
-        let values = Array.zeroCreate<DType> (int metadata.ListSize)
+        let values = Array.zeroCreate<TFDataType> (int metadata.ListSize)
         use valuesF = fixed &values.[0]
         TF_OperationGetAttrTypeList(handle, attrName, valuesF, (int) metadata.ListSize, cstatus.Handle)
         cstatus.CheckMaybeRaise(?incoming=status) |> ignore
@@ -407,13 +408,13 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
         use storageF = fixed &storage.[0]
         TF_OperationGetAttrShapeList(handle, attrName, dimsF, numDimsF, (int)metadata.ListSize, storageF, (int)metadata.TotalSize, cstatus.Handle)
         cstatus.CheckMaybeRaise(?incoming=status) |> ignore
-        let returnValues = Array.zeroCreate<Shape> (int metadata.ListSize)
+        let returnValues = Array.zeroCreate<TFShape> (int metadata.ListSize)
         let mutable offset = 0
         for i = 0 to int metadata.ListSize - 1 do
             let xs = Array.zeroCreate<int64> numDims.[i]
             for j = 0 to numDims.[i] - 1 do
                 xs.[j] <- storage.[offset + j]
-            returnValues.[i] <- new Shape(xs)
+            returnValues.[i] <- new TFShape(xs)
             offset <- offset + numDims.[i]
         returnValues
 
@@ -450,7 +451,7 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
         let tensor = IntPtr.Zero : TF_Tensor
         TF_OperationGetAttrTensor(handle, attrName, &&tensor, cstatus.Handle)
         cstatus.CheckMaybeRaise (?incoming=status) |> ignore
-        new Tensor(tensor)
+        new TFTensor(tensor)
 
     // WARN: untested
     member this.GetAttrTensorList(attrName : string, ?status : TFStatus) =
@@ -463,7 +464,7 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
          use tensorPointersF = fixed &tensorPointers.[0]
          TF_OperationGetAttrTensorList(handle, attrName, tensorPointersF, (int) metadata.ListSize, cstatus.Handle)
          cstatus.CheckMaybeRaise (?incoming=status) |> ignore
-         tensorPointers |> Array.map (fun x -> new Tensor(x))
+         tensorPointers |> Array.map (fun x -> new TFTensor(x))
 
      // WARN: untested 
     member __.GetAttrValueProto(attrName : string, ?status : TFStatus) =
@@ -496,16 +497,16 @@ type Operation((*graph : Graph,*) handle : IntPtr)  =
     interface IComparable with 
         member this.CompareTo(x : obj) = 
             if (x.GetType() <> this.GetType()) then -1
-            else (this :> IComparable<Operation>).CompareTo(x :?> Operation)
+            else (this :> IComparable<TFOperation>).CompareTo(x :?> TFOperation)
 
-    interface IComparable<Operation> with 
-        member this.CompareTo(x : Operation) =
+    interface IComparable<TFOperation> with 
+        member this.CompareTo(x : TFOperation) =
             if box x = null then -1
             else this.Name.CompareTo(x.Name)
 
     override this.Equals(x:obj) = 
         match x with
-        | :? Operation as other -> this.Handle = other.Handle
+        | :? TFOperation as other -> this.Handle = other.Handle
         | _ -> false
 
     override this.GetHashCode() = this.Handle.GetHashCode()

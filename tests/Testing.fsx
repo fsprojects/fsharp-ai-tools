@@ -5,11 +5,11 @@
 #r "Google.Protobuf.dll"
 #r "HDF.PInvoke.dll"
 #r "protobuf-net.dll"
-#r "TensorFlow.Proto.dll"
+#r "TensorFlow.FSharp.Proto.dll"
 #r "TensorFlow.FSharp.dll"
 #r "netstandard"
 
-open Tensorflow
+open TensorFlow
 open System
 
 let c1 = TF.Const(new Tensor([|1;4|]))

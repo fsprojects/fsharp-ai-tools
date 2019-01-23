@@ -28,7 +28,7 @@
 
 #I "../lib"
 #r @"Google.Protobuf.dll"
-#r @"TensorFlow.Proto.dll"
+#r @"TensorFlow.FSharp.Proto.dll"
 #r @"nativeWorkaround.dll"
 #r @"protobuf-net.dll"
 
@@ -37,12 +37,12 @@ open ProtoBuf
 open System.IO
 open NativeWorkaround
 open NativeWorkaround.Native
-open Microsoft.FSharp.NativeInterop
+open FSharp.NativeInterop
 open System.Collections.Generic
 open System.Runtime.InteropServices
 open Google.Protobuf.Collections
 open System.Collections.Generic
-open TensorFlow.Proto
+open TensorFlow.FSharp.Proto
 
 let deserialize<'a> = Serializer.Deserialize<'a>
 

@@ -8,10 +8,12 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="..\lib\Tensorflow.Proto.dll" />
+    <Reference Include="..\lib\TensorFlow.Proto.dll" />
+<!--    <PackageReference Include="TensorFlowSharp" Version="1.11.0" /> -->
     <PackageReference Include="Argu" Version="5.1.0" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />
     <PackageReference Include="Google.Protobuf" Version="3.6.1" />
@@ -27,19 +29,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\lib\libtensorflow.dll" Link="native\libtensorflow.dll">
+    <None Include="..\lib\libtensorflow.dll" Link="libtensorflow.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\lib\libtensorflow_framework.so" Link="native\libtensorflow_framework.so">
+    <None Include="..\lib\libtensorflow_framework.so" Link="libtensorflow_framework.so">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\lib\libtensorflow.so" Link="native\libtensorflow.so">
+    <None Include="..\lib\libtensorflow.so" Link="libtensorflow.so">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\lib\libtensorflow_framework.dylib" Link="native\libtensorflow_framework.dylib">
+    <None Include="..\lib\libtensorflow_framework.dylib" Link="libtensorflow_framework.dylib">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\lib\libtensorflow.dylib" Link="native\libtensorflow.dylib">
+    <None Include="..\lib\libtensorflow.dylib" Link="libtensorflow.dylib">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup> 

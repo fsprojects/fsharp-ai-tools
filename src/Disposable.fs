@@ -1,8 +1,8 @@
-﻿namespace TensorFlow
+﻿namespace TensorFlow.FSharp
 
 open System
 open System.Runtime.InteropServices
-open Microsoft.FSharp.NativeInterop
+open FSharp.NativeInterop
 
 #nowarn "9"
 
@@ -53,14 +53,14 @@ module TFCore =
 
     // extern size_t TF_DataTypeSize (TF_DataType dt)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern IntPtr TF_DataTypeSize (DType dt)
+    extern IntPtr TF_DataTypeSize (TFDataType dt)
 
     /// <summary>
     /// Gets the size in bytes of the specified TensorFlow data type.
     /// </summary>
     /// <returns>The data type size.</returns>
     /// <param name="dt">Dt.</param>
-    let GetDataTypeSize (dt:DType) = int64 (TF_DataTypeSize (dt))
+    let GetDataTypeSize (dt:TFDataType) = int64 (TF_DataTypeSize (dt))
 
     // extern TF_Buffer * TF_GetAllOpList ()
     //[<DllImport (NativeBinding.TensorFlowLibrary)>]

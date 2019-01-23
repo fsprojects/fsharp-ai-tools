@@ -7,7 +7,7 @@
 
 #I __SOURCE_DIRECTORY__
 #r @"../lib/Google.Protobuf.dll"
-#r @"../lib/TensorFlow.Proto.dll"
+#r @"../lib/TensorFlow.FSharp.Proto.dll"
 #r @"../lib/LinuxNativeWorkaround.dll"
 #r @"../lib/protobuf-net.dll"
 
@@ -16,10 +16,10 @@ open ProtoBuf
 open System.IO
 open LinuxNativeWorkaround
 open LinuxNativeWorkaround.Native
-open Microsoft.FSharp.NativeInterop
+open FSharp.NativeInterop
 open System.Collections.Generic
 open System.Runtime.InteropServices
-open TensorFlow.Proto
+open TensorFlow.FSharp.Proto
 
 let deserialize<'a> = Serializer.Deserialize<'a>
 
@@ -53,7 +53,7 @@ type ApiDefMap(buffer : LLBuffer) =
         let mutable buffer = buffer
         use status = new Status()
         let x = TF_NewApiDefMap ( &&buffer |> NativePtr.toNativeInt, status.Handle)
-        if status.Error then raise (ArgumentException("Failrue to call TF_NewApiDefMap"))
+        if status.Error then raise (ArgumentException("Failure to call TF_NewApiDefMap"))
         x
     
     member this.Dispose (disposing : bool) =
@@ -86,9 +86,9 @@ let fsharptype (tfType : string) =
     | "int"     -> "int64"     |> Some
     | "float"   -> "float32"     |> Some
     | "bool"    -> "bool"      |> Some
-    | "type"    -> "DType"     |> Some
-    | "shape"   -> "Shape"   |> Some
-    | "tensor"  -> "Tensor"  |> Some
+    | "type"    -> "TFDataType"     |> Some
+    | "shape"   -> "TFShape"   |> Some
+    | "tensor"  -> "TFTensor"  |> Some
     | "string"  -> "string"    |> Some
     | _ -> printfn "Unknown data TensorFlow type %s" tfType; None
     |> Option.map (fun fstype -> if list then fstype + "[]" else fstype)
@@ -251,19 +251,19 @@ let run(dirs : string []) =
             | "float32[]"
             | "bool"
             | "bool[]" -> sprintf "desc.SetAttr (\"%s\", %s) |> ignore" attrName csAttrName
-            | "DType"
-            | "DType[]" -> sprintf "desc.SetAttr (\"%s\", %s) |> ignore" attrName csAttrName
+            | "TFDataType"
+            | "TFDataType[]" -> sprintf "desc.SetAttr (\"%s\", %s) |> ignore" attrName csAttrName
             // this should pass the cstatus, but requries the
             // function to take a TFStatus as well, so need to weave that
             // in the parameters
-            | "Tensor"
-            | "Tensor[]" -> sprintf "desc.SetAttr (\"%s\", %s (* cstatus *)) |> ignore;" attrName csAttrName
+            | "TFTensor"
+            | "TFTensor[]" -> sprintf "desc.SetAttr (\"%s\", %s (* cstatus *)) |> ignore;" attrName csAttrName
             | fstype -> failwithf "Unexpected type: %s" fstype
 
 
     let fillArguments (oper : OpDef, requiredAttrs : OpDef.AttrDef[], optionalAttrs : OpDef.AttrDef[]) =
         [|
-            yield! oper.InputArgs |> Seq.toArray |> Array.map (fun inarg -> sprintf "%s : %s" (paramMap inarg.Name) (if isListArg inarg then "Output[]" else "Output") ) 
+            yield! oper.InputArgs |> Seq.toArray |> Array.map (fun inarg -> sprintf "%s : %s" (paramMap inarg.Name) (if isListArg inarg then "TFOutput[]" else "TFOutput") ) 
             yield! requiredAttrs |> Array.map (fun attr -> sprintf "%s : %s" (paramMap attr.Name) (fsharptype attr.Type |> Option.get) ) 
             yield! optionalAttrs |> Array.map (fun attr -> 
                 //let reftype = isReferenceType attr.Type
@@ -280,18 +280,18 @@ let run(dirs : string []) =
             if hasReturnValue then
                 match oper.OutputArgs |> Seq.toArray with
                 | [||] -> failwith "should have at least one return value"
-                | [|x|] -> if isListArg x then "Output[]" else "Output"
-                | xs -> xs |> Array.map (fun arg ->  (if isListArg arg then "Output[]" else "Output")) |> String.concat "*" |> sprintf "(%s)"
-            else "Operation"
+                | [|x|] -> if isListArg x then "TFOutput[]" else "TFOutput"
+                | xs -> xs |> Array.map (fun arg ->  (if isListArg arg then "TFOutput[]" else "TFOutput")) |> String.concat "*" |> sprintf "(%s)"
+            else "TFOperation"
         let fillArgs = (fillArguments(oper, requiredAttrs, optionalAttrs))
-        pi (sprintf "static member %s (%s%s ?name : string) : %s =" name fillArgs (if String.IsNullOrWhiteSpace(fillArgs) then "" else ", ") retType )
+        pi (sprintf "member graph.%s (%s%s ?name : string) : %s =" name fillArgs (if String.IsNullOrWhiteSpace(fillArgs) then "" else ", ") retType )
         // NOTE: All defaults are None, as the default is set by the op
-        let needStatus = [|yield! requiredAttrs; yield! optionalAttrs|] |> Array.exists (fun x -> x.Type.Contains("Tensor"))
+        let needStatus = [|yield! requiredAttrs; yield! optionalAttrs|] |> Array.exists (fun x -> x.Type.Contains("TFTensor"))
         // NOTE: needStatus is not used anywhere
         p (sprintf "let name = defaultArg name \"\"")
-        p (sprintf "let desc = new OperationDesc (TF.DefaultGraph, \"%s\", TF.DefaultGraph.MakeName (\"%s\", name))" oper.Name oper.Name)
+        p (sprintf "let desc = new TFOperationDesc (graph, \"%s\", graph.MakeName (\"%s\", name))" oper.Name oper.Name)
         oper.InputArgs |> Seq.iter (fun arg -> p (sprintf "desc.AddInput%s (%s) |> ignore" ( if isListArg arg then "s" else "")  (paramMap arg.Name)))
-        p "TF.DefaultGraph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)"
+        p "graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)"
         // If we have attributes
         if requiredAttrs.Length > 0 || optionalAttrs.Length > 0 then
             for attr in requiredAttrs do
@@ -309,9 +309,9 @@ let run(dirs : string []) =
         for arg in oper.OutputArgs do
             if isListArg arg then
                 let n = (sprintf "(op.OutputListLength (\"%s\"))" (paramMap arg.Name))
-                p (sprintf "let %s = [| for i = 0 to %s - 1 do yield new Output(op, _idx); _idx <- _idx + 1; |]" (paramMap arg.Name) n)
+                p (sprintf "let %s = [| for i = 0 to %s - 1 do yield new TFOutput(op, _idx); _idx <- _idx + 1; |]" (paramMap arg.Name) n)
             else
-                p (sprintf "let %s = new Output (op, _idx)" (paramMap arg.Name))
+                p (sprintf "let %s = new TFOutput (op, _idx)" (paramMap arg.Name))
                 p "_idx <- _idx + 1"
         
         if hasReturnValue then
@@ -323,9 +323,9 @@ let run(dirs : string []) =
         pd "\n"
             
     p "[<AutoOpen>]"
-    p "module TensorFlow.GeneratedOpeartions\n"
+    p "module TensorFlow.FSharp.GeneratedOperations\n"
     p "open System\n"
-    pi "type TF with"
+    pi "type TFGraph with"
 
     for oper in operations |> Array.sortBy (fun x -> x.Name) do
         // Skip internal operations

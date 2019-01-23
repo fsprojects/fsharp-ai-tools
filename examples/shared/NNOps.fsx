@@ -1,10 +1,12 @@
 [<AutoOpen>]
 module TensorFlow.NNOps
+
+#I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../lib/TensorFlowSharp.dll"
+#r "../../tests/bin/Debug/net472/TensorFlow.FSharp.dll"
 
 open System
-open TensorFlow
+open TensorFlow.FSharp
 
 type TFGraph with
     /// https://github.com/tensorflow/tensorflow/blob/r1.12/tensorflow/python/ops/nn_impl.py
