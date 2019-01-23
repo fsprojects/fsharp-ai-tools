@@ -629,8 +629,7 @@ and TFGraph internal (handle) =
             if this.CurrentNameScope = "" then name else this.CurrentNameScope + "/" + name
             |> this.MakeUnique
         | _ -> 
-            if this.CurrentNameScope = "" then userName else this.CurrentNameScope + "/" + userName 
-
+            if this.CurrentNameScope = "" then userName else this.CurrentNameScope + "/" + userName
 
     member internal this.GetNextId () = 
         let x = lastId
