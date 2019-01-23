@@ -631,7 +631,6 @@ and TFGraph internal (handle) =
         | _ -> 
             if this.CurrentNameScope = "" then userName else this.CurrentNameScope + "/" + userName
 
-
     member internal this.GetNextId () = 
         let x = lastId
         lastId <- lastId + 1
@@ -1102,7 +1101,7 @@ type TFOperationDesc private (graph : TFGraph, opType : string, name : string, h
     member this.OpType = opType
     override this.NativeDispose (handle : IntPtr) =
         // If you reach this, you never called FinishOperation
-        printf "OperationDescription(%s,%s was never turned into an Operation" opType name
+        printfn "OperationDescription(%s,%s) was never turned into an Operation" opType name
 
     /// <summary>
     /// Specifies the device for the operation, if one is not provided, the operation is unconstrained.
