@@ -1,4 +1,4 @@
-namespace Tensorflow
+namespace TensorFlow
 
 open System
 open System.Runtime.InteropServices
@@ -639,7 +639,7 @@ type TFFunction internal (handle : IntPtr) =
 /// Represents a dynamically loaded library of TensorFlow operations, use to load and consume TensorFlow operations from an external library.
 /// </summary>
 /// <remarks>
-/// Use the static method <see cref="M:Tensorflow.TFLibrary.FromFile"/> to load a dynamic library.
+/// Use the static method <see cref="M:TensorFlow.TFLibrary.FromFile"/> to load a dynamic library.
 /// Once that function returns
 /// </remarks>
 type TFLibrary private (handle : IntPtr) = 

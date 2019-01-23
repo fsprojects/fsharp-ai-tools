@@ -3,10 +3,10 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFrameworks>net472</TargetFrameworks>
-    <!--<UseNETCoreGenerator>true</UseNETCoreGenerator> -->
     <RootNamespace>TensorFlow.FSharp.Tests</RootNamespace>
     <AssemblyName>TensorFlow.FSharp.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
@@ -25,6 +25,24 @@
     <PackageReference Include="NUnit" Version="3.9.0" />
     <ProjectReference Include="..\src\TensorFlow.FSharp.fsproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\lib\libtensorflow.dll" Link="native\libtensorflow.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\lib\libtensorflow_framework.so" Link="native\libtensorflow_framework.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\lib\libtensorflow.so" Link="native\libtensorflow.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\lib\libtensorflow_framework.dylib" Link="native\libtensorflow_framework.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\lib\libtensorflow.dylib" Link="native\libtensorflow.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup> 
 
   <ItemGroup>
     <None Include="examples\chicago.jpg" />

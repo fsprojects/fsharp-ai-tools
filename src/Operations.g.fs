@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Tensorflow.GeneratedOpeartions
+module TensorFlow.GeneratedOpeartions
 
 open System
 

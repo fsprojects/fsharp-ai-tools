@@ -1,5 +1,5 @@
-namespace Tensorflow
-// This is common Tensorflow specific types / utils
+namespace TensorFlow
+// This is common TensorFlow specific types / utils
 
 open System.Runtime.InteropServices
 
@@ -31,12 +31,12 @@ type TF_Function = System.IntPtr
 type TF_DeviceList = System.IntPtr
 
 // [<AutoOpen>]
-// module Tensorflow.common
+// module TensorFlow.common
 
 // open System
 // open Utils
 // open TensorFlow
-// open Tensorflow
+// open TensorFlow
 // open System.Collections.Generic
 
 // module OS =

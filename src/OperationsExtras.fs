@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Tensorflow.OperationExtras
+module TensorFlow.OperationExtras
 
 open System.Runtime.InteropServices
 open System

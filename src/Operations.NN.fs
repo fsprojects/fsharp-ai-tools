@@ -1,5 +1,5 @@
 ﻿[<AutoOpen>]
-module Tensorflow.NNImpl
+module TensorFlow.NNImpl
 //#r "netstandard"
 //#r "../lib/TensorFlowSharp.dll"
 

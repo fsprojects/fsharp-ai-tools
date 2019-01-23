@@ -1,4 +1,4 @@
-﻿module Tensorflow.HDF5ReaderWriter
+﻿module TensorFlow.HDF5ReaderWriter
 // Originally from https://github.com/DeepMLNet/DeepNet/blob/master/Tensor/Tensor/HDF5.fs
 // Apache 2.0 licence
 

@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Tensorflow.Utils
+module TensorFlow.Utils
 open System
 open System.Collections.Generic
 open System.Collections

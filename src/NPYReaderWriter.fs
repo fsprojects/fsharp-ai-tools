@@ -1,4 +1,4 @@
-﻿module Tensorflow.NPYReaderWriter
+﻿module TensorFlow.NPYReaderWriter
 
 open System
 open System.IO

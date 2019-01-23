@@ -1,4 +1,4 @@
-namespace Tensorflow 
+namespace TensorFlow 
 open Microsoft.FSharp.NativeInterop
 open System.Collections.Generic
 open System

@@ -1,4 +1,4 @@
-namespace Tensorflow
+namespace TensorFlow
 
 open System
 open System.Runtime.InteropServices

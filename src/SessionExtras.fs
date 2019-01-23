@@ -1,5 +1,5 @@
 ﻿[<AutoOpen>]
-module Tensorflow.SessionExtras
+module TensorFlow.SessionExtras
 open System
 open System.Text
 

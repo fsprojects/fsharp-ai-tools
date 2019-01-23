@@ -1,4 +1,4 @@
-﻿module Tensorflow.ImageWriter
+﻿module TensorFlow.ImageWriter
 
 // This is a lightweight library for saving bitmap files in order to view the output of image base machine learning
 // The point of this is is have minimal dependencies for examples

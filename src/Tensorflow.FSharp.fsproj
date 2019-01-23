@@ -3,69 +3,29 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>Tensorflow</RootNamespace>
-    <AssemblyName>Tensorflow.FSharp</AssemblyName>
+    <RootNamespace>TensorFlow</RootNamespace>
+    <AssemblyName>TensorFlow.FSharp</AssemblyName>
     <ReleaseVersion>0.1</ReleaseVersion>
     <TensorFlowRuntimeVersion>1.11.0</TensorFlowRuntimeVersion>
+    <NuspecFile>build\TensorFlow.FSharp.nuspec</NuspecFile>
+    <PlatformTarget>x64</PlatformTarget>
+    <DocumentationFile>TensorFlow.FSharp.xml</DocumentationFile>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <PlatformTarget>x64</PlatformTarget>
-    <DocumentationFile>Tensorflow.FSharp.xml</DocumentationFile>
-  </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="..\lib\Tensorflow.Proto.dll" />
+    <Reference Include="..\lib\TensorFlow.Proto.dll">
+      <Private>true</Private>
+    </Reference>
     <PackageReference Include="Argu" Version="5.1.0" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />
     <PackageReference Include="Google.Protobuf" Version="3.6.1" />
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
     <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.200" />
     <PackageReference Update="FSharp.Core" Version="4.5.2" />
+    <PackageReference Include="System.Runtime" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <GeneratePackageOnBuild Condition=" '$(Configuration)' == 'Release' ">true</GeneratePackageOnBuild>
-    <PackageId>Tensorflow.FSharp</PackageId>
-    <PackageVersion>1.11.0-pre1</PackageVersion>
-    <Authors>moloneymb</Authors>
-    <PackageLicense>https://github.com/moloneymb/Tensorflow.FSharp/blob/master/LICENSE</PackageLicense>
-    <PackageProjectUrl>https://github.com/moloneymb/Tensorflow.FSharp/</PackageProjectUrl>
-    <PackageTags>machine-learning, tensorflow, f#</PackageTags>
-    <Description>F# .NET Bindings for TensorFlow</Description>
-    <Owners>Miguel de Icaza, moloneymb</Owners>
-    <Summary>F# .NET API for TensorFlow, Google's Machine Intelligence framework</Summary>
-    <PackageReleaseNotes>1.11.0 adds support for the TensorFlow 1.11 release</PackageReleaseNotes>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="nuget\Tensorflow.FSharp.targets" />
-    <None Include="nuget\Tensorflow.FSharp.targets" PackagePath="build\netstandard2.0\TensorFlowSharp.targets" Pack="true" />
-    <None Include="..\lib\libtensorflow.dll" Link="nuget\runtimes\win7-x64\native\libtensorflow.dll" PackagePath="runtimes\win7-x64\native\libtensorflow.dll" Pack="true" />
-    <None Include="..\lib\libtensorflow.dylib" Link="nuget\runtimes\osx\native\libtensorflow.dylib" PackagePath="runtimes\osx\native\libtensorflow.dylib" Pack="true" />
-    <None Include="..\lib\libtensorflow_framework.dylib" Link="nuget\runtimes\osx\native\libtensorflow_framework.dylib" PackagePath="runtimes\osx\native\libtensorflow_framework.dylib" Pack="true" />
-    <None Include="..\lib\libtensorflow.so" Link="nuget\runtimes\linux\native\libtensorflow.so" PackagePath="runtimes\linux\native\libtensorflow.so" Pack="true" />
-    <None Include="..\lib\libtensorflow_framework.so" Link="nuget\runtimes\linux\native\libtensorflow_framework.so" PackagePath="runtimes\linux\native\libtensorflow_framework.so" Pack="true" />
-  </ItemGroup>
-
-  <!--
-  <ItemGroup>
-    <None Include="..\lib\libtensorflow.dll" Link="native\libtensorflow.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\lib\libtensorflow_framework.so" Link="native\libtensorflow_framework.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\lib\libtensorflow.so" Link="native\libtensorflow.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\lib\libtensorflow_framework.dylib" Link="native\libtensorflow_framework.dylib">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\lib\libtensorflow.dylib" Link="native\libtensorflow.dylib">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup> -->
 
   <ItemGroup>
     <Compile Include="Utils.fs" />
@@ -91,9 +51,5 @@
     <Compile Include="Datasets.fs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.Runtime" Version="4.3.0" />
-    <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
-  </ItemGroup>
 </Project>
 

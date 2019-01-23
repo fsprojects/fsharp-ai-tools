@@ -1,4 +1,4 @@
-namespace Tensorflow
+namespace TensorFlow
 // TODO as we've remove graph from Operations we should figure out how to make sure we prevent the graph from disposing when operations are live
 
 open System
@@ -10,12 +10,12 @@ open Microsoft.FSharp.NativeInterop
 #nowarn "9" "51"
 
 /// <summary>
-/// Represents a computation node in the graph.  Tensorflow operations are attached to a <see cref="T:Tensorflow.Graph"/>.
+/// Represents a computation node in the graph.  TensorFlow operations are attached to a <see cref="T:TensorFlow.Graph"/>.
 /// </summary>
 /// <remarks>
 /// Operations are usually created by  invoking one of the methods in 
-/// <see cref="T:Tensorflow.Graph"/>, but they can also be constructed
-/// manually using the low-level <see cref="T:Tensorflow.OperationDesc"/> API.
+/// <see cref="T:TensorFlow.Graph"/>, but they can also be constructed
+/// manually using the low-level <see cref="T:TensorFlow.OperationDesc"/> API.
 /// </remarks>
 type Operation((*graph : Graph,*) handle : IntPtr)  =
 

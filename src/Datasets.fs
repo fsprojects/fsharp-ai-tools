@@ -1,4 +1,4 @@
-﻿module Tensorflow.Datasets
+﻿module TensorFlow.Datasets
 
 module MNIST = 
     //CVDF mirror of http://yann.lecun.com/exdb/mnist/

@@ -1,7 +1,7 @@
 #load "NugetDownload.fsx"
 open NugetDownload
 
-// TODO extract all OS specific files for Tensorflow
+// TODO extract all OS specific files for TensorFlow
 
 let nugetFiles = 
     [| 
@@ -37,9 +37,9 @@ open System.IO
 let dir = __SOURCE_DIRECTORY__
 let lib = Path.Combine(dir, "..","lib")
 
-printfn "Building Tensorflow Proto"
-runFSI (Path.Combine(dir,"BuildTensorflowProto.fsx"))
-printfn "Finished building Tensorflow Proto"
+printfn "Building TensorFlow Proto"
+runFSI (Path.Combine(dir,"BuildTensorFlowProto.fsx"))
+printfn "Finished building TensorFlow Proto"
 
 printfn "Code genearting operations"
 runFSC (sprintf "%s -o %s" (Path.Combine(dir,"LinuxNativeWorkaround.fs")) (Path.Combine(lib,"LinuxNativeWorkaround.dll")))

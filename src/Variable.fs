@@ -1,4 +1,4 @@
-namespace Tensorflow
+namespace TensorFlow
 //
 // TensorFlow.cs; Bindings to the TensorFlow C API for .NET
 // 

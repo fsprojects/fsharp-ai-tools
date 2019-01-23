@@ -121,7 +121,7 @@ let dependecies =  [ ("ionic.zlib","1.9.1.5"); ("HDF.PInvoke.NETStandard","1.10.
 
 [|
     for file in ["TensorFlow.FSharp.dll";"TensorFlow.FSharp.XML"; "libtensorflow.dll";
-"Tensorflow.Proto.dll";"Tensorflow.Proto.xml"]  ->
+"TensorFlow.Proto.dll";"TensorFlow.Proto.xml"]  ->
         MPackageFile(file,@"lib\net40\" + file, net40,[|net40|], File.ReadAllBytes(__SOURCE_DIRECTORY__ + sprintf "\\bin\\Debug\\%s"
 file))
 |] |> Seq.iter pb.Files.Add

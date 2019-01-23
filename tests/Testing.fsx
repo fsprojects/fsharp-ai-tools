@@ -5,7 +5,7 @@
 #r "Google.Protobuf.dll"
 #r "HDF.PInvoke.dll"
 #r "protobuf-net.dll"
-#r "Tensorflow.Proto.dll"
+#r "TensorFlow.Proto.dll"
 #r "TensorFlow.FSharp.dll"
 #r "netstandard"
 

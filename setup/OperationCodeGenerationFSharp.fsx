@@ -7,7 +7,7 @@
 
 #I __SOURCE_DIRECTORY__
 #r @"../lib/Google.Protobuf.dll"
-#r @"../lib/Tensorflow.Proto.dll"
+#r @"../lib/TensorFlow.Proto.dll"
 #r @"../lib/LinuxNativeWorkaround.dll"
 #r @"../lib/protobuf-net.dll"
 
@@ -19,7 +19,7 @@ open LinuxNativeWorkaround.Native
 open Microsoft.FSharp.NativeInterop
 open System.Collections.Generic
 open System.Runtime.InteropServices
-open Tensorflow
+open TensorFlow.Proto
 
 let deserialize<'a> = Serializer.Deserialize<'a>
 
@@ -323,7 +323,7 @@ let run(dirs : string []) =
         pd "\n"
             
     p "[<AutoOpen>]"
-    p "module Tensorflow.GeneratedOpeartions\n"
+    p "module TensorFlow.GeneratedOpeartions\n"
     p "open System\n"
     pi "type TF with"
 
