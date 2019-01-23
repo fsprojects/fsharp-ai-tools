@@ -1,12 +1,11 @@
-namespace TensorFlow
+namespace TensorFlow.FSharp
 
 open System
 open System.Runtime.InteropServices
-open System.Text
-open Utils
-open Microsoft.FSharp.NativeInterop
 open System.Collections.Generic
-
+open System.Text
+open FSharp.NativeInterop
+open TensorFlow.FSharp.Utils
 
 #nowarn "9"
 
@@ -31,7 +30,7 @@ type DeviceType =
     | CPU
     /// The device is a Graphics Processing Unit (GPU)
     | GPU
-    /// The device is a Tensor Processing Unit (TPU)
+    /// The device is a TFTensor Processing Unit (TPU)
     | TPU
 
 /// Describes the device attributes 
@@ -110,7 +109,7 @@ type TFImportGraphDefOptions() =
     /// replaced with `dst`. `src_name` refers to a node in the graph to be imported,
     /// `dst` references a node already existing in the graph being imported into.
     /// </remarks>
-    member this.AddInputMapping (srcName : string, srcIndex : int, dst : Output) =
+    member this.AddInputMapping (srcName : string, srcIndex : int, dst : TFOutput) =
         if this.Handle = IntPtr.Zero then raise(ObjectDisposedException ("Handle"))
         TF_ImportGraphDefOptionsAddInputMapping (this.Handle, srcName, srcIndex, dst.Struct)
 
@@ -119,7 +118,7 @@ type TFImportGraphDefOptions() =
     /// Cause the imported graph to have a control dependency on the provided operation.
     /// </summary>
     /// <param name="operation">This operation should exist in the graph being imported to.</param>
-    member this.AddControlDependency (operation : Operation) =
+    member this.AddControlDependency (operation : TFOperation) =
         if box operation = null then raise(ArgumentNullException ("operation"))
         if this.Handle = IntPtr.Zero then raise(ObjectDisposedException ("Handle"))
         TF_ImportGraphDefOptionsAddControlDependency (this.Handle, operation.Handle)
@@ -158,7 +157,7 @@ type TFImportGraphDefOptions() =
     /// Set any imported nodes with control input <paramref name="srcName"/> to have that input
     /// replaced with <paramref name="destination"/>. 
     /// </remarks>
-    member this.RemapControlDependency (srcName : string, destination : Operation) =
+    member this.RemapControlDependency (srcName : string, destination : TFOperation) =
         if this.Handle = IntPtr.Zero then raise(ObjectDisposedException ("Handle"))
         if srcName = null then raise(ArgumentNullException ("srcName"))
         if box destination = null then raise(ArgumentNullException ("destination"))
@@ -217,8 +216,8 @@ module GraphExternal =
 /// You can use the passed status record problems with it.
 /// </para>
 /// </remarks>
-type WhileConstructor = delegate of conditionGraph : Graph * condInputs : TF_Output [] * [<Out>] condOutput : TF_Output  * 
-                        bodyGraph : Graph * bodyInputs : TF_Output [] * bodyOutpus : TF_Output [] * [<Out>] name : string  -> unit
+type WhileConstructor = delegate of conditionGraph : TFGraph * condInputs : TF_Output [] * [<Out>] condOutput : TF_Output  * 
+                        bodyGraph : TFGraph * bodyInputs : TF_Output [] * bodyOutpus : TF_Output [] * [<Out>] name : string  -> unit
 
 
 //
@@ -227,7 +226,7 @@ type WhileConstructor = delegate of conditionGraph : Graph * condInputs : TF_Out
 // want to delete the handle when this object is collected
 //
 and GraphUnowned internal (handle:IntPtr) = 
-    inherit Graph (handle)
+    inherit TFGraph (handle)
 
     // Nothing, we do not own the handle
     override this.NativeDispose (handle : TF_Status) = ()
@@ -250,11 +249,11 @@ and GraphUnowned internal (handle:IntPtr) =
 /// "hot", and add a "sub" operation there the result will be "demo/hot/sub".
 /// </para>
 /// </remarks>
-and Graph internal (handle) =
+and TFGraph internal (handle) =
     inherit TFDisposableThreadSafe(handle)
 
     let mutable currentNameScope = ""
-    let mutable currentDependencies = Array.empty<Operation>
+    let mutable currentDependencies = Array.empty<TFOperation>
     let values = new DictionaryCount<string> ()
 
     /// <summary>
@@ -279,8 +278,8 @@ and Graph internal (handle) =
     /// </remarks>
     let mutable seed = 87654321
 
-    let pending_init_variables : List<Operation> = List<Operation>()
-    let trainable_variables : List<Variable> = List<Variable>()
+    let pending_init_variables : List<TFOperation> = List<TFOperation>()
+    let trainable_variables : List<TFVariable> = List<TFVariable>()
 
     let mutable lastId = 0
 
@@ -363,7 +362,7 @@ and Graph internal (handle) =
     /// <summary>
     /// Initializes a new instance of the <see cref="T:TensorFlow.Graph"/> class.
     /// </summary>
-    new () = new Graph (TF_NewGraph ())
+    new () = new TFGraph (TF_NewGraph ())
 
     override this.NativeDispose (handle : IntPtr) = TF_DeleteGraph (handle)
 
@@ -390,7 +389,7 @@ and Graph internal (handle) =
     /// <param name="output">The tensor on which this method will operate in the graph.</param>
     /// <param name="dims">The tensor shape, specified as an array of dimensions.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member this.SetTensorShape (output : Output, ?dims : int64 [], ?status : TFStatus) =
+    member this.SetTensorShape (output : TFOutput, ?dims : int64 [], ?status : TFStatus) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status)
         match dims with
@@ -402,12 +401,12 @@ and Graph internal (handle) =
 
 
     /// <summary>
-    /// Returns the number of dimensions of the Tensor referenced by output
+    /// Returns the number of dimensions of the TFTensor referenced by output
     /// </summary>
     /// <returns>The number of dimensions of the tensor.</returns>
     /// <param name="output">The tensor to probe.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member this.GetTensorNumDims (output : Output, ?status : TFStatus) = 
+    member this.GetTensorNumDims (output : TFOutput, ?status : TFStatus) = 
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status)
         let code = TF_GraphGetTensorNumDims (handle, output.Struct, cstatus.Handle)
@@ -422,17 +421,17 @@ and Graph internal (handle) =
     /// <returns>The tensor shape.    If the number of dimensions in the shape is unknown or the shape is, a scalar, the values in the array will be zero. Otherwise, each element of will be set corresponding to the size of the dimension. An  unknown dimension is represented by -1.</returns>
     /// <param name="output">The tensor that you want to look up.  </param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member this.GetTensorShape (output : Output, ?status : TFStatus) =
+    member this.GetTensorShape (output : TFOutput, ?status : TFStatus) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status)
         let n = TF_GraphGetTensorNumDims (handle, output.Struct, cstatus.Handle)
-        if (not (cstatus.CheckMaybeRaise (?incoming=status, last = false))) then Shape.Unknown
-        elif n = -1 then Shape.Unknown
+        if (not (cstatus.CheckMaybeRaise (?incoming=status, last = false))) then TFShape.Unknown
+        elif n = -1 then TFShape.Unknown
         else
             let dims = Array.zeroCreate<int64> n
             TF_GraphGetTensorShape (handle, output.Struct, dims, dims.Length, cstatus.Handle)
             cstatus.CheckMaybeRaise (?incoming=status) |> ignore
-            new Shape (dims)
+            new TFShape (dims)
 
     /// <summary>
     /// Write out a serialized representation of the graph (as a GraphDef protocol buffer message) into <paramref name="outputGraphDef"/>.
@@ -520,27 +519,27 @@ and Graph internal (handle) =
             if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
             let h = TF_GraphOperationByName (handle, name)
             if h = IntPtr.Zero then None
-            else Some(new Operation (h))
+            else Some(new TFOperation (h))
 
     /// <summary>
     /// Gets the <see cref="T:TensorFlow.Graph"/> with the specified name, or null if the named operation does not exist in the graph.
     /// </summary>
     /// <param name="name">Name to lookup.</param>
     member this.Item 
-        with get(name : string) : Operation = this.TryGet(name) |> Option.orNull
+        with get(name : string) : TFOperation = this.TryGet(name) |> Option.orNull
     
 
     /// <summary>
     /// Returns the enumerator that returns all the Operations in a graph.
     /// </summary>
     /// <returns>The enumerator.</returns>
-    member this.GetEnumerator () : IEnumerable<Operation> =
+    member this.GetEnumerator () : IEnumerable<TFOperation> =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         let mutable token = IntPtr.Zero
         Seq.unfold (fun _ -> 
             match TF_GraphNextOperation (handle, &token) with
             | operll when operll = IntPtr.Zero -> None
-            | operll -> Some(Operation(operll),())) ()
+            | operll -> Some(TFOperation(operll),())) ()
 
     /// <summary>
     ///  Returns the tensor shape for the specific output pparameters as an array of longs.
@@ -548,7 +547,7 @@ and Graph internal (handle) =
     /// <returns>null for single dimension, .</returns>
     /// <param name="output">The output operation to probe.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member this.GetShape (output : Output, ?status : TFStatus) =
+    member this.GetShape (output : TFOutput, ?status : TFStatus) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status)
         let ndims = TF_GraphGetTensorNumDims (this.Handle, output.Struct, cstatus.Handle)
@@ -617,7 +616,7 @@ and Graph internal (handle) =
     /// <summary>
     /// Adds new dependencies for new tensors and operations created while the context is active.
     /// </summary>
-    member this.WithDependencies ([<ParamArray>] dependencies : Operation []) = 
+    member this.WithDependencies ([<ParamArray>] dependencies : TFOperation []) = 
         let prevDeps = this.CurrentDependencies
         this.CurrentDependencies <- [|yield! prevDeps; yield! dependencies|] |> Array.distinct
         {new IDisposable with member x.Dispose() = this.CurrentDependencies <- prevDeps}
@@ -648,7 +647,7 @@ and Graph internal (handle) =
     /// <remarks>
     ///   If you are tryig to load a file stored using the SavedModel file format, you should use the <see cref="T:TensorFlow.Session.FromSavedModel"/> API instead.
     /// </remarks>
-    member this.ImportGraphDef (graphDef : TFBuffer, options :TFImportGraphDefOptions, returnOutputs : Output [], ?status : TFStatus) =
+    member this.ImportGraphDef (graphDef : TFBuffer, options :TFImportGraphDefOptions, returnOutputs : TFOutput [], ?status : TFStatus) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         if box graphDef = null then raise(ArgumentNullException ("graphDef"))
         if box options = null then raise(ArgumentNullException ("options"))
@@ -678,13 +677,13 @@ and Graph internal (handle) =
     /// An array of Outputs from creating the While loop, or null if there is an error creating the 
     /// while loop, or if the constructor raised an exception when it was invoked.
     /// </returns>
-    member this.While(inputs : Output [], constructor : WhileConstructor, ?status : TFStatus) =
+    member this.While(inputs : TFOutput [], constructor : WhileConstructor, ?status : TFStatus) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         if box inputs = null then raise(ArgumentNullException ("inputs"))
         if constructor = null then raise(ArgumentNullException ("constructor"))
         let cstatus = TFStatus.Setup (?incoming=status)
         let mutable result = TF_NewWhile (handle, inputs |> Array.map (fun x -> x.Struct), inputs.Length, cstatus.Handle)
-        if cstatus.Error then box null :?> Output[]
+        if cstatus.Error then box null :?> TFOutput[]
         else
             try
                 // 
@@ -695,9 +694,9 @@ and Graph internal (handle) =
                 let mutable name : string = box null :?> string
                 let n = result.ninputs
                 let bodyOutputs = Array.zeroCreate<TF_Output> n 
-                let condGraph = new GraphUnowned (result.cond_graph) :> Graph
-                let bodyGraph = new GraphUnowned (result.body_graph) :> Graph
-                constructor.Invoke(condGraph, Graph.CopyFrom (result.cond_inputs, n), result.cond_output, bodyGraph, Graph.CopyFrom (result.body_inputs, n), bodyOutputs, name)
+                let condGraph = new GraphUnowned (result.cond_graph) :> TFGraph
+                let bodyGraph = new GraphUnowned (result.body_graph) :> TFGraph
+                constructor.Invoke(condGraph, TFGraph.CopyFrom (result.cond_inputs, n), result.cond_output, bodyGraph, TFGraph.CopyFrom (result.body_inputs, n), bodyOutputs, name)
 
                 let name = if box name = null || name = "" then this.MakeUnique ("while") else name
                 // On return, copy the condOutput and bodyOututs
@@ -712,7 +711,7 @@ and Graph internal (handle) =
                 use first = fixed &ret.[0]
                 TF_FinishWhile (&result, cstatus.Handle, first)
                 if (cstatus.CheckMaybeRaise (?incoming=status)) then 
-                    ret |> Array.map Output
+                    ret |> Array.map TFOutput
                 else null
             with
             | _ -> 
@@ -731,7 +730,7 @@ and Graph internal (handle) =
     /// <remarks>
     /// d(y[0] + y[1]+ ...)/dx[0], d(y[0] + y[1] + ...)/dx[1]z...
     /// </remarks>
-    member this.AddGradients(y : Output [], x : Output [], ?dx : Output [], ?status : TFStatus) : Output [] =
+    member this.AddGradients(y : TFOutput [], x : TFOutput [], ?dx : TFOutput [], ?status : TFStatus) : TFOutput [] =
         if y = null then raise(ArgumentNullException ("y"))
         if x = null then raise(ArgumentNullException ("x"))
         dx |> Option.iter (fun dx -> 
@@ -754,7 +753,7 @@ and Graph internal (handle) =
         if not(cstatus.CheckMaybeRaise (?incoming=status, last = false)) then
              null
         else
-            ret |> Array.map Output
+            ret |> Array.map TFOutput
 
     /// <summary>
     /// Adds a gradient: the operations needed to compute the partial derivatives of sum of <paramref name="y"/>` wrt to <paramref name="x"/>.
@@ -772,7 +771,7 @@ and Graph internal (handle) =
     /// <remarks>
     /// d(y[0] + y[1]+ ...)/dx[0], d(y[0] + y[1] + ...)/dx[1]z...
     /// </remarks>
-    member this.AddGradients (prefix : string,  y : Output [], x : Output [], ?dx : Output [], ?status : TFStatus) : Output [] =
+    member this.AddGradients (prefix : string,  y : TFOutput [], x : TFOutput [], ?dx : TFOutput [], ?status : TFStatus) : TFOutput [] =
         if y = null then raise(ArgumentNullException ("y"))
         if x = null then raise(ArgumentNullException ("x"))
         dx |> Option.iter (fun dx -> 
@@ -795,7 +794,7 @@ and Graph internal (handle) =
         if not(cstatus.CheckMaybeRaise (?incoming=status, last = false)) then
              null
         else
-            ret |> Array.map Output
+            ret |> Array.map TFOutput
 
     /// <summary>
     /// Creates a TFFunction from a Graph
@@ -862,9 +861,9 @@ and Graph internal (handle) =
     /// </remarks>
     member this.ToFunction (functionName : string,
                             description : string,
-                            operations : Operation [],
-                            inputs : Output [],
-                            outputs : Output [],
+                            operations : TFOperation [],
+                            inputs : TFOutput [],
+                            outputs : TFOutput [],
                             outputNames : string [],
                             ?appendHashToFunctionName : bool, // false
                             ?status : TFStatus) : TFFunction  =
@@ -955,16 +954,16 @@ and Graph internal (handle) =
     /// </summary>
     /// <returns><c>true</c>, if the evaluation is successful, in which case the result is returned in <paramref name="tensor"/>, <c>false</c> otherwise.</returns>
     /// <param name="output">Output.</param>
-    /// <param name="tensor">Tensor.</param>
-    member this.TryEvaluateConstant (output : Output, [<Out>] tensor : Tensor byref) = 
+    /// <param name="tensor">TFTensor.</param>
+    member this.TryEvaluateConstant (output : TFOutput, [<Out>] tensor : TFTensor byref) = 
         let cstatus = new TFStatus ()
         let mutable ptr = IntPtr.Zero
         let ret = TF_TryEvaluateConstant (handle, output.Struct, &ptr, cstatus.Handle)
         cstatus.Dispose ()
         if ret then
-            tensor <- new Tensor (ptr)
+            tensor <- new TFTensor (ptr)
         else
-            tensor <- box null :?> Tensor
+            tensor <- box null :?> TFTensor
         ret
     
     override this.ToString () =
@@ -991,11 +990,11 @@ module OperationDescNative =
 /// </para>
 /// <para>
 /// You create instances bound to a graph, add inputs, attributes and so on, and when you are done
-/// you can call the <see cref="FinishOperation"/> method that will turn this OperationDesc 
+/// you can call the <see cref="FinishOperation"/> method that will turn this TFOperationDesc 
 /// into a <see cref="T:TensorFlow.Operation"/>.
 /// </para>
 /// </remarks>
-type OperationDesc private (graph : Graph, opType : string, name : string, handle : IntPtr) =
+type TFOperationDesc private (graph : TFGraph, opType : string, name : string, handle : IntPtr) =
     inherit TFDisposable(handle)
     let mutable handle = handle
 
@@ -1096,9 +1095,9 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern void TF_SetAttrFuncName (TF_OperationDescription desc, string attr_name, string value, IntPtr len)
 
-    new (graph : Graph, opType : string, name: string) =
+    new (graph : TFGraph, opType : string, name: string) =
         let handle = TF_NewOperation (graph.Handle, opType, name)
-        new OperationDesc(graph, opType, name,handle)
+        new TFOperationDesc(graph, opType, name,handle)
 
     member this.OpType = opType
     override this.NativeDispose (handle : IntPtr) =
@@ -1121,7 +1120,7 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
     /// </summary>
     /// <returns>The input.</returns>
     /// <param name="input">Input.</param>
-    member this.AddInput (input : Output) =
+    member this.AddInput (input : TFOutput) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         TF_AddInput (handle, input.Struct)
         this
@@ -1130,7 +1129,7 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
         /// Adds a series of inputs to the operation.
         /// </summary>
         /// <param name="inputs">Inputs, this is a params array for your convenience.</param>
-    member this.AddInputs([<ParamArray>] inputs : Output []) =
+    member this.AddInputs([<ParamArray>] inputs : TFOutput []) =
             if (handle = IntPtr.Zero) then raise (ObjectDisposedException ("handle"))
             if not (box inputs = null || inputs.Length = 0) then
                 TF_AddInputList (handle, inputs |> Array.map (fun x -> x.Struct), inputs.Length)
@@ -1151,13 +1150,13 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
     /// running the operation.
     /// </para>
     /// </remarks>
-    member this.AddControlInput (control : Operation) =
+    member this.AddControlInput (control : TFOperation) =
         if (handle = IntPtr.Zero) then raise (ObjectDisposedException ("handle"))
         if (box control = null) then raise (ArgumentNullException ("input"))
         TF_AddControlInput (handle, control.Handle)
         this
 
-    member this.ColocateWith (op : Operation) = 
+    member this.ColocateWith (op : TFOperation) = 
         if (handle = IntPtr.Zero) then (raise (ObjectDisposedException ("handle")))
         if (box op = null) then raise (ArgumentNullException ("op"))
         TF_ColocateWith (handle, op.Handle)
@@ -1230,20 +1229,20 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
         TF_SetAttrBoolList (handle, attrName, values, values.Length)
         this
 
-    member this.SetAttr (attrName : string, value : DType) =
+    member this.SetAttr (attrName : string, value : TFDataType) =
         if handle = IntPtr.Zero then raise( ObjectDisposedException ("handle"))
         if attrName = null then raise(ArgumentNullException ("attrName"))
         TF_SetAttrType (handle, attrName, uint32 value)
         this
 
-    member this.SetAttr (attrName : string, [<ParamArray>] values : DType[]) =
+    member this.SetAttr (attrName : string, [<ParamArray>] values : TFDataType[]) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         if box attrName = null then raise(ArgumentNullException ("handle"))
         if box values = null then raise(ArgumentNullException ("values"))
         TF_SetAttrTypeList(handle, attrName, values |> Array.map uint32, values.Length)
         this
 
-    member this.SetAttr (attrName : string, shape : Shape) =
+    member this.SetAttr (attrName : string, shape : TFShape) =
         if handle = IntPtr.Zero then raise( ObjectDisposedException ("handle"))
         if attrName = null then raise(ArgumentNullException ("attrName"))
         if (box shape = null || box shape.Dims = null) then
@@ -1252,7 +1251,7 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
             OperationDescNative.TF_SetAttrShape (handle, attrName, shape.Dims, shape.Dims.Length)
         this
 
-    member this.SetAttr (attrName : string, shapeList : Shape []) =
+    member this.SetAttr (attrName : string, shapeList : TFShape []) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         if attrName = null then raise(ArgumentNullException ("attrName"))
         if box shapeList = null then raise(ArgumentNullException ("shapeList"))
@@ -1289,7 +1288,7 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
         cstatus.CheckMaybeRaise (?incoming=status) |> ignore
         this
 
-    member this.SetAttr (attrName : string, tensor : Tensor, ?status : TFStatus) =
+    member this.SetAttr (attrName : string, tensor : TFTensor, ?status : TFStatus) =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
         if box attrName = null then raise (ArgumentNullException ("attrName"))
         if box tensor = null then raise (ArgumentNullException ("tensor"))
@@ -1299,7 +1298,7 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
         this
 
 
-    member this.SetAttr (attrName : string, tensors : Tensor [], ?status : TFStatus) =
+    member this.SetAttr (attrName : string, tensors : TFTensor [], ?status : TFStatus) =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
         if box attrName = null then raise (ArgumentNullException ("attrName"))
         if box tensors = null then raise (ArgumentNullException ("tensors"))
@@ -1336,8 +1335,8 @@ type OperationDesc private (graph : Graph, opType : string, name : string, handl
         handle <- IntPtr.Zero
         GC.SuppressFinalize (this)
         match status with 
-        | Some status when status.Error -> box null :?> Operation
-        | _ -> new Operation (h)
+        | Some status when status.Error -> box null :?> TFOperation
+        | _ -> new TFOperation (h)
 
     /// <summary>
     /// Sets an attribute on the function to the specified value.

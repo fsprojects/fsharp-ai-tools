@@ -1,9 +1,10 @@
 ﻿[<AutoOpen>]
-module TensorFlow.SessionExtras
+module TensorFlow.FSharp.SessionExtras
+
 open System
 open System.Text
 
-type Session with
+type TFSession with
      /// <summary>
      /// Restores a tensor from a serialized tensorflor file.
      /// </summary>
@@ -21,9 +22,10 @@ type Session with
      ///   session.SaveTensors($"saved.tsf", ("a", a), ("b", b));
      /// }
      /// </code>
-     member this.RestoreTensor(filename : string, tensor : string, _type : DType) : Output =
-         TF.Restore (TF.Const (Tensor.CreateString (Encoding.UTF8.GetBytes (filename))),
-                            TF.Const (Tensor.CreateString (Encoding.UTF8.GetBytes (tensor))),
+     member this.RestoreTensor(filename : string, tensor : string, _type : TFDataType) : TFOutput =
+         let graph = this.Graph
+         graph.Restore (graph.Const (TFTensor.CreateString (Encoding.UTF8.GetBytes (filename))),
+                            graph.Const (TFTensor.CreateString (Encoding.UTF8.GetBytes (tensor))),
                             _type);
 
      /// <summary>
@@ -47,7 +49,7 @@ type Session with
      /// }
      /// </code>
      /// </remarks>
-     member this.SaveTensors(filename : string, [<ParamArray>] tensors : (string*Output) []) : Tensor [] =
+     member this.SaveTensors(filename : string, [<ParamArray>] tensors : (string*TFOutput) []) : TFTensor [] =
 //			return GetRunner ().AddTarget (Graph.Save (Graph.Const (TFTensor.CreateString (Encoding.UTF8.GetBytes (filename)), TFDataType.String),
 //				      Graph.Concat (Graph.Const (0), tensors.Select (T => {
 //					      TFTensor clone = TFTensor.CreateString (Encoding.UTF8.GetBytes (T.Item1));
@@ -57,12 +59,13 @@ type Session with
 //											  clone.TensorByteSize,
 //											  null, IntPtr.Zero));
 //				      }).ToArray ()), tensors.Select (d => d.Item2).ToArray ())).Run ();
+         let graph = this.Graph
          let clonedTensors = 
                      tensors |> Array.map (fun (x,_) ->  
-                         let clone = Tensor.CreateString (System.Text.Encoding.UTF8.GetBytes (x))
-                         TF.Const (new Tensor(DType.String,  [|1L|], clone.Data, clone.TensorByteSize, null, IntPtr.Zero)))
+                         let clone = TFTensor.CreateString (System.Text.Encoding.UTF8.GetBytes (x))
+                         graph.Const (new TFTensor(TFDataType.String,  [|1L|], clone.Data, clone.TensorByteSize, null, IntPtr.Zero)))
 
-         let save : Operation = TF.Save (TF.Const (Tensor.CreateString (Encoding.UTF8.GetBytes (filename)), DType.String), TF.Concat (TF.Const (new Tensor(0)), clonedTensors), tensors |> Array.map snd)
+         let save : TFOperation = graph.Save (graph.Const (TFTensor.CreateString (Encoding.UTF8.GetBytes (filename)), TFDataType.String), graph.Concat (graph.Const (new TFTensor(0)), clonedTensors), tensors |> Array.map snd)
 
          this.GetRunner().AddTarget(save).Run ()
 

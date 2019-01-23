@@ -260,7 +260,7 @@ let saveToNPZ(npys:Map<string,NPYDescription*Array>) =
     ms.ToArray()
 *)
 
-let readFromNPZ(data:byte[]) : Map<string,(NPYDescription*Array)> =
+let readFromNPZ(data:byte[]) : (string * (NPYDescription*Array))[] =
     use ms = new MemoryStream(data)
     use zip = new ZipArchive(ms, ZipArchiveMode.Read)
     [|
@@ -271,4 +271,4 @@ let readFromNPZ(data:byte[]) : Map<string,(NPYDescription*Array)> =
             let bytes = targetMs.ToArray()
             let desc,arr = readNumpy(bytes) |> Result.requireOk
             entry.FullName, (desc,arr)
-    |] |> Map.ofArray
+    |] 

@@ -3,7 +3,9 @@ module ImageWriter
 // This is a lightweight library for saving bitmap files in order to view the output of image base machine learning
 // The point is is have minimal dependencies
 
-#r "../lib/Ionic.Zlib.dll"
+#r "netstandard"
+#I __SOURCE_DIRECTORY__
+#r "../../tests/bin/Debug/net472/Ionic.Zlib.Core.dll"
 #nowarn "9"
 
 open System
@@ -129,7 +131,7 @@ module (*private*) PNG =
     let decompress = ZlibStream.UncompressBuffer
     let compress   = ZlibStream.CompressBuffer
 
-open Microsoft.FSharp.NativeInterop
+open FSharp.NativeInterop
 
 /// This only supports TruecolorAlpha
 let RGBAToPNG(height:int, width:int, pixels:int[]) : byte[] =

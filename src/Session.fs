@@ -1,5 +1,6 @@
-namespace TensorFlow 
-open Microsoft.FSharp.NativeInterop
+namespace TensorFlow.FSharp
+
+open FSharp.NativeInterop
 open System.Collections.Generic
 open System
 open System.Runtime.InteropServices
@@ -34,12 +35,12 @@ open System.Runtime.InteropServices
 /// </code>
 /// </remarks>
 /// 
-type Runner internal (session : Session) =
+type TFRunner internal (session : TFSession) =
 
-    let inputs = new List<Output> () 
-    let outputs = new List<Output> ()
-    let inputValues = new List<Tensor> ()
-    let targets = new List<Operation>()
+    let inputs = new List<TFOutput> () 
+    let outputs = new List<TFOutput> ()
+    let inputValues = new List<TFTensor> ()
+    let targets = new List<TFOperation>()
 
     /// <summary>
     /// Adds an input to the session
@@ -47,7 +48,7 @@ type Runner internal (session : Session) =
     /// <returns>An instance to the runner, so you can easily chain the operations together.</returns>
     /// <param name="input">Incoming port.</param>
     /// <param name="value">Value to assing to the incoming port.</param>
-    member this.AddInput (input : Output, value : Tensor) : Runner =
+    member this.AddInput (input : TFOutput, value : TFTensor) : TFRunner =
         if box value = null then  raise(ArgumentNullException("value"))
         inputs.Add (input)
         inputValues.Add (value)
@@ -59,7 +60,7 @@ type Runner internal (session : Session) =
     /// <returns>An instance to the runner, so you can easily chain the operations together.</returns>
     /// <param name="input">Incoming port, with an optional index separated by a colon.</param>
     /// <param name="value">Value to assing to the incoming port.</param>
-    member this.AddInput(input : string,  value : Tensor) : Runner  = 
+    member this.AddInput(input : string,  value : TFTensor) : TFRunner  = 
         if box value = null then  raise(ArgumentNullException("value"))
         inputValues.Add (value)
         this
@@ -69,7 +70,7 @@ type Runner internal (session : Session) =
     /// </summary>
     /// <returns>An instance to the runner, so you can easily chain the operations together.</returns>
     /// <param name="targets">One or more targets.</param>
-    member this.AddTarget ([<ParamArray>] newTargets : Operation[]) : Runner =
+    member this.AddTarget ([<ParamArray>] newTargets : TFOperation[]) : TFRunner =
         targets.AddRange(newTargets)
         this
 
@@ -87,7 +88,7 @@ type Runner internal (session : Session) =
     /// </summary>
     /// <returns>An instance to the runner, so you can easily chain the operations together.</returns>
     /// <param name="targetNames">One or more target names.</param>
-    member this.AddTarget ([<ParamArray>] targetNames : string [])  :  Runner =
+    member this.AddTarget ([<ParamArray>] targetNames : string [])  :  TFRunner =
         targets.AddRange(targetNames |> Array.map (fun name -> session.Graph.[name]))
         this
 
@@ -97,7 +98,7 @@ type Runner internal (session : Session) =
     /// <returns>The instance of runner, to allow chaining operations.</returns>
     /// <param name="operation">The name of the operation in the graph.</param>
     /// <param name="index">The index of the output in the operation.</param>
-    member this.Fetch (operation : string, index : int) : Runner =
+    member this.Fetch (operation : string, index : int) : TFRunner =
         outputs.Add (session.Graph.[operation].[index])
         this
 
@@ -107,7 +108,7 @@ type Runner internal (session : Session) =
     /// <returns>The instance of runner, to allow chaining operations.</returns>
     /// <param name="operation">The name of the operation in the graph, which might be a simple name, or it might be name:index, 
     /// where the index is the .</param>
-    member this.Fetch(operation : string) : Runner = 
+    member this.Fetch(operation : string) : TFRunner = 
         outputs.Add (this.ParseOutput(operation))
         this
 
@@ -116,7 +117,7 @@ type Runner internal (session : Session) =
     /// </summary>
     /// <returns>The instance of runner, to allow chaining operations.</returns>
     /// <param name="output">The output referencing a specified tensor.</param>
-    member this.Fetch (output : Output) : Runner =
+    member this.Fetch (output : TFOutput) : TFRunner =
         outputs.Add (output)
         this
 
@@ -125,7 +126,7 @@ type Runner internal (session : Session) =
     /// </summary>
     /// <returns>The instance of runner, to allow chaining operations.</returns>
     /// <param name="outputs">The outputs referencing a specified tensor.</param>
-    member this.Fetch ([<ParamArray>] outputsToFetch : Output []) : Runner =
+    member this.Fetch ([<ParamArray>] outputsToFetch : TFOutput []) : TFRunner =
         outputs.AddRange(outputsToFetch)
         this
 
@@ -134,26 +135,26 @@ type Runner internal (session : Session) =
     /// </summary>
     /// <returns>The instance of runner, to allow chaining operations.</returns>
     /// <param name="outputs">The output sreferencing a specified tensor.</param>
-    member this.Fetch ([<ParamArray>] outputsToFetch : string []) : Runner =
+    member this.Fetch ([<ParamArray>] outputsToFetch : string []) : TFRunner =
         outputs.AddRange(outputsToFetch |> Array.map this.ParseOutput)
         this
 
     /// <summary>
-    /// Protocol buffer encoded block containing the metadata passed to the <see cref="M:TensorFlow.Session.Run"/> method.
+    /// Protocol buffer encoded block containing the metadata passed to the <see cref="M:TensorFlow.TFSession.Run"/> method.
     /// </summary>
     member val RunMetadata : TFBuffer option = None with get, set
 
     /// <summary>
-    /// Protocol buffer encoded block containing the run options passed to the <see cref="M:TensorFlow.Session.Run"/> method.
+    /// Protocol buffer encoded block containing the run options passed to the <see cref="M:TensorFlow.TFSession.Run"/> method.
     /// </summary>
     member val RunOptions : TFBuffer option = None with get, set
 
     /// <summary>
     ///  Execute the graph fragments necessary to compute all requested fetches.
     /// </summary>
-    /// <returns>One Tensor for each call to Fetch that you made, in the order that you made them.</returns>
+    /// <returns>One TFTensor for each call to Fetch that you made, in the order that you made them.</returns>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member this.Run(?status : TFStatus) : Tensor [] =
+    member this.Run(?status : TFStatus) : TFTensor [] =
         session.Run (inputs.ToArray (), inputValues.ToArray (), outputs.ToArray (), targets.ToArray (), ?runMetadata=this.RunMetadata, ?runOptions=this.RunOptions, ?status=status)
 
     /// <summary>
@@ -166,14 +167,14 @@ type Runner internal (session : Session) =
     /// calls that you might have done to Fetch() and use the specified operation to Fetch
     /// instead.
     /// </remarks>
-    member this.Run(operation : Output, ?status : TFStatus) : Tensor =
+    member this.Run(operation : TFOutput, ?status : TFStatus) : TFTensor =
         outputs.Clear ()
         this.Fetch (operation) |> ignore
         this.Run(?status=status).[0]
 
 
 /// <summary>
-/// Token returned from using one of the Partial Run Setup methods from <see cref="T:TensorFlow.Session"/>,
+/// Token returned from using one of the Partial Run Setup methods from <see cref="T:TensorFlow.TFSession"/>,
 /// and use this token subsequently for other invocations.
 /// </summary>
 /// <remarks>
@@ -211,7 +212,7 @@ and PartialRunToken(token:IntPtr) =
 /// be kept in sync.
 /// </para>
 /// </remarks>
-and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
+and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
     inherit TFDisposableThreadSafe(handle:IntPtr)
 
     // extern TF_Session * TF_NewSession (TF_Graph *graph, const TF_SessionOptions *opts, TF_Status *status)
@@ -268,10 +269,10 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// Creates a new execution session associated with the specified session graph with some configuration options.
     /// </summary>
     /// <param name="graph">The Graph to which this session is associated.</param>
-    /// <param name="sessionOptions">Session options.</param>
+    /// <param name="sessionOptions">TFSession options.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    new (?graph : Graph, ?sessionOptions : SessionOptions , ?status : TFStatus ) =
-        let graph = graph |> Option.defaultWith (fun () -> new Graph())
+    new (?graph : TFGraph, ?sessionOptions : SessionOptions , ?status : TFStatus ) =
+        let graph = graph |> Option.defaultWith (fun () -> new TFGraph())
         let cstatus = TFStatus.Setup (?incoming=status)
         let h = 
             match sessionOptions with 
@@ -281,9 +282,9 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
                 let res = TF_NewSession (graph.Handle, empty.Handle, cstatus.Handle)
                 empty.Dispose()
                 res
-        new Session(h,graph,?status=status)
+        new TFSession(h,graph,?status=status)
 
-    member this.Graph : Graph = graph
+    member this.Graph : TFGraph = graph
 
     /// <summary>
     /// Lists available devices in this session.
@@ -323,7 +324,7 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// here: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/saved_model/README.md
     /// </para>
     /// </remarks>
-    member this.FromSavedModel (sessionOptions : SessionOptions, exportDir : string,tags :  string [], graph : Graph,?runOptions : TFBuffer,  ?metaGraphDef : TFBuffer, ?status : TFStatus) : Session option =
+    member this.FromSavedModel (sessionOptions : SessionOptions, exportDir : string,tags :  string [], graph : TFGraph,?runOptions : TFBuffer,  ?metaGraphDef : TFBuffer, ?status : TFStatus) : TFSession option =
         if (box graph = null) then raise (ArgumentNullException("graph"))
         if (box tags = null) then raise (ArgumentNullException("tags"))
         if (box exportDir = null) then raise (ArgumentNullException ("exportDir"))
@@ -334,7 +335,7 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
                                                 metaGraphDef |> Option.mapOrNull (fun x -> x.LLBuffer) , cstatus.Handle)
 
         if cstatus.CheckMaybeRaise (?incoming=status) 
-        then Some(new Session (h, graph))
+        then Some(new TFSession (h, graph))
         else None
 
 
@@ -373,9 +374,9 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// The runner has a simple API that allows developers to call the AddTarget, AddInput, AddOutput and Fetch
     /// to construct the parameters that will be passed to the Session.Run method.
     /// 
-    /// The Run method will return an array of Tensor values, one for each invocation to the Fetch method.
+    /// The Run method will return an array of TFTensor values, one for each invocation to the Fetch method.
     /// </remarks>
-    member this.GetRunner () : Runner = new Runner (this)
+    member this.GetRunner () : TFRunner = new TFRunner (this)
 
     /// <summary>
     /// Executes a pipeline given the specified inputs, inputValues, outputs, targetOpers, runMetadata and runOptions.   
@@ -390,7 +391,7 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// <param name="runMetadata">Run metadata, a buffer containing the protocol buffer encoded value for https://github.com/tensorflow/tensorflow/blob/r1.9/tensorflow/core/protobuf/config.proto.</param>
     /// <param name="runOptions">Run options, a buffer containing the protocol buffer encoded value for https://github.com/tensorflow/tensorflow/blob/r1.9/tensorflow/core/protobuf/config.proto.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member __.Run(inputs : Output [], inputValues : Tensor [], outputs : Output [] , ?targetOpers : Operation [], ?runMetadata : TFBuffer, ?runOptions : TFBuffer, ?status : TFStatus) : Tensor [] =
+    member __.Run(inputs : TFOutput [], inputValues : TFTensor [], outputs : TFOutput [] , ?targetOpers : TFOperation [], ?runMetadata : TFBuffer, ?runOptions : TFBuffer, ?status : TFStatus) : TFTensor [] =
         if handle = IntPtr.Zero then raise (ObjectDisposedException("handle"))
         if box inputs = null then raise (ArgumentNullException("inputs"))
         if box inputValues = null then raise (ArgumentNullException "inputValues")
@@ -424,7 +425,7 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
         // prevent finalization of managed Tensors
         GC.KeepAlive(inputValues)
 
-        ovals |> Array.map (fun x -> new Tensor(x))
+        ovals |> Array.map (fun x -> new TFTensor(x))
 
     /// <summary>
     /// Prepares the session for a partial run.
@@ -434,7 +435,7 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
     /// <param name="outputs">Outputs.</param>
     /// <param name="targetOpers">Target operations to run.</param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    member __.PartialRunSetup (inputs : Output [], outputs : Output [], targetOpers : Operation [], ?status : TFStatus) : PartialRunToken =
+    member __.PartialRunSetup (inputs : TFOutput [], outputs : TFOutput [], targetOpers : TFOperation [], ?status : TFStatus) : PartialRunToken =
         if handle = IntPtr.Zero then raise (ObjectDisposedException ("handle"))
         if isNull inputs then raise (ArgumentNullException ("inputs"))
         if isNull outputs then raise (ArgumentNullException ("outputs"))
@@ -447,7 +448,7 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
         cstatus.CheckMaybeRaise (?incoming=status) |> ignore
         PartialRunToken(returnHandle)
 
-    member __.PartialRun (token : PartialRunToken, inputs : Output [], inputValues : Tensor [], outputs : Output [], targetOpers : Operation [], ?status : TFStatus) : Tensor [] =
+    member __.PartialRun (token : PartialRunToken, inputs : TFOutput [], inputValues : TFTensor [], outputs : TFOutput [], targetOpers : TFOperation [], ?status : TFStatus) : TFTensor [] =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         if isNull inputs then raise(ArgumentNullException("inputs"))
         if isNull inputValues then raise (ArgumentNullException ("inputValues"))
@@ -471,4 +472,4 @@ and Session private (handle:IntPtr, graph : Graph,  ?status : TFStatus) =
         // prevent finalization of managed Tensors
         GC.KeepAlive(inputValues)
 
-        ovals |> Array.map (fun x -> new Tensor(x))
+        ovals |> Array.map (fun x -> new TFTensor(x))

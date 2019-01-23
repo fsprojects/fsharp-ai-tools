@@ -1,4 +1,5 @@
-namespace TensorFlow
+namespace TensorFlow.FSharp
+
 // This is common TensorFlow specific types / utils
 
 open System.Runtime.InteropServices

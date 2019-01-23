@@ -1,7 +1,4 @@
-namespace TensorFlow
-
-open System;
-open System.Linq;
+namespace TensorFlow.FSharp
 
 /// Base class for queue implementations
 /// Port of Python implementation https://github.com/tensorflow/tensorflow/blob/r1.3/tensorflow/python/ops/data_flow_ops.py
@@ -17,7 +14,7 @@ open System.Linq;
 /// </summary>
 /// <param name="session">Session instance</param>
 [<AbstractClass>]
-type  QueueBase(session : Session) =
+type  QueueBase(session : TFSession) =
 
     /// <summary>
     /// The session that this QueueBased was created for.
@@ -47,7 +44,7 @@ type  QueueBase(session : Session) =
     ///   The components input has k elements, which correspond to the components of
     ///   tuples stored in the given queue.
     /// </remarks>
-    abstract member Enqueue : components : Output [] * ?timeout_ms : int64 * ?operationName : string -> Operation 
+    abstract member Enqueue : components : TFOutput [] * ?timeout_ms : int64 * ?operationName : string -> TFOperation 
 
     /// <summary>
     ///   Dequeues a tuple of one or more tensors from this queue.
@@ -70,14 +67,14 @@ type  QueueBase(session : Session) =
     ///   in the tuples stored in the given queue, and output i is the ith
     ///   component of the dequeued tuple.
     /// </remarks>
-    abstract member Dequeue : ?timeout_ms : int64 * ?operationName : string -> Output [] 
+    abstract member Dequeue : ?timeout_ms : int64 * ?operationName : string -> TFOutput [] 
 
     /// <summary>
     /// Gets the size of this queue.
     /// </summary>
     /// <param name="operationName"></param>
     /// <returns>queue size</returns>
-    abstract member GetSize : ?operationName : string -> Output 
+    abstract member GetSize : ?operationName : string -> TFOutput 
 
 /// <summary>
 /// A FIFOQueue that supports batching variable-sized tensors by padding.
@@ -106,11 +103,10 @@ type  QueueBase(session : Session) =
 /// <param name="capacity"> Optional argument. The upper bound on the number of elements in this queue. Negative numbers mean no limit.</param>
 /// <param name="container"> Optional argument. If non-empty, this queue is placed in the given container. Otherwise, a default container is used.</param>
 /// <param name="operationName"> If specified, the created operation in the graph will be this one, otherwise it will be named 'PaddingFIFOQueueV2'.</param>
-type PaddingFIFOQueue(session : Session, componentTypes : DType [], shapes : Shape [], ?capacity : int, ?container : string, ?operationName : string) =
+type PaddingFIFOQueue(session : TFSession, componentTypes : TFDataType [], shapes : TFShape [], ?capacity : int, ?container : string, ?operationName : string) =
     inherit QueueBase(session)
-    let handle = 
-        use gScope = TF.WithGraphScope(session.Graph)
-        TF.PaddingFIFOQueueV2 ( componentTypes, shapes, ?capacity = (capacity |> Option.map int64), ?container = container, ?name=operationName);
+    let graph = session.Graph
+    let handle = graph.PaddingFIFOQueueV2 ( componentTypes, shapes, ?capacity = (capacity |> Option.map int64), ?container = container, ?name=operationName)
 
     /// <summary>
     ///   Enqueues a tuple of one or more tensors in this queue.
@@ -137,8 +133,8 @@ type PaddingFIFOQueue(session : Session, componentTypes : DType [], shapes : Sha
     ///   N.B. If the queue is full, this operation will block until the given
     ///   element has been enqueued (or 'timeout_ms' elapses, if specified).
     /// </remarks>
-    override this.Enqueue (components : Output [], ?timeout_ms : int64, ?operationName : string) =
-        TF.QueueEnqueueV2 (handle, components, ?timeout_ms = timeout_ms, ?name = operationName);
+    override this.Enqueue (components : TFOutput [], ?timeout_ms : int64, ?operationName : string) =
+        graph.QueueEnqueueV2 (handle, components, ?timeout_ms = timeout_ms, ?name = operationName)
 
     /// <summary>
     ///   Enqueues a tuple of one or more tensors in this queue and runs the session.
@@ -165,9 +161,9 @@ type PaddingFIFOQueue(session : Session, componentTypes : DType [], shapes : Sha
     ///   The components input has k elements, which correspond to the components of
     ///   tuples stored in the given queue.
     /// </remarks>
-    member this.EnqueueExecute (components : Output [], inputValues : Tensor [], ?timeout_ms : int64, ?operationName : string) : Tensor [] =
-        let enqueueOp = this.Enqueue (components, ?timeout_ms=timeout_ms, ?operationName=operationName);
-        session.Run (components, inputValues, [||], [|enqueueOp|]);
+    member this.EnqueueExecute (components : TFOutput [], inputValues : TFTensor [], ?timeout_ms : int64, ?operationName : string) : TFTensor [] =
+        let enqueueOp = this.Enqueue (components, ?timeout_ms=timeout_ms, ?operationName=operationName)
+        session.Run (components, inputValues, [||], [|enqueueOp|])
 
     /// <summary>
     ///   Dequeues a tuple of one or more tensors from the given queue.
@@ -190,9 +186,8 @@ type PaddingFIFOQueue(session : Session, componentTypes : DType [], shapes : Sha
     ///   in the tuples stored in the given queue, and output i is the ith
     ///   component of the dequeued tuple.
     /// </remarks>
-    override this.Dequeue (?timeout_ms : int64, ?operationName : string) : Output [] =
-        use gScope = TF.WithGraphScope(session.Graph)
-        TF.QueueDequeueV2 (handle, componentTypes, ?timeout_ms=timeout_ms, ?name=operationName)
+    override this.Dequeue (?timeout_ms : int64, ?operationName : string) : TFOutput [] =
+        graph.QueueDequeueV2 (handle, componentTypes, ?timeout_ms=timeout_ms, ?name=operationName)
 
     /// <summary>
     ///   Dequeues a tuple of one or more tensors from this queue and runs the session.
@@ -215,9 +210,8 @@ type PaddingFIFOQueue(session : Session, componentTypes : DType [], shapes : Sha
     ///   in the tuples stored in the given queue, and output i is the ith
     ///   component of the dequeued tuple.
     /// </remarks>
-    member this.DequeueExecute (?timeout_ms : int64, ?operationName : string) : Tensor [] =
-        use gScope = TF.WithGraphScope(session.Graph)
-        let values = TF.QueueDequeueV2 (handle, componentTypes, ?timeout_ms=timeout_ms, ?name=operationName);
+    member this.DequeueExecute (?timeout_ms : int64, ?operationName : string) : TFTensor [] =
+        let values = graph.QueueDequeueV2 (handle, componentTypes, ?timeout_ms=timeout_ms, ?name=operationName)
         session.Run ([||],[||], values)
 
     /// <summary>
@@ -235,7 +229,7 @@ type PaddingFIFOQueue(session : Session, componentTypes : DType [], shapes : Sha
     /// <returns>
     ///   
     /// </returns>
-    member this.DequeueExecute<'T when 'T :> Tensor > (?timeout_ms : int64, ?operationName : string) =
+    member this.DequeueExecute<'T when 'T :> TFTensor > (?timeout_ms : int64, ?operationName : string) =
         this.DequeueExecute (?timeout_ms=timeout_ms, ?operationName=operationName) |> Array.cast<'T>
 
     /// <summary>
@@ -243,9 +237,8 @@ type PaddingFIFOQueue(session : Session, componentTypes : DType [], shapes : Sha
     /// </summary>
     /// <param name="operationName">If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueSizeV2'.</param>
     /// <returns>queue size</returns>
-    override this.GetSize (?operationName : string) : Output =
-        use gScope = TF.WithGraphScope(session.Graph)
-        TF.QueueSizeV2 (handle, ?name = operationName)
+    override this.GetSize (?operationName : string) : TFOutput =
+        graph.QueueSizeV2 (handle, ?name = operationName)
 
     /// <summary>
     /// Uses provided session instance to obtain the size of this queue

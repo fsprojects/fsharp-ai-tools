@@ -1,9 +1,9 @@
 [<AutoOpen>]
-module TensorFlow.Utils
+module TensorFlow.FSharp.Utils
 open System
 open System.Collections.Generic
 open System.Collections
-open Microsoft.FSharp.NativeInterop
+open FSharp.NativeInterop
 open System.Runtime.InteropServices
 
 #nowarn "9"

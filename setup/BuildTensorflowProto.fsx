@@ -60,10 +60,10 @@ Directory.CreateDirectory(outDirectory) |> ignore
 
 
 let rebaseNamespace(str:string) = 
- str.Replace("namespace Tensorflow","namespace TensorFlow.Proto")
-    .Replace("namespace tensorflow.","namespace TensorFlow.Proto.")
-    .Replace("global::tensorflow.","global::TensorFlow.Proto.")
-    .Replace("global::Tensorflow.","global::TensorFlow.Proto.")
+ str.Replace("namespace Tensorflow","namespace TensorFlow.FSharp.Proto")
+    .Replace("namespace tensorflow.","namespace TensorFlow.FSharp.Proto.")
+    .Replace("global::tensorflow.","global::TensorFlow.FSharp.Proto.")
+    .Replace("global::Tensorflow.","global::TensorFlow.FSharp.Proto.")
 
 for file in compilerResult.Files do 
     let fn = Path.Combine(outDirectory, Path.GetFileName(file.Name))
@@ -72,7 +72,7 @@ for file in compilerResult.Files do
 
 (*
 # previous bash commands for reference
-csc -langversion:latest -target:library -reference:./lib/protobuf-net.dll -reference:./lib/Google.Protobuf.dll -out:TensorFlow.Proto.dll -doc:TensorFlow.Proto.xml ./protogen/*.cs
+csc -langversion:latest -target:library -reference:./lib/protobuf-net.dll -reference:./lib/Google.Protobuf.dll -out:TensorFlow.FSharp.Proto.dll -doc:TensorFlow.FSharp.Proto.xml ./protogen/*.cs
 *)
 
 //let requireRunProcessWithEnvs (name:string) (envs:(string*string)[]) (args:string)  = if runProcess None name envs args   <> 0 then failwith (sprintf "%s failed to exit correctly" name)
@@ -98,7 +98,7 @@ let references = ["protobuf-net.dll"; "Google.Protobuf.dll"] |> List.map (sprint
 
 // NOTE: documentation xml is empty
 Directory.GetFiles(outDirectory, "*.cs") |> String.concat " "
-|> sprintf @"-langversion:latest -target:library %s -out:%s%cTensorFlow.Proto.dll %s" references libDir Path.DirectorySeparatorChar
+|> sprintf @"-langversion:latest -target:library %s -out:%s%cTensorFlow.FSharp.Proto.dll %s" references libDir Path.DirectorySeparatorChar
 |> runProcess csc 
 
 // Clean up generated C# code
