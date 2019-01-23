@@ -1,0 +1,33 @@
+
+version: 1.11.{build}
+
+branches:
+  only:
+    - master
+
+# Do not build fature branch with open Pull requests
+skip_branch_with_pr: true
+
+image: Visual Studio 2017
+
+install:
+- "SET PATH=C:\\Program Files\\dotnet\\bin;%PATH%"
+  
+# I'm uncertain if this is used in dotNet
+platform: x64
+configuration: Release
+
+clone_folder: c:\projects\TFF
+
+install: 
+- cmd: FSI.exe c:\projects\TFF\setup\setup.fsx
+
+
+build_script:
+- dotnet restore
+- dotnet build
+
+after_build:
+- dotnet test
+- dotnet pack
+
