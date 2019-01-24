@@ -35,5 +35,7 @@ The design is very much being done to allow alternative execution with Torch or 
 
 * Port testing for core API
 
+* add docs
+
 * many more things
 
