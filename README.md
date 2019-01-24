@@ -29,13 +29,15 @@ The design is very much being done to allow alternative execution with Torch or 
 
 * Add more differentiation options (grad, hessian etc.)
 
-* Generate larger TF surface area in DSL
+* Generate larger TF surface area in `tf { ... }` DSL
 
 * Add proper testing for DSL 
 
 * Port testing for core API
 
-* add docs
+* Add docs
 
-* many more things
+* Add examples of how to do static graph building and analysis based on FCS, quotations and/or interpretation, e.g. for visualization
+
+* Many more things
 
