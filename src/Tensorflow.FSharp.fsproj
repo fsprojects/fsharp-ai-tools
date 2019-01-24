@@ -50,8 +50,9 @@
     <Compile Include="TensorflowGlobal.fs" /> 
     <Compile Include="HDF5ReaderWriter.fs" /> 
     <Compile Include="NPYReaderWriter.fs" /> 
-    <Compile Include="ImageWriter.fs" /> 
+    <Compile Include="ImageWriter.fs" />
     <Compile Include="Datasets.fs" />
+    <Compile Include="dsl.fs" />
   </ItemGroup>
 
 </Project>
