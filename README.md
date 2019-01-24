@@ -1,6 +1,6 @@
 # **work in progress some serious wet paint here**
 
-# Differentiable F#, executing using TensorFlow
+# TensorFlow.FSharp - Differentiable F#, executing using TensorFlow
 
 The repo contains 
 
