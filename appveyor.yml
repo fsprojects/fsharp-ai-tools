@@ -10,18 +10,14 @@ skip_branch_with_pr: true
 
 image: Visual Studio 2017
 
-install:
-- "SET PATH=C:\\Program Files\\dotnet\\bin;%PATH%"
-  
-# I'm uncertain if this is used in dotNet
-platform: x64
 configuration: Release
 
 clone_folder: c:\projects\TFF
 
 install: 
+- "SET PATH=C:\\Program Files\\dotnet\\bin;%PATH%"
+- "SET PATH=C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\FSharp\\;%PATH%"
 - cmd: FSI.exe c:\projects\TFF\setup\setup.fsx
-
 
 build_script:
 - dotnet restore
