@@ -23,17 +23,25 @@ As well as complete expression of deep neural networks.
 
 The design is very much being done to allow alternative execution with Torch or DiffSharp (we may try DiffSharp if/when we get Gunes Baydin on board to implement Tensors in that)
 
-# Roadmap
+# Roadmap - Core API
 
 * Port gradient and training/optimization code (from the Scala-Tensorflow)
 
+* Port testing for core API
+
+* Add docs
+
+# Roadmap - DSL
+
 * Add more differentiation options (grad, hessian etc.)
+
+* Switch to using ported gradient code when it is available in core API
 
 * Generate larger TF surface area in `tf { ... }` DSL
 
 * Add proper testing for DSL 
 
-* Port testing for core API
+* Consider control flow translation in DSL
 
 * Add docs
 
