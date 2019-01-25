@@ -21,6 +21,10 @@ It allows differentiation of F# code as follows:
 
 As well as complete expression of deep neural networks.
 
+* [NeuralStyleTransfer using TF API](https://github.com/fsprojects/TensorFlow.FSharp/blob/master/examples/NeuralStyleTransfer.fsx)
+
+* [NeuralStyleTransfer in DSL form](https://github.com/fsprojects/TensorFlow.FSharp/blob/master/examples/NeuralStyleTransfer-dsl.fsx)
+
 The design is very much being done to allow alternative execution with Torch or DiffSharp (we may try DiffSharp if/when we get Gunes Baydin on board to implement Tensors in that)
 
 # Roadmap - Core API
