@@ -51,7 +51,9 @@
     <Compile Include="HDF5ReaderWriter.fs" /> 
     <Compile Include="NPYReaderWriter.fs" /> 
     <Compile Include="ImageWriter.fs" /> 
-    <Compile Include="Datasets.fs" />
+    <Compile Include="Datasets.fs" /> 
+    <Compile Include="Operations.ArrayOps.fs" /> 
+    <Compile Include="Operations.ArrayGrad.fs" />
   </ItemGroup>
 
 </Project>

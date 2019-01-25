@@ -11,9 +11,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Abort'.
     /// <param>
     /// <param name="error_msg">
+    ///    Optional argument
     ///    A string which is the message associated with the exception.
     /// </param>
     /// <param name="exit_without_error">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -71,11 +73,7 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AccumulateNV2'.
     /// <param>
-    /// <param name="n">
-    ///    Optional argument
-    /// </param>
     /// <param name="shape">
-    ///    Optional argument
     ///    Shape of elements of <c>inputs<c>.
     /// </param>
     /// <returns>
@@ -91,12 +89,11 @@ type TFGraph with
     ///    
     ///    Returns a <c>Tensor<c> of same shape and type as the elements of <c>inputs<c>.
     /// </remarks>
-    member graph.AccumulateNV2 (inputs : TFOutput[], n : int64, shape : TFShape,  ?name : string) : TFOutput =
+    member graph.AccumulateNV2 (inputs : TFOutput[], shape : TFShape,  ?name : string) : TFOutput =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "AccumulateNV2", graph.MakeName ("AccumulateNV2", name))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
         desc.SetAttr ("shape", shape) |> ignore
         let op = desc.FinishOperation ()
         let mutable _idx = 0
@@ -204,7 +201,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AccumulatorTakeGradient'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    The data type of accumulated gradients. Needs to correspond to the type
     ///    of the accumulator.
     /// </param>
@@ -327,9 +323,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AddManySparseToTensorsMap'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     ///    The container name for the <c>SparseTensorsMap<c> created by this op.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    The shared name for the <c>SparseTensorsMap<c> created by this op.
     ///    If blank, the new Operation's unique name is used.
     /// </param>
@@ -389,18 +387,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AddN'.
     /// <param>
-    /// <param name="n">
-    ///    Optional argument
-    /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
-    member graph.AddN (inputs : TFOutput[], n : int64,  ?name : string) : TFOutput =
+    member graph.AddN (inputs : TFOutput[],  ?name : string) : TFOutput =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "AddN", graph.MakeName ("AddN", name))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
         let op = desc.FinishOperation ()
         let mutable _idx = 0
         let sum = new TFOutput (op, _idx)
@@ -424,9 +418,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AddSparseToTensorsMap'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     ///    The container name for the <c>SparseTensorsMap<c> created by this op.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    The shared name for the <c>SparseTensorsMap<c> created by this op.
     ///    If blank, the new Operation's unique name is used.
     /// </param>
@@ -657,6 +653,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'All'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If true, retain reduced dimensions with length 1.
     /// </param>
     /// <returns>
@@ -693,27 +690,26 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AllCandidateSampler'.
     /// <param>
-    /// <param name="num_true">
-    ///    Optional argument
-    ///    Number of true labels per context.
-    /// </param>
-    /// <param name="num_sampled">
-    ///    Optional argument
-    ///    Number of candidates to produce.
-    /// </param>
-    /// <param name="unique">
-    ///    Optional argument
-    ///    If unique is true, we sample with rejection, so that all sampled
-    ///    candidates in a batch are unique. This requires some approximation to
-    ///    estimate the post-rejection sampling probabilities.
-    /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    An second seed to avoid seed collision.
+    /// </param>
+    /// <param name="num_true">
+    ///    Number of true labels per context.
+    /// </param>
+    /// <param name="num_sampled">
+    ///    Number of candidates to produce.
+    /// </param>
+    /// <param name="unique">
+    ///    If unique is true, we sample with rejection, so that all sampled
+    ///    candidates in a batch are unique. This requires some approximation to
+    ///    estimate the post-rejection sampling probabilities.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -769,6 +765,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Angle'.
     /// <param>
     /// <param name="tOut">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -812,10 +809,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AnonymousIterator'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    A handle to the iterator that can be passed to a "MakeIterator" or
@@ -851,6 +846,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Any'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If true, retain reduced dimensions with length 1.
     /// </param>
     /// <returns>
@@ -911,6 +907,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyAdaMax'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, m, and v tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -973,6 +970,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyAdadelta'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var, accum and update_accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -1024,11 +1022,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyAdagrad'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
     /// </param>
     /// <param name="update_slots">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Same as "var".
@@ -1086,6 +1086,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyAdagradDA'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var and accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -1150,11 +1151,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyAdam'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, m, and v tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
     /// </param>
     /// <param name="use_nesterov">
+    ///    Optional argument
     ///    If <c>True<c>, uses the nesterov update.
     /// </param>
     /// <returns>
@@ -1218,6 +1221,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyAddSign'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and m tensors is
     ///    protected by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -1283,6 +1287,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyCenteredRMSProp'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, mg, ms, and mom tensors is
     ///    protected by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -1363,6 +1368,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyFtrl'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -1431,6 +1437,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyFtrlV2'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -1485,6 +1492,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyGradientDescent'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, the subtraction will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -1529,11 +1537,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyMomentum'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
     /// </param>
     /// <param name="use_nesterov">
+    ///    Optional argument
     ///    If <c>True<c>, the tensor passed to compute grad will be
     ///    var - lr * momentum * accum, so in the end, the var you get is actually
     ///    var - lr * momentum * accum.
@@ -1594,6 +1604,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyPowerSign'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and m tensors is
     ///    protected by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -1651,6 +1662,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyProximalAdagrad'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var and accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -1703,6 +1715,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyProximalGradientDescent'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the subtraction will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -1761,6 +1774,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApplyRMSProp'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, ms, and mom tensors is protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -1812,6 +1826,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ApproximateEqual'.
     /// <param>
     /// <param name="tolerance">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -1844,6 +1859,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ArgMax'.
     /// <param>
     /// <param name="output_type">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -1879,6 +1895,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ArgMin'.
     /// <param>
     /// <param name="output_type">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -1909,22 +1926,27 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AsString'.
     /// <param>
     /// <param name="precision">
+    ///    Optional argument
     ///    The post-decimal precision to use for floating point numbers.
     ///    Only used if precision &amp;gt; -1.
     /// </param>
     /// <param name="scientific">
+    ///    Optional argument
     ///    Use scientific notation for floating point numbers.
     /// </param>
     /// <param name="shortest">
+    ///    Optional argument
     ///    Use shortest representation (either scientific or standard) for
     ///    floating point numbers.
     /// </param>
     /// <param name="width">
+    ///    Optional argument
     ///    Pad pre-decimal numbers to this width.
     ///    Applies to both floating point and integer numbers.
     ///    Only used if width &amp;gt; -1.
     /// </param>
     /// <param name="fill">
+    ///    Optional argument
     ///    The value to pad if width &amp;gt; -1.  If empty, pads with spaces.
     ///    Another typical value is '0'.  String cannot be longer than 1 character.
     /// </param>
@@ -2010,6 +2032,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Assert'.
     /// <param>
     /// <param name="summarize">
+    ///    Optional argument
     ///    Print this many entries of each tensor.
     /// </param>
     /// <returns>
@@ -2043,11 +2066,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Assign'.
     /// <param>
     /// <param name="validate_shape">
+    ///    Optional argument
     ///    If true, the operation will validate that the shape
     ///    of 'value' matches the shape of the Tensor being assigned to.  If false,
     ///    'ref' will take on the shape of 'value'.
     /// </param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the assignment will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -2088,6 +2113,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AssignAdd'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the addition will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -2156,6 +2182,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AssignSub'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the subtraction will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -2328,18 +2355,17 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AudioSpectrogram'.
     /// <param>
-    /// <param name="window_size">
+    /// <param name="magnitude_squared">
     ///    Optional argument
+    ///    Whether to return the squared magnitude or just the
+    ///    magnitude. Using squared magnitude can avoid extra calculations.
+    /// </param>
+    /// <param name="window_size">
     ///    How wide the input window is in samples. For the highest efficiency
     ///    this should be a power of two, but other values are accepted.
     /// </param>
     /// <param name="stride">
-    ///    Optional argument
     ///    How widely apart the center of adjacent sample windows should be.
-    /// </param>
-    /// <param name="magnitude_squared">
-    ///    Whether to return the squared magnitude or just the
-    ///    magnitude. Using squared magnitude can avoid extra calculations.
     /// </param>
     /// <returns>
     ///    3D representation of the audio frequencies as an image.
@@ -2399,12 +2425,12 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AudioSummary'.
     /// <param>
-    /// <param name="sample_rate">
-    ///    Optional argument
-    ///    The sample rate of the signal in hertz.
-    /// </param>
     /// <param name="max_outputs">
+    ///    Optional argument
     ///    Max number of batch elements to generate audio for.
+    /// </param>
+    /// <param name="sample_rate">
+    ///    The sample rate of the signal in hertz.
     /// </param>
     /// <returns>
     ///    Scalar. Serialized <c>Summary<c> protocol buffer.
@@ -2454,6 +2480,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AudioSummaryV2'.
     /// <param>
     /// <param name="max_outputs">
+    ///    Optional argument
     ///    Max number of batch elements to generate audio for.
     /// </param>
     /// <returns>
@@ -2497,24 +2524,22 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AvgPool'.
     /// <param>
-    /// <param name="ksize">
-    ///    Optional argument
-    ///    The size of the sliding window for each dimension of <c>value<c>.
-    /// </param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    The stride of the sliding window for each dimension of <c>value<c>.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCHW", the data storage order of:
     ///    [batch, in_channels, in_height, in_width].
+    /// </param>
+    /// <param name="ksize">
+    ///    The size of the sliding window for each dimension of <c>value<c>.
+    /// </param>
+    /// <param name="strides">
+    ///    The stride of the sliding window for each dimension of <c>value<c>.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    The average pooled output tensor.
@@ -2549,26 +2574,24 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AvgPool3D'.
     /// <param>
-    /// <param name="ksize">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The size of the window for each dimension of
-    ///    the input tensor. Must have <c>ksize[0] = ksize[4] = 1<c>.
-    /// </param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The stride of the sliding window for each
-    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format of the input and output data. With the
     ///    default format "NDHWC", the data is stored in the order of:
     ///    [batch, in_depth, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCDHW", the data storage order is:
     ///    [batch, in_channels, in_depth, in_height, in_width].
+    /// </param>
+    /// <param name="ksize">
+    ///    1-D tensor of length 5. The size of the window for each dimension of
+    ///    the input tensor. Must have <c>ksize[0] = ksize[4] = 1<c>.
+    /// </param>
+    /// <param name="strides">
+    ///    1-D tensor of length 5. The stride of the sliding window for each
+    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    The average pooled output tensor.
@@ -2602,26 +2625,24 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AvgPool3DGrad'.
     /// <param>
-    /// <param name="ksize">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The size of the window for each dimension of
-    ///    the input tensor. Must have <c>ksize[0] = ksize[4] = 1<c>.
-    /// </param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The stride of the sliding window for each
-    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format of the input and output data. With the
     ///    default format "NDHWC", the data is stored in the order of:
     ///    [batch, in_depth, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCDHW", the data storage order is:
     ///    [batch, in_channels, in_depth, in_height, in_width].
+    /// </param>
+    /// <param name="ksize">
+    ///    1-D tensor of length 5. The size of the window for each dimension of
+    ///    the input tensor. Must have <c>ksize[0] = ksize[4] = 1<c>.
+    /// </param>
+    /// <param name="strides">
+    ///    1-D tensor of length 5. The stride of the sliding window for each
+    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    The backprop for input.
@@ -2657,24 +2678,22 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'AvgPoolGrad'.
     /// <param>
-    /// <param name="ksize">
-    ///    Optional argument
-    ///    The size of the sliding window for each dimension of the input.
-    /// </param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    The stride of the sliding window for each dimension of the input.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCHW", the data storage order of:
     ///    [batch, in_channels, in_height, in_width].
+    /// </param>
+    /// <param name="ksize">
+    ///    The size of the sliding window for each dimension of the input.
+    /// </param>
+    /// <param name="strides">
+    ///    The stride of the sliding window for each dimension of the input.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    4-D.  Gradients w.r.t. the input of <c>avg_pool<c>.
@@ -2703,26 +2722,29 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Barrier'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a value.
-    /// </param>
     /// <param name="shapes">
+    ///    Optional argument
     ///    The shape of each component in a value. Each shape must be 1 in the
     ///    first dimension. The length of this attr must be the same as the length of
     ///    component_types.
     /// </param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    The capacity of the barrier.  The default capacity is MAX_INT32,
     ///    which is the largest capacity of the underlying queue.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this barrier is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this barrier will be shared under the given name
     ///    across multiple sessions.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a value.
     /// </param>
     /// <returns>
     ///    The handle to the barrier.
@@ -2764,6 +2786,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BarrierClose'.
     /// <param>
     /// <param name="cancel_pending_enqueues">
+    ///    Optional argument
     ///    If true, all pending enqueue requests that are
     ///    blocked on the barrier's queue will be canceled. InsertMany will fail, even
     ///    if no new key is introduced.
@@ -2832,7 +2855,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BarrierInsertMany'.
     /// <param>
     /// <param name="component_index">
-    ///    Optional argument
     ///    The component of the barrier elements that is being assigned.
     /// </param>
     /// <returns>
@@ -2895,20 +2917,22 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BarrierTakeMany'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a value.
-    /// </param>
     /// <param name="allow_small_batch">
+    ///    Optional argument
     ///    Allow to return less than num_elements items if barrier is
     ///    already closed.
     /// </param>
     /// <param name="wait_for_incomplete">
+    ///    Optional argument
     /// </param>
     /// <param name="timeout_ms">
+    ///    Optional argument
     ///    If the queue is empty, this operation will block for up to
     ///    timeout_ms milliseconds.
     ///    Note: This option is not supported yet.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a value.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -2958,27 +2982,28 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Batch'.
     /// <param>
-    /// <param name="num_batch_threads">
-    ///    Optional argument
-    /// </param>
-    /// <param name="max_batch_size">
-    ///    Optional argument
-    /// </param>
-    /// <param name="batch_timeout_micros">
-    ///    Optional argument
-    /// </param>
-    /// <param name="grad_timeout_micros">
-    ///    Optional argument
-    /// </param>
     /// <param name="max_enqueued_batches">
+    ///    Optional argument
     /// </param>
     /// <param name="allowed_batch_sizes">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     /// </param>
     /// <param name="batching_queue">
+    ///    Optional argument
+    /// </param>
+    /// <param name="num_batch_threads">
+    /// </param>
+    /// <param name="max_batch_size">
+    /// </param>
+    /// <param name="batch_timeout_micros">
+    /// </param>
+    /// <param name="grad_timeout_micros">
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -3063,10 +3088,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BatchDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -3102,10 +3125,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BatchDatasetV2'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -3139,9 +3160,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BatchMatMul'.
     /// <param>
     /// <param name="adj_x">
+    ///    Optional argument
     ///    If <c>True<c>, adjoint the slices of <c>x<c>. Defaults to <c>False<c>.
     /// </param>
     /// <param name="adj_y">
+    ///    Optional argument
     ///    If <c>True<c>, adjoint the slices of <c>y<c>. Defaults to <c>False<c>.
     /// </param>
     /// <returns>
@@ -3187,7 +3210,7 @@ type TFGraph with
     ///    Batch normalization.
     /// </summary>
     /// <param name="t">
-    ///    A 4D input TFTensor.
+    ///    A 4D input Tensor.
     /// </param>
     /// <param name="m">
     ///    A 1D mean Tensor with size matching the last dimension of t.
@@ -3212,11 +3235,9 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BatchNormWithGlobalNormalization'.
     /// <param>
     /// <param name="variance_epsilon">
-    ///    Optional argument
     ///    A small float number to avoid dividing by 0.
     /// </param>
     /// <param name="scale_after_normalization">
-    ///    Optional argument
     ///    A bool indicating whether the resulted tensor
     ///    needs to be multiplied with gamma.
     /// </param>
@@ -3248,7 +3269,7 @@ type TFGraph with
     ///    Gradients for batch normalization.
     /// </summary>
     /// <param name="t">
-    ///    A 4D input TFTensor.
+    ///    A 4D input Tensor.
     /// </param>
     /// <param name="m">
     ///    A 1D mean Tensor with size matching the last dimension of t.
@@ -3263,20 +3284,18 @@ type TFGraph with
     /// <param name="gamma">
     ///    A 1D gamma Tensor with size matching the last dimension of t.
     ///    If "scale_after_normalization" is true, this Tensor will be multiplied
-    ///    with the normalized TFTensor.
+    ///    with the normalized Tensor.
     /// </param>
     /// <param name="backprop">
-    ///    4D backprop TFTensor.
+    ///    4D backprop Tensor.
     /// </param>
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BatchNormWithGlobalNormalizationGrad'.
     /// <param>
     /// <param name="variance_epsilon">
-    ///    Optional argument
     ///    A small float number to avoid dividing by 0.
     /// </param>
     /// <param name="scale_after_normalization">
-    ///    Optional argument
     ///    A bool indicating whether the resulted tensor
     ///    needs to be multiplied with gamma.
     /// </param>
@@ -3338,7 +3357,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BatchToSpace'.
     /// <param>
     /// <param name="block_size">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    4-D with shape <c>[batch, height, width, depth]<c>, where:
@@ -3697,6 +3715,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BiasAdd'.
     /// <param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the bias tensor will be added to the last dimension
     ///    of the value tensor.
@@ -3737,6 +3756,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BiasAddGrad'.
     /// <param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the bias tensor will be added to the last dimension
     ///    of the value tensor.
@@ -3856,7 +3876,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Bitcast'.
     /// <param>
     /// <param name="_type">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -4003,7 +4022,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BoostedTreesCalculateBestGainsPerFeature'.
     /// <param>
     /// <param name="max_splits">
-    ///    Optional argument
     ///    the number of nodes that can be split in the whole tree. Used as a dimension of output tensors.
     /// </param>
     /// <returns>
@@ -4156,8 +4174,10 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BoostedTreesEnsembleResourceHandleOp'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -4188,7 +4208,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BoostedTreesExampleDebugOutputs'.
     /// <param>
     /// <param name="logits_dimension">
-    ///    Optional argument
     ///    scalar, dimension of the logits, to be used for constructing the protos in
     ///    examples_debug_outputs_serialized.
     /// </param>
@@ -4273,11 +4292,9 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BoostedTreesMakeStatsSummary'.
     /// <param>
     /// <param name="max_splits">
-    ///    Optional argument
     ///    int; the maximum number of splits possible in the whole tree.
     /// </param>
     /// <param name="num_buckets">
-    ///    Optional argument
     ///    int; equals to the maximum possible value of bucketized feature.
     /// </param>
     /// <returns>
@@ -4317,7 +4334,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BoostedTreesPredict'.
     /// <param>
     /// <param name="logits_dimension">
-    ///    Optional argument
     ///    scalar, dimension of the logits, to be used for partial logits
     ///    shape.
     /// </param>
@@ -4393,7 +4409,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BoostedTreesTrainingPredict'.
     /// <param>
     /// <param name="logits_dimension">
-    ///    Optional argument
     ///    scalar, dimension of the logits, to be used for partial logits
     ///    shape.
     /// </param>
@@ -4472,7 +4487,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BoostedTreesUpdateEnsemble'.
     /// <param>
     /// <param name="pruning_mode">
-    ///    Optional argument
     ///    0-No pruning, 1-Pre-pruning, 2-Post-pruning.
     /// </param>
     /// <returns>
@@ -4570,13 +4584,13 @@ type TFGraph with
     ///    A Tensor to broadcast.
     /// </param>
     /// <param name="shape">
-    ///    An 1-D <c>int<c> TFTensor. The shape of the desired output.
+    ///    An 1-D <c>int<c> Tensor. The shape of the desired output.
     /// </param>
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BroadcastTo'.
     /// <param>
     /// <returns>
-    ///    A TFTensor.
+    ///    A Tensor.
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     /// <remarks>
@@ -4621,7 +4635,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Bucketize'.
     /// <param>
     /// <param name="boundaries">
-    ///    Optional argument
     ///    A sorted list of floats gives the boundary of the buckets.
     /// </param>
     /// <returns>
@@ -4668,10 +4681,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'BytesProducedStatsDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -4703,16 +4714,15 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CTCBeamSearchDecoder'.
     /// <param>
-    /// <param name="beam_width">
+    /// <param name="merge_repeated">
     ///    Optional argument
+    ///    If true, merge repeated classes in output.
+    /// </param>
+    /// <param name="beam_width">
     ///    A scalar &amp;gt;= 0 (beam search beam width).
     /// </param>
     /// <param name="top_paths">
-    ///    Optional argument
     ///    A scalar &amp;gt;= 0, &amp;lt;= beam_width (controls output size).
-    /// </param>
-    /// <param name="merge_repeated">
-    ///    If true, merge repeated classes in output.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -4769,6 +4779,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CTCGreedyDecoder'.
     /// <param>
     /// <param name="merge_repeated">
+    ///    Optional argument
     ///    If True, merge repeated classes in output.
     /// </param>
     /// <returns>
@@ -4835,15 +4846,18 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CTCLoss'.
     /// <param>
     /// <param name="preprocess_collapse_repeated">
+    ///    Optional argument
     ///    Scalar, if true then repeated labels are
     ///    collapsed prior to the CTC calculation.
     /// </param>
     /// <param name="ctc_merge_repeated">
+    ///    Optional argument
     ///    Scalar.  If set to false, *during* CTC calculation
     ///    repeated non-blank labels will not be merged and are interpreted as
     ///    individual labels.  This is a simplified version of CTC.
     /// </param>
     /// <param name="ignore_longer_outputs_than_inputs">
+    ///    Optional argument
     ///    Scalar. If set to true, during CTC
     ///    calculation, items that have longer output sequences than input sequences
     ///    are skipped: they don't contribute to the loss term and have zero-gradient.
@@ -4892,10 +4906,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CacheDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -4929,10 +4941,10 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Cast'.
     /// <param>
-    /// <param name="dStT">
+    /// <param name="tRuncate">
     ///    Optional argument
     /// </param>
-    /// <param name="tRuncate">
+    /// <param name="dStT">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -4983,7 +4995,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CheckNumerics'.
     /// <param>
     /// <param name="message">
-    ///    Optional argument
     ///    Prefix of the error message.
     /// </param>
     /// <returns>
@@ -5131,19 +5142,14 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CollectiveBcastRecv'.
     /// <param>
     /// <param name="t">
-    ///    Optional argument
     /// </param>
     /// <param name="group_size">
-    ///    Optional argument
     /// </param>
     /// <param name="group_key">
-    ///    Optional argument
     /// </param>
     /// <param name="instance_key">
-    ///    Optional argument
     /// </param>
     /// <param name="shape">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -5173,16 +5179,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CollectiveBcastSend'.
     /// <param>
     /// <param name="group_size">
-    ///    Optional argument
     /// </param>
     /// <param name="group_key">
-    ///    Optional argument
     /// </param>
     /// <param name="instance_key">
-    ///    Optional argument
     /// </param>
     /// <param name="shape">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -5212,22 +5214,16 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CollectiveReduce'.
     /// <param>
     /// <param name="group_size">
-    ///    Optional argument
     /// </param>
     /// <param name="group_key">
-    ///    Optional argument
     /// </param>
     /// <param name="instance_key">
-    ///    Optional argument
     /// </param>
     /// <param name="merge_op">
-    ///    Optional argument
     /// </param>
     /// <param name="final_op">
-    ///    Optional argument
     /// </param>
     /// <param name="subdiv_offsets">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -5315,6 +5311,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Complex'.
     /// <param>
     /// <param name="tOut">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -5358,6 +5355,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ComplexAbs'.
     /// <param>
     /// <param name="tOut">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -5393,17 +5391,18 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ComputeAccidentalHits'.
     /// <param>
-    /// <param name="num_true">
-    ///    Optional argument
-    ///    Number of true labels per context.
-    /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    An second seed to avoid seed collision.
+    /// </param>
+    /// <param name="num_true">
+    ///    Number of true labels per context.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -5454,22 +5453,18 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Concat'.
     /// <param>
-    /// <param name="n">
-    ///    Optional argument
-    /// </param>
     /// <returns>
     ///    A <c>Tensor<c> with the concatenation of values stacked along the
     ///    <c>concat_dim<c> dimension.  This tensor's shape matches that of <c>values<c> except
     ///    in <c>concat_dim<c> where it has the sum of the sizes.
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
-    member graph.Concat (concat_dim : TFOutput, values : TFOutput[], n : int64,  ?name : string) : TFOutput =
+    member graph.Concat (concat_dim : TFOutput, values : TFOutput[],  ?name : string) : TFOutput =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "Concat", graph.MakeName ("Concat", name))
         desc.AddInput (concat_dim) |> ignore
         desc.AddInputs (values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
         let op = desc.FinishOperation ()
         let mutable _idx = 0
         let output = new TFOutput (op, _idx)
@@ -5533,22 +5528,18 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ConcatV2'.
     /// <param>
-    /// <param name="n">
-    ///    Optional argument
-    /// </param>
     /// <returns>
     ///    A <c>Tensor<c> with the concatenation of values stacked along the
     ///    <c>concat_dim<c> dimension.  This tensor's shape matches that of <c>values<c> except
     ///    in <c>concat_dim<c> where it has the sum of the sizes.
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
-    member graph.ConcatV2 (values : TFOutput[], axis : TFOutput, n : int64,  ?name : string) : TFOutput =
+    member graph.ConcatV2 (values : TFOutput[], axis : TFOutput,  ?name : string) : TFOutput =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "ConcatV2", graph.MakeName ("ConcatV2", name))
         desc.AddInputs (values) |> ignore
         desc.AddInput (axis) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
         let op = desc.FinishOperation ()
         let mutable _idx = 0
         let output = new TFOutput (op, _idx)
@@ -5567,10 +5558,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ConcatenateDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -5596,21 +5585,21 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ConditionalAccumulator'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The type of the value being accumulated.
-    /// </param>
-    /// <param name="shape">
-    ///    Optional argument
-    ///    The shape of the values, can be [], in which case shape is unknown.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this accumulator is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this accumulator will be shared under the
     ///    given name across multiple sessions.
+    /// </param>
+    /// <param name="dtype">
+    ///    The type of the value being accumulated.
+    /// </param>
+    /// <param name="shape">
+    ///    The shape of the values, can be [], in which case shape is unknown.
     /// </param>
     /// <returns>
     ///    The handle to the accumulator.
@@ -5646,13 +5635,16 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ConfigureDistributedTPU'.
     /// <param>
     /// <param name="embedding_config">
+    ///    Optional argument
     ///    Reserved. Do not use.
     /// </param>
     /// <param name="tpu_embedding_config">
+    ///    Optional argument
     ///    Serialized tensorflow.tpu.TPUEmbeddingConfiguration that
     ///    describes the embedding lookups of the program.
     /// </param>
     /// <param name="is_global_init">
+    ///    Optional argument
     ///    Reserved. Do not use.
     /// </param>
     /// <returns>
@@ -5753,11 +5745,9 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Const'.
     /// <param>
     /// <param name="value">
-    ///    Optional argument
     ///    Attr <c>value<c> is the tensor to return.
     /// </param>
     /// <param name="dtype">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -5839,19 +5829,11 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Conv2D'.
     /// <param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    1-D tensor of length 4.  The stride of the sliding window for each
-    ///    dimension of <c>input<c>. The dimension order is determined by the value of
-    ///    <c>data_format<c>, see below for details.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="use_cudnn_on_gpu">
+    ///    Optional argument
     /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, height, width, channels].
@@ -5859,11 +5841,20 @@ type TFGraph with
     ///    [batch, channels, height, width].
     /// </param>
     /// <param name="dilations">
+    ///    Optional argument
     ///    1-D tensor of length 4.  The dilation factor for each dimension of
     ///    <c>input<c>. If set to k &amp;gt; 1, there will be k-1 skipped cells between each
     ///    filter element on that dimension. The dimension order is determined by the
     ///    value of <c>data_format<c>, see above for details. Dilations in the batch and
     ///    depth dimensions must be 1.
+    /// </param>
+    /// <param name="strides">
+    ///    1-D tensor of length 4.  The stride of the sliding window for each
+    ///    dimension of <c>input<c>. The dimension order is determined by the value of
+    ///    <c>data_format<c>, see below for details.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    A 4-D tensor. The dimension order is determined by the value of
@@ -5929,19 +5920,11 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Conv2DBackpropFilter'.
     /// <param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    The stride of the sliding window for each dimension of the input
-    ///    of the convolution. Must be in the same order as the dimension specified with
-    ///    format.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="use_cudnn_on_gpu">
+    ///    Optional argument
     /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, in_height, in_width, in_channels].
@@ -5949,11 +5932,20 @@ type TFGraph with
     ///    [batch, in_channels, in_height, in_width].
     /// </param>
     /// <param name="dilations">
+    ///    Optional argument
     ///    1-D tensor of length 4.  The dilation factor for each dimension of
     ///    <c>input<c>. If set to k &amp;gt; 1, there will be k-1 skipped cells between each filter
     ///    element on that dimension. The dimension order is determined by the value of
     ///    <c>data_format<c>, see above for details. Dilations in the batch and depth
     ///    dimensions must be 1.
+    /// </param>
+    /// <param name="strides">
+    ///    The stride of the sliding window for each dimension of the input
+    ///    of the convolution. Must be in the same order as the dimension specified with
+    ///    format.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    4-D with shape
@@ -5998,19 +5990,11 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Conv2DBackpropInput'.
     /// <param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    The stride of the sliding window for each dimension of the input
-    ///    of the convolution. Must be in the same order as the dimension specified with
-    ///    format.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="use_cudnn_on_gpu">
+    ///    Optional argument
     /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, in_height, in_width, in_channels].
@@ -6018,11 +6002,20 @@ type TFGraph with
     ///    [batch, in_channels, in_height, in_width].
     /// </param>
     /// <param name="dilations">
+    ///    Optional argument
     ///    1-D tensor of length 4.  The dilation factor for each dimension of
     ///    <c>input<c>. If set to k &amp;gt; 1, there will be k-1 skipped cells between each filter
     ///    element on that dimension. The dimension order is determined by the value of
     ///    <c>data_format<c>, see above for details. Dilations in the batch and depth
     ///    dimensions must be 1.
+    /// </param>
+    /// <param name="strides">
+    ///    The stride of the sliding window for each dimension of the input
+    ///    of the convolution. Must be in the same order as the dimension specified with
+    ///    format.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    4-D with shape <c>[batch, in_height, in_width, in_channels]<c>.  Gradient
@@ -6061,16 +6054,8 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Conv3D'.
     /// <param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The stride of the sliding window for each
-    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format of the input and output data. With the
     ///    default format "NDHWC", the data is stored in the order of:
     ///    [batch, in_depth, in_height, in_width, in_channels].
@@ -6078,11 +6063,19 @@ type TFGraph with
     ///    [batch, in_channels, in_depth, in_height, in_width].
     /// </param>
     /// <param name="dilations">
+    ///    Optional argument
     ///    1-D tensor of length 5.  The dilation factor for each dimension of
     ///    <c>input<c>. If set to k &amp;gt; 1, there will be k-1 skipped cells between each
     ///    filter element on that dimension. The dimension order is determined by the
     ///    value of <c>data_format<c>, see above for details. Dilations in the batch and
     ///    depth dimensions must be 1.
+    /// </param>
+    /// <param name="strides">
+    ///    1-D tensor of length 5. The stride of the sliding window for each
+    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -6128,16 +6121,15 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Conv3DBackpropFilter'.
     /// <param>
-    /// <param name="strides">
+    /// <param name="dilations">
     ///    Optional argument
+    /// </param>
+    /// <param name="strides">
     ///    1-D tensor of length 5. The stride of the sliding window for each
     ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
-    /// </param>
-    /// <param name="dilations">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -6178,16 +6170,8 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Conv3DBackpropFilterV2'.
     /// <param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The stride of the sliding window for each
-    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format of the input and output data. With the
     ///    default format "NDHWC", the data is stored in the order of:
     ///    [batch, in_depth, in_height, in_width, in_channels].
@@ -6195,11 +6179,19 @@ type TFGraph with
     ///    [batch, in_channels, in_depth, in_height, in_width].
     /// </param>
     /// <param name="dilations">
+    ///    Optional argument
     ///    1-D tensor of length 5.  The dilation factor for each dimension of
     ///    <c>input<c>. If set to k &amp;gt; 1, there will be k-1 skipped cells between each
     ///    filter element on that dimension. The dimension order is determined by the
     ///    value of <c>data_format<c>, see above for details. Dilations in the batch and
     ///    depth dimensions must be 1.
+    /// </param>
+    /// <param name="strides">
+    ///    1-D tensor of length 5. The stride of the sliding window for each
+    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -6239,16 +6231,15 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Conv3DBackpropInput'.
     /// <param>
-    /// <param name="strides">
+    /// <param name="dilations">
     ///    Optional argument
+    /// </param>
+    /// <param name="strides">
     ///    1-D tensor of length 5. The stride of the sliding window for each
     ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
-    /// </param>
-    /// <param name="dilations">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -6289,16 +6280,8 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Conv3DBackpropInputV2'.
     /// <param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The stride of the sliding window for each
-    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format of the input and output data. With the
     ///    default format "NDHWC", the data is stored in the order of:
     ///    [batch, in_depth, in_height, in_width, in_channels].
@@ -6306,11 +6289,19 @@ type TFGraph with
     ///    [batch, in_channels, in_depth, in_height, in_width].
     /// </param>
     /// <param name="dilations">
+    ///    Optional argument
     ///    1-D tensor of length 5.  The dilation factor for each dimension of
     ///    <c>input<c>. If set to k &amp;gt; 1, there will be k-1 skipped cells between each
     ///    filter element on that dimension. The dimension order is determined by the
     ///    value of <c>data_format<c>, see above for details. Dilations in the batch and
     ///    depth dimensions must be 1.
+    /// </param>
+    /// <param name="strides">
+    ///    1-D tensor of length 5. The stride of the sliding window for each
+    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -6343,9 +6334,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Copy'.
     /// <param>
     /// <param name="tensor_name">
+    ///    Optional argument
     ///    The name of the input tensor.
     /// </param>
     /// <param name="debug_ops_spec">
+    ///    Optional argument
     ///    A list of debug op spec (op, url, gated_grpc) for attached debug
     ///    ops. Each element of the list has the format
     ///    &amp;lt;debug_op&amp;gt;;&amp;lt;grpc_url&amp;gt;;&amp;lt;gated_grpc&amp;gt;, wherein gated_grpc is boolean represented
@@ -6390,9 +6383,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CopyHost'.
     /// <param>
     /// <param name="tensor_name">
+    ///    Optional argument
     ///    The name of the input tensor.
     /// </param>
     /// <param name="debug_ops_spec">
+    ///    Optional argument
     ///    A list of debug op spec (op, url, gated_grpc) for attached debug
     ///    ops. Each element of the list has the format
     ///    &amp;lt;debug_op&amp;gt;;&amp;lt;grpc_url&amp;gt;;&amp;lt;gated_grpc&amp;gt;, wherein gated_grpc is boolean represented
@@ -6481,7 +6476,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CountUpTo'.
     /// <param>
     /// <param name="limit">
-    ///    Optional argument
     ///    If incrementing ref would bring it above limit, instead generates an
     ///    'OutOfRange' error.
     /// </param>
@@ -6536,11 +6530,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CropAndResize'.
     /// <param>
     /// <param name="method">
+    ///    Optional argument
     ///    A string specifying the sampling method for resizing. It can be either
     ///    <c>"bilinear"<c> or <c>"nearest"<c> and default to <c>"bilinear"<c>. Currently two sampling
     ///    methods are supported: Bilinear and Nearest Neighbor.
     /// </param>
     /// <param name="extrapolation_value">
+    ///    Optional argument
     ///    Value used for extrapolation, when applicable.
     /// </param>
     /// <returns>
@@ -6611,6 +6607,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CropAndResizeGradBoxes'.
     /// <param>
     /// <param name="method">
+    ///    Optional argument
     ///    A string specifying the interpolation method. Only 'bilinear' is
     ///    supported for now.
     /// </param>
@@ -6664,12 +6661,12 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CropAndResizeGradImage'.
     /// <param>
-    /// <param name="t">
-    ///    Optional argument
-    /// </param>
     /// <param name="method">
+    ///    Optional argument
     ///    A string specifying the interpolation method. Only 'bilinear' is
     ///    supported for now.
+    /// </param>
+    /// <param name="t">
     /// </param>
     /// <returns>
     ///    A 4-D tensor of shape <c>[batch, image_height, image_width, depth]<c>.
@@ -6782,18 +6779,25 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CudnnRNN'.
     /// <param>
     /// <param name="rnn_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="input_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="direction">
+    ///    Optional argument
     /// </param>
     /// <param name="dropout">
+    ///    Optional argument
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     /// </param>
     /// <param name="is_training">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -6892,16 +6896,22 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CudnnRNNBackprop'.
     /// <param>
     /// <param name="rnn_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="input_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="direction">
+    ///    Optional argument
     /// </param>
     /// <param name="dropout">
+    ///    Optional argument
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -7017,16 +7027,22 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CudnnRNNBackpropV2'.
     /// <param>
     /// <param name="rnn_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="input_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="direction">
+    ///    Optional argument
     /// </param>
     /// <param name="dropout">
+    ///    Optional argument
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -7131,20 +7147,23 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CudnnRNNCanonicalToParams'.
     /// <param>
-    /// <param name="num_params">
+    /// <param name="rnn_mode">
     ///    Optional argument
     /// </param>
-    /// <param name="rnn_mode">
-    /// </param>
     /// <param name="input_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="direction">
+    ///    Optional argument
     /// </param>
     /// <param name="dropout">
+    ///    Optional argument
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -7180,7 +7199,7 @@ type TFGraph with
     ///    seed: the 1st part of a seed to initialize dropout.
     ///    seed2: the 2nd part of a seed to initialize dropout.
     /// </remarks>
-    member graph.CudnnRNNCanonicalToParams (num_layers : TFOutput, num_units : TFOutput, input_size : TFOutput, weights : TFOutput[], biases : TFOutput[], num_params : int64, ?rnn_mode : string, ?input_mode : string, ?direction : string, ?dropout : float32, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
+    member graph.CudnnRNNCanonicalToParams (num_layers : TFOutput, num_units : TFOutput, input_size : TFOutput, weights : TFOutput[], biases : TFOutput[], ?rnn_mode : string, ?input_mode : string, ?direction : string, ?dropout : float32, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "CudnnRNNCanonicalToParams", graph.MakeName ("CudnnRNNCanonicalToParams", name))
         desc.AddInput (num_layers) |> ignore
@@ -7189,7 +7208,6 @@ type TFGraph with
         desc.AddInputs (weights) |> ignore
         desc.AddInputs (biases) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("num_params", num_params) |> ignore
         rnn_mode |> Option.iter (fun rnn_mode -> desc.SetAttr ("rnn_mode", rnn_mode) |> ignore)
         input_mode |> Option.iter (fun input_mode -> desc.SetAttr ("input_mode", input_mode) |> ignore)
         direction |> Option.iter (fun direction -> desc.SetAttr ("direction", direction) |> ignore)
@@ -7215,23 +7233,27 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CudnnRNNParamsSize'.
     /// <param>
-    /// <param name="t">
-    ///    Optional argument
-    /// </param>
-    /// <param name="s">
-    ///    Optional argument
-    /// </param>
     /// <param name="rnn_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="input_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="direction">
+    ///    Optional argument
     /// </param>
     /// <param name="dropout">
+    ///    Optional argument
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
+    /// </param>
+    /// <param name="t">
+    /// </param>
+    /// <param name="s">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -7295,20 +7317,25 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CudnnRNNParamsToCanonical'.
     /// <param>
-    /// <param name="num_params">
+    /// <param name="rnn_mode">
     ///    Optional argument
     /// </param>
-    /// <param name="rnn_mode">
-    /// </param>
     /// <param name="input_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="direction">
+    ///    Optional argument
     /// </param>
     /// <param name="dropout">
+    ///    Optional argument
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
+    /// </param>
+    /// <param name="num_params">
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -7385,18 +7412,25 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'CudnnRNNV2'.
     /// <param>
     /// <param name="rnn_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="input_mode">
+    ///    Optional argument
     /// </param>
     /// <param name="direction">
+    ///    Optional argument
     /// </param>
     /// <param name="dropout">
+    ///    Optional argument
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     /// </param>
     /// <param name="is_training">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -7488,9 +7522,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Cumprod'.
     /// <param>
     /// <param name="exclusive">
+    ///    Optional argument
     ///    If <c>True<c>, perform exclusive cumprod.
     /// </param>
     /// <param name="reverse">
+    ///    Optional argument
     ///    A <c>bool<c> (default: False).
     /// </param>
     /// <returns>
@@ -7557,9 +7593,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Cumsum'.
     /// <param>
     /// <param name="exclusive">
+    ///    Optional argument
     ///    If <c>True<c>, perform exclusive cumsum.
     /// </param>
     /// <param name="reverse">
+    ///    Optional argument
     ///    A <c>bool<c> (default: False).
     /// </param>
     /// <returns>
@@ -7621,9 +7659,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DataFormatDimMap'.
     /// <param>
     /// <param name="src_format">
+    ///    Optional argument
     ///    source data format.
     /// </param>
     /// <param name="dst_format">
+    ///    Optional argument
     ///    destination data format.
     /// </param>
     /// <returns>
@@ -7657,9 +7697,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DataFormatVecPermute'.
     /// <param>
     /// <param name="src_format">
+    ///    Optional argument
     ///    source data format.
     /// </param>
     /// <param name="dst_format">
+    ///    Optional argument
     ///    destination data format.
     /// </param>
     /// <returns>
@@ -7721,10 +7763,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DatasetToSingleElement'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The components of the single element of <c>input<c>.
@@ -7840,21 +7880,25 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DebugIdentity'.
     /// <param>
     /// <param name="device_name">
+    ///    Optional argument
     /// </param>
     /// <param name="tensor_name">
+    ///    Optional argument
     ///    Name of the input tensor.
     /// </param>
     /// <param name="debug_urls">
+    ///    Optional argument
     ///    List of URLs to debug targets, e.g.,
     ///    file:///foo/tfdbg_dump, grpc:://localhost:11011
     /// </param>
     /// <param name="gated_grpc">
+    ///    Optional argument
     ///    Whether this op will be gated. If any of the debug_urls of this
     ///    debug node is of the grpc:// scheme, when the value of this attribute is set
     ///    to True, the data will not actually be sent via the grpc stream unless this
     ///    debug op has been enabled at the debug_url. If all of the debug_urls of this
     ///    debug node are of the grpc:// scheme and the debug op is enabled at none of
-    ///    them, the output will be an empty TFTensor.
+    ///    them, the output will be an empty Tensor.
     /// </param>
     /// <returns>
     ///    Output tensor that equals the input tensor.
@@ -7889,21 +7933,25 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DebugNanCount'.
     /// <param>
     /// <param name="device_name">
+    ///    Optional argument
     /// </param>
     /// <param name="tensor_name">
+    ///    Optional argument
     ///    Name of the input tensor.
     /// </param>
     /// <param name="debug_urls">
+    ///    Optional argument
     ///    List of URLs to debug targets, e.g.,
     ///    file:///foo/tfdbg_dump, grpc:://localhost:11011.
     /// </param>
     /// <param name="gated_grpc">
+    ///    Optional argument
     ///    Whether this op will be gated. If any of the debug_urls of this
     ///    debug node is of the grpc:// scheme, when the value of this attribute is set
     ///    to True, the data will not actually be sent via the grpc stream unless this
     ///    debug op has been enabled at the debug_url. If all of the debug_urls of this
     ///    debug node are of the grpc:// scheme and the debug op is enabled at none of
-    ///    them, the output will be an empty TFTensor.
+    ///    them, the output will be an empty Tensor.
     /// </param>
     /// <returns>
     ///    An integer output tensor that is the number of NaNs in the input.
@@ -7938,34 +7986,41 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DebugNumericSummary'.
     /// <param>
     /// <param name="device_name">
+    ///    Optional argument
     /// </param>
     /// <param name="tensor_name">
+    ///    Optional argument
     ///    Name of the input tensor.
     /// </param>
     /// <param name="debug_urls">
+    ///    Optional argument
     ///    List of URLs to debug targets, e.g.,
     ///    file:///foo/tfdbg_dump, grpc:://localhost:11011
     /// </param>
     /// <param name="lower_bound">
+    ///    Optional argument
     ///    (float) The lower bound &amp;lt;= which values will be included in the
     ///    generalized -inf count. Default: -inf.
     /// </param>
     /// <param name="upper_bound">
+    ///    Optional argument
     ///    (float) The upper bound &amp;gt;= which values will be included in the
     ///    generalized +inf count. Default: +inf.
     /// </param>
     /// <param name="mute_if_healthy">
+    ///    Optional argument
     ///    (bool) Do not send data to the debug URLs unless at least one
     ///    of elements [2], [3] and [7] (i.e., the nan count and the generalized -inf and
     ///    inf counts) is non-zero.
     /// </param>
     /// <param name="gated_grpc">
+    ///    Optional argument
     ///    Whether this op will be gated. If any of the debug_urls of this
     ///    debug node is of the grpc:// scheme, when the value of this attribute is set
     ///    to True, the data will not actually be sent via the grpc stream unless this
     ///    debug op has been enabled at the debug_url. If all of the debug_urls of this
     ///    debug node are of the grpc:// scheme and the debug op is enabled at none of
-    ///    them, the output will be an empty TFTensor.
+    ///    them, the output will be an empty Tensor.
     /// </param>
     /// <returns>
     ///    A double tensor of shape [14 + nDimensions], where nDimensions is the
@@ -8032,23 +8087,29 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DecodeAndCropJpeg'.
     /// <param>
     /// <param name="channels">
+    ///    Optional argument
     ///    Number of color channels for the decoded image.
     /// </param>
     /// <param name="ratio">
+    ///    Optional argument
     ///    Downscaling ratio.
     /// </param>
     /// <param name="fancy_upscaling">
+    ///    Optional argument
     ///    If true use a slower but nicer upscaling of the
     ///    chroma planes (yuv420/422 only).
     /// </param>
     /// <param name="try_recover_truncated">
+    ///    Optional argument
     ///    If true try to recover an image from truncated input.
     /// </param>
     /// <param name="acceptable_fraction">
+    ///    Optional argument
     ///    The minimum required fraction of lines before a truncated
     ///    input is accepted.
     /// </param>
     /// <param name="dct_method">
+    ///    Optional argument
     ///    string specifying a hint about the algorithm used for
     ///    decompression.  Defaults to "" which maps to a system-specific
     ///    default.  Currently valid values are ["INTEGER_FAST",
@@ -8139,6 +8200,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DecodeBmp'.
     /// <param>
     /// <param name="channels">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    3-D with shape <c>[height, width, channels]<c>. RGB order
@@ -8183,17 +8245,21 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DecodeCSV'.
     /// <param>
     /// <param name="field_delim">
+    ///    Optional argument
     ///    char delimiter to separate fields in a record.
     /// </param>
     /// <param name="use_quote_delim">
+    ///    Optional argument
     ///    If false, treats double quotation marks as regular
     ///    characters inside of the string fields (ignoring RFC 4180, Section 2,
     ///    Bullet 5).
     /// </param>
     /// <param name="na_value">
+    ///    Optional argument
     ///    Additional string to recognize as NA/NaN.
     /// </param>
     /// <param name="select_cols">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Each tensor will have the same shape as records.
@@ -8231,6 +8297,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DecodeCompressed'.
     /// <param>
     /// <param name="compression_type">
+    ///    Optional argument
     ///    A scalar containing either (i) the empty string (no
     ///    compression), (ii) "ZLIB", or (iii) "GZIP".
     /// </param>
@@ -8339,23 +8406,29 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DecodeJpeg'.
     /// <param>
     /// <param name="channels">
+    ///    Optional argument
     ///    Number of color channels for the decoded image.
     /// </param>
     /// <param name="ratio">
+    ///    Optional argument
     ///    Downscaling ratio.
     /// </param>
     /// <param name="fancy_upscaling">
+    ///    Optional argument
     ///    If true use a slower but nicer upscaling of the
     ///    chroma planes (yuv420/422 only).
     /// </param>
     /// <param name="try_recover_truncated">
+    ///    Optional argument
     ///    If true try to recover an image from truncated input.
     /// </param>
     /// <param name="acceptable_fraction">
+    ///    Optional argument
     ///    The minimum required fraction of lines before a truncated
     ///    input is accepted.
     /// </param>
     /// <param name="dct_method">
+    ///    Optional argument
     ///    string specifying a hint about the algorithm used for
     ///    decompression.  Defaults to "" which maps to a system-specific
     ///    default.  Currently valid values are ["INTEGER_FAST",
@@ -8416,9 +8489,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DecodePng'.
     /// <param>
     /// <param name="channels">
+    ///    Optional argument
     ///    Number of color channels for the decoded image.
     /// </param>
     /// <param name="dtype">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    3-D with shape <c>[height, width, channels]<c>.
@@ -8464,27 +8539,27 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DecodeProtoV2'.
     /// <param>
-    /// <param name="message_type">
-    ///    Optional argument
-    ///    Name of the proto message type to decode.
-    /// </param>
-    /// <param name="field_names">
-    ///    Optional argument
-    ///    List of strings containing proto field names.
-    /// </param>
-    /// <param name="output_types">
-    ///    Optional argument
-    ///    List of TF types to use for the respective field in field_names.
-    /// </param>
     /// <param name="descriptor_source">
+    ///    Optional argument
     ///    Either the special value <c>local://<c> or a path to a file containing
     ///    a serialized <c>FileDescriptorSet<c>.
     /// </param>
     /// <param name="message_format">
+    ///    Optional argument
     ///    Either <c>binary<c> or <c>text<c>.
     /// </param>
     /// <param name="sanitize">
+    ///    Optional argument
     ///    Whether to sanitize the result or not.
+    /// </param>
+    /// <param name="message_type">
+    ///    Name of the proto message type to decode.
+    /// </param>
+    /// <param name="field_names">
+    ///    List of strings containing proto field names.
+    /// </param>
+    /// <param name="output_types">
+    ///    List of TF types to use for the respective field in field_names.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -8576,13 +8651,13 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DecodeRaw'.
     /// <param>
-    /// <param name="out_type">
-    ///    Optional argument
-    /// </param>
     /// <param name="little_endian">
+    ///    Optional argument
     ///    Whether the input <c>bytes<c> are in little-endian order.
     ///    Ignored for <c>out_type<c> values that are stored in a single byte like
     ///    <c>uint8<c>.
+    /// </param>
+    /// <param name="out_type">
     /// </param>
     /// <returns>
     ///    A Tensor with one more dimension than the input <c>bytes<c>.  The
@@ -8614,9 +8689,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DecodeWav'.
     /// <param>
     /// <param name="desired_channels">
+    ///    Optional argument
     ///    Number of sample channels wanted.
     /// </param>
     /// <param name="desired_samples">
+    ///    Optional argument
     ///    Length of audio requested.
     /// </param>
     /// <returns>
@@ -8718,10 +8795,10 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DenseToDenseSetOperation'.
     /// <param>
-    /// <param name="set_operation">
+    /// <param name="validate_indices">
     ///    Optional argument
     /// </param>
-    /// <param name="validate_indices">
+    /// <param name="set_operation">
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -8779,10 +8856,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DenseToSparseBatchDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -8826,10 +8901,10 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DenseToSparseSetOperation'.
     /// <param>
-    /// <param name="set_operation">
+    /// <param name="validate_indices">
     ///    Optional argument
     /// </param>
-    /// <param name="validate_indices">
+    /// <param name="set_operation">
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -8886,11 +8961,11 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DepthToSpace'.
     /// <param>
-    /// <param name="block_size">
-    ///    Optional argument
-    ///    The size of the spatial block, same as in Space2Depth.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
+    /// </param>
+    /// <param name="block_size">
+    ///    The size of the spatial block, same as in Space2Depth.
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -8918,7 +8993,7 @@ type TFGraph with
     ///    "NCHW_VECT_C":
     ///    <c>qint8 [ batch, channels / 4, height, width, 4 ]<c>
     ///    
-    ///    It is useful to consider the operation as transforming a 6-D TFTensor.
+    ///    It is useful to consider the operation as transforming a 6-D Tensor.
     ///    e.g. for data_format = NHWC,
     ///    Each element in the input tensor can be specified via 6 coordinates,
     ///    ordered by decreasing memory layout significance as:
@@ -9010,16 +9085,8 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DepthwiseConv2dNative'.
     /// <param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    1-D of length 4.  The stride of the sliding window for each dimension
-    ///    of <c>input<c>.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, height, width, channels].
@@ -9027,11 +9094,19 @@ type TFGraph with
     ///    [batch, channels, height, width].
     /// </param>
     /// <param name="dilations">
+    ///    Optional argument
     ///    1-D tensor of length 4.  The dilation factor for each dimension of
     ///    <c>input<c>. If set to k &amp;gt; 1, there will be k-1 skipped cells between each filter
     ///    element on that dimension. The dimension order is determined by the value of
     ///    <c>data_format<c>, see above for details. Dilations in the batch and depth
     ///    dimensions must be 1.
+    /// </param>
+    /// <param name="strides">
+    ///    1-D of length 4.  The stride of the sliding window for each dimension
+    ///    of <c>input<c>.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -9095,16 +9170,8 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DepthwiseConv2dNativeBackpropFilter'.
     /// <param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    The stride of the sliding window for each dimension of the input
-    ///    of the convolution.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, height, width, channels].
@@ -9112,11 +9179,19 @@ type TFGraph with
     ///    [batch, channels, height, width].
     /// </param>
     /// <param name="dilations">
+    ///    Optional argument
     ///    1-D tensor of length 4.  The dilation factor for each dimension of
     ///    <c>input<c>. If set to k &amp;gt; 1, there will be k-1 skipped cells between each filter
     ///    element on that dimension. The dimension order is determined by the value of
     ///    <c>data_format<c>, see above for details. Dilations in the batch and depth
     ///    dimensions must be 1.
+    /// </param>
+    /// <param name="strides">
+    ///    The stride of the sliding window for each dimension of the input
+    ///    of the convolution.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    4-D with shape
@@ -9163,16 +9238,8 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DepthwiseConv2dNativeBackpropInput'.
     /// <param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    The stride of the sliding window for each dimension of the input
-    ///    of the convolution.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, height, width, channels].
@@ -9180,11 +9247,19 @@ type TFGraph with
     ///    [batch, channels, height, width].
     /// </param>
     /// <param name="dilations">
+    ///    Optional argument
     ///    1-D tensor of length 4.  The dilation factor for each dimension of
     ///    <c>input<c>. If set to k &amp;gt; 1, there will be k-1 skipped cells between each filter
     ///    element on that dimension. The dimension order is determined by the value of
     ///    <c>data_format<c>, see above for details. Dilations in the batch and depth
     ///    dimensions must be 1.
+    /// </param>
+    /// <param name="strides">
+    ///    The stride of the sliding window for each dimension of the input
+    ///    of the convolution.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    4-D with shape according to <c>data_format<c>.  For example, if
@@ -9212,7 +9287,7 @@ type TFGraph with
         
 
     /// <summary>
-    ///    Dequantize the 'input' tensor into a float TFTensor.
+    ///    Dequantize the 'input' tensor into a float Tensor.
     /// </summary>
     /// <param name="input">
     /// </param>
@@ -9226,6 +9301,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Dequantize'.
     /// <param>
     /// <param name="mode">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -9357,7 +9433,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DeserializeManySparse'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    The <c>dtype<c> of the serialized <c>SparseTensor<c> objects.
     /// </param>
     /// <returns>
@@ -9438,7 +9513,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DeserializeSparse'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    The <c>dtype<c> of the serialized <c>SparseTensor<c> objects.
     /// </param>
     /// <returns>
@@ -9518,6 +9592,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DestroyResourceOp'.
     /// <param>
     /// <param name="ignore_lookup_error">
+    ///    Optional argument
     ///    whether to ignore the error when the resource
     ///    doesn't exist.
     /// </param>
@@ -9548,7 +9623,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DestroyTemporaryVariable'.
     /// <param>
     /// <param name="var_name">
-    ///    Optional argument
     ///    Name of the temporary variable, usually the name of the matching
     ///    'TemporaryVariable' op.
     /// </param>
@@ -9704,17 +9778,14 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Dilation2D'.
     /// <param>
     /// <param name="strides">
-    ///    Optional argument
     ///    The stride of the sliding window for each dimension of the input
     ///    tensor. Must be: <c>[1, stride_height, stride_width, 1]<c>.
     /// </param>
     /// <param name="rates">
-    ///    Optional argument
     ///    The input stride for atrous morphological dilation. Must be:
     ///    <c>[1, rate_height, rate_width, 1]<c>.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
@@ -9778,17 +9849,14 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Dilation2DBackpropFilter'.
     /// <param>
     /// <param name="strides">
-    ///    Optional argument
     ///    1-D of length 4. The stride of the sliding window for each dimension of
     ///    the input tensor. Must be: <c>[1, stride_height, stride_width, 1]<c>.
     /// </param>
     /// <param name="rates">
-    ///    Optional argument
     ///    1-D of length 4. The input stride for atrous morphological dilation.
     ///    Must be: <c>[1, rate_height, rate_width, 1]<c>.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
@@ -9828,17 +9896,14 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Dilation2DBackpropInput'.
     /// <param>
     /// <param name="strides">
-    ///    Optional argument
     ///    1-D of length 4. The stride of the sliding window for each dimension of
     ///    the input tensor. Must be: <c>[1, stride_height, stride_width, 1]<c>.
     /// </param>
     /// <param name="rates">
-    ///    Optional argument
     ///    1-D of length 4. The input stride for atrous morphological dilation.
     ///    Must be: <c>[1, rate_height, rate_width, 1]<c>.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
@@ -9979,7 +10044,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'DynamicPartition'.
     /// <param>
     /// <param name="num_partitions">
-    ///    Optional argument
     ///    The number of partitions to output.
     /// </param>
     /// <returns>
@@ -10158,6 +10222,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'EditDistance'.
     /// <param>
     /// <param name="normalize">
+    ///    Optional argument
     ///    boolean (if true, edit distances are normalized by length of truth).
     ///    
     ///    The output is:
@@ -10289,11 +10354,11 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Empty'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    /// </param>
     /// <param name="init">
+    ///    Optional argument
     ///    If True, initialize the returned tensor with the default value of dtype.  Otherwise, the implementation is free not to initializethe tensor's content.
+    /// </param>
+    /// <param name="dtype">
     /// </param>
     /// <returns>
     ///    A <c>Tensor<c> of type <c>T<c>.
@@ -10322,7 +10387,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'EmptyTensorList'.
     /// <param>
     /// <param name="element_dtype">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -10358,6 +10422,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'EncodeBase64'.
     /// <param>
     /// <param name="pad">
+    ///    Optional argument
     ///    Bool whether padding is applied at the ends.
     /// </param>
     /// <returns>
@@ -10395,31 +10460,40 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'EncodeJpeg'.
     /// <param>
     /// <param name="format">
+    ///    Optional argument
     ///    Per pixel image format.
     /// </param>
     /// <param name="quality">
+    ///    Optional argument
     ///    Quality of the compression from 0 to 100 (higher is better and slower).
     /// </param>
     /// <param name="progressive">
+    ///    Optional argument
     ///    If True, create a JPEG that loads progressively (coarse to fine).
     /// </param>
     /// <param name="optimize_size">
+    ///    Optional argument
     ///    If True, spend CPU/RAM to reduce size with no quality change.
     /// </param>
     /// <param name="chroma_downsampling">
+    ///    Optional argument
     ///    See http://en.wikipedia.org/wiki/Chroma_subsampling.
     /// </param>
     /// <param name="density_unit">
+    ///    Optional argument
     ///    Unit used to specify <c>x_density<c> and <c>y_density<c>:
     ///    pixels per inch (<c>'in'<c>) or centimeter (<c>'cm'<c>).
     /// </param>
     /// <param name="x_density">
+    ///    Optional argument
     ///    Horizontal pixels per density unit.
     /// </param>
     /// <param name="y_density">
+    ///    Optional argument
     ///    Vertical pixels per density unit.
     /// </param>
     /// <param name="xmp_metadata">
+    ///    Optional argument
     ///    If not empty, embed this XMP metadata in the image header.
     /// </param>
     /// <returns>
@@ -10475,6 +10549,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'EncodePng'.
     /// <param>
     /// <param name="compression">
+    ///    Optional argument
     ///    Compression level.
     /// </param>
     /// <returns>
@@ -10519,15 +10594,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'EncodeProto'.
     /// <param>
-    /// <param name="field_names">
+    /// <param name="descriptor_source">
     ///    Optional argument
+    /// </param>
+    /// <param name="field_names">
     ///    List of strings containing proto field names.
     /// </param>
     /// <param name="message_type">
-    ///    Optional argument
     ///    Name of the proto message type to decode.
-    /// </param>
-    /// <param name="descriptor_source">
     /// </param>
     /// <returns>
     ///    Tensor of serialized protos with shape <c>batch_shape<c>.
@@ -10636,7 +10710,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'EnsureShape'.
     /// <param>
     /// <param name="shape">
-    ///    Optional argument
     ///    The expected (possibly partially specified) shape of the input tensor.
     /// </param>
     /// <returns>
@@ -10669,15 +10742,16 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Enter'.
     /// <param>
-    /// <param name="frame_name">
-    ///    Optional argument
-    ///    The name of the child frame.
-    /// </param>
     /// <param name="is_constant">
+    ///    Optional argument
     ///    If true, the output is constant within the child frame.
     /// </param>
     /// <param name="parallel_iterations">
+    ///    Optional argument
     ///    The number of iterations allowed to run in parallel.
+    /// </param>
+    /// <param name="frame_name">
+    ///    The name of the child frame.
     /// </param>
     /// <returns>
     ///    The same tensor as <c>data<c>.
@@ -10940,15 +11014,18 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ExtractGlimpse'.
     /// <param>
     /// <param name="centered">
+    ///    Optional argument
     ///    indicates if the offset coordinates are centered relative to
     ///    the image, in which case the (0, 0) offset is relative to the center
     ///    of the input images. If false, the (0,0) offset corresponds to the
     ///    upper left corner of the input images.
     /// </param>
     /// <param name="normalized">
+    ///    Optional argument
     ///    indicates if the offset coordinates are normalized.
     /// </param>
     /// <param name="uniform_noise">
+    ///    Optional argument
     ///    indicates if the noise should be generated using a
     ///    uniform distribution or a Gaussian distribution.
     /// </param>
@@ -11007,16 +11084,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ExtractImagePatches'.
     /// <param>
     /// <param name="ksizes">
-    ///    Optional argument
     ///    The size of the sliding window for each dimension of <c>images<c>.
     /// </param>
     /// <param name="strides">
-    ///    Optional argument
     ///    1-D of length 4. How far the centers of two consecutive patches are in
     ///    the images. Must be: <c>[1, stride_rows, stride_cols, 1]<c>.
     /// </param>
     /// <param name="rates">
-    ///    Optional argument
     ///    1-D of length 4. Must be: <c>[1, rate_rows, rate_cols, 1]<c>. This is the
     ///    input stride, specifying how far two consecutive patch samples are in the
     ///    input. Equivalent to extracting patches with
@@ -11025,7 +11099,6 @@ type TFGraph with
     ///    <c>rate<c> in dilated (a.k.a. Atrous) convolutions.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
     ///    
     ///    We specify the size-related attributes as:
@@ -11069,6 +11142,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ExtractJpegShape'.
     /// <param>
     /// <param name="output_type">
+    ///    Optional argument
     ///    (Optional) The output type of the operation (int32 or int64).
     ///    Defaults to int32.
     /// </param>
@@ -11200,27 +11274,30 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FIFOQueue'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a value.
-    /// </param>
     /// <param name="shapes">
+    ///    Optional argument
     ///    The shape of each component in a value. The length of this attr must
     ///    be either 0 or the same as the length of component_types. If the length of
     ///    this attr is 0, the shapes of queue elements are not constrained, and
     ///    only one element may be dequeued at a time.
     /// </param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    The upper bound on the number of elements in this queue.
     ///    Negative numbers mean no limit.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this queue is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this queue will be shared under the given name
     ///    across multiple sessions.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a value.
     /// </param>
     /// <returns>
     ///    The handle to the queue.
@@ -11248,27 +11325,30 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FIFOQueueV2'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a value.
-    /// </param>
     /// <param name="shapes">
+    ///    Optional argument
     ///    The shape of each component in a value. The length of this attr must
     ///    be either 0 or the same as the length of component_types. If the length of
     ///    this attr is 0, the shapes of queue elements are not constrained, and
     ///    only one element may be dequeued at a time.
     /// </param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    The upper bound on the number of elements in this queue.
     ///    Negative numbers mean no limit.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this queue is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this queue will be shared under the given name
     ///    across multiple sessions.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a value.
     /// </param>
     /// <returns>
     ///    The handle to the queue.
@@ -11300,11 +11380,9 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FakeParam'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    The type of the output.
     /// </param>
     /// <param name="shape">
-    ///    Optional argument
     ///    The purported shape of the output. This is only used for shape inference;
     ///    the output will not necessarily have this shape. Can be a partial shape.
     /// </param>
@@ -11334,12 +11412,16 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FakeQuantWithMinMaxArgs'.
     /// <param>
     /// <param name="min">
+    ///    Optional argument
     /// </param>
     /// <param name="max">
+    ///    Optional argument
     /// </param>
     /// <param name="num_bits">
+    ///    Optional argument
     /// </param>
     /// <param name="narrow_range">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -11382,12 +11464,16 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FakeQuantWithMinMaxArgsGradient'.
     /// <param>
     /// <param name="min">
+    ///    Optional argument
     /// </param>
     /// <param name="max">
+    ///    Optional argument
     /// </param>
     /// <param name="num_bits">
+    ///    Optional argument
     /// </param>
     /// <param name="narrow_range">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Backpropagated gradients below the FakeQuantWithMinMaxArgs operation:
@@ -11424,8 +11510,10 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FakeQuantWithMinMaxVars'.
     /// <param>
     /// <param name="num_bits">
+    ///    Optional argument
     /// </param>
     /// <param name="narrow_range">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -11476,9 +11564,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FakeQuantWithMinMaxVarsGradient'.
     /// <param>
     /// <param name="num_bits">
+    ///    Optional argument
     ///    The bitwidth of the quantization; between 2 and 8, inclusive.
     /// </param>
     /// <param name="narrow_range">
+    ///    Optional argument
     ///    Whether to quantize into 2^num_bits - 1 distinct values.
     /// </param>
     /// <returns>
@@ -11525,8 +11615,10 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FakeQuantWithMinMaxVarsPerChannel'.
     /// <param>
     /// <param name="num_bits">
+    ///    Optional argument
     /// </param>
     /// <param name="narrow_range">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -11580,9 +11672,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FakeQuantWithMinMaxVarsPerChannelGradient'.
     /// <param>
     /// <param name="num_bits">
+    ///    Optional argument
     ///    The bitwidth of the quantization; between 2 and 16, inclusive.
     /// </param>
     /// <param name="narrow_range">
+    ///    Optional argument
     ///    Whether to quantize into 2^num_bits - 1 distinct values.
     /// </param>
     /// <returns>
@@ -11702,10 +11796,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FilterByLastComponentDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -11773,27 +11865,31 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FixedLengthRecordReader'.
     /// <param>
-    /// <param name="record_bytes">
-    ///    Optional argument
-    ///    Number of bytes in the record.
-    /// </param>
     /// <param name="header_bytes">
+    ///    Optional argument
     ///    Number of bytes in the header, defaults to 0.
     /// </param>
     /// <param name="footer_bytes">
+    ///    Optional argument
     ///    Number of bytes in the footer, defaults to 0.
     /// </param>
     /// <param name="hop_bytes">
+    ///    Optional argument
     ///    Number of bytes to hop before each read. Default of 0 means using
     ///    record_bytes.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this reader is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this reader is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
+    /// </param>
+    /// <param name="record_bytes">
+    ///    Number of bytes in the record.
     /// </param>
     /// <returns>
     ///    The handle to reference the Reader.
@@ -11822,31 +11918,36 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FixedLengthRecordReaderV2'.
     /// <param>
-    /// <param name="record_bytes">
-    ///    Optional argument
-    ///    Number of bytes in the record.
-    /// </param>
     /// <param name="header_bytes">
+    ///    Optional argument
     ///    Number of bytes in the header, defaults to 0.
     /// </param>
     /// <param name="footer_bytes">
+    ///    Optional argument
     ///    Number of bytes in the footer, defaults to 0.
     /// </param>
     /// <param name="hop_bytes">
+    ///    Optional argument
     ///    Number of bytes to hop before each read. Default of 0 means using
     ///    record_bytes.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this reader is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this reader is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
     /// </param>
     /// <param name="encoding">
+    ///    Optional argument
     ///    The type of encoding for the file. Currently ZLIB and GZIP
     ///    are supported. Defaults to none.
+    /// </param>
+    /// <param name="record_bytes">
+    ///    Number of bytes in the record.
     /// </param>
     /// <returns>
     ///    The handle to reference the Reader.
@@ -11880,25 +11981,8 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FixedUnigramCandidateSampler'.
     /// <param>
-    /// <param name="num_true">
-    ///    Optional argument
-    ///    Number of true labels per context.
-    /// </param>
-    /// <param name="num_sampled">
-    ///    Optional argument
-    ///    Number of candidates to randomly sample.
-    /// </param>
-    /// <param name="unique">
-    ///    Optional argument
-    ///    If unique is true, we sample with rejection, so that all sampled
-    ///    candidates in a batch are unique. This requires some approximation to
-    ///    estimate the post-rejection sampling probabilities.
-    /// </param>
-    /// <param name="range_max">
-    ///    Optional argument
-    ///    The sampler will sample integers from the interval [0, range_max).
-    /// </param>
     /// <param name="vocab_file">
+    ///    Optional argument
     ///    Each valid line in this file (which should have a CSV-like format)
     ///    corresponds to a valid word ID. IDs are in sequential order, starting from
     ///    num_reserved_ids. The last entry in each line is expected to be a value
@@ -11906,6 +11990,7 @@ type TFGraph with
     ///    and unigrams needs to be passed to this op.
     /// </param>
     /// <param name="distortion">
+    ///    Optional argument
     ///    The distortion is used to skew the unigram probability distribution.
     ///    Each weight is first raised to the distortion's power before adding to the
     ///    internal unigram distribution. As a result, distortion = 1.0 gives regular
@@ -11913,33 +11998,53 @@ type TFGraph with
     ///    a uniform distribution.
     /// </param>
     /// <param name="num_reserved_ids">
+    ///    Optional argument
     ///    Optionally some reserved IDs can be added in the range [0,
     ///    ..., num_reserved_ids) by the users. One use case is that a special unknown
     ///    word token is used as ID 0. These IDs will have a sampling probability of 0.
     /// </param>
     /// <param name="num_shards">
+    ///    Optional argument
     ///    A sampler can be used to sample from a subset of the original range
     ///    in order to speed up the whole computation through parallelism. This parameter
     ///    (together with 'shard') indicates the number of partitions that are being
     ///    used in the overall computation.
     /// </param>
     /// <param name="shard">
+    ///    Optional argument
     ///    A sampler can be used to sample from a subset of the original range
     ///    in order to speed up the whole computation through parallelism. This parameter
     ///    (together with 'num_shards') indicates the particular partition number of a
     ///    sampler op, when partitioning is being used.
     /// </param>
     /// <param name="unigrams">
+    ///    Optional argument
     ///    A list of unigram counts or probabilities, one per ID in sequential
     ///    order. Exactly one of vocab_file and unigrams should be passed to this op.
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    An second seed to avoid seed collision.
+    /// </param>
+    /// <param name="num_true">
+    ///    Number of true labels per context.
+    /// </param>
+    /// <param name="num_sampled">
+    ///    Number of candidates to randomly sample.
+    /// </param>
+    /// <param name="unique">
+    ///    If unique is true, we sample with rejection, so that all sampled
+    ///    candidates in a batch are unique. This requires some approximation to
+    ///    estimate the post-rejection sampling probabilities.
+    /// </param>
+    /// <param name="range_max">
+    ///    The sampler will sample integers from the interval [0, range_max).
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -12093,22 +12198,15 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FractionalAvgPool'.
     /// <param>
-    /// <param name="pooling_ratio">
-    ///    Optional argument
-    ///    Pooling ratio for each dimension of <c>value<c>, currently only
-    ///    supports row and col dimension and should be &amp;gt;= 1.0. For example, a valid
-    ///    pooling ratio looks like [1.0, 1.44, 1.73, 1.0]. The first and last elements
-    ///    must be 1.0 because we don't allow pooling on batch and channels
-    ///    dimensions. 1.44 and 1.73 are pooling ratio on height and width dimensions
-    ///    respectively.
-    /// </param>
     /// <param name="pseudo_random">
+    ///    Optional argument
     ///    When set to True, generates the pooling sequence in a
     ///    pseudorandom fashion, otherwise, in a random fashion. Check paper [Benjamin
     ///    Graham, Fractional Max-Pooling](http://arxiv.org/abs/1412.6071) for
     ///    difference between pseudorandom and random.
     /// </param>
     /// <param name="overlapping">
+    ///    Optional argument
     ///    When set to True, it means when pooling, the values at the boundary
     ///    of adjacent pooling cells are used by both cells. For example:
     ///    
@@ -12120,17 +12218,28 @@ type TFGraph with
     ///    The result would be [41/3, 26/3] for fractional avg pooling.
     /// </param>
     /// <param name="deterministic">
+    ///    Optional argument
     ///    When set to True, a fixed pooling region will be used when
     ///    iterating over a FractionalAvgPool node in the computation graph. Mainly used
     ///    in unit test to make FractionalAvgPool deterministic.
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    An second seed to avoid seed collision.
+    /// </param>
+    /// <param name="pooling_ratio">
+    ///    Pooling ratio for each dimension of <c>value<c>, currently only
+    ///    supports row and col dimension and should be &amp;gt;= 1.0. For example, a valid
+    ///    pooling ratio looks like [1.0, 1.44, 1.73, 1.0]. The first and last elements
+    ///    must be 1.0 because we don't allow pooling on batch and channels
+    ///    dimensions. 1.44 and 1.73 are pooling ratio on height and width dimensions
+    ///    respectively.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -12189,6 +12298,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FractionalAvgPoolGrad'.
     /// <param>
     /// <param name="overlapping">
+    ///    Optional argument
     ///    When set to True, it means when pooling, the values at the boundary
     ///    of adjacent pooling cells are used by both cells. For example:
     ///    
@@ -12235,22 +12345,15 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FractionalMaxPool'.
     /// <param>
-    /// <param name="pooling_ratio">
-    ///    Optional argument
-    ///    Pooling ratio for each dimension of <c>value<c>, currently only
-    ///    supports row and col dimension and should be &amp;gt;= 1.0. For example, a valid
-    ///    pooling ratio looks like [1.0, 1.44, 1.73, 1.0]. The first and last elements
-    ///    must be 1.0 because we don't allow pooling on batch and channels
-    ///    dimensions. 1.44 and 1.73 are pooling ratio on height and width dimensions
-    ///    respectively.
-    /// </param>
     /// <param name="pseudo_random">
+    ///    Optional argument
     ///    When set to True, generates the pooling sequence in a
     ///    pseudorandom fashion, otherwise, in a random fashion. Check paper [Benjamin
     ///    Graham, Fractional Max-Pooling](http://arxiv.org/abs/1412.6071) for
     ///    difference between pseudorandom and random.
     /// </param>
     /// <param name="overlapping">
+    ///    Optional argument
     ///    When set to True, it means when pooling, the values at the boundary
     ///    of adjacent pooling cells are used by both cells. For example:
     ///    
@@ -12262,17 +12365,28 @@ type TFGraph with
     ///    The result would be [20, 16] for fractional max pooling.
     /// </param>
     /// <param name="deterministic">
+    ///    Optional argument
     ///    When set to True, a fixed pooling region will be used when
     ///    iterating over a FractionalMaxPool node in the computation graph. Mainly used
     ///    in unit test to make FractionalMaxPool deterministic.
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    An second seed to avoid seed collision.
+    /// </param>
+    /// <param name="pooling_ratio">
+    ///    Pooling ratio for each dimension of <c>value<c>, currently only
+    ///    supports row and col dimension and should be &amp;gt;= 1.0. For example, a valid
+    ///    pooling ratio looks like [1.0, 1.44, 1.73, 1.0]. The first and last elements
+    ///    must be 1.0 because we don't allow pooling on batch and channels
+    ///    dimensions. 1.44 and 1.73 are pooling ratio on height and width dimensions
+    ///    respectively.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -12358,6 +12472,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FractionalMaxPoolGrad'.
     /// <param>
     /// <param name="overlapping">
+    ///    Optional argument
     ///    When set to True, it means when pooling, the values at the boundary
     ///    of adjacent pooling cells are used by both cells. For example:
     ///    
@@ -12413,12 +12528,15 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FusedBatchNorm'.
     /// <param>
     /// <param name="epsilon">
+    ///    Optional argument
     ///    A small float number added to the variance of x.
     /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format for x and y. Either "NHWC" (default) or "NCHW".
     /// </param>
     /// <param name="is_training">
+    ///    Optional argument
     ///    A bool value to indicate the operation is for training (default)
     ///    or inference.
     /// </param>
@@ -12495,13 +12613,16 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FusedBatchNormGrad'.
     /// <param>
     /// <param name="epsilon">
+    ///    Optional argument
     ///    A small float number added to the variance of x.
     /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format for y_backprop, x, x_backprop.
     ///    Either "NHWC" (default) or "NCHW".
     /// </param>
     /// <param name="is_training">
+    ///    Optional argument
     ///    A bool value to indicate the operation is for training (default)
     ///    or inference.
     /// </param>
@@ -12575,13 +12696,16 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FusedBatchNormGradV2'.
     /// <param>
     /// <param name="epsilon">
+    ///    Optional argument
     ///    A small float number added to the variance of x.
     /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format for y_backprop, x, x_backprop.
     ///    Either "NHWC" (default) or "NCHW".
     /// </param>
     /// <param name="is_training">
+    ///    Optional argument
     ///    A bool value to indicate the operation is for training (default)
     ///    or inference.
     /// </param>
@@ -12650,12 +12774,15 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FusedBatchNormV2'.
     /// <param>
     /// <param name="epsilon">
+    ///    Optional argument
     ///    A small float number added to the variance of x.
     /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format for x and y. Either "NHWC" (default) or "NCHW".
     /// </param>
     /// <param name="is_training">
+    ///    Optional argument
     ///    A bool value to indicate the operation is for training (default)
     ///    or inference.
     /// </param>
@@ -12721,15 +12848,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FusedPadConv2D'.
     /// <param>
     /// <param name="mode">
-    ///    Optional argument
     /// </param>
     /// <param name="strides">
-    ///    Optional argument
     ///    1-D of length 4.  The stride of the sliding window for each dimension
     ///    of <c>input<c>. Must be in the same order as the dimension specified with format.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
@@ -12786,21 +12910,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'FusedResizeAndPadConv2D'.
     /// <param>
-    /// <param name="mode">
+    /// <param name="resize_align_corners">
     ///    Optional argument
+    ///    If true, the centers of the 4 corner pixels of the input and output tensors are
+    ///    aligned, preserving the values at the corner pixels. Defaults to false.
+    /// </param>
+    /// <param name="mode">
     /// </param>
     /// <param name="strides">
-    ///    Optional argument
     ///    1-D of length 4.  The stride of the sliding window for each dimension
     ///    of <c>input<c>. Must be in the same order as the dimension specified with format.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
-    /// </param>
-    /// <param name="resize_align_corners">
-    ///    If true, the centers of the 4 corner pixels of the input and output tensors are
-    ///    aligned, preserving the values at the corner pixels. Defaults to false.
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -12847,6 +12969,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Gather'.
     /// <param>
     /// <param name="validate_indices">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -13105,17 +13228,16 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'GenerateVocabRemapping'.
     /// <param>
-    /// <param name="new_vocab_offset">
+    /// <param name="old_vocab_size">
     ///    Optional argument
+    ///    Number of entries in the old vocab file to consider.  If -1,
+    ///    use the entire old vocabulary.
+    /// </param>
+    /// <param name="new_vocab_offset">
     ///    How many entries into the new vocab file to start reading.
     /// </param>
     /// <param name="num_new_vocab">
-    ///    Optional argument
     ///    Number of entries in the new vocab file to remap.
-    /// </param>
-    /// <param name="old_vocab_size">
-    ///    Number of entries in the old vocab file to consider.  If -1,
-    ///    use the entire old vocabulary.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -13235,7 +13357,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'GetSessionTensor'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    The type of the output value.
     /// </param>
     /// <returns>
@@ -13384,25 +13505,26 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'HashTable'.
     /// <param>
-    /// <param name="key_dtype">
-    ///    Optional argument
-    ///    Type of the table keys.
-    /// </param>
-    /// <param name="value_dtype">
-    ///    Optional argument
-    ///    Type of the table values.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this table is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this table is shared under the given name across
     ///    multiple sessions.
     /// </param>
     /// <param name="use_node_name_sharing">
+    ///    Optional argument
     ///    If true and shared_name is empty, the table is shared
     ///    using the node name.
+    /// </param>
+    /// <param name="key_dtype">
+    ///    Type of the table keys.
+    /// </param>
+    /// <param name="value_dtype">
+    ///    Type of the table values.
     /// </param>
     /// <returns>
     ///    Handle to a table.
@@ -13435,25 +13557,26 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'HashTableV2'.
     /// <param>
-    /// <param name="key_dtype">
-    ///    Optional argument
-    ///    Type of the table keys.
-    /// </param>
-    /// <param name="value_dtype">
-    ///    Optional argument
-    ///    Type of the table values.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this table is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this table is shared under the given name across
     ///    multiple sessions.
     /// </param>
     /// <param name="use_node_name_sharing">
+    ///    Optional argument
     ///    If true and shared_name is empty, the table is shared
     ///    using the node name.
+    /// </param>
+    /// <param name="key_dtype">
+    ///    Type of the table keys.
+    /// </param>
+    /// <param name="value_dtype">
+    ///    Type of the table values.
     /// </param>
     /// <returns>
     ///    Handle to a table.
@@ -13498,6 +13621,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'HistogramFixedWidth'.
     /// <param>
     /// <param name="dtype">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    A 1-D <c>Tensor<c> holding histogram of values.
@@ -13578,11 +13702,9 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'HostConst'.
     /// <param>
     /// <param name="value">
-    ///    Optional argument
     ///    Attr <c>value<c> is the tensor to return.
     /// </param>
     /// <param name="dtype">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -13924,10 +14046,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'IdentityReader'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this reader is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this reader is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
     /// </param>
@@ -13959,10 +14083,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'IdentityReaderV2'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this reader is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this reader is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
     /// </param>
@@ -14103,6 +14229,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Imag'.
     /// <param>
     /// <param name="tOut">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -14147,9 +14274,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ImageSummary'.
     /// <param>
     /// <param name="max_images">
+    ///    Optional argument
     ///    Max number of batch elements to generate images for.
     /// </param>
     /// <param name="bad_color">
+    ///    Optional argument
     ///    Color to use for pixels with non-finite values.
     /// </param>
     /// <returns>
@@ -14213,15 +14342,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ImmutableConst'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    Type of the returned tensor.
     /// </param>
     /// <param name="shape">
-    ///    Optional argument
     ///    Shape of the returned tensor.
     /// </param>
     /// <param name="memory_region_name">
-    ///    Optional argument
     ///    Name of readonly memory region used by the tensor, see
     ///    NewReadOnlyMemoryRegionFromFile in tensorflow::Env.
     /// </param>
@@ -14258,7 +14384,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'InTopK'.
     /// <param>
     /// <param name="k">
-    ///    Optional argument
     ///    Number of top elements to look at for computing precision.
     /// </param>
     /// <returns>
@@ -14351,11 +14476,9 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'InfeedDequeue'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    The type of elements in the tensor.
     /// </param>
     /// <param name="shape">
-    ///    Optional argument
     ///    The shape of the tensor.
     /// </param>
     /// <returns>
@@ -14382,11 +14505,9 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'InfeedDequeueTuple'.
     /// <param>
     /// <param name="dtypes">
-    ///    Optional argument
     ///    The element types of each element in <c>outputs<c>.
     /// </param>
     /// <param name="shapes">
-    ///    Optional argument
     ///    The shapes of each tensor in <c>outputs<c>.
     /// </param>
     /// <returns>
@@ -14419,9 +14540,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'InfeedEnqueue'.
     /// <param>
     /// <param name="shape">
+    ///    Optional argument
     ///    The shape of the tensor.
     /// </param>
     /// <param name="device_ordinal">
+    ///    Optional argument
     ///    The TPU device to use. This should be -1 when the Op
     ///    is running on a TPU device, and &amp;gt;= 0 when the Op is running on the CPU
     ///    device.
@@ -14449,14 +14572,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'InfeedEnqueueTuple'.
     /// <param>
-    /// <param name="shapes">
-    ///    Optional argument
-    ///    The shapes of each tensor in <c>inputs<c>.
-    /// </param>
     /// <param name="device_ordinal">
+    ///    Optional argument
     ///    The TPU device to use. This should be -1 when the Op
     ///    is running on a TPU device, and &amp;gt;= 0 when the Op is running on the CPU
     ///    device.
+    /// </param>
+    /// <param name="shapes">
+    ///    The shapes of each tensor in <c>inputs<c>.
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -14513,20 +14636,20 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'InitializeTableFromTextFile'.
     /// <param>
-    /// <param name="key_index">
-    ///    Optional argument
-    ///    Column index in a line to get the table <c>key<c> values from.
-    /// </param>
-    /// <param name="value_index">
-    ///    Optional argument
-    ///    Column index that represents information of a line to get the table
-    ///    <c>value<c> values from.
-    /// </param>
     /// <param name="vocab_size">
+    ///    Optional argument
     ///    Number of elements of the file, use -1 if unknown.
     /// </param>
     /// <param name="delimiter">
+    ///    Optional argument
     ///    Delimiter to separate fields in a line.
+    /// </param>
+    /// <param name="key_index">
+    ///    Column index in a line to get the table <c>key<c> values from.
+    /// </param>
+    /// <param name="value_index">
+    ///    Column index that represents information of a line to get the table
+    ///    <c>value<c> values from.
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -14569,20 +14692,20 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'InitializeTableFromTextFileV2'.
     /// <param>
-    /// <param name="key_index">
-    ///    Optional argument
-    ///    Column index in a line to get the table <c>key<c> values from.
-    /// </param>
-    /// <param name="value_index">
-    ///    Optional argument
-    ///    Column index that represents information of a line to get the table
-    ///    <c>value<c> values from.
-    /// </param>
     /// <param name="vocab_size">
+    ///    Optional argument
     ///    Number of elements of the file, use -1 if unknown.
     /// </param>
     /// <param name="delimiter">
+    ///    Optional argument
     ///    Delimiter to separate fields in a line.
+    /// </param>
+    /// <param name="key_index">
+    ///    Column index in a line to get the table <c>key<c> values from.
+    /// </param>
+    /// <param name="value_index">
+    ///    Column index that represents information of a line to get the table
+    ///    <c>value<c> values from.
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -15015,16 +15138,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Iterator'.
     /// <param>
     /// <param name="shared_name">
-    ///    Optional argument
     /// </param>
     /// <param name="container">
-    ///    Optional argument
     /// </param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    A handle to the iterator that can be passed to a "MakeIterator"
@@ -15056,10 +15175,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'IteratorFromStringHandle'.
     /// <param>
     /// <param name="output_types">
+    ///    Optional argument
     ///    If specified, defines the type of each tuple component in an
     ///    element produced by the resulting iterator.
     /// </param>
     /// <param name="output_shapes">
+    ///    Optional argument
     ///    If specified, defines the shape of each tuple component in an
     ///    element produced by the resulting iterator.
     /// </param>
@@ -15090,10 +15211,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'IteratorGetNext'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -15121,10 +15240,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'IteratorGetNextAsOptional'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -15152,10 +15269,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'IteratorGetNextSync'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -15242,10 +15357,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'LMDBReader'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this reader is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this reader is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
     /// </param>
@@ -15276,15 +15393,19 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'LRN'.
     /// <param>
     /// <param name="depth_radius">
+    ///    Optional argument
     ///    0-D.  Half-width of the 1-D normalization window.
     /// </param>
     /// <param name="bias">
+    ///    Optional argument
     ///    An offset (usually positive to avoid dividing by 0).
     /// </param>
     /// <param name="alpha">
+    ///    Optional argument
     ///    A scale factor, usually positive.
     /// </param>
     /// <param name="beta">
+    ///    Optional argument
     ///    An exponent.
     /// </param>
     /// <returns>
@@ -15335,15 +15456,19 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'LRNGrad'.
     /// <param>
     /// <param name="depth_radius">
+    ///    Optional argument
     ///    A depth radius.
     /// </param>
     /// <param name="bias">
+    ///    Optional argument
     ///    An offset (usually &amp;gt; 0 to avoid dividing by 0).
     /// </param>
     /// <param name="alpha">
+    ///    Optional argument
     ///    A scale factor, usually positive.
     /// </param>
     /// <param name="beta">
+    ///    Optional argument
     ///    An exponent.
     /// </param>
     /// <returns>
@@ -15379,10 +15504,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'LatencyStatsDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -15412,31 +15535,29 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'LearnedUnigramCandidateSampler'.
     /// <param>
-    /// <param name="num_true">
-    ///    Optional argument
-    ///    Number of true labels per context.
-    /// </param>
-    /// <param name="num_sampled">
-    ///    Optional argument
-    ///    Number of candidates to randomly sample.
-    /// </param>
-    /// <param name="unique">
-    ///    Optional argument
-    ///    If unique is true, we sample with rejection, so that all sampled
-    ///    candidates in a batch are unique. This requires some approximation to
-    ///    estimate the post-rejection sampling probabilities.
-    /// </param>
-    /// <param name="range_max">
-    ///    Optional argument
-    ///    The sampler will sample integers from the interval [0, range_max).
-    /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    An second seed to avoid seed collision.
+    /// </param>
+    /// <param name="num_true">
+    ///    Number of true labels per context.
+    /// </param>
+    /// <param name="num_sampled">
+    ///    Number of candidates to randomly sample.
+    /// </param>
+    /// <param name="unique">
+    ///    If unique is true, we sample with rejection, so that all sampled
+    ///    candidates in a batch are unique. This requires some approximation to
+    ///    estimate the post-rejection sampling probabilities.
+    /// </param>
+    /// <param name="range_max">
+    ///    The sampler will sample integers from the interval [0, range_max).
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -15654,6 +15775,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ListDiff'.
     /// <param>
     /// <param name="out_idx">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -15729,18 +15851,17 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'LoadAndRemapMatrix'.
     /// <param>
-    /// <param name="num_rows">
-    ///    Optional argument
-    ///    Number of rows (length of the 1st dimension) in the output matrix.
-    /// </param>
-    /// <param name="num_cols">
-    ///    Optional argument
-    ///    Number of columns (length of the 2nd dimension) in the output matrix.
-    /// </param>
     /// <param name="max_rows_in_memory">
+    ///    Optional argument
     ///    The maximum number of rows to load from the checkpoint at
     ///    once. If less than or equal to 0, the entire matrix will be loaded into
     ///    memory. Setting this arg trades increased disk reads for lower memory usage.
+    /// </param>
+    /// <param name="num_rows">
+    ///    Number of rows (length of the 1st dimension) in the output matrix.
+    /// </param>
+    /// <param name="num_cols">
+    ///    Number of columns (length of the 2nd dimension) in the output matrix.
     /// </param>
     /// <returns>
     ///    Output matrix containing existing values loaded from the
@@ -15935,31 +16056,29 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'LogUniformCandidateSampler'.
     /// <param>
-    /// <param name="num_true">
-    ///    Optional argument
-    ///    Number of true labels per context.
-    /// </param>
-    /// <param name="num_sampled">
-    ///    Optional argument
-    ///    Number of candidates to randomly sample.
-    /// </param>
-    /// <param name="unique">
-    ///    Optional argument
-    ///    If unique is true, we sample with rejection, so that all sampled
-    ///    candidates in a batch are unique. This requires some approximation to
-    ///    estimate the post-rejection sampling probabilities.
-    /// </param>
-    /// <param name="range_max">
-    ///    Optional argument
-    ///    The sampler will sample integers from the interval [0, range_max).
-    /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    An second seed to avoid seed collision.
+    /// </param>
+    /// <param name="num_true">
+    ///    Number of true labels per context.
+    /// </param>
+    /// <param name="num_sampled">
+    ///    Number of candidates to randomly sample.
+    /// </param>
+    /// <param name="unique">
+    ///    If unique is true, we sample with rejection, so that all sampled
+    ///    candidates in a batch are unique. This requires some approximation to
+    ///    estimate the post-rejection sampling probabilities.
+    /// </param>
+    /// <param name="range_max">
+    ///    The sampler will sample integers from the interval [0, range_max).
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -16100,10 +16219,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'LookupTableExport'.
     /// <param>
     /// <param name="tKeys">
-    ///    Optional argument
     /// </param>
     /// <param name="tValues">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -16137,10 +16254,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'LookupTableExportV2'.
     /// <param>
     /// <param name="tKeys">
-    ///    Optional argument
     /// </param>
     /// <param name="tValues">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -16488,16 +16603,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MapClear'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -16521,16 +16639,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MapIncompleteSize'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -16561,16 +16682,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MapPeek'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -16603,16 +16727,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MapSize'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -16648,21 +16775,24 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MapStage'.
     /// <param>
-    /// <param name="dtypes">
-    ///    Optional argument
-    /// </param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    Maximum number of elements in the Staging Area. If &amp;gt; 0, inserts
     ///    on the container will block when the capacity is reached.
     /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this queue is placed in the given container. Otherwise,
     ///    a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    It is necessary to match this name to the matching Unstage Op.
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -16693,16 +16823,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MapUnstage'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -16737,16 +16870,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MapUnstageNoKey'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -16788,9 +16924,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MatMul'.
     /// <param>
     /// <param name="transpose_a">
+    ///    Optional argument
     ///    If true, "a" is transposed before multiplication.
     /// </param>
     /// <param name="transpose_b">
+    ///    Optional argument
     ///    If true, "b" is transposed before multiplication.
     /// </param>
     /// <returns>
@@ -17098,6 +17236,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MatrixInverse'.
     /// <param>
     /// <param name="adjoint">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Shape is <c>[..., M, M]<c>.
@@ -17235,6 +17374,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MatrixSolve'.
     /// <param>
     /// <param name="adjoint">
+    ///    Optional argument
     ///    Boolean indicating whether to solve with <c>matrix<c> or its (block-wise)
     ///    adjoint.
     /// </param>
@@ -17284,6 +17424,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MatrixSolveLs'.
     /// <param>
     /// <param name="fast">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Shape is <c>[..., N, K]<c>.
@@ -17353,10 +17494,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MatrixTriangularSolve'.
     /// <param>
     /// <param name="lower">
+    ///    Optional argument
     ///    Boolean indicating whether the innermost matrices in <c>matrix<c> are
     ///    lower or upper triangular.
     /// </param>
     /// <param name="adjoint">
+    ///    Optional argument
     ///    Boolean indicating whether to solve with <c>matrix<c> or its (block-wise)
     ///    adjoint.
     ///    
@@ -17414,6 +17557,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Max'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If true, retain reduced dimensions with length 1.
     /// </param>
     /// <returns>
@@ -17449,25 +17593,23 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPool'.
     /// <param>
-    /// <param name="ksize">
-    ///    Optional argument
-    ///    The size of the window for each dimension of the input tensor.
-    /// </param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    The stride of the sliding window for each dimension of the
-    ///    input tensor.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCHW", the data storage order of:
     ///    [batch, in_channels, in_height, in_width].
+    /// </param>
+    /// <param name="ksize">
+    ///    The size of the window for each dimension of the input tensor.
+    /// </param>
+    /// <param name="strides">
+    ///    The stride of the sliding window for each dimension of the
+    ///    input tensor.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    The max pooled output tensor.
@@ -17498,26 +17640,24 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPool3D'.
     /// <param>
-    /// <param name="ksize">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The size of the window for each dimension of
-    ///    the input tensor. Must have <c>ksize[0] = ksize[4] = 1<c>.
-    /// </param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The stride of the sliding window for each
-    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format of the input and output data. With the
     ///    default format "NDHWC", the data is stored in the order of:
     ///    [batch, in_depth, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCDHW", the data storage order is:
     ///    [batch, in_channels, in_depth, in_height, in_width].
+    /// </param>
+    /// <param name="ksize">
+    ///    1-D tensor of length 5. The size of the window for each dimension of
+    ///    the input tensor. Must have <c>ksize[0] = ksize[4] = 1<c>.
+    /// </param>
+    /// <param name="strides">
+    ///    1-D tensor of length 5. The stride of the sliding window for each
+    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    The max pooled output tensor.
@@ -17554,26 +17694,24 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPool3DGrad'.
     /// <param>
-    /// <param name="ksize">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The size of the window for each dimension of
-    ///    the input tensor. Must have <c>ksize[0] = ksize[4] = 1<c>.
-    /// </param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The stride of the sliding window for each
-    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format of the input and output data. With the
     ///    default format "NDHWC", the data is stored in the order of:
     ///    [batch, in_depth, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCDHW", the data storage order is:
     ///    [batch, in_channels, in_depth, in_height, in_width].
+    /// </param>
+    /// <param name="ksize">
+    ///    1-D tensor of length 5. The size of the window for each dimension of
+    ///    the input tensor. Must have <c>ksize[0] = ksize[4] = 1<c>.
+    /// </param>
+    /// <param name="strides">
+    ///    1-D tensor of length 5. The stride of the sliding window for each
+    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -17611,26 +17749,24 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPool3DGradGrad'.
     /// <param>
-    /// <param name="ksize">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The size of the window for each dimension of
-    ///    the input tensor. Must have <c>ksize[0] = ksize[4] = 1<c>.
-    /// </param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    1-D tensor of length 5. The stride of the sliding window for each
-    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    The data format of the input and output data. With the
     ///    default format "NDHWC", the data is stored in the order of:
     ///    [batch, in_depth, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCDHW", the data storage order is:
     ///    [batch, in_channels, in_depth, in_height, in_width].
+    /// </param>
+    /// <param name="ksize">
+    ///    1-D tensor of length 5. The size of the window for each dimension of
+    ///    the input tensor. Must have <c>ksize[0] = ksize[4] = 1<c>.
+    /// </param>
+    /// <param name="strides">
+    ///    1-D tensor of length 5. The stride of the sliding window for each
+    ///    dimension of <c>input<c>. Must have <c>strides[0] = strides[4] = 1<c>.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    Gradients of gradients w.r.t. the input to <c>max_pool<c>.
@@ -17669,25 +17805,23 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPoolGrad'.
     /// <param>
-    /// <param name="ksize">
-    ///    Optional argument
-    ///    The size of the window for each dimension of the input tensor.
-    /// </param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    The stride of the sliding window for each dimension of the
-    ///    input tensor.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCHW", the data storage order of:
     ///    [batch, in_channels, in_height, in_width].
+    /// </param>
+    /// <param name="ksize">
+    ///    The size of the window for each dimension of the input tensor.
+    /// </param>
+    /// <param name="strides">
+    ///    The stride of the sliding window for each dimension of the
+    ///    input tensor.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    Gradients w.r.t. the input to <c>max_pool<c>.
@@ -17726,25 +17860,23 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPoolGradGrad'.
     /// <param>
-    /// <param name="ksize">
-    ///    Optional argument
-    ///    The size of the window for each dimension of the input tensor.
-    /// </param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    The stride of the sliding window for each dimension of the
-    ///    input tensor.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCHW", the data storage order of:
     ///    [batch, in_channels, in_height, in_width].
+    /// </param>
+    /// <param name="ksize">
+    ///    The size of the window for each dimension of the input tensor.
+    /// </param>
+    /// <param name="strides">
+    ///    The stride of the sliding window for each dimension of the
+    ///    input tensor.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    Gradients of gradients w.r.t. the input to <c>max_pool<c>.
@@ -17790,16 +17922,16 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPoolGradGradV2'.
     /// <param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCHW", the data storage order of:
     ///    [batch, in_channels, in_height, in_width].
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    Gradients of gradients w.r.t. the input to <c>max_pool<c>.
@@ -17840,16 +17972,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPoolGradGradWithArgmax'.
     /// <param>
     /// <param name="ksize">
-    ///    Optional argument
     ///    The size of the window for each dimension of the input tensor.
     /// </param>
     /// <param name="strides">
-    ///    Optional argument
     ///    The stride of the sliding window for each dimension of the
     ///    input tensor.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
@@ -17895,16 +18024,16 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPoolGradV2'.
     /// <param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCHW", the data storage order of:
     ///    [batch, in_channels, in_height, in_width].
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    Gradients w.r.t. the input to <c>max_pool<c>.
@@ -17945,16 +18074,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPoolGradWithArgmax'.
     /// <param>
     /// <param name="ksize">
-    ///    Optional argument
     ///    The size of the window for each dimension of the input tensor.
     /// </param>
     /// <param name="strides">
-    ///    Optional argument
     ///    The stride of the sliding window for each dimension of the
     ///    input tensor.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
@@ -17994,16 +18120,16 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPoolV2'.
     /// <param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
     ///    Specify the data format of the input and output data. With the
     ///    default format "NHWC", the data is stored in the order of:
     ///    [batch, in_height, in_width, in_channels].
     ///    Alternatively, the format could be "NCHW", the data storage order of:
     ///    [batch, in_channels, in_height, in_width].
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    The max pooled output tensor.
@@ -18034,20 +18160,18 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MaxPoolWithArgmax'.
     /// <param>
-    /// <param name="ksize">
+    /// <param name="tArgmax">
     ///    Optional argument
+    /// </param>
+    /// <param name="ksize">
     ///    The size of the window for each dimension of the input tensor.
     /// </param>
     /// <param name="strides">
-    ///    Optional argument
     ///    The stride of the sliding window for each dimension of the
     ///    input tensor.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
-    /// </param>
-    /// <param name="tArgmax">
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -18127,6 +18251,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Mean'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If true, retain reduced dimensions with length 1.
     /// </param>
     /// <returns>
@@ -18162,9 +18287,6 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Merge'.
     /// <param>
-    /// <param name="n">
-    ///    Optional argument
-    /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
     ///    output : Will be set to the available input tensor.
@@ -18178,12 +18300,11 @@ type TFGraph with
     ///    <c>Merge<c> forwards the first tensor to become available to <c>output<c>, and sets
     ///    <c>value_index<c> to its index in <c>inputs<c>.
     /// </remarks>
-    member graph.Merge (inputs : TFOutput[], n : int64,  ?name : string) : (TFOutput*TFOutput) =
+    member graph.Merge (inputs : TFOutput[],  ?name : string) : (TFOutput*TFOutput) =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "Merge", graph.MakeName ("Merge", name))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
         let op = desc.FinishOperation ()
         let mutable _idx = 0
         let output = new TFOutput (op, _idx)
@@ -18242,6 +18363,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MergeV2Checkpoints'.
     /// <param>
     /// <param name="delete_old_dirs">
+    ///    Optional argument
     ///    see above.
     /// </param>
     /// <returns>
@@ -18282,17 +18404,21 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Mfcc'.
     /// <param>
     /// <param name="upper_frequency_limit">
+    ///    Optional argument
     ///    The highest frequency to use when calculating the
     ///    ceptstrum.
     /// </param>
     /// <param name="lower_frequency_limit">
+    ///    Optional argument
     ///    The lowest frequency to use when calculating the
     ///    ceptstrum.
     /// </param>
     /// <param name="filterbank_channel_count">
+    ///    Optional argument
     ///    Resolution of the Mel bank used internally.
     /// </param>
     /// <param name="dct_coefficient_count">
+    ///    Optional argument
     ///    How many output channels to produce per time slice.
     /// </param>
     /// <returns>
@@ -18337,6 +18463,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Min'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If true, retain reduced dimensions with length 1.
     /// </param>
     /// <returns>
@@ -18407,7 +18534,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MirrorPad'.
     /// <param>
     /// <param name="mode">
-    ///    Optional argument
     ///    Either <c>REFLECT<c> or <c>SYMMETRIC<c>. In reflect mode the padded regions
     ///    do not include the borders, while in symmetric mode the padded regions
     ///    do include the borders. For example, if <c>input<c> is <c>[1, 2, 3]<c> and <c>paddings<c>
@@ -18473,7 +18599,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MirrorPadGrad'.
     /// <param>
     /// <param name="mode">
-    ///    Optional argument
     ///    The mode used in the <c>MirrorPad<c> op.
     /// </param>
     /// <returns>
@@ -18591,13 +18716,16 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Multinomial'.
     /// <param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 is set to be non-zero, the internal random number
     ///    generator is seeded by the given seed.  Otherwise, a random seed is used.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
     /// </param>
     /// <param name="output_dtype">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    2-D Tensor with shape <c>[batch_size, num_samples]<c>.  Each slice <c>[i, :]<c>
@@ -18630,30 +18758,35 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MutableDenseHashTable'.
     /// <param>
-    /// <param name="value_dtype">
-    ///    Optional argument
-    ///    Type of the table values.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this table is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this table is shared under the given name across
     ///    multiple sessions.
     /// </param>
     /// <param name="use_node_name_sharing">
+    ///    Optional argument
     /// </param>
     /// <param name="value_shape">
+    ///    Optional argument
     ///    The shape of each value.
     /// </param>
     /// <param name="initial_num_buckets">
+    ///    Optional argument
     ///    The initial number of hash table buckets. Must be a power
     ///    to 2.
     /// </param>
     /// <param name="max_load_factor">
+    ///    Optional argument
     ///    The maximum ratio between number of entries and number of
     ///    buckets before growing the table. Must be between 0 and 1.
+    /// </param>
+    /// <param name="value_dtype">
+    ///    Type of the table values.
     /// </param>
     /// <returns>
     ///    Handle to a table.
@@ -18696,30 +18829,35 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MutableDenseHashTableV2'.
     /// <param>
-    /// <param name="value_dtype">
-    ///    Optional argument
-    ///    Type of the table values.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this table is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this table is shared under the given name across
     ///    multiple sessions.
     /// </param>
     /// <param name="use_node_name_sharing">
+    ///    Optional argument
     /// </param>
     /// <param name="value_shape">
+    ///    Optional argument
     ///    The shape of each value.
     /// </param>
     /// <param name="initial_num_buckets">
+    ///    Optional argument
     ///    The initial number of hash table buckets. Must be a power
     ///    to 2.
     /// </param>
     /// <param name="max_load_factor">
+    ///    Optional argument
     ///    The maximum ratio between number of entries and number of
     ///    buckets before growing the table. Must be between 0 and 1.
+    /// </param>
+    /// <param name="value_dtype">
+    ///    Type of the table values.
     /// </param>
     /// <returns>
     ///    Handle to a table.
@@ -18758,25 +18896,26 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MutableHashTable'.
     /// <param>
-    /// <param name="key_dtype">
-    ///    Optional argument
-    ///    Type of the table keys.
-    /// </param>
-    /// <param name="value_dtype">
-    ///    Optional argument
-    ///    Type of the table values.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this table is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this table is shared under the given name across
     ///    multiple sessions.
     /// </param>
     /// <param name="use_node_name_sharing">
+    ///    Optional argument
     ///    If true and shared_name is empty, the table is shared
     ///    using the node name.
+    /// </param>
+    /// <param name="key_dtype">
+    ///    Type of the table keys.
+    /// </param>
+    /// <param name="value_dtype">
+    ///    Type of the table values.
     /// </param>
     /// <returns>
     ///    Handle to a table.
@@ -18809,25 +18948,27 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MutableHashTableOfTensors'.
     /// <param>
-    /// <param name="key_dtype">
-    ///    Optional argument
-    ///    Type of the table keys.
-    /// </param>
-    /// <param name="value_dtype">
-    ///    Optional argument
-    ///    Type of the table values.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this table is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this table is shared under the given name across
     ///    multiple sessions.
     /// </param>
     /// <param name="use_node_name_sharing">
+    ///    Optional argument
     /// </param>
     /// <param name="value_shape">
+    ///    Optional argument
+    /// </param>
+    /// <param name="key_dtype">
+    ///    Type of the table keys.
+    /// </param>
+    /// <param name="value_dtype">
+    ///    Type of the table values.
     /// </param>
     /// <returns>
     ///    Handle to a table.
@@ -18861,25 +19002,27 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MutableHashTableOfTensorsV2'.
     /// <param>
-    /// <param name="key_dtype">
-    ///    Optional argument
-    ///    Type of the table keys.
-    /// </param>
-    /// <param name="value_dtype">
-    ///    Optional argument
-    ///    Type of the table values.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this table is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this table is shared under the given name across
     ///    multiple sessions.
     /// </param>
     /// <param name="use_node_name_sharing">
+    ///    Optional argument
     /// </param>
     /// <param name="value_shape">
+    ///    Optional argument
+    /// </param>
+    /// <param name="key_dtype">
+    ///    Type of the table keys.
+    /// </param>
+    /// <param name="value_dtype">
+    ///    Type of the table values.
     /// </param>
     /// <returns>
     ///    Handle to a table.
@@ -18913,25 +19056,26 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MutableHashTableV2'.
     /// <param>
-    /// <param name="key_dtype">
-    ///    Optional argument
-    ///    Type of the table keys.
-    /// </param>
-    /// <param name="value_dtype">
-    ///    Optional argument
-    ///    Type of the table values.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this table is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this table is shared under the given name across
     ///    multiple sessions.
     /// </param>
     /// <param name="use_node_name_sharing">
+    ///    Optional argument
     ///    If true and shared_name is empty, the table is shared
     ///    using the node name.
+    /// </param>
+    /// <param name="key_dtype">
+    ///    Type of the table keys.
+    /// </param>
+    /// <param name="value_dtype">
+    ///    Type of the table values.
     /// </param>
     /// <returns>
     ///    Handle to a table.
@@ -19032,10 +19176,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'MutexV2'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this variable is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this variable is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
     /// </param>
@@ -19103,11 +19249,9 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'NegTrain'.
     /// <param>
     /// <param name="vocab_count">
-    ///    Optional argument
     ///    Count of words in the vocabulary.
     /// </param>
     /// <param name="num_negative_samples">
-    ///    Optional argument
     ///    Number of negative samples per example.
     /// </param>
     /// <returns>
@@ -19188,6 +19332,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'NonMaxSuppression'.
     /// <param>
     /// <param name="iou_threshold">
+    ///    Optional argument
     ///    A float representing the threshold for deciding whether boxes
     ///    overlap too much with respect to IOU.
     /// </param>
@@ -19381,6 +19526,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'NonMaxSuppressionV4'.
     /// <param>
     /// <param name="pad_to_max_output_size">
+    ///    Optional argument
     ///    If true, the output <c>selected_indices<c> is padded to be of length
     ///    <c>max_output_size<c>. Defaults to false.
     /// </param>
@@ -19537,6 +19683,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'NthElement'.
     /// <param>
     /// <param name="reverse">
+    ///    Optional argument
     ///    When set to True, find the nth-largest value in the vector and vice
     ///    versa.
     /// </param>
@@ -19586,6 +19733,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OneHot'.
     /// <param>
     /// <param name="axis">
+    ///    Optional argument
     ///    The axis to fill (default: -1, a new inner-most axis).
     /// </param>
     /// <returns>
@@ -19739,10 +19887,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OptimizeDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -19797,10 +19943,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OptionalGetValue'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -19868,16 +20012,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OrderedMapClear'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -19901,16 +20048,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OrderedMapIncompleteSize'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -19941,16 +20091,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OrderedMapPeek'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -19984,16 +20137,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OrderedMapSize'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -20029,21 +20185,24 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OrderedMapStage'.
     /// <param>
-    /// <param name="dtypes">
-    ///    Optional argument
-    /// </param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    Maximum number of elements in the Staging Area. If &amp;gt; 0, inserts
     ///    on the container will block when the capacity is reached.
     /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this queue is placed in the given container. Otherwise,
     ///    a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    It is necessary to match this name to the matching Unstage Op.
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -20077,16 +20236,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OrderedMapUnstage'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -20121,16 +20283,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OrderedMapUnstageNoKey'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -20167,18 +20332,17 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OutfeedDequeue'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The type of elements in the tensor.
-    /// </param>
-    /// <param name="shape">
-    ///    Optional argument
-    ///    The shape of the tensor.
-    /// </param>
     /// <param name="device_ordinal">
+    ///    Optional argument
     ///    The TPU device to use. This should be -1 when the Op
     ///    is running on a TPU device, and &amp;gt;= 0 when the Op is running on the CPU
     ///    device.
+    /// </param>
+    /// <param name="dtype">
+    ///    The type of elements in the tensor.
+    /// </param>
+    /// <param name="shape">
+    ///    The shape of the tensor.
     /// </param>
     /// <returns>
     ///    A tensor that will be read from the device outfeed.
@@ -20207,18 +20371,17 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'OutfeedDequeueTuple'.
     /// <param>
-    /// <param name="dtypes">
-    ///    Optional argument
-    ///    The element types of each element in <c>outputs<c>.
-    /// </param>
-    /// <param name="shapes">
-    ///    Optional argument
-    ///    The shapes of each tensor in <c>outputs<c>.
-    /// </param>
     /// <param name="device_ordinal">
+    ///    Optional argument
     ///    The TPU device to use. This should be -1 when the Op
     ///    is running on a TPU device, and &amp;gt;= 0 when the Op is running on the CPU
     ///    device.
+    /// </param>
+    /// <param name="dtypes">
+    ///    The element types of each element in <c>outputs<c>.
+    /// </param>
+    /// <param name="shapes">
+    ///    The shapes of each tensor in <c>outputs<c>.
     /// </param>
     /// <returns>
     ///    A list of tensors that will be read from the outfeed.
@@ -20294,10 +20457,8 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Pack'.
     /// <param>
-    /// <param name="n">
-    ///    Optional argument
-    /// </param>
     /// <param name="axis">
+    ///    Optional argument
     ///    Dimension along which to pack.  Negative values wrap around, so the
     ///    valid range is <c>[-(R+1), R+1)<c>.
     /// </param>
@@ -20326,12 +20487,11 @@ type TFGraph with
     ///    
     ///    This is the opposite of <c>unpack<c>.
     /// </remarks>
-    member graph.Pack (values : TFOutput[], n : int64, ?axis : int64,  ?name : string) : TFOutput =
+    member graph.Pack (values : TFOutput[], ?axis : int64,  ?name : string) : TFOutput =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "Pack", graph.MakeName ("Pack", name))
         desc.AddInputs (values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
         axis |> Option.iter (fun axis -> desc.SetAttr ("axis", axis) |> ignore)
         let op = desc.FinishOperation ()
         let mutable _idx = 0
@@ -20469,7 +20629,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'PaddedBatchDataset'.
     /// <param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -20517,7 +20676,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'PaddedBatchDatasetV2'.
     /// <param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -20545,11 +20703,8 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'PaddingFIFOQueue'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a value.
-    /// </param>
     /// <param name="shapes">
+    ///    Optional argument
     ///    The shape of each component in a value. The length of this attr must
     ///    be either 0 or the same as the length of component_types.
     ///    Shapes of fixed rank but variable size are allowed by setting
@@ -20560,16 +20715,22 @@ type TFGraph with
     ///    different ranks and shapes, but only one element may be dequeued at a time.
     /// </param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    The upper bound on the number of elements in this queue.
     ///    Negative numbers mean no limit.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this queue is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this queue will be shared under the given name
     ///    across multiple sessions.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a value.
     /// </param>
     /// <returns>
     ///    The handle to the queue.
@@ -20602,11 +20763,8 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'PaddingFIFOQueueV2'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a value.
-    /// </param>
     /// <param name="shapes">
+    ///    Optional argument
     ///    The shape of each component in a value. The length of this attr must
     ///    be either 0 or the same as the length of component_types.
     ///    Shapes of fixed rank but variable size are allowed by setting
@@ -20617,16 +20775,22 @@ type TFGraph with
     ///    different ranks and shapes, but only one element may be dequeued at a time.
     /// </param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    The upper bound on the number of elements in this queue.
     ///    Negative numbers mean no limit.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this queue is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this queue will be shared under the given name
     ///    across multiple sessions.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a value.
     /// </param>
     /// <returns>
     ///    The handle to the queue.
@@ -20663,11 +20827,7 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ParallelConcat'.
     /// <param>
-    /// <param name="n">
-    ///    Optional argument
-    /// </param>
     /// <param name="shape">
-    ///    Optional argument
     ///    the final shape of the result; should be equal to the shapes of any input
     ///    but with the number of input values in the first dimension.
     /// </param>
@@ -20693,12 +20853,11 @@ type TFGraph with
     ///    will copy pieces of the input into the output as they become available, in
     ///    some situations this can provide a performance benefit.
     /// </remarks>
-    member graph.ParallelConcat (values : TFOutput[], n : int64, shape : TFShape,  ?name : string) : TFOutput =
+    member graph.ParallelConcat (values : TFOutput[], shape : TFShape,  ?name : string) : TFOutput =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "ParallelConcat", graph.MakeName ("ParallelConcat", name))
         desc.AddInputs (values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
         desc.SetAttr ("shape", shape) |> ignore
         let op = desc.FinishOperation ()
         let mutable _idx = 0
@@ -20819,11 +20978,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ParameterizedTruncatedNormal'.
     /// <param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either <c>seed<c> or <c>seed2<c> are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
     /// </param>
     /// <returns>
@@ -20891,14 +21052,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ParseExample'.
     /// <param>
     /// <param name="sparse_types">
-    ///    Optional argument
     ///    A list of Nsparse types; the data types of data in each Feature
     ///    given in sparse_keys.
     ///    Currently the ParseExample supports DT_FLOAT (FloatList),
     ///    DT_INT64 (Int64List), and DT_STRING (BytesList).
     /// </param>
     /// <param name="dense_shapes">
-    ///    Optional argument
     ///    A list of Ndense shapes; the shapes of data in each Feature
     ///    given in dense_keys.
     ///    The number of elements in the Feature corresponding to dense_key[j]
@@ -20958,23 +21117,19 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ParseExampleDataset'.
     /// <param>
     /// <param name="sparse_keys">
-    ///    Optional argument
     ///    A list of string keys in the examples features.
     ///    The results for these keys will be returned as <c>SparseTensor<c> objects.
     /// </param>
     /// <param name="dense_keys">
-    ///    Optional argument
     ///    A list of Ndense string Tensors (scalars).
     ///    The keys expected in the Examples features associated with dense values.
     /// </param>
     /// <param name="sparse_types">
-    ///    Optional argument
     ///    A list of <c>DTypes<c> of the same length as <c>sparse_keys<c>.
     ///    Only <c>tf.float32<c> (<c>FloatList<c>), <c>tf.int64<c> (<c>Int64List<c>),
     ///    and <c>tf.string<c> (<c>BytesList<c>) are supported.
     /// </param>
     /// <param name="dense_shapes">
-    ///    Optional argument
     ///    List of tuples with the same length as <c>dense_keys<c>.
     ///    The shape of the data for each dense feature referenced by <c>dense_keys<c>.
     ///    Required for any input tensors identified by <c>dense_keys<c>.  Must be
@@ -20986,11 +21141,9 @@ type TFGraph with
     ///    given feature along this dimension.
     /// </param>
     /// <param name="output_types">
-    ///    Optional argument
     ///    The type list for the return values.
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     ///    The list of shapes being produced.
     /// </param>
     /// <returns>
@@ -21042,54 +21195,30 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ParseSequenceExample'.
     /// <param>
-    /// <param name="feature_list_dense_missing_assumed_empty">
-    ///    Optional argument
-    ///    A vector listing the
-    ///    FeatureList keys which may be missing from the SequenceExamples.  If the
-    ///    associated FeatureList is missing, it is treated as empty.  By default,
-    ///    any FeatureList not listed in this vector must exist in the SequenceExamples.
-    /// </param>
-    /// <param name="context_sparse_keys">
-    ///    Optional argument
-    ///    A list of Ncontext_sparse string Tensors (scalars).
-    ///    The keys expected in the Examples' features associated with context_sparse
-    ///    values.
-    /// </param>
-    /// <param name="context_dense_keys">
-    ///    Optional argument
-    ///    A list of Ncontext_dense string Tensors (scalars).
-    ///    The keys expected in the SequenceExamples' context features associated with
-    ///    dense values.
-    /// </param>
-    /// <param name="feature_list_sparse_keys">
-    ///    Optional argument
-    ///    A list of Nfeature_list_sparse string Tensors
-    ///    (scalars).  The keys expected in the FeatureLists associated with sparse
-    ///    values.
-    /// </param>
-    /// <param name="feature_list_dense_keys">
-    ///    Optional argument
-    ///    A list of Nfeature_list_dense string Tensors (scalars).
-    ///    The keys expected in the SequenceExamples' feature_lists associated
-    ///    with lists of dense values.
-    /// </param>
     /// <param name="nContext_sparse">
+    ///    Optional argument
     /// </param>
     /// <param name="nContext_dense">
+    ///    Optional argument
     /// </param>
     /// <param name="nFeature_list_sparse">
+    ///    Optional argument
     /// </param>
     /// <param name="nFeature_list_dense">
+    ///    Optional argument
     /// </param>
     /// <param name="context_sparse_types">
+    ///    Optional argument
     ///    A list of Ncontext_sparse types; the data types of data in
     ///    each context Feature given in context_sparse_keys.
     ///    Currently the ParseSingleSequenceExample supports DT_FLOAT (FloatList),
     ///    DT_INT64 (Int64List), and DT_STRING (BytesList).
     /// </param>
     /// <param name="feature_list_dense_types">
+    ///    Optional argument
     /// </param>
     /// <param name="context_dense_shapes">
+    ///    Optional argument
     ///    A list of Ncontext_dense shapes; the shapes of data in
     ///    each context Feature given in context_dense_keys.
     ///    The number of elements in the Feature corresponding to context_dense_key[j]
@@ -21097,17 +21226,45 @@ type TFGraph with
     ///    The shape of context_dense_values[j] will match context_dense_shapes[j].
     /// </param>
     /// <param name="feature_list_sparse_types">
+    ///    Optional argument
     ///    A list of Nfeature_list_sparse types; the data types
     ///    of data in each FeatureList given in feature_list_sparse_keys.
     ///    Currently the ParseSingleSequenceExample supports DT_FLOAT (FloatList),
     ///    DT_INT64 (Int64List), and DT_STRING (BytesList).
     /// </param>
     /// <param name="feature_list_dense_shapes">
+    ///    Optional argument
     ///    A list of Nfeature_list_dense shapes; the shapes of
     ///    data in each FeatureList given in feature_list_dense_keys.
     ///    The shape of each Feature in the FeatureList corresponding to
     ///    feature_list_dense_key[j] must always equal
     ///    feature_list_dense_shapes[j].NumEntries().
+    /// </param>
+    /// <param name="feature_list_dense_missing_assumed_empty">
+    ///    A vector listing the
+    ///    FeatureList keys which may be missing from the SequenceExamples.  If the
+    ///    associated FeatureList is missing, it is treated as empty.  By default,
+    ///    any FeatureList not listed in this vector must exist in the SequenceExamples.
+    /// </param>
+    /// <param name="context_sparse_keys">
+    ///    A list of Ncontext_sparse string Tensors (scalars).
+    ///    The keys expected in the Examples' features associated with context_sparse
+    ///    values.
+    /// </param>
+    /// <param name="context_dense_keys">
+    ///    A list of Ncontext_dense string Tensors (scalars).
+    ///    The keys expected in the SequenceExamples' context features associated with
+    ///    dense values.
+    /// </param>
+    /// <param name="feature_list_sparse_keys">
+    ///    A list of Nfeature_list_sparse string Tensors
+    ///    (scalars).  The keys expected in the FeatureLists associated with sparse
+    ///    values.
+    /// </param>
+    /// <param name="feature_list_dense_keys">
+    ///    A list of Nfeature_list_dense string Tensors (scalars).
+    ///    The keys expected in the SequenceExamples' feature_lists associated
+    ///    with lists of dense values.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -21180,29 +21337,24 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ParseSingleExample'.
     /// <param>
     /// <param name="num_sparse">
-    ///    Optional argument
     ///    The number of sparse features to be parsed from the example. This
     ///    must match the lengths of <c>sparse_keys<c> and <c>sparse_types<c>.
     /// </param>
     /// <param name="sparse_keys">
-    ///    Optional argument
     ///    A list of <c>num_sparse<c> strings.
     ///    The keys expected in the Examples' features associated with sparse values.
     /// </param>
     /// <param name="dense_keys">
-    ///    Optional argument
     ///    The keys expected in the Examples' features associated with dense
     ///    values.
     /// </param>
     /// <param name="sparse_types">
-    ///    Optional argument
     ///    A list of <c>num_sparse<c> types; the data types of data in each
     ///    Feature given in sparse_keys.
     ///    Currently the ParseSingleExample op supports DT_FLOAT (FloatList),
     ///    DT_INT64 (Int64List), and DT_STRING (BytesList).
     /// </param>
     /// <param name="dense_shapes">
-    ///    Optional argument
     ///    The shapes of data in each Feature given in dense_keys.
     ///    The length of this list must match the length of <c>dense_keys<c>.  The
     ///    number of elements in the Feature corresponding to dense_key[j] must
@@ -21295,14 +21447,17 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ParseSingleSequenceExample'.
     /// <param>
     /// <param name="context_sparse_types">
+    ///    Optional argument
     ///    A list of Ncontext_sparse types; the data types of data in
     ///    each context Feature given in context_sparse_keys.
     ///    Currently the ParseSingleSequenceExample supports DT_FLOAT (FloatList),
     ///    DT_INT64 (Int64List), and DT_STRING (BytesList).
     /// </param>
     /// <param name="feature_list_dense_types">
+    ///    Optional argument
     /// </param>
     /// <param name="context_dense_shapes">
+    ///    Optional argument
     ///    A list of Ncontext_dense shapes; the shapes of data in
     ///    each context Feature given in context_dense_keys.
     ///    The number of elements in the Feature corresponding to context_dense_key[j]
@@ -21310,12 +21465,14 @@ type TFGraph with
     ///    The shape of context_dense_values[j] will match context_dense_shapes[j].
     /// </param>
     /// <param name="feature_list_sparse_types">
+    ///    Optional argument
     ///    A list of Nfeature_list_sparse types; the data types
     ///    of data in each FeatureList given in feature_list_sparse_keys.
     ///    Currently the ParseSingleSequenceExample supports DT_FLOAT (FloatList),
     ///    DT_INT64 (Int64List), and DT_STRING (BytesList).
     /// </param>
     /// <param name="feature_list_dense_shapes">
+    ///    Optional argument
     ///    A list of Nfeature_list_dense shapes; the shapes of
     ///    data in each FeatureList given in feature_list_dense_keys.
     ///    The shape of each Feature in the FeatureList corresponding to
@@ -21366,7 +21523,7 @@ type TFGraph with
         
 
     /// <summary>
-    ///    Transforms a serialized tensorflow.TensorProto proto into a TFTensor.
+    ///    Transforms a serialized tensorflow.TensorProto proto into a Tensor.
     /// </summary>
     /// <param name="serialized">
     ///    A scalar string containing a serialized TensorProto proto.
@@ -21375,7 +21532,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ParseTensor'.
     /// <param>
     /// <param name="out_type">
-    ///    Optional argument
     ///    The type of the serialized tensor.  The provided type must match the
     ///    type of the serialized tensor and no implicit conversion will take place.
     /// </param>
@@ -21402,13 +21558,13 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Placeholder'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The type of elements in the tensor.
-    /// </param>
     /// <param name="shape">
+    ///    Optional argument
     ///    (Optional) The shape of the tensor. If the shape has 0 dimensions, the
     ///    shape is unconstrained.
+    /// </param>
+    /// <param name="dtype">
+    ///    The type of elements in the tensor.
     /// </param>
     /// <returns>
     ///    A placeholder tensor that must be replaced using the feed mechanism.
@@ -21439,11 +21595,9 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'PlaceholderV2'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    The type of elements in the tensor.
     /// </param>
     /// <param name="shape">
-    ///    Optional argument
     ///    The shape of the tensor. The shape can be any partially-specified
     ///    shape.  To be unconstrained, pass in a shape with unknown rank.
     /// </param>
@@ -21479,7 +21633,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'PlaceholderWithDefault'.
     /// <param>
     /// <param name="shape">
-    ///    Optional argument
     ///    The (possibly partial) shape of the tensor.
     /// </param>
     /// <returns>
@@ -21613,10 +21766,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'PrefetchDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -21646,6 +21797,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'PreventGradient'.
     /// <param>
     /// <param name="message">
+    ///    Optional argument
     ///    Will be printed in the error when anyone tries to differentiate
     ///    this operation.
     /// </param>
@@ -21688,12 +21840,15 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Print'.
     /// <param>
     /// <param name="message">
+    ///    Optional argument
     ///    A string, prefix of the error message.
     /// </param>
     /// <param name="first_n">
+    ///    Optional argument
     ///    Only log <c>first_n<c> number of times. -1 disables logging.
     /// </param>
     /// <param name="summarize">
+    ///    Optional argument
     ///    Only print this many entries of each tensor.
     /// </param>
     /// <returns>
@@ -21725,27 +21880,30 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'PriorityQueue'.
     /// <param>
-    /// <param name="shapes">
-    ///    Optional argument
-    ///    The shape of each component in a value. The length of this attr must
-    ///    be either 0 or the same as the length of component_types. If the length of
-    ///    this attr is 0, the shapes of queue elements are not constrained, and
-    ///    only one element may be dequeued at a time.
-    /// </param>
     /// <param name="component_types">
+    ///    Optional argument
     ///    The type of each component in a value.
     /// </param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    The upper bound on the number of elements in this queue.
     ///    Negative numbers mean no limit.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this queue is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this queue will be shared under the given name
     ///    across multiple sessions.
+    /// </param>
+    /// <param name="shapes">
+    ///    The shape of each component in a value. The length of this attr must
+    ///    be either 0 or the same as the length of component_types. If the length of
+    ///    this attr is 0, the shapes of queue elements are not constrained, and
+    ///    only one element may be dequeued at a time.
     /// </param>
     /// <returns>
     ///    The handle to the queue.
@@ -21780,27 +21938,30 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'PriorityQueueV2'.
     /// <param>
-    /// <param name="shapes">
-    ///    Optional argument
-    ///    The shape of each component in a value. The length of this attr must
-    ///    be either 0 or the same as the length of component_types. If the length of
-    ///    this attr is 0, the shapes of queue elements are not constrained, and
-    ///    only one element may be dequeued at a time.
-    /// </param>
     /// <param name="component_types">
+    ///    Optional argument
     ///    The type of each component in a value.
     /// </param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    The upper bound on the number of elements in this queue.
     ///    Negative numbers mean no limit.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this queue is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this queue will be shared under the given name
     ///    across multiple sessions.
+    /// </param>
+    /// <param name="shapes">
+    ///    The shape of each component in a value. The length of this attr must
+    ///    be either 0 or the same as the length of component_types. If the length of
+    ///    this attr is 0, the shapes of queue elements are not constrained, and
+    ///    only one element may be dequeued at a time.
     /// </param>
     /// <returns>
     ///    The handle to the queue.
@@ -21843,6 +22004,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Prod'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If true, retain reduced dimensions with length 1.
     /// </param>
     /// <returns>
@@ -21880,6 +22042,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Qr'.
     /// <param>
     /// <param name="full_matrices">
+    ///    Optional argument
     ///    If true, compute full-sized <c>q<c> and <c>r<c>. If false
     ///    (the default), compute only the leading <c>P<c> columns of <c>q<c>.
     /// </param>
@@ -21928,14 +22091,19 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizeAndDequantize'.
     /// <param>
     /// <param name="signed_input">
+    ///    Optional argument
     /// </param>
     /// <param name="num_bits">
+    ///    Optional argument
     /// </param>
     /// <param name="range_given">
+    ///    Optional argument
     /// </param>
     /// <param name="input_min">
+    ///    Optional argument
     /// </param>
     /// <param name="input_max">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -21977,13 +22145,16 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizeAndDequantizeV2'.
     /// <param>
     /// <param name="signed_input">
+    ///    Optional argument
     ///    Whether the quantization is signed or unsigned. (actually this parameter should
     ///    have been called &amp;lt;b&amp;gt;<c>signed_output<c>&amp;lt;/b&amp;gt;)
     /// </param>
     /// <param name="num_bits">
+    ///    Optional argument
     ///    The bitwidth of the quantization.
     /// </param>
     /// <param name="range_given">
+    ///    Optional argument
     ///    Whether the range is given or should be determined from the <c>input<c> tensor.
     /// </param>
     /// <returns>
@@ -22073,8 +22244,10 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizeAndDequantizeV3'.
     /// <param>
     /// <param name="signed_input">
+    ///    Optional argument
     /// </param>
     /// <param name="range_given">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -22115,7 +22288,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizeDownAndShrinkRange'.
     /// <param>
     /// <param name="out_type">
-    ///    Optional argument
     ///    The type of the output. Should be a lower bit depth than Tinput.
     /// </param>
     /// <returns>
@@ -22182,12 +22354,13 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizeV2'.
     /// <param>
-    /// <param name="t">
+    /// <param name="mode">
     ///    Optional argument
     /// </param>
-    /// <param name="mode">
-    /// </param>
     /// <param name="round_mode">
+    ///    Optional argument
+    /// </param>
+    /// <param name="t">
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -22340,6 +22513,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedAdd'.
     /// <param>
     /// <param name="tOutput">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -22389,17 +22563,14 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedAvgPool'.
     /// <param>
     /// <param name="ksize">
-    ///    Optional argument
     ///    The size of the window for each dimension of the input tensor.
     ///    The length must be 4 to match the number of dimensions of the input.
     /// </param>
     /// <param name="strides">
-    ///    Optional argument
     ///    The stride of the sliding window for each dimension of the input
     ///    tensor.  The length must be 4 to match the number of dimensions of the input.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
@@ -22434,7 +22605,7 @@ type TFGraph with
     ///    Quantized Batch normalization.
     /// </summary>
     /// <param name="t">
-    ///    A 4D input TFTensor.
+    ///    A 4D input Tensor.
     /// </param>
     /// <param name="t_min">
     ///    The value represented by the lowest quantized input.
@@ -22489,14 +22660,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedBatchNormWithGlobalNormalization'.
     /// <param>
     /// <param name="out_type">
-    ///    Optional argument
     /// </param>
     /// <param name="variance_epsilon">
-    ///    Optional argument
     ///    A small float number to avoid dividing by 0.
     /// </param>
     /// <param name="scale_after_normalization">
-    ///    Optional argument
     ///    A bool indicating whether the resulted tensor
     ///    needs to be multiplied with gamma.
     /// </param>
@@ -22568,7 +22736,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedBiasAdd'.
     /// <param>
     /// <param name="out_type">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -22673,23 +22840,23 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedConv2D'.
     /// <param>
-    /// <param name="strides">
-    ///    Optional argument
-    ///    The stride of the sliding window for each dimension of the input
-    ///    tensor.
-    /// </param>
-    /// <param name="padding">
-    ///    Optional argument
-    ///    The type of padding algorithm to use.
-    /// </param>
     /// <param name="out_type">
+    ///    Optional argument
     /// </param>
     /// <param name="dilations">
+    ///    Optional argument
     ///    1-D tensor of length 4.  The dilation factor for each dimension of
     ///    <c>input<c>. If set to k &amp;gt; 1, there will be k-1 skipped cells between each
     ///    filter element on that dimension. The dimension order is determined by the
     ///    value of <c>data_format<c>, see above for details. Dilations in the batch and
     ///    depth dimensions must be 1.
+    /// </param>
+    /// <param name="strides">
+    ///    The stride of the sliding window for each dimension of the input
+    ///    tensor.
+    /// </param>
+    /// <param name="padding">
+    ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -22733,7 +22900,7 @@ type TFGraph with
     ///    Quantized Instance normalization.
     /// </summary>
     /// <param name="x">
-    ///    A 4D input TFTensor.
+    ///    A 4D input Tensor.
     /// </param>
     /// <param name="x_min">
     ///    The value represented by the lowest quantized input.
@@ -22745,25 +22912,30 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedInstanceNorm'.
     /// <param>
     /// <param name="output_range_given">
+    ///    Optional argument
     ///    If True, <c>given_y_min<c> and <c>given_y_min<c>
     ///    and <c>given_y_max<c> are used as the output range. Otherwise,
     ///    the implementation computes the output range.
     /// </param>
     /// <param name="given_y_min">
+    ///    Optional argument
     ///    Output in <c>y_min<c> if <c>output_range_given<c> is True.
     /// </param>
     /// <param name="given_y_max">
+    ///    Optional argument
     ///    Output in <c>y_max<c> if <c>output_range_given<c> is True.
     /// </param>
     /// <param name="variance_epsilon">
+    ///    Optional argument
     ///    A small float number to avoid dividing by 0.
     /// </param>
     /// <param name="min_separation">
+    ///    Optional argument
     ///    Minimum value of <c>y_max - y_min<c>
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
-    ///    y : A 4D TFTensor.
+    ///    y : A 4D Tensor.
     ///    y_min : The value represented by the lowest quantized output.
     ///    y_max : The value represented by the highest quantized output.
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
@@ -22816,14 +22988,18 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedMatMul'.
     /// <param>
     /// <param name="tOutput">
+    ///    Optional argument
     /// </param>
     /// <param name="transpose_a">
+    ///    Optional argument
     ///    If true, <c>a<c> is transposed before multiplication.
     /// </param>
     /// <param name="transpose_b">
+    ///    Optional argument
     ///    If true, <c>b<c> is transposed before multiplication.
     /// </param>
     /// <param name="tActivation">
+    ///    Optional argument
     ///    The type of output produced by activation function
     ///    following this operation.
     /// </param>
@@ -22881,17 +23057,14 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedMaxPool'.
     /// <param>
     /// <param name="ksize">
-    ///    Optional argument
     ///    The size of the window for each dimension of the input tensor.
     ///    The length must be 4 to match the number of dimensions of the input.
     /// </param>
     /// <param name="strides">
-    ///    Optional argument
     ///    The stride of the sliding window for each dimension of the input
     ///    tensor. The length must be 4 to match the number of dimensions of the input.
     /// </param>
     /// <param name="padding">
-    ///    Optional argument
     ///    The type of padding algorithm to use.
     /// </param>
     /// <returns>
@@ -22945,6 +23118,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedMul'.
     /// <param>
     /// <param name="tOutput">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -22993,6 +23167,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedRelu'.
     /// <param>
     /// <param name="out_type">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -23035,6 +23210,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedRelu6'.
     /// <param>
     /// <param name="out_type">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -23079,6 +23255,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedReluX'.
     /// <param>
     /// <param name="out_type">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -23171,6 +23348,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QuantizedResizeBilinear'.
     /// <param>
     /// <param name="align_corners">
+    ///    Optional argument
     ///    If true, the centers of the 4 corner pixels of the input and output tensors are
     ///    aligned, preserving the values at the corner pixels. Defaults to false.
     /// </param>
@@ -23215,6 +23393,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueClose'.
     /// <param>
     /// <param name="cancel_pending_enqueues">
+    ///    Optional argument
     ///    If true, all pending enqueue requests that are
     ///    blocked on the given queue will be canceled.
     /// </param>
@@ -23248,6 +23427,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueCloseV2'.
     /// <param>
     /// <param name="cancel_pending_enqueues">
+    ///    Optional argument
     ///    If true, all pending enqueue requests that are
     ///    blocked on the given queue will be canceled.
     /// </param>
@@ -23280,14 +23460,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueDequeue'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a tuple.
-    /// </param>
     /// <param name="timeout_ms">
+    ///    Optional argument
     ///    If the queue is empty, this operation will block for up to
     ///    timeout_ms milliseconds.
     ///    Note: This option is not supported yet.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a tuple.
     /// </param>
     /// <returns>
     ///    One or more tensors that were dequeued as a tuple.
@@ -23327,14 +23507,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueDequeueMany'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a tuple.
-    /// </param>
     /// <param name="timeout_ms">
+    ///    Optional argument
     ///    If the queue has fewer than n elements, this operation
     ///    will block for up to timeout_ms milliseconds.
     ///    Note: This option is not supported yet.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a tuple.
     /// </param>
     /// <returns>
     ///    One or more tensors that were dequeued as a tuple.
@@ -23382,14 +23562,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueDequeueManyV2'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a tuple.
-    /// </param>
     /// <param name="timeout_ms">
+    ///    Optional argument
     ///    If the queue has fewer than n elements, this operation
     ///    will block for up to timeout_ms milliseconds.
     ///    Note: This option is not supported yet.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a tuple.
     /// </param>
     /// <returns>
     ///    One or more tensors that were dequeued as a tuple.
@@ -23437,14 +23617,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueDequeueUpTo'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a tuple.
-    /// </param>
     /// <param name="timeout_ms">
+    ///    Optional argument
     ///    If the queue has fewer than n elements, this operation
     ///    will block for up to timeout_ms milliseconds.
     ///    Note: This option is not supported yet.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a tuple.
     /// </param>
     /// <returns>
     ///    One or more tensors that were dequeued as a tuple.
@@ -23496,14 +23676,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueDequeueUpToV2'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a tuple.
-    /// </param>
     /// <param name="timeout_ms">
+    ///    Optional argument
     ///    If the queue has fewer than n elements, this operation
     ///    will block for up to timeout_ms milliseconds.
     ///    Note: This option is not supported yet.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a tuple.
     /// </param>
     /// <returns>
     ///    One or more tensors that were dequeued as a tuple.
@@ -23552,14 +23732,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueDequeueV2'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a tuple.
-    /// </param>
     /// <param name="timeout_ms">
+    ///    Optional argument
     ///    If the queue is empty, this operation will block for up to
     ///    timeout_ms milliseconds.
     ///    Note: This option is not supported yet.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a tuple.
     /// </param>
     /// <returns>
     ///    One or more tensors that were dequeued as a tuple.
@@ -23600,6 +23780,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueEnqueue'.
     /// <param>
     /// <param name="timeout_ms">
+    ///    Optional argument
     ///    If the queue is full, this operation will block for up to
     ///    timeout_ms milliseconds.
     ///    Note: This option is not supported yet.
@@ -23639,6 +23820,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueEnqueueMany'.
     /// <param>
     /// <param name="timeout_ms">
+    ///    Optional argument
     ///    If the queue is too full, this operation will block for up
     ///    to timeout_ms milliseconds.
     ///    Note: This option is not supported yet.
@@ -23682,6 +23864,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueEnqueueManyV2'.
     /// <param>
     /// <param name="timeout_ms">
+    ///    Optional argument
     ///    If the queue is too full, this operation will block for up
     ///    to timeout_ms milliseconds.
     ///    Note: This option is not supported yet.
@@ -23724,6 +23907,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'QueueEnqueueV2'.
     /// <param>
     /// <param name="timeout_ms">
+    ///    Optional argument
     ///    If the queue is full, this operation will block for up to
     ///    timeout_ms milliseconds.
     ///    Note: This option is not supported yet.
@@ -24047,11 +24231,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RandomCrop'.
     /// <param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    An second seed to avoid seed collision.
     /// </param>
     /// <returns>
@@ -24096,10 +24282,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RandomDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -24134,11 +24318,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RandomGamma'.
     /// <param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either <c>seed<c> or <c>seed2<c> are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
     /// </param>
     /// <returns>
@@ -24204,8 +24390,10 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RandomPoisson'.
     /// <param>
     /// <param name="seed">
+    ///    Optional argument
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -24240,14 +24428,17 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RandomPoissonV2'.
     /// <param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either <c>seed<c> or <c>seed2<c> are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
     /// </param>
     /// <param name="dtype">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    A tensor with shape <c>shape + shape(rate)<c>. Each slice
@@ -24292,11 +24483,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RandomShuffle'.
     /// <param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either <c>seed<c> or <c>seed2<c> are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
     /// </param>
     /// <returns>
@@ -24335,39 +24528,45 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RandomShuffleQueue'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a value.
-    /// </param>
     /// <param name="shapes">
+    ///    Optional argument
     ///    The shape of each component in a value. The length of this attr must
     ///    be either 0 or the same as the length of component_types. If the length of
     ///    this attr is 0, the shapes of queue elements are not constrained, and
     ///    only one element may be dequeued at a time.
     /// </param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    The upper bound on the number of elements in this queue.
     ///    Negative numbers mean no limit.
     /// </param>
     /// <param name="min_after_dequeue">
+    ///    Optional argument
     ///    Dequeue will block unless there would be this
     ///    many elements after the dequeue or the queue is closed. This
     ///    ensures a minimum level of mixing of elements.
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 is set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, a random seed is used.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this queue is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this queue will be shared under the given name
     ///    across multiple sessions.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a value.
     /// </param>
     /// <returns>
     ///    The handle to the queue.
@@ -24398,39 +24597,45 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RandomShuffleQueueV2'.
     /// <param>
-    /// <param name="component_types">
-    ///    Optional argument
-    ///    The type of each component in a value.
-    /// </param>
     /// <param name="shapes">
+    ///    Optional argument
     ///    The shape of each component in a value. The length of this attr must
     ///    be either 0 or the same as the length of component_types. If the length of
     ///    this attr is 0, the shapes of queue elements are not constrained, and
     ///    only one element may be dequeued at a time.
     /// </param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    The upper bound on the number of elements in this queue.
     ///    Negative numbers mean no limit.
     /// </param>
     /// <param name="min_after_dequeue">
+    ///    Optional argument
     ///    Dequeue will block unless there would be this
     ///    many elements after the dequeue or the queue is closed. This
     ///    ensures a minimum level of mixing of elements.
     /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 is set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, a random seed is used.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this queue is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this queue will be shared under the given name
     ///    across multiple sessions.
+    /// </param>
+    /// <param name="component_types">
+    ///    The type of each component in a value.
     /// </param>
     /// <returns>
     ///    The handle to the queue.
@@ -24464,17 +24669,18 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RandomStandardNormal'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The type of the output.
-    /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either <c>seed<c> or <c>seed2<c> are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
+    /// </param>
+    /// <param name="dtype">
+    ///    The type of the output.
     /// </param>
     /// <returns>
     ///    A tensor of the specified shape filled with random normal values.
@@ -24507,17 +24713,18 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RandomUniform'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The type of the output.
-    /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either <c>seed<c> or <c>seed2<c> are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
+    /// </param>
+    /// <param name="dtype">
+    ///    The type of the output.
     /// </param>
     /// <returns>
     ///    A tensor of the specified shape filled with uniform random values.
@@ -24558,11 +24765,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RandomUniformInt'.
     /// <param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either <c>seed<c> or <c>seed2<c> are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
     /// </param>
     /// <returns>
@@ -24656,10 +24865,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RangeDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -24751,7 +24958,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ReadVariableOp'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    the dtype of the value.
     /// </param>
     /// <returns>
@@ -25211,6 +25417,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Real'.
     /// <param>
     /// <param name="tOut">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -25335,29 +25542,34 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RecordInput'.
     /// <param>
-    /// <param name="file_pattern">
-    ///    Optional argument
-    ///    Glob pattern for the data files.
-    /// </param>
     /// <param name="file_random_seed">
+    ///    Optional argument
     ///    Random seeds used to produce randomized records.
     /// </param>
     /// <param name="file_shuffle_shift_ratio">
+    ///    Optional argument
     ///    Shifts the list of files after the list is randomly
     ///    shuffled.
     /// </param>
     /// <param name="file_buffer_size">
+    ///    Optional argument
     ///    The randomization shuffling buffer.
     /// </param>
     /// <param name="file_parallelism">
+    ///    Optional argument
     ///    How many sstables are opened and concurrently iterated over.
     /// </param>
     /// <param name="batch_size">
+    ///    Optional argument
     ///    The batch size.
     /// </param>
     /// <param name="compression_type">
+    ///    Optional argument
     ///    The type of compression for the file. Currently ZLIB and
     ///    GZIP are supported. Defaults to none.
+    /// </param>
+    /// <param name="file_pattern">
+    ///    Glob pattern for the data files.
     /// </param>
     /// <returns>
     ///    A tensor of shape [batch_size].
@@ -25396,9 +25608,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ReduceJoin'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If <c>True<c>, retain reduced dimensions with length <c>1<c>.
     /// </param>
     /// <param name="separator">
+    ///    Optional argument
     ///    The separator to use when joining.
     /// </param>
     /// <returns>
@@ -25455,15 +25669,16 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RefEnter'.
     /// <param>
-    /// <param name="frame_name">
-    ///    Optional argument
-    ///    The name of the child frame.
-    /// </param>
     /// <param name="is_constant">
+    ///    Optional argument
     ///    If true, the output is constant within the child frame.
     /// </param>
     /// <param name="parallel_iterations">
+    ///    Optional argument
     ///    The number of iterations allowed to run in parallel.
+    /// </param>
+    /// <param name="frame_name">
+    ///    The name of the child frame.
     /// </param>
     /// <returns>
     ///    The same tensor as <c>data<c>.
@@ -25550,9 +25765,6 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RefMerge'.
     /// <param>
-    /// <param name="n">
-    ///    Optional argument
-    /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
     ///    output : Will be set to the available input tensor.
@@ -25566,12 +25778,11 @@ type TFGraph with
     ///    <c>Merge<c> forwards the first tensor for become available to <c>output<c>, and sets
     ///    <c>value_index<c> to its index in <c>inputs<c>.
     /// </remarks>
-    member graph.RefMerge (inputs : TFOutput[], n : int64,  ?name : string) : (TFOutput*TFOutput) =
+    member graph.RefMerge (inputs : TFOutput[],  ?name : string) : (TFOutput*TFOutput) =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "RefMerge", graph.MakeName ("RefMerge", name))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
         let op = desc.FinishOperation ()
         let mutable _idx = 0
         let output = new TFOutput (op, _idx)
@@ -25618,20 +25829,16 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RefSelect'.
     /// <param>
-    /// <param name="n">
-    ///    Optional argument
-    /// </param>
     /// <returns>
     ///    The forwarded tensor.
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
-    member graph.RefSelect (index : TFOutput, inputs : TFOutput[], n : int64,  ?name : string) : TFOutput =
+    member graph.RefSelect (index : TFOutput, inputs : TFOutput[],  ?name : string) : TFOutput =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "RefSelect", graph.MakeName ("RefSelect", name))
         desc.AddInput (index) |> ignore
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
         let op = desc.FinishOperation ()
         let mutable _idx = 0
         let output = new TFOutput (op, _idx)
@@ -25731,6 +25938,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RegexReplace'.
     /// <param>
     /// <param name="replace_global">
+    ///    Optional argument
     ///    If True, the replacement is global, otherwise the replacement
     ///    is done only on the first match.
     /// </param>
@@ -25873,10 +26081,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RemoteFusedGraphExecute'.
     /// <param>
     /// <param name="tOutputs">
-    ///    Optional argument
     /// </param>
     /// <param name="serialized_remote_fused_graph_execute_info">
-    ///    Optional argument
     ///    Serialized protocol buffer
     ///    of RemoteFusedGraphExecuteInfo which contains graph specifications.
     /// </param>
@@ -25920,10 +26126,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RepeatDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -26005,7 +26209,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Requantize'.
     /// <param>
     /// <param name="out_type">
-    ///    Optional argument
     ///    The type of the output. Should be a lower bit depth than Tinput.
     /// </param>
     /// <returns>
@@ -26143,6 +26346,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResizeArea'.
     /// <param>
     /// <param name="align_corners">
+    ///    Optional argument
     ///    If true, the centers of the 4 corner pixels of the input and output tensors are
     ///    aligned, preserving the values at the corner pixels. Defaults to false.
     /// </param>
@@ -26192,6 +26396,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResizeBicubic'.
     /// <param>
     /// <param name="align_corners">
+    ///    Optional argument
     ///    If true, the centers of the 4 corner pixels of the input and output tensors are
     ///    aligned, preserving the values at the corner pixels. Defaults to false.
     /// </param>
@@ -26231,6 +26436,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResizeBicubicGrad'.
     /// <param>
     /// <param name="align_corners">
+    ///    Optional argument
     ///    If true, the centers of the 4 corner pixels of the input and grad tensors are
     ///    aligned. Defaults to false.
     /// </param>
@@ -26268,6 +26474,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResizeBilinear'.
     /// <param>
     /// <param name="align_corners">
+    ///    Optional argument
     ///    If true, the centers of the 4 corner pixels of the input and output tensors are
     ///    aligned, preserving the values at the corner pixels. Defaults to false.
     /// </param>
@@ -26307,6 +26514,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResizeBilinearGrad'.
     /// <param>
     /// <param name="align_corners">
+    ///    Optional argument
     ///    If true, the centers of the 4 corner pixels of the input and grad tensors are
     ///    aligned. Defaults to false.
     /// </param>
@@ -26344,6 +26552,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResizeNearestNeighbor'.
     /// <param>
     /// <param name="align_corners">
+    ///    Optional argument
     ///    If true, the centers of the 4 corner pixels of the input and output tensors are
     ///    aligned, preserving the values at the corner pixels. Defaults to false.
     /// </param>
@@ -26380,6 +26589,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResizeNearestNeighborGrad'.
     /// <param>
     /// <param name="align_corners">
+    ///    Optional argument
     ///    If true, the centers of the 4 corner pixels of the input and grad tensors are
     ///    aligned. Defaults to false.
     /// </param>
@@ -26436,6 +26646,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyAdaMax'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, m, and v tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -26494,6 +26705,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyAdadelta'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var, accum and update_accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -26541,11 +26753,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyAdagrad'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
     /// </param>
     /// <param name="update_slots">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -26599,6 +26813,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyAdagradDA'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var and accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -26659,11 +26874,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyAdam'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, m, and v tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
     /// </param>
     /// <param name="use_nesterov">
+    ///    Optional argument
     ///    If <c>True<c>, uses the nesterov update.
     /// </param>
     /// <returns>
@@ -26723,6 +26940,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyAddSign'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and m tensors is
     ///    protected by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -26784,6 +27002,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyCenteredRMSProp'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, mg, ms, and mom tensors is
     ///    protected by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -26860,6 +27079,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyFtrl'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -26924,6 +27144,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyFtrlV2'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -26974,6 +27195,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyGradientDescent'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, the subtraction will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -27014,11 +27236,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyMomentum'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
     /// </param>
     /// <param name="use_nesterov">
+    ///    Optional argument
     ///    If <c>True<c>, the tensor passed to compute grad will be
     ///    var - lr * momentum * accum, so in the end, the var you get is actually
     ///    var - lr * momentum * accum.
@@ -27075,6 +27299,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyPowerSign'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and m tensors is
     ///    protected by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -27128,6 +27353,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyProximalAdagrad'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var and accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -27176,6 +27402,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyProximalGradientDescent'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the subtraction will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -27230,6 +27457,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceApplyRMSProp'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, ms, and mom tensors is protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -27276,12 +27504,10 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceCountUpTo'.
     /// <param>
     /// <param name="limit">
-    ///    Optional argument
     ///    If incrementing ref would bring it above limit, instead generates an
     ///    'OutOfRange' error.
     /// </param>
     /// <param name="t">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    A copy of the input before increment. If nothing else modifies the
@@ -27312,10 +27538,10 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceGather'.
     /// <param>
-    /// <param name="dtype">
+    /// <param name="validate_indices">
     ///    Optional argument
     /// </param>
-    /// <param name="validate_indices">
+    /// <param name="dtype">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -27607,17 +27833,18 @@ type TFGraph with
     ///    A resource handle. Must be from a VarHandleOp.
     /// </param>
     /// <param name="indices">
-    ///    A TFTensor. Must be one of the following types: int32, int64.
+    ///    A Tensor. Must be one of the following types: int32, int64.
     ///    A tensor of indices into ref.
     /// </param>
     /// <param name="updates">
-    ///    A TFTensor. Must have the same type as ref. A tensor of
+    ///    A Tensor. Must have the same type as ref. A tensor of
     ///    values to add to ref.
     /// </param>
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceScatterNdAdd'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    An optional bool. Defaults to True. If True, the assignment will
     ///    be protected by a lock; otherwise the behavior is undefined,
     ///    but may exhibit less contention.
@@ -27681,17 +27908,18 @@ type TFGraph with
     ///    A resource handle. Must be from a VarHandleOp.
     /// </param>
     /// <param name="indices">
-    ///    A TFTensor. Must be one of the following types: int32, int64.
+    ///    A Tensor. Must be one of the following types: int32, int64.
     ///    A tensor of indices into ref.
     /// </param>
     /// <param name="updates">
-    ///    A TFTensor. Must have the same type as ref. A tensor of updated
+    ///    A Tensor. Must have the same type as ref. A tensor of updated
     ///    values to add to ref.
     /// </param>
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceScatterNdUpdate'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    An optional bool. Defaults to True. If True, the assignment will
     ///    be protected by a lock; otherwise the behavior is undefined,
     ///    but may exhibit less contention.
@@ -27869,6 +28097,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceSparseApplyAdadelta'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var and accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -27914,11 +28143,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceSparseApplyAdagrad'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
     /// </param>
     /// <param name="update_slots">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -27977,6 +28208,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceSparseApplyAdagradDA'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var and accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -28037,6 +28269,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceSparseApplyCenteredRMSProp'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, mg, ms, and mom tensors is
     ///    protected by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -28115,6 +28348,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceSparseApplyFtrl'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -28184,6 +28418,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceSparseApplyFtrlV2'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -28245,11 +28480,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceSparseApplyMomentum'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
     /// </param>
     /// <param name="use_nesterov">
+    ///    Optional argument
     ///    If <c>True<c>, the tensor passed to compute grad will be
     ///    var - lr * momentum * accum, so in the end, the var you get is actually
     ///    var - lr * momentum * accum.
@@ -28309,6 +28546,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceSparseApplyProximalAdagrad'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var and accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -28363,6 +28601,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceSparseApplyProximalGradientDescent'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the subtraction will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -28422,6 +28661,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceSparseApplyRMSProp'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, ms, and mom tensors is protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -28476,14 +28716,19 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ResourceStridedSliceAssign'.
     /// <param>
     /// <param name="begin_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="end_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="ellipsis_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="new_axis_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="shrink_axis_mask">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -28528,13 +28773,13 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Restore'.
     /// <param>
-    /// <param name="dt">
-    ///    Optional argument
-    ///    The type of the tensor to be restored.
-    /// </param>
     /// <param name="preferred_shard">
+    ///    Optional argument
     ///    Index of file to open first if multiple files match
     ///    <c>file_pattern<c>.
+    /// </param>
+    /// <param name="dt">
+    ///    The type of the tensor to be restored.
     /// </param>
     /// <returns>
     ///    The restored tensor.
@@ -28591,13 +28836,13 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RestoreSlice'.
     /// <param>
-    /// <param name="dt">
-    ///    Optional argument
-    ///    The type of the tensor to be restored.
-    /// </param>
     /// <param name="preferred_shard">
+    ///    Optional argument
     ///    Index of file to open first if multiple files match
     ///    <c>file_pattern<c>. See the documentation for <c>Restore<c>.
+    /// </param>
+    /// <param name="dt">
+    ///    The type of the tensor to be restored.
     /// </param>
     /// <returns>
     ///    The restored tensor.
@@ -28644,7 +28889,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'RestoreV2'.
     /// <param>
     /// <param name="dtypes">
-    ///    Optional argument
     ///    shape {N}.  The list of expected dtype for the tensors.  Must match
     ///    those stored in the checkpoint.
     /// </param>
@@ -28771,12 +29015,12 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ReverseSequence'.
     /// <param>
-    /// <param name="seq_dim">
-    ///    Optional argument
-    ///    The dimension which is partially reversed.
-    /// </param>
     /// <param name="batch_dim">
+    ///    Optional argument
     ///    The dimension along which reversal is performed.
+    /// </param>
+    /// <param name="seq_dim">
+    ///    The dimension which is partially reversed.
     /// </param>
     /// <returns>
     ///    The partially reversed input. It has the same shape as <c>input<c>.
@@ -29109,14 +29353,17 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Rpc'.
     /// <param>
     /// <param name="protocol">
+    ///    Optional argument
     ///    RPC protocol to use.  Empty string means use the default protocol.
     ///    Options include 'grpc'.
     /// </param>
     /// <param name="fail_fast">
+    ///    Optional argument
     ///    <c>boolean<c>. If <c>true<c> (default), then failures to connect
     ///    (i.e., the server does not immediately respond) cause an RPC failure.
     /// </param>
     /// <param name="timeout_in_ms">
+    ///    Optional argument
     ///    <c>int<c>. If <c>0<c> (default), then the kernel will run the RPC
     ///    request and only time out if the RPC deadline passes or the session times out.
     ///    If this value is greater than <c>0<c>, then the op will raise an exception if
@@ -29262,33 +29509,40 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SampleDistortedBoundingBox'.
     /// <param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either <c>seed<c> or <c>seed2<c> are set to non-zero, the random number
     ///    generator is seeded by the given <c>seed<c>.  Otherwise, it is seeded by a random
     ///    seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
     /// </param>
     /// <param name="min_object_covered">
+    ///    Optional argument
     ///    The cropped area of the image must contain at least this
     ///    fraction of any bounding box supplied. The value of this parameter should be
     ///    non-negative. In the case of 0, the cropped area does not need to overlap
     ///    any of the bounding boxes supplied.
     /// </param>
     /// <param name="aspect_ratio_range">
+    ///    Optional argument
     ///    The cropped area of the image must have an aspect ratio =
     ///    width / height within this range.
     /// </param>
     /// <param name="area_range">
+    ///    Optional argument
     ///    The cropped area of the image must contain a fraction of the
     ///    supplied image within this range.
     /// </param>
     /// <param name="max_attempts">
+    ///    Optional argument
     ///    Number of attempts at generating a cropped region of the image
     ///    of the specified constraints. After <c>max_attempts<c> failures, return the entire
     ///    image.
     /// </param>
     /// <param name="use_image_if_no_bounding_boxes">
+    ///    Optional argument
     ///    Controls behavior if no bounding boxes supplied.
     ///    If true, assume an implicit bounding box covering the whole input. If false,
     ///    raise an error.
@@ -29387,27 +29641,33 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SampleDistortedBoundingBoxV2'.
     /// <param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either <c>seed<c> or <c>seed2<c> are set to non-zero, the random number
     ///    generator is seeded by the given <c>seed<c>.  Otherwise, it is seeded by a random
     ///    seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
     /// </param>
     /// <param name="aspect_ratio_range">
+    ///    Optional argument
     ///    The cropped area of the image must have an aspect ratio =
     ///    width / height within this range.
     /// </param>
     /// <param name="area_range">
+    ///    Optional argument
     ///    The cropped area of the image must contain a fraction of the
     ///    supplied image within this range.
     /// </param>
     /// <param name="max_attempts">
+    ///    Optional argument
     ///    Number of attempts at generating a cropped region of the image
     ///    of the specified constraints. After <c>max_attempts<c> failures, return the entire
     ///    image.
     /// </param>
     /// <param name="use_image_if_no_bounding_boxes">
+    ///    Optional argument
     ///    Controls behavior if no bounding boxes supplied.
     ///    If true, assume an implicit bounding box covering the whole input. If false,
     ///    raise an error.
@@ -29669,6 +29929,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ScatterAdd'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the addition will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -29732,6 +29993,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ScatterDiv'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the operation will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -29793,6 +30055,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ScatterMax'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the update will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -29856,6 +30119,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ScatterMin'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the update will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -29919,6 +30183,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ScatterMul'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the operation will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -30082,20 +30347,21 @@ type TFGraph with
     ///    Applies sparse addition between <c>updates<c> and individual values or slices
     /// </summary>
     /// <param name="reference">
-    ///    A mutable TFTensor. Should be from a Variable node.
+    ///    A mutable Tensor. Should be from a Variable node.
     /// </param>
     /// <param name="indices">
-    ///    A TFTensor. Must be one of the following types: int32, int64.
+    ///    A Tensor. Must be one of the following types: int32, int64.
     ///    A tensor of indices into ref.
     /// </param>
     /// <param name="updates">
-    ///    A TFTensor. Must have the same type as ref. A tensor of updated values
+    ///    A Tensor. Must have the same type as ref. A tensor of updated values
     ///    to add to ref.
     /// </param>
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ScatterNdAdd'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    An optional bool. Defaults to True. If True, the assignment will
     ///    be protected by a lock; otherwise the behavior is undefined,
     ///    but may exhibit less contention.
@@ -30157,14 +30423,14 @@ type TFGraph with
     ///    Applies sparse addition to <c>input<c> using individual values or slices
     /// </summary>
     /// <param name="input">
-    ///    A TFTensor.
+    ///    A Tensor.
     /// </param>
     /// <param name="indices">
-    ///    A TFTensor. Must be one of the following types: <c>int32<c>, <c>int64<c>.
+    ///    A Tensor. Must be one of the following types: <c>int32<c>, <c>int64<c>.
     ///    A tensor of indices into <c>input<c>.
     /// </param>
     /// <param name="updates">
-    ///    A TFTensor. Must have the same type as ref. A tensor of updated values
+    ///    A Tensor. Must have the same type as ref. A tensor of updated values
     ///    to add to <c>input<c>.
     /// </param>
     /// <param name="name">
@@ -30228,20 +30494,21 @@ type TFGraph with
     ///    Applies sparse subtraction between <c>updates<c> and individual values or slices
     /// </summary>
     /// <param name="reference">
-    ///    A mutable TFTensor. Should be from a Variable node.
+    ///    A mutable Tensor. Should be from a Variable node.
     /// </param>
     /// <param name="indices">
-    ///    A TFTensor. Must be one of the following types: int32, int64.
+    ///    A Tensor. Must be one of the following types: int32, int64.
     ///    A tensor of indices into ref.
     /// </param>
     /// <param name="updates">
-    ///    A TFTensor. Must have the same type as ref. A tensor of updated values
+    ///    A Tensor. Must have the same type as ref. A tensor of updated values
     ///    to subtract from ref.
     /// </param>
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ScatterNdSub'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    An optional bool. Defaults to True. If True, the assignment will
     ///    be protected by a lock; otherwise the behavior is undefined,
     ///    but may exhibit less contention.
@@ -30303,20 +30570,21 @@ type TFGraph with
     ///    Applies sparse <c>updates<c> to individual values or slices within a given
     /// </summary>
     /// <param name="reference">
-    ///    A mutable TFTensor. Should be from a Variable node.
+    ///    A mutable Tensor. Should be from a Variable node.
     /// </param>
     /// <param name="indices">
-    ///    A TFTensor. Must be one of the following types: int32, int64.
+    ///    A Tensor. Must be one of the following types: int32, int64.
     ///    A tensor of indices into ref.
     /// </param>
     /// <param name="updates">
-    ///    A TFTensor. Must have the same type as ref. A tensor of updated
+    ///    A Tensor. Must have the same type as ref. A tensor of updated
     ///    values to add to ref.
     /// </param>
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ScatterNdUpdate'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    An optional bool. Defaults to True. If True, the assignment will
     ///    be protected by a lock; otherwise the behavior is undefined,
     ///    but may exhibit less contention.
@@ -30394,6 +30662,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ScatterSub'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the subtraction will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -30457,6 +30726,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ScatterUpdate'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the assignment will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -30578,29 +30848,25 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SdcaOptimizer'.
     /// <param>
-    /// <param name="loss_type">
+    /// <param name="adaptative">
     ///    Optional argument
+    ///    Whether to use Adaptive SDCA for the inner loop.
+    /// </param>
+    /// <param name="loss_type">
     ///    Type of the primal loss. Currently SdcaSolver supports logistic,
     ///    squared and hinge losses.
     /// </param>
     /// <param name="l1">
-    ///    Optional argument
     ///    Symmetric l1 regularization strength.
     /// </param>
     /// <param name="l2">
-    ///    Optional argument
     ///    Symmetric l2 regularization strength.
     /// </param>
     /// <param name="num_loss_partitions">
-    ///    Optional argument
     ///    Number of partitions of the global loss function.
     /// </param>
     /// <param name="num_inner_iterations">
-    ///    Optional argument
     ///    Number of iterations per mini-batch.
-    /// </param>
-    /// <param name="adaptative">
-    ///    Whether to use Adaptive SDCA for the inner loop.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -30672,11 +30938,9 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SdcaShrinkL1'.
     /// <param>
     /// <param name="l1">
-    ///    Optional argument
     ///    Symmetric l1 regularization strength.
     /// </param>
     /// <param name="l2">
-    ///    Optional argument
     ///    Symmetric l2 regularization strength. Should be a positive float.
     /// </param>
     /// <returns>
@@ -31037,6 +31301,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SelfAdjointEigV2'.
     /// <param>
     /// <param name="compute_v">
+    ///    Optional argument
     ///    If <c>True<c> then eigenvectors will be computed and returned in <c>v<c>.
     ///    Otherwise, only the eigenvalues will be computed.
     /// </param>
@@ -31178,6 +31443,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SerializeManySparse'.
     /// <param>
     /// <param name="out_type">
+    ///    Optional argument
     ///    The <c>dtype<c> to use for serialization; the supported types are <c>string<c>
     ///    (default) and <c>variant<c>.
     /// </param>
@@ -31224,6 +31490,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SerializeSparse'.
     /// <param>
     /// <param name="out_type">
+    ///    Optional argument
     ///    The <c>dtype<c> to use for serialization; the supported types are <c>string<c>
     ///    (default) and <c>variant<c>.
     /// </param>
@@ -31286,6 +31553,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SetSize'.
     /// <param>
     /// <param name="validate_indices">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    For <c>set<c> ranked <c>n<c>, this is a <c>Tensor<c> with rank <c>n-1<c>, and the same 1st
@@ -31325,6 +31593,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Shape'.
     /// <param>
     /// <param name="out_type">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -31360,10 +31629,8 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ShapeN'.
     /// <param>
-    /// <param name="n">
-    ///    Optional argument
-    /// </param>
     /// <param name="out_type">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -31371,12 +31638,11 @@ type TFGraph with
     /// <remarks>
     ///    This operation returns N 1-D integer tensors representing shape of <c>input[i]s<c>.
     /// </remarks>
-    member graph.ShapeN (input : TFOutput[], n : int64, ?out_type : TFDataType,  ?name : string) : TFOutput[] =
+    member graph.ShapeN (input : TFOutput[], ?out_type : TFDataType,  ?name : string) : TFOutput[] =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "ShapeN", graph.MakeName ("ShapeN", name))
         desc.AddInputs (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
         out_type |> Option.iter (fun out_type -> desc.SetAttr ("out_type", out_type) |> ignore)
         let op = desc.FinishOperation ()
         let mutable _idx = 0
@@ -31469,10 +31735,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ShuffleAndRepeatDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -31519,18 +31783,17 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ShuffleDataset'.
     /// <param>
-    /// <param name="output_types">
-    ///    Optional argument
-    /// </param>
-    /// <param name="output_shapes">
-    ///    Optional argument
-    /// </param>
     /// <param name="reshuffle_each_iteration">
+    ///    Optional argument
     ///    If true, each iterator over this dataset will be given
     ///    a different pseudorandomly generated seed, based on a sequence seeded by the
     ///    <c>seed<c> and <c>seed2<c> inputs. If false, each iterator will be given the same
     ///    seed, and repeated iteration over this dataset will yield the exact same
     ///    sequence of results.
+    /// </param>
+    /// <param name="output_types">
+    /// </param>
+    /// <param name="output_shapes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -31739,6 +32002,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Size'.
     /// <param>
     /// <param name="out_type">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -31780,10 +32044,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SkipDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -31809,24 +32071,25 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Skipgram'.
     /// <param>
-    /// <param name="filename">
-    ///    Optional argument
-    ///    The corpus's text file name.
-    /// </param>
-    /// <param name="batch_size">
-    ///    Optional argument
-    ///    The size of produced batch.
-    /// </param>
     /// <param name="window_size">
+    ///    Optional argument
     ///    The number of words to predict to the left and right of the target.
     /// </param>
     /// <param name="min_count">
+    ///    Optional argument
     ///    The minimum number of word occurrences for it to be included in the
     ///    vocabulary.
     /// </param>
     /// <param name="subsample">
+    ///    Optional argument
     ///    Threshold for word occurrence. Words that appear with higher
     ///    frequency will be randomly down-sampled. Set to 0 to disable.
+    /// </param>
+    /// <param name="filename">
+    ///    The corpus's text file name.
+    /// </param>
+    /// <param name="batch_size">
+    ///    The size of produced batch.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -31931,10 +32194,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SlideDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -32248,7 +32509,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SpaceToBatch'.
     /// <param>
     /// <param name="block_size">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -32434,11 +32694,11 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SpaceToDepth'.
     /// <param>
-    /// <param name="block_size">
-    ///    Optional argument
-    ///    The size of the spatial block.
-    /// </param>
     /// <param name="data_format">
+    ///    Optional argument
+    /// </param>
+    /// <param name="block_size">
+    ///    The size of the spatial block.
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -32463,7 +32723,7 @@ type TFGraph with
     ///    "NCHW_VECT_C":
     ///    <c>qint8 [ batch, channels / 4, height, width, 4 ]<c>
     ///    
-    ///    It is useful to consider the operation as transforming a 6-D TFTensor.
+    ///    It is useful to consider the operation as transforming a 6-D Tensor.
     ///    e.g. for data_format = NHWC,
     ///    Each element in the input tensor can be specified via 6 coordinates,
     ///    ordered by decreasing memory layout significance as:
@@ -32567,7 +32827,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseAccumulatorApplyGradient'.
     /// <param>
     /// <param name="has_known_shape">
-    ///    Optional argument
     ///    Boolean indicating whether gradient_shape is unknown, in which
     ///    case the input is ignored during validation.
     /// </param>
@@ -32605,7 +32864,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseAccumulatorTakeGradient'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    The data type of accumulated gradients. Needs to correspond to the type
     ///    of the accumulator.
     /// </param>
@@ -32795,6 +33053,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseApplyAdadelta'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var and accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -32844,11 +33103,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseApplyAdagrad'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
     /// </param>
     /// <param name="update_slots">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Same as "var".
@@ -32911,6 +33172,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseApplyAdagradDA'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var and accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -32975,6 +33237,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseApplyCenteredRMSProp'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, mg, ms, and mom tensors is
     ///    protected by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -33057,6 +33320,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseApplyFtrl'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -33130,6 +33394,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseApplyFtrlV2'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -33195,11 +33460,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseApplyMomentum'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var and accum tensors will be protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
     /// </param>
     /// <param name="use_nesterov">
+    ///    Optional argument
     ///    If <c>True<c>, the tensor passed to compute grad will be
     ///    var - lr * momentum * accum, so in the end, the var you get is actually
     ///    var - lr * momentum * accum.
@@ -33263,6 +33530,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseApplyProximalAdagrad'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, updating of the var and accum tensors will be protected by
     ///    a lock; otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -33321,6 +33589,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseApplyProximalGradientDescent'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If True, the subtraction will be protected by a lock;
     ///    otherwise the behavior is undefined, but may exhibit less contention.
     /// </param>
@@ -33384,6 +33653,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseApplyRMSProp'.
     /// <param>
     /// <param name="use_locking">
+    ///    Optional argument
     ///    If <c>True<c>, updating of the var, ms, and mom tensors is protected
     ///    by a lock; otherwise the behavior is undefined, but may exhibit less
     ///    contention.
@@ -33441,7 +33711,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseConcat'.
     /// <param>
     /// <param name="concat_dim">
-    ///    Optional argument
     ///    Dimension to concatenate along. Must be in range [-rank, rank),
     ///    where rank is the number of dimensions in each input <c>SparseTensor<c>.
     /// </param>
@@ -33520,21 +33789,21 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseConditionalAccumulator'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The type of the value being accumulated.
-    /// </param>
-    /// <param name="shape">
-    ///    Optional argument
-    ///    The shape of the values.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this accumulator is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this accumulator will be shared under the given name
     ///    across multiple sessions.
+    /// </param>
+    /// <param name="dtype">
+    ///    The type of the value being accumulated.
+    /// </param>
+    /// <param name="shape">
+    ///    The shape of the values.
     /// </param>
     /// <returns>
     ///    The handle to the accumulator.
@@ -33582,25 +33851,20 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseCross'.
     /// <param>
     /// <param name="hashed_output">
-    ///    Optional argument
     ///    If true, returns the hash of the cross instead of the string.
     ///    This will allow us avoiding string manipulations.
     /// </param>
     /// <param name="num_buckets">
-    ///    Optional argument
     ///    It is used if hashed_output is true.
     ///    output = hashed_value%num_buckets if num_buckets &amp;gt; 0 else hashed_value.
     /// </param>
     /// <param name="hash_key">
-    ///    Optional argument
     ///    Specify the hash_key that will be used by the <c>FingerprintCat64<c>
     ///    function to combine the crosses fingerprints.
     /// </param>
     /// <param name="out_type">
-    ///    Optional argument
     /// </param>
     /// <param name="internal_type">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -33721,7 +33985,7 @@ type TFGraph with
         
 
     /// <summary>
-    ///    Component-wise divides a SparseTensor by a dense TFTensor.
+    ///    Component-wise divides a SparseTensor by a dense Tensor.
     /// </summary>
     /// <param name="sp_indices">
     ///    2-D.  <c>N x R<c> matrix with the indices of non-empty values in a
@@ -33763,7 +34027,7 @@ type TFGraph with
         
 
     /// <summary>
-    ///    Component-wise multiplies a SparseTensor by a dense TFTensor.
+    ///    Component-wise multiplies a SparseTensor by a dense Tensor.
     /// </summary>
     /// <param name="sp_indices">
     ///    2-D.  <c>N x R<c> matrix with the indices of non-empty values in a
@@ -33950,12 +34214,16 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseMatMul'.
     /// <param>
     /// <param name="transpose_a">
+    ///    Optional argument
     /// </param>
     /// <param name="transpose_b">
+    ///    Optional argument
     /// </param>
     /// <param name="a_is_sparse">
+    ///    Optional argument
     /// </param>
     /// <param name="b_is_sparse">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -34008,10 +34276,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseReduceMax'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If true, retain reduced dimensions with length 1.
     /// </param>
     /// <returns>
-    ///    <c>R-K<c>-D.  The reduced TFTensor.
+    ///    <c>R-K<c>-D.  The reduced Tensor.
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     /// <remarks>
@@ -34064,6 +34333,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseReduceMaxSparse'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If true, retain reduced dimensions with length 1.
     /// </param>
     /// <returns>
@@ -34127,10 +34397,11 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseReduceSum'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If true, retain reduced dimensions with length 1.
     /// </param>
     /// <returns>
-    ///    <c>R-K<c>-D.  The reduced TFTensor.
+    ///    <c>R-K<c>-D.  The reduced Tensor.
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     /// <remarks>
@@ -34183,6 +34454,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseReduceSumSparse'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If true, retain reduced dimensions with length 1.
     /// </param>
     /// <returns>
@@ -35049,7 +35321,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseSplit'.
     /// <param>
     /// <param name="num_split">
-    ///    Optional argument
     ///    The number of ways to split.
     /// </param>
     /// <returns>
@@ -35111,7 +35382,7 @@ type TFGraph with
     ///    1-D.  The <c>shape<c> of the <c>SparseTensor<c>, with shape <c>[ndims]<c>.
     /// </param>
     /// <param name="b">
-    ///    <c>ndims<c>-D TFTensor.  With shape <c>a_shape<c>.
+    ///    <c>ndims<c>-D Tensor.  With shape <c>a_shape<c>.
     /// </param>
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseTensorDenseAdd'.
@@ -35156,10 +35427,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseTensorDenseMatMul'.
     /// <param>
     /// <param name="adjoint_a">
+    ///    Optional argument
     ///    Use the adjoint of A in the matrix multiply.  If A is complex, this
     ///    is transpose(conj(A)).  Otherwise it's transpose(A).
     /// </param>
     /// <param name="adjoint_b">
+    ///    Optional argument
     ///    Use the adjoint of B in the matrix multiply.  If B is complex, this
     ///    is transpose(conj(B)).  Otherwise it's transpose(B).
     /// </param>
@@ -35245,6 +35518,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseToDense'.
     /// <param>
     /// <param name="validate_indices">
+    ///    Optional argument
     ///    If true, indices are checked to make sure they are sorted in
     ///    lexicographic order and that there are no repeats.
     /// </param>
@@ -35321,10 +35595,10 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SparseToSparseSetOperation'.
     /// <param>
-    /// <param name="set_operation">
+    /// <param name="validate_indices">
     ///    Optional argument
     /// </param>
-    /// <param name="validate_indices">
+    /// <param name="set_operation">
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -35397,7 +35671,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Split'.
     /// <param>
     /// <param name="num_split">
-    ///    Optional argument
     ///    The number of ways to split.  Must evenly divide
     ///    <c>value.shape[split_dim]<c>.
     /// </param>
@@ -35440,7 +35713,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SplitV'.
     /// <param>
     /// <param name="num_split">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Tensors whose shape matches that of <c>value<c>
@@ -35479,10 +35751,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'SqlDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -35625,6 +35895,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Squeeze'.
     /// <param>
     /// <param name="squeeze_dims">
+    ///    Optional argument
     ///    If specified, only squeezes the dimensions listed. The dimension
     ///    index starts at 0. It is an error to squeeze a dimension that is not 1. Must
     ///    be in the range <c>[-rank(input), rank(input))<c>.
@@ -35673,10 +35944,10 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Stack'.
     /// <param>
-    /// <param name="elem_type">
+    /// <param name="stack_name">
     ///    Optional argument
     /// </param>
-    /// <param name="stack_name">
+    /// <param name="elem_type">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -35744,7 +36015,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StackPop'.
     /// <param>
     /// <param name="elem_type">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -35772,7 +36042,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StackPopV2'.
     /// <param>
     /// <param name="elem_type">
-    ///    Optional argument
     ///    The type of the elem that is popped.
     /// </param>
     /// <returns>
@@ -35803,6 +36072,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StackPush'.
     /// <param>
     /// <param name="swap_memory">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -35834,6 +36104,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StackPushV2'.
     /// <param>
     /// <param name="swap_memory">
+    ///    Optional argument
     ///    Swap <c>elem<c> to CPU. Default to false.
     /// </param>
     /// <returns>
@@ -35864,13 +36135,13 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StackV2'.
     /// <param>
-    /// <param name="elem_type">
-    ///    Optional argument
-    ///    The type of the elements on the stack.
-    /// </param>
     /// <param name="stack_name">
+    ///    Optional argument
     ///    Overrides the name used for the temporary stack resource. Default
     ///    value is the name of the 'Stack' op (which is guaranteed unique).
+    /// </param>
+    /// <param name="elem_type">
+    ///    The type of the elements on the stack.
     /// </param>
     /// <returns>
     ///    The handle to the stack.
@@ -35901,18 +36172,22 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Stage'.
     /// <param>
     /// <param name="capacity">
+    ///    Optional argument
     ///    Maximum number of elements in the Staging Area. If &amp;gt; 0, inserts
     ///    on the container will block when the capacity is reached.
     /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     ///    The maximum number of bytes allowed for Tensors in the Staging Area.
     ///    If &amp;gt; 0, inserts will block until sufficient space is available.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this queue is placed in the given container. Otherwise,
     ///    a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    It is necessary to match this name to the matching Unstage Op.
     /// </param>
     /// <returns>
@@ -35941,16 +36216,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StageClear'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    Returns the description of the operation
@@ -35976,16 +36254,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StagePeek'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -36018,16 +36299,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StageSize'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -36065,6 +36349,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StatelessMultinomial'.
     /// <param>
     /// <param name="output_dtype">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    2-D Tensor with shape <c>[batch_size, num_samples]<c>.  Each slice <c>[i, :]<c>
@@ -36099,6 +36384,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StatelessRandomNormal'.
     /// <param>
     /// <param name="dtype">
+    ///    Optional argument
     ///    The type of the output.
     /// </param>
     /// <returns>
@@ -36137,6 +36423,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StatelessRandomUniform'.
     /// <param>
     /// <param name="dtype">
+    ///    Optional argument
     ///    The type of the output.
     /// </param>
     /// <returns>
@@ -36176,6 +36463,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StatelessTruncatedNormal'.
     /// <param>
     /// <param name="dtype">
+    ///    Optional argument
     ///    The type of the output.
     /// </param>
     /// <returns>
@@ -36212,17 +36500,16 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StaticRegexReplace'.
     /// <param>
-    /// <param name="pattern">
+    /// <param name="replace_global">
     ///    Optional argument
+    ///    If True, the replacement is global, otherwise the replacement
+    ///    is done only on the first match.
+    /// </param>
+    /// <param name="pattern">
     ///    The regular expression to match the input.
     /// </param>
     /// <param name="rewrite">
-    ///    Optional argument
     ///    The rewrite to be applied to the matched expresion.
-    /// </param>
-    /// <param name="replace_global">
-    ///    If True, the replacement is global, otherwise the replacement
-    ///    is done only on the first match.
     /// </param>
     /// <returns>
     ///    The text after applying pattern and rewrite.
@@ -36253,8 +36540,10 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StatsAggregatorHandle'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -36366,15 +36655,18 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StridedSlice'.
     /// <param>
     /// <param name="begin_mask">
+    ///    Optional argument
     ///    a bitmask where a bit i being 1 means to ignore the begin
     ///    value and instead use the largest interval possible. At runtime
     ///    begin[i] will be replaced with <c>[0, n-1)<c> if <c>stride[i] &amp;gt; 0<c> or
     ///    <c>[-1, n-1]<c> if <c>stride[i] &amp;lt; 0<c>
     /// </param>
     /// <param name="end_mask">
+    ///    Optional argument
     ///    analogous to <c>begin_mask<c>
     /// </param>
     /// <param name="ellipsis_mask">
+    ///    Optional argument
     ///    a bitmask where bit <c>i<c> being 1 means the <c>i<c>th
     ///    position is actually an ellipsis. One bit at most can be 1.
     ///    If <c>ellipsis_mask == 0<c>, then an implicit ellipsis mask of <c>1 &amp;lt;&amp;lt; (m+1)<c>
@@ -36384,11 +36676,13 @@ type TFGraph with
     ///    tensor <c>foo<c> the slice <c>foo[2, ..., 5:8]<c> implies <c>foo[2, :, :, 5:8]<c>.
     /// </param>
     /// <param name="new_axis_mask">
+    ///    Optional argument
     ///    a bitmask where bit <c>i<c> being 1 means the <c>i<c>th
     ///    specification creates a new shape 1 dimension. For example
     ///    <c>foo[:4, tf.newaxis, :2]<c> would produce a shape <c>(4, 1, 2)<c> tensor.
     /// </param>
     /// <param name="shrink_axis_mask">
+    ///    Optional argument
     ///    a bitmask where bit <c>i<c> implies that the <c>i<c>th
     ///    specification should shrink the dimensionality. begin and end
     ///    must imply a slice of size 1 in the dimension. For example in
@@ -36399,7 +36693,7 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     /// <remarks>
-    ///    Note, most python users will want to use the Python <c>TFTensor.__getitem__<c>
+    ///    Note, most python users will want to use the Python <c>Tensor.__getitem__<c>
     ///    or <c>Variable.__getitem__<c> rather than this op directly.
     ///    
     ///    The goal of this op is to produce a new tensor with a subset of
@@ -36526,14 +36820,19 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StridedSliceAssign'.
     /// <param>
     /// <param name="begin_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="end_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="ellipsis_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="new_axis_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="shrink_axis_mask">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -36584,14 +36883,19 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StridedSliceGrad'.
     /// <param>
     /// <param name="begin_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="end_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="ellipsis_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="new_axis_mask">
+    ///    Optional argument
     /// </param>
     /// <param name="shrink_axis_mask">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -36639,6 +36943,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StringJoin'.
     /// <param>
     /// <param name="separator">
+    ///    Optional argument
     ///    string, an optional join separator.
     /// </param>
     /// <returns>
@@ -36673,6 +36978,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StringSplit'.
     /// <param>
     /// <param name="skip_empty">
+    ///    Optional argument
     ///    A <c>bool<c>. If <c>True<c>, skip the empty strings from the result.
     /// </param>
     /// <returns>
@@ -36737,6 +37043,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StringSplitV2'.
     /// <param>
     /// <param name="maxsplit">
+    ///    Optional argument
     ///    An <c>int<c>. If <c>maxsplit &amp;gt; 0<c>, limit of the split of the result.
     /// </param>
     /// <returns>
@@ -36791,7 +37098,7 @@ type TFGraph with
         
 
     /// <summary>
-    ///    Strip leading and trailing whitespaces from the TFTensor.
+    ///    Strip leading and trailing whitespaces from the Tensor.
     /// </summary>
     /// <param name="input">
     ///    A string <c>Tensor<c> of any shape.
@@ -36824,7 +37131,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StringToHashBucket'.
     /// <param>
     /// <param name="num_buckets">
-    ///    Optional argument
     ///    The number of buckets.
     /// </param>
     /// <returns>
@@ -36862,7 +37168,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StringToHashBucketFast'.
     /// <param>
     /// <param name="num_buckets">
-    ///    Optional argument
     ///    The number of buckets.
     /// </param>
     /// <returns>
@@ -36900,11 +37205,9 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StringToHashBucketStrong'.
     /// <param>
     /// <param name="num_buckets">
-    ///    Optional argument
     ///    The number of buckets.
     /// </param>
     /// <param name="key">
-    ///    Optional argument
     ///    The key for the keyed hash function passed as a list of two uint64
     ///    elements.
     /// </param>
@@ -36947,6 +37250,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'StringToNumber'.
     /// <param>
     /// <param name="out_type">
+    ///    Optional argument
     ///    The numeric type to interpret each string in <c>string_tensor<c> as.
     /// </param>
     /// <returns>
@@ -37124,6 +37428,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Sum'.
     /// <param>
     /// <param name="keep_dims">
+    ///    Optional argument
     ///    If true, retain reduced dimensions with length 1.
     /// </param>
     /// <returns>
@@ -37161,11 +37466,13 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Svd'.
     /// <param>
     /// <param name="compute_uv">
+    ///    Optional argument
     ///    If true, left and right singular vectors will be
     ///    computed and returned in <c>u<c> and <c>v<c>, respectively.
     ///    If false, <c>u<c> and <c>v<c> are not set and should never referenced.
     /// </param>
     /// <param name="full_matrices">
+    ///    Optional argument
     ///    If true, compute full-sized <c>u<c> and <c>v<c>. If false
     ///    (the default), compute only the leading <c>P<c> singular vectors.
     ///    Ignored if <c>compute_uv<c> is <c>False<c>.
@@ -37293,14 +37600,17 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TFRecordReader'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this reader is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this reader is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
     /// </param>
     /// <param name="compression_type">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The handle to reference the Reader.
@@ -37327,14 +37637,17 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TFRecordReaderV2'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this reader is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this reader is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
     /// </param>
     /// <param name="compression_type">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The handle to reference the Reader.
@@ -37367,12 +37680,10 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TPUEmbeddingActivations'.
     /// <param>
     /// <param name="table_id">
-    ///    Optional argument
     ///    The id of the table in the embedding layer configuration from which
     ///    these activations were computed.
     /// </param>
     /// <param name="lookup_id">
-    ///    Optional argument
     ///    Identifier of the set of embedding indices which produced these
     ///    activations.
     /// </param>
@@ -37420,6 +37731,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TPUEmbeddingEnqueueSparseBatch'.
     /// <param>
     /// <param name="device_ordinal">
+    ///    Optional argument
     ///    The TPU device to use. This should be -1 when the Op
     ///    is running on a TPU device, and &amp;gt;= 0 when the Op is running on the CPU
     ///    device.
@@ -37471,19 +37783,15 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TPUEmbeddingLoadAdagradParameters'.
     /// <param>
     /// <param name="tpu_embedding_config">
-    ///    Optional argument
     ///    Serialized TPUEmbeddingConfiguration proto.
     /// </param>
     /// <param name="table_id">
-    ///    Optional argument
     ///    The id of the table specified in the embedding_config.
     /// </param>
     /// <param name="num_hosts">
-    ///    Optional argument
     ///    The number of CPU hosts in the distributed training job.
     /// </param>
     /// <param name="host_id">
-    ///    Optional argument
     ///    Which CPU host in the distributed training job will execute this op.
     /// </param>
     /// <returns>
@@ -37519,19 +37827,15 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TPUEmbeddingLoadGradientDescentParameters'.
     /// <param>
     /// <param name="tpu_embedding_config">
-    ///    Optional argument
     ///    Serialized TPUEmbeddingConfiguration proto.
     /// </param>
     /// <param name="table_id">
-    ///    Optional argument
     ///    The id of the table specified in the tpu_embedding_config.
     /// </param>
     /// <param name="num_hosts">
-    ///    Optional argument
     ///    The number of CPU hosts in the distributed training job.
     /// </param>
     /// <param name="host_id">
-    ///    Optional argument
     ///    Which CPU host in the distributed training job will execute this op.
     /// </param>
     /// <returns>
@@ -37562,12 +37866,10 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TPUEmbeddingReceiveActivations'.
     /// <param>
     /// <param name="num_tables">
-    ///    Optional argument
     ///    The number of output activation tensors, equal to the number of
     ///    embedding tables in the model.
     /// </param>
     /// <param name="tpu_embedding_config">
-    ///    Optional argument
     ///    Serialized TPUEmbeddingConfiguration proto.
     /// </param>
     /// <returns>
@@ -37603,19 +37905,15 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TPUEmbeddingRetrieveAdagradParameters'.
     /// <param>
     /// <param name="tpu_embedding_config">
-    ///    Optional argument
     ///    Serialized TPUEmbeddingConfiguration proto.
     /// </param>
     /// <param name="table_id">
-    ///    Optional argument
     ///    The id of the table specified in the embedding_config_json.
     /// </param>
     /// <param name="num_hosts">
-    ///    Optional argument
     ///    The number of CPU hosts in the distributed training job.
     /// </param>
     /// <param name="host_id">
-    ///    Optional argument
     ///    Which CPU host in the distributed training job will execute this op.
     /// </param>
     /// <returns>
@@ -37653,19 +37951,15 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TPUEmbeddingRetrieveGradientDescentParameters'.
     /// <param>
     /// <param name="tpu_embedding_config">
-    ///    Optional argument
     ///    Serialized TPUEmbeddingConfiguration proto.
     /// </param>
     /// <param name="table_id">
-    ///    Optional argument
     ///    The id of the table specified in tpu_embedding_config.
     /// </param>
     /// <param name="num_hosts">
-    ///    Optional argument
     ///    The number of CPU hosts in the distributed training job.
     /// </param>
     /// <param name="host_id">
-    ///    Optional argument
     ///    Which CPU host in the distributed training job will execute this op.
     /// </param>
     /// <returns>
@@ -37701,7 +37995,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TPUEmbeddingSendGradients'.
     /// <param>
     /// <param name="tpu_embedding_config">
-    ///    Optional argument
     ///    Serialized TPUEmbeddingConfiguration proto.
     /// </param>
     /// <returns>
@@ -37732,18 +38025,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TPUReplicatedInput'.
     /// <param>
-    /// <param name="n">
-    ///    Optional argument
-    /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
-    member graph.TPUReplicatedInput (inputs : TFOutput[], n : int64,  ?name : string) : TFOutput =
+    member graph.TPUReplicatedInput (inputs : TFOutput[],  ?name : string) : TFOutput =
         let name = defaultArg name ""
         let desc = new TFOperationDesc (graph, "TPUReplicatedInput", graph.MakeName ("TPUReplicatedInput", name))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
         let op = desc.FinishOperation ()
         let mutable _idx = 0
         let output = new TFOutput (op, _idx)
@@ -37760,7 +38049,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TPUReplicatedOutput'.
     /// <param>
     /// <param name="num_replicas">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -37792,10 +38080,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TakeDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -37825,18 +38111,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TakeManySparseFromTensorsMap'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The <c>dtype<c> of the <c>SparseTensor<c> objects stored in the
-    ///    <c>SparseTensorsMap<c>.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    The container name for the <c>SparseTensorsMap<c> read by this op.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    The shared name for the <c>SparseTensorsMap<c> read by this op.
     ///    It should not be blank; rather the <c>shared_name<c> or unique Operation name
     ///    of the Op that created the original <c>SparseTensorsMap<c> should be used.
+    /// </param>
+    /// <param name="dtype">
+    ///    The <c>dtype<c> of the <c>SparseTensor<c> objects stored in the
+    ///    <c>SparseTensorsMap<c>.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -37996,17 +38283,16 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TemporaryVariable'.
     /// <param>
-    /// <param name="shape">
+    /// <param name="var_name">
     ///    Optional argument
+    ///    Overrides the name used for the temporary variable resource. Default
+    ///    value is the name of the 'TemporaryVariable' op (which is guaranteed unique).
+    /// </param>
+    /// <param name="shape">
     ///    The shape of the variable tensor.
     /// </param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    The type of elements in the variable tensor.
-    /// </param>
-    /// <param name="var_name">
-    ///    Overrides the name used for the temporary variable resource. Default
-    ///    value is the name of the 'TemporaryVariable' op (which is guaranteed unique).
     /// </param>
     /// <returns>
     ///    A reference to the variable tensor.
@@ -38097,10 +38383,10 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorArrayConcatV2'.
     /// <param>
-    /// <param name="dtype">
+    /// <param name="element_shape_except0">
     ///    Optional argument
     /// </param>
-    /// <param name="element_shape_except0">
+    /// <param name="dtype">
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -38137,15 +38423,15 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorArrayConcatV3'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The type of the elem that is returned.
-    /// </param>
     /// <param name="element_shape_except0">
+    ///    Optional argument
     ///    The expected shape of an element, if known,
     ///    excluding the first dimension. Used to validate the shapes of
     ///    TensorArray elements. If this shape is not fully specified, concatenating
     ///    zero-size TensorArrays is an error.
+    /// </param>
+    /// <param name="dtype">
+    ///    The type of the elem that is returned.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -38200,10 +38486,10 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorArrayGatherV2'.
     /// <param>
-    /// <param name="dtype">
+    /// <param name="element_shape">
     ///    Optional argument
     /// </param>
-    /// <param name="element_shape">
+    /// <param name="dtype">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -38239,14 +38525,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorArrayGatherV3'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The type of the elem that is returned.
-    /// </param>
     /// <param name="element_shape">
+    ///    Optional argument
     ///    The expected shape of an element, if known. Used to
     ///    validate the shapes of TensorArray elements. If this shape is not
     ///    fully specified, gathering zero-size TensorArrays is an error.
+    /// </param>
+    /// <param name="dtype">
+    ///    The type of the elem that is returned.
     /// </param>
     /// <returns>
     ///    All of the elements in the TensorArray, concatenated along a new
@@ -38283,7 +38569,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorArrayGradV2'.
     /// <param>
     /// <param name="source">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -38315,7 +38600,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorArrayGradV3'.
     /// <param>
     /// <param name="source">
-    ///    Optional argument
     ///    The gradient source string, used to decide which gradient TensorArray
     ///    to return.
     /// </param>
@@ -38397,7 +38681,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorArrayGradWithShape'.
     /// <param>
     /// <param name="source">
-    ///    Optional argument
     ///    The gradient source string, used to decide which gradient TensorArray
     ///    to return.
     /// </param>
@@ -38443,7 +38726,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorArrayReadV2'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -38478,7 +38760,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorArrayReadV3'.
     /// <param>
     /// <param name="dtype">
-    ///    Optional argument
     ///    The type of the elem that is returned.
     /// </param>
     /// <returns>
@@ -38731,16 +39012,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorArrayV2'.
     /// <param>
-    /// <param name="dtype">
+    /// <param name="element_shape">
     ///    Optional argument
     /// </param>
-    /// <param name="element_shape">
-    /// </param>
     /// <param name="dynamic_size">
+    ///    Optional argument
     /// </param>
     /// <param name="clear_after_read">
+    ///    Optional argument
     /// </param>
     /// <param name="tensor_array_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtype">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -38771,25 +39055,25 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorArrayV3'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The type of the elements on the tensor_array.
-    /// </param>
     /// <param name="element_shape">
+    ///    Optional argument
     ///    The expected shape of an element, if known. Used to
     ///    validate the shapes of TensorArray elements. If this shape is not
     ///    fully specified, gathering zero-size TensorArrays is an error.
     /// </param>
     /// <param name="dynamic_size">
+    ///    Optional argument
     ///    A boolean that determines whether writes to the TensorArray
     ///    are allowed to grow the size.  By default, this is not allowed.
     /// </param>
     /// <param name="clear_after_read">
+    ///    Optional argument
     ///    If true (default), Tensors in the TensorArray are cleared
     ///    after being read.  This disables multiple read semantics but allows early
     ///    release of memory.
     /// </param>
     /// <param name="identical_element_shapes">
+    ///    Optional argument
     ///    If true (default is false), then all
     ///    elements in the TensorArray will be expected to have have identical shapes.
     ///    This allows certain behaviors, like dynamically checking for
@@ -38798,9 +39082,13 @@ type TFGraph with
     ///    is not fully defined.
     /// </param>
     /// <param name="tensor_array_name">
+    ///    Optional argument
     ///    Overrides the name used for the temporary tensor_array
     ///    resource. Default value is the name of the 'TensorArray' op (which
     ///    is guaranteed unique).
+    /// </param>
+    /// <param name="dtype">
+    ///    The type of the elements on the tensor_array.
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -38909,7 +39197,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorDataset'.
     /// <param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -38936,7 +39223,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorListElementShape'.
     /// <param>
     /// <param name="shape_type">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -39001,7 +39287,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorListGather'.
     /// <param>
     /// <param name="element_dtype">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -39039,7 +39324,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorListGetItem'.
     /// <param>
     /// <param name="element_dtype">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -39101,7 +39385,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorListPopBack'.
     /// <param>
     /// <param name="element_dtype">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -39176,7 +39459,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorListReserve'.
     /// <param>
     /// <param name="element_dtype">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -39202,7 +39484,7 @@ type TFGraph with
         
 
     /// <summary>
-    ///    Creates a TensorList by indexing into a TFTensor.
+    ///    Creates a TensorList by indexing into a Tensor.
     /// </summary>
     /// <param name="tensor">
     /// </param>
@@ -39284,10 +39566,10 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorListStack'.
     /// <param>
-    /// <param name="element_dtype">
+    /// <param name="num_elements">
     ///    Optional argument
     /// </param>
-    /// <param name="num_elements">
+    /// <param name="element_dtype">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -39323,7 +39605,6 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorSliceDataset'.
     /// <param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -39351,12 +39632,15 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TensorSummary'.
     /// <param>
     /// <param name="description">
+    ///    Optional argument
     ///    A json-encoded SummaryDescription proto.
     /// </param>
     /// <param name="labels">
+    ///    Optional argument
     ///    An unused list of strings.
     /// </param>
     /// <param name="display_name">
+    ///    Optional argument
     ///    An unused string.
     /// </param>
     /// <returns>
@@ -39456,13 +39740,16 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TextLineReader'.
     /// <param>
     /// <param name="skip_header_lines">
+    ///    Optional argument
     ///    Number of lines to skip from the beginning of every file.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this reader is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this reader is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
     /// </param>
@@ -39491,13 +39778,16 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TextLineReaderV2'.
     /// <param>
     /// <param name="skip_header_lines">
+    ///    Optional argument
     ///    Number of lines to skip from the beginning of every file.
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this reader is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this reader is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
     /// </param>
@@ -39529,31 +39819,29 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ThreadUnsafeUnigramCandidateSampler'.
     /// <param>
-    /// <param name="num_true">
-    ///    Optional argument
-    ///    Number of true labels per context.
-    /// </param>
-    /// <param name="num_sampled">
-    ///    Optional argument
-    ///    Number of candidates to randomly sample.
-    /// </param>
-    /// <param name="unique">
-    ///    Optional argument
-    ///    If unique is true, we sample with rejection, so that all sampled
-    ///    candidates in a batch are unique. This requires some approximation to
-    ///    estimate the post-rejection sampling probabilities.
-    /// </param>
-    /// <param name="range_max">
-    ///    Optional argument
-    ///    The sampler will sample integers from the interval [0, range_max).
-    /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    An second seed to avoid seed collision.
+    /// </param>
+    /// <param name="num_true">
+    ///    Number of true labels per context.
+    /// </param>
+    /// <param name="num_sampled">
+    ///    Number of candidates to randomly sample.
+    /// </param>
+    /// <param name="unique">
+    ///    If unique is true, we sample with rejection, so that all sampled
+    ///    candidates in a batch are unique. This requires some approximation to
+    ///    estimate the post-rejection sampling probabilities.
+    /// </param>
+    /// <param name="range_max">
+    ///    The sampler will sample integers from the interval [0, range_max).
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -39702,14 +39990,14 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TopK'.
     /// <param>
-    /// <param name="k">
-    ///    Optional argument
-    ///    Number of top elements to look for along the last dimension (along each
-    ///    row for matrices).
-    /// </param>
     /// <param name="sorted">
+    ///    Optional argument
     ///    If true the resulting <c>k<c> elements will be sorted by the values in
     ///    descending order.
+    /// </param>
+    /// <param name="k">
+    ///    Number of top elements to look for along the last dimension (along each
+    ///    row for matrices).
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -39761,6 +40049,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TopKV2'.
     /// <param>
     /// <param name="sorted">
+    ///    Optional argument
     ///    If true the resulting <c>k<c> elements will be sorted by the values in
     ///    descending order.
     /// </param>
@@ -39905,17 +40194,18 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TruncatedNormal'.
     /// <param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The type of the output.
-    /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either <c>seed<c> or <c>seed2<c> are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    A second seed to avoid seed collision.
+    /// </param>
+    /// <param name="dtype">
+    ///    The type of the output.
     /// </param>
     /// <returns>
     ///    A tensor of the specified shape filled with random truncated normal
@@ -39964,14 +40254,17 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'TryRpc'.
     /// <param>
     /// <param name="protocol">
+    ///    Optional argument
     ///    RPC protocol to use.  Empty string means use the default protocol.
     ///    Options include 'grpc'.
     /// </param>
     /// <param name="fail_fast">
+    ///    Optional argument
     ///    <c>boolean<c>. If <c>true<c> (default), then failures to connect
     ///    (i.e., the server does not immediately respond) cause an RPC failure.
     /// </param>
     /// <param name="timeout_in_ms">
+    ///    Optional argument
     ///    <c>int<c>. If <c>0<c> (default), then the kernel will run the RPC
     ///    request and only time out if the RPC deadline passes or the session times out.
     ///    If this value is greater than <c>0<c>, then the op will raise an exception if
@@ -40058,7 +40351,7 @@ type TFGraph with
         
 
     /// <summary>
-    ///    Reverses the operation of Batch for a single output TFTensor.
+    ///    Reverses the operation of Batch for a single output Tensor.
     /// </summary>
     /// <param name="batched_tensor">
     /// </param>
@@ -40069,12 +40362,13 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Unbatch'.
     /// <param>
-    /// <param name="timeout_micros">
+    /// <param name="container">
     ///    Optional argument
     /// </param>
-    /// <param name="container">
-    /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="timeout_micros">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -40125,10 +40419,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'UnbatchDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -40162,8 +40454,10 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'UnbatchGrad'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -40211,31 +40505,29 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'UniformCandidateSampler'.
     /// <param>
-    /// <param name="num_true">
-    ///    Optional argument
-    ///    Number of true labels per context.
-    /// </param>
-    /// <param name="num_sampled">
-    ///    Optional argument
-    ///    Number of candidates to randomly sample.
-    /// </param>
-    /// <param name="unique">
-    ///    Optional argument
-    ///    If unique is true, we sample with rejection, so that all sampled
-    ///    candidates in a batch are unique. This requires some approximation to
-    ///    estimate the post-rejection sampling probabilities.
-    /// </param>
-    /// <param name="range_max">
-    ///    Optional argument
-    ///    The sampler will sample integers from the interval [0, range_max).
-    /// </param>
     /// <param name="seed">
+    ///    Optional argument
     ///    If either seed or seed2 are set to be non-zero, the random number
     ///    generator is seeded by the given seed.  Otherwise, it is seeded by a
     ///    random seed.
     /// </param>
     /// <param name="seed2">
+    ///    Optional argument
     ///    An second seed to avoid seed collision.
+    /// </param>
+    /// <param name="num_true">
+    ///    Number of true labels per context.
+    /// </param>
+    /// <param name="num_sampled">
+    ///    Number of candidates to randomly sample.
+    /// </param>
+    /// <param name="unique">
+    ///    If unique is true, we sample with rejection, so that all sampled
+    ///    candidates in a batch are unique. This requires some approximation to
+    ///    estimate the post-rejection sampling probabilities.
+    /// </param>
+    /// <param name="range_max">
+    ///    The sampler will sample integers from the interval [0, range_max).
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -40293,6 +40585,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Unique'.
     /// <param>
     /// <param name="out_idx">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -40346,11 +40639,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'UniqueV2'.
     /// <param>
     /// <param name="out_idx">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
     ///    y : A <c>Tensor<c>. Unique elements along the <c>axis<c> of <c>Tensor<c> x.
-    ///    idx : A 1-D TFTensor. Has the same type as x that contains the index of each
+    ///    idx : A 1-D Tensor. Has the same type as x that contains the index of each
     ///    value of x in the output y.
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
@@ -40425,6 +40719,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'UniqueWithCounts'.
     /// <param>
     /// <param name="out_idx">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
@@ -40483,13 +40778,14 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'UniqueWithCountsV2'.
     /// <param>
     /// <param name="out_idx">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    Returns a tuple with multiple values, as follows:
     ///    y : A <c>Tensor<c>. Unique elements along the <c>axis<c> of <c>Tensor<c> x.
-    ///    idx : A 1-D TFTensor. Has the same type as x that contains the index of each
+    ///    idx : A 1-D Tensor. Has the same type as x that contains the index of each
     ///    value of x in the output y.
-    ///    count : A 1-D TFTensor. The count of each value of x in the output y.
+    ///    count : A 1-D Tensor. The count of each value of x in the output y.
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     /// <remarks>
@@ -40568,12 +40864,12 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Unpack'.
     /// <param>
-    /// <param name="num">
-    ///    Optional argument
-    /// </param>
     /// <param name="axis">
+    ///    Optional argument
     ///    Dimension along which to unpack.  Negative values wrap around, so the
     ///    valid range is <c>[-R, R)<c>.
+    /// </param>
+    /// <param name="num">
     /// </param>
     /// <returns>
     ///    The list of tensors unpacked from <c>value<c>.
@@ -40615,7 +40911,7 @@ type TFGraph with
     ///    flattened version of an array of dimensions dims.
     /// </param>
     /// <param name="dims">
-    ///    An 1-D <c>int<c> TFTensor. The shape of the array to use for unraveling
+    ///    An 1-D <c>int<c> Tensor. The shape of the array to use for unraveling
     ///    indices.
     /// </param>
     /// <param name="name">
@@ -40869,16 +41165,19 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Unstage'.
     /// <param>
-    /// <param name="dtypes">
+    /// <param name="capacity">
     ///    Optional argument
     /// </param>
-    /// <param name="capacity">
-    /// </param>
     /// <param name="memory_limit">
+    ///    Optional argument
     /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="dtypes">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -40909,20 +41208,20 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'VarHandleOp'.
     /// <param>
-    /// <param name="dtype">
+    /// <param name="container">
     ///    Optional argument
+    ///    the container this variable is placed in.
+    /// </param>
+    /// <param name="shared_name">
+    ///    Optional argument
+    ///    the name by which this variable is referred to.
+    /// </param>
+    /// <param name="dtype">
     ///    the type of this variable. Must agree with the dtypes
     ///    of all ops using this variable.
     /// </param>
     /// <param name="shape">
-    ///    Optional argument
     ///    The (possibly partially specified) shape of this variable.
-    /// </param>
-    /// <param name="container">
-    ///    the container this variable is placed in.
-    /// </param>
-    /// <param name="shared_name">
-    ///    the name by which this variable is referred to.
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -40974,15 +41273,15 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Variable'.
     /// <param>
-    /// <param name="shape">
-    ///    Optional argument
-    /// </param>
-    /// <param name="dtype">
-    ///    Optional argument
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
+    /// </param>
+    /// <param name="shape">
+    /// </param>
+    /// <param name="dtype">
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -41011,6 +41310,7 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'VariableShape'.
     /// <param>
     /// <param name="out_type">
+    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
@@ -41044,21 +41344,21 @@ type TFGraph with
     /// <param name="name">
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'VariableV2'.
     /// <param>
-    /// <param name="shape">
-    ///    Optional argument
-    ///    The shape of the variable tensor.
-    /// </param>
-    /// <param name="dtype">
-    ///    Optional argument
-    ///    The type of elements in the variable tensor.
-    /// </param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this variable is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this variable is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
+    /// </param>
+    /// <param name="shape">
+    ///    The shape of the variable tensor.
+    /// </param>
+    /// <param name="dtype">
+    ///    The type of elements in the variable tensor.
     /// </param>
     /// <returns>
     ///    A reference to the variable tensor.
@@ -41175,10 +41475,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'WholeFileReader'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this reader is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this reader is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
     /// </param>
@@ -41210,10 +41512,12 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'WholeFileReaderV2'.
     /// <param>
     /// <param name="container">
+    ///    Optional argument
     ///    If non-empty, this reader is placed in the given container.
     ///    Otherwise, a default container is used.
     /// </param>
     /// <param name="shared_name">
+    ///    Optional argument
     ///    If non-empty, this reader is named in the given bucket
     ///    with this shared_name. Otherwise, the node name is used instead.
     /// </param>
@@ -41361,10 +41665,8 @@ type TFGraph with
     /// If specified, the created operation in the graph will be this one, otherwise it will be named 'ZipDataset'.
     /// <param>
     /// <param name="output_types">
-    ///    Optional argument
     /// </param>
     /// <param name="output_shapes">
-    ///    Optional argument
     /// </param>
     /// <returns>
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.

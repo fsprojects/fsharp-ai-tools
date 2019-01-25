@@ -31,35 +31,28 @@ type TF_Function = System.IntPtr
 
 type TF_DeviceList = System.IntPtr
 
-// [<AutoOpen>]
-// module TensorFlow.common
+open System
 
-// open System
-// open Utils
-// open TensorFlow
-// open TensorFlow
-// open System.Collections.Generic
+module OS =
+    let tryGetEnv(name:string) = 
+         System.Environment.GetEnvironmentVariable(name,System.EnvironmentVariableTarget.Process)
+         |> Option.ofObj
+    
+module context = 
+   /// For now eager execution is not supported
+   let executing_eagerly() = false
 
-// module OS =
-//     let tryGetEnv(name:string) = 
-//         System.Environment.GetEnvironmentVariable(name,System.EnvironmentVariableTarget.Process)
-//         |> Option.ofObj
-        
-        
+type LookupError(msg:string) =
+    inherit Exception(msg)
 
-// module context = 
-//     /// For now eager execution is not supported
-//     let executing_eagerly() = false
+type ValueError(msg:string) =
+    inherit Exception(msg)
 
-// //open tensorflow
-// type LookupError(msg:string) =
-//     inherit Exception(msg)
+type TypeError(msg:string) =
+    inherit Exception(msg)
 
-// type ValueError(msg:string) =
-//     inherit Exception(msg)
-
-// type TypeError(msg:string) =
-//     inherit Exception(msg)
+type GraphMismatchException(msg:string) =
+    inherit Exception(msg)
 
 // type Operation with
 //     member this.try_get_output(i:int) = if i >= 0 && i < this.NumOutputs then Some(this.[i]) else None
