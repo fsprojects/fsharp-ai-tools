@@ -2,8 +2,8 @@
 #r "netstandard"
 #r "lib/Argu.dll"
 #r "lib/TensorFlowSharp.dll"
-#load "shared/NNImpl.fsx"
-#load "shared/NNOps.fsx"
+//#load "shared/NNImpl.fsx"
+//#load "shared/NNOps.fsx"
 #load "shared/NPYReaderWriter.fsx"
 #load "shared/ImageWriter.fsx"
 
