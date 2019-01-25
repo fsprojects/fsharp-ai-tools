@@ -188,7 +188,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
     static member AddN (vs: DT<'T>[]) : DT<'T> = 
         let outputShape = vs.[0].Shape 
         for v in vs do Shape.Unify outputShape v.Shape
-        DT<_> (outputShape, fun ctxt -> ctxt.Graph.AddN(vs |> Array.map (fun v -> v.Apply ctxt), int64 vs.Length))
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.AddN(vs |> Array.map (fun v -> v.Apply ctxt)))
 
     // TODO: accept axis argument for stacking, take this into account in inferred shape
     // TODO: this gives wrong shape when all inputs have size 1. Ugh

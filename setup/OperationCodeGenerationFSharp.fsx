@@ -148,11 +148,12 @@ let run(dirs : string []) =
         // Attributes related ot the InputArg's type are inferred automatically
         // and are not exposed to the client
         let inferred = 
-            oper.InputArgs |> Seq.toArray |> Array.choose (fun argdef ->
-                if argdef.TypeAttr <> "" then Some(argdef.TypeAttr)
-                elif argdef.TypeListAttr <> "" then Some(argdef.TypeListAttr)
-                elif argdef.NumberAttr <> "" then Some(argdef.NumberAttr)
-                else None) |> Set.ofArray
+            oper.InputArgs |> Seq.toArray |> Array.collect (fun argdef ->
+                [|
+                    if argdef.TypeAttr <> "" then yield argdef.TypeAttr
+                    elif argdef.TypeListAttr <> "" then yield argdef.TypeListAttr
+                    if argdef.NumberAttr <> "" then yield argdef.NumberAttr
+                |]) |> Set.ofArray
         let requiredAttrs, optionalAttrs = 
             oper.Attrs |> Seq.toArray
             |> Array.filter (fun attr -> not(inferred.Contains(attr.Name)))
@@ -274,7 +275,7 @@ let run(dirs : string []) =
 
     let generate (oper : OpDef) =
         let requiredAttrs, optionalAttrs, hasReturnValue = setupArguments (oper)
-        genDocs (oper, requiredAttrs, optionalAttrs, hasReturnValue)
+        genDocs (oper, optionalAttrs, requiredAttrs, hasReturnValue)
         let name = oper.Name
         let retType = 
             if hasReturnValue then

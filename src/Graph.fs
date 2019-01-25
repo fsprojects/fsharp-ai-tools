@@ -1,6 +1,7 @@
 namespace TensorFlow.FSharp
 
 open System
+open System.Diagnostics
 open System.Runtime.InteropServices
 open System.Collections.Generic
 open System.Text
@@ -254,6 +255,11 @@ and TFGraph internal (handle) =
 
     let mutable currentNameScope = ""
     let mutable currentDependencies = Array.empty<TFOperation>
+    /// Indicates whether this grpah has been frozen (i.e., no more ops can be added to it).
+    let mutable isFrozen = false
+    let assertNotFrozen() = Debug.Assert(not isFrozen,"This graph has already been frozen.")
+    let mutable cleanupFunctions : (unit -> unit)[] = [||]
+
     let values = new DictionaryCount<string> ()
 
     /// <summary>
@@ -364,11 +370,21 @@ and TFGraph internal (handle) =
     /// </summary>
     new () = new TFGraph (TF_NewGraph ())
 
-    override this.NativeDispose (handle : IntPtr) = TF_DeleteGraph (handle)
+    override this.NativeDispose (handle : IntPtr) = 
+        cleanupFunctions |> Array.iter (fun x -> x())
+        TF_DeleteGraph (handle)
 
     member this.PendingInitVariables with get() = pending_init_variables
     member this.TrainingVariables with get() = trainable_variables
 
+    member this.IsFrozen = isFrozen
+
+    /// Freezes this graph, meaning that no more ops can be added to it after a call to this function. This method is used
+    /// to ensure that no operations are added to a graph when it is shared between mutliple threads
+    member this.Freeze() = isFrozen <- true
+
+    // Unfreezes this graph
+    member this.UnFreeze() = isFrozen <- false
 
     /// <summary>
     /// Returns the graph and local seeds based on an optionally set incoming seed value.
@@ -603,6 +619,32 @@ and TFGraph internal (handle) =
             | _ -> currentNameScope + "/" + nameScopeDesc
         {new IDisposable with member x.Dispose() = this.CurrentNameScope <- prevScope}
 
+    ///  A context manager for use when defining a FSharp op.
+    ///
+    ///  This context manager validates that the given `values` are from the
+    ///  same graph, makes that graph the default graph, and pushes a
+    ///  name scope in that graph. 
+    ///
+    ///  For example, to define a new FSharp op called `my_op`:
+    ///
+    ///  ```python
+    ///  member graph.MyOp(a, b, c, ?name) =
+    ///    use scope = graph.NameScope(?name=name, "MyOp", [|a; b; c|])
+    ///    let a = tf.convert_to_tensor(a, name="a")
+    ///    let b = tf.convert_to_tensor(b, name="b")
+    ///    let c = tf.convert_to_tensor(c, name="c")
+    ///     Define some computation that uses `a`, `b`, and `c`.
+    ///    foo_op(..., name=scope)
+    ///  ```
+//    member graph.NameScope(?name:string, ?defaultName:string, [<ParamArray>] operations: TFOutput[]) = 
+//        if operations.IsSome && name.IsNone && defaultName.IsNone then
+//            raise (ValueError(sprintf "At least one of the name and defaultName must be provided if operations have been specified."))
+//
+//        let name = name |> Option.orElse defaultName
+//        //let operations = operations |> Option.defaultValue [||]
+//
+//        {new IDisposable with member this.Dispose() = failwith "todo"}
+
     /// <summary>
     /// Returns the current variable dependencies in use. New tensors and operations will be created
     /// with an added input dependency to the operations specified in this property. To change this, 
@@ -621,7 +663,8 @@ and TFGraph internal (handle) =
         this.CurrentDependencies <- [|yield! prevDeps; yield! dependencies|] |> Array.distinct
         {new IDisposable with member x.Dispose() = this.CurrentDependencies <- prevDeps}
 
-    member this.MakeUnique (name : string) = name + (string  <| values.GetThenIncrement(name))
+    member this.MakeUnique (name : string, ?markAsUsed:bool) = 
+        name + (string  <| values.GetThenIncrement(name))
 
     member this.MakeName (name : string, userName : string) = 
         match userName with 

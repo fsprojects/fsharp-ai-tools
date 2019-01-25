@@ -24,7 +24,7 @@ type TFGraph with
             let shape = graph.GetTensorShape (input)
             if shape.IsFullySpecified then
                 // NOTE: The python code distinguishes between tensor and sparsetensor
-                graph.Const (new TFTensor([|0 .. shape.NumDimensions-1|]), TFDataType.Int32)
+                graph.Const (new TFTensor([|0 .. shape.NumDimensions - 1|]), TFDataType.Int32)
             else
                 // Otherwise, we rely on Range and Rank to do the right thing at run-time.
                 graph.Range (graph.Const (new TFTensor(0)), graph.Rank (input), graph.Const (new TFTensor(1)))
@@ -392,7 +392,7 @@ type TFGraph with
             false_fn ()
 
         // Add the final merge to the graph.
-        let merges, idnex = graph.Merge ([|res_t; res_f|],2L)
+        let merges, idnex = graph.Merge ([|res_t; res_f|])
         merges
 
     /// <summary>
@@ -413,6 +413,7 @@ type TFGraph with
         | Some(x),Some(y) -> graph.Select(condition = condition, t = x, e = y, ?name = name)
         | _ -> raise(ArgumentException ("x and y must both be non-None or both be None."))
 
+        
     /// <summary>
     /// Stacks a list of rank-`R` tensors into one rank-`(R+1)` tensor.
     /// </summary>
@@ -433,7 +434,7 @@ type TFGraph with
         if axis < -expanded_num_dims || axis >= expanded_num_dims then
             raise (InvalidOperationException (sprintf "axis = %i not in [-%i, %i]" axis expanded_num_dims expanded_num_dims))
         else
-            graph.Pack (values,-1L, int64 axis, name)
+            graph.Pack (values, axis = int64 axis, name=name);
 
     /// <summary>
     /// Creates a sequence of numbers.
