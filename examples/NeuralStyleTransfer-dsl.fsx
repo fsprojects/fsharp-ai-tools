@@ -134,7 +134,7 @@ module NeuralStyles =
         }
 
     // Run the style transfer
-    let img_styled = DT.Run (PretrainedFFStyleVGG input)
+    let img_styled = DT.RunTFTensor (PretrainedFFStyleVGG input)
 
     // NOTE: Assumed NHWC dataformat
     let tensorToPNG (batchIndex:int) (imgs:TFTensor) =
