@@ -20,6 +20,9 @@ module PlayWithTF =
     tf { return v 1.0 }
     |> DT.RunScalar
 
+    tf { return (vec [1.0; 2.0]) }
+    |> DT.RunArray
+
     tf { return (vec [1.0]).[0] }
     |> DT.RunScalar
 
@@ -36,7 +39,7 @@ module PlayWithTF =
     |> DT.RunArray
 
     let f x = tf { return x * x + v 4.0 * x }
-    let df x = DT.diff f x
+    let df x = DT.gradient f x
 
     df (v 3.0)
     |> DT.RunScalar
@@ -88,6 +91,8 @@ module PlayWithTF =
     |> DT.RunArray
 
     let var v nm = DT.Variable (v, name=nm)
+    
+    // Specifying values for variables in the graph
     tf { return var (vec [ 1.0 ]) "x" + v 4.0 }
     |> fun dt -> DT.RunArray(dt, ["x", (vec [2.0] :> _)] )
 
@@ -105,12 +110,12 @@ module Example2 =
 
     // Get the partial derivatives of the scalar function
     // computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
-    let df xs = DT.diff f xs   
+    let df xs = DT.gradient f xs   
 
     // Run the derivative 
     df (vec [ 3.0; 4.0; 5.0 ]) |> DT.RunArray // returns [ 55.0; 48.0; 39.0 ]
 
-module TransferFragments =
+module NeuralTransferFragments =
     let input = matrix4 [ for i in 0 .. 9 -> [ for j in 1 .. 40 -> [ for k in 1 .. 40 -> [ for m in 0 .. 2 -> double (i+j+k+m) ]]]]
     let name = "a"
     let instance_norm (input, name) =
@@ -127,7 +132,6 @@ module TransferFragments =
         |> array2D |> Array2D.map array2D
 
     instance_norm (input, name) |> DT.RunArray4D |> friendly4D
-    (fun input -> instance_norm (input, name)) |> DT.diff |> apply input |> DT.RunArray4D |> friendly4D
 
     let out_channels = 128
     let filter_size = 7
@@ -152,7 +156,7 @@ module TransferFragments =
                  return x }
 
     conv_layer (input, out_channels, filter_size, 1, true, "layer")  |> DT.RunArray4D |> friendly4D
-    (fun input -> conv_layer (input, out_channels, filter_size, 1, true, "layer")) |> DT.diff |> apply input |> DT.RunArray4D |> friendly4D
+    //(fun input -> conv_layer (input, out_channels, filter_size, 1, true, "layer")) |> DT.gradient |> apply input |> DT.RunArray4D |> friendly4D
 
     let residual_block (input, filter_size, name) = 
         tf { let tmp = conv_layer(input, 128, filter_size, 1, true, name + "_c1")
