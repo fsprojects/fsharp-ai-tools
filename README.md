@@ -13,14 +13,14 @@ TF graphs using a fairly thin differentiable-DSL whose intended semantics are cl
 of TF, while still achieving some degree of cohabitation with the TF ecosystem (graphs are graphs, and we believe they
 can be saved/visualized using standard TF tools, and even made to interoperate with TF-Python).
 
-# The TensorFlow API for the F# Programming Language
+# The TensorFlow API for F# 
 
 See `TensorFlow.FSharp`.  This API is designed in a similar way to `TensorFlowSharp`, but is implemented directly in F# and
 contains additional functionality.
 
 # The Differentiable F# DSL
 
-This DSL allows differentiation of F# code as follows:
+See `TensorFlow.FSharp.DSL`.  This DSL allows differentiation of F# code as follows:
 
 ```fsharp
     // Define a function which will be executed using TensorFlow
@@ -56,7 +56,10 @@ For a scalar function with multiple input variables:
     // Run the derivative 
     df (vec [ 3.0; 4.0; 5.0 ]) |> DT.RunArray // returns [ 55.0; 48.0; 39.0 ]
 ```
-* `tf { ... }` stands for TensorFlow and indicates a block of code intended to be executed as a TensorFlow graph.  The
+
+More examples/tests are in [dsl-tests.fsx](https://github.com/fsprojects/TensorFlow.FSharp/blob/master/tests/dsl-tests.fsx).
+
+* `tf { ... }` indicates a block of code expressed using the DSL and intended to be executed as a TensorFlow graph.  The
   use of `tf { ... }` is actually optional but recommended for clarity for all significant chunks of differentiable code.
 
 * `DT` stands for `differentiable tensor` and the one type of `DT<_>` values are used to represent differentiable scalars, vectors, matrices and tensors.
@@ -85,7 +88,6 @@ For a scalar function with multiple input variables:
 
   It is possible that at some future point this shape inference may be performed statically for F# code, or via a
   secondary tool.
-
 
 While the above are toy examples, the approach scales (at least in principle) to the complete expression of deep neural networks
 and full TensorFlow computation graphs. The links below show the implementation of a common DNN sample (the samples may not
