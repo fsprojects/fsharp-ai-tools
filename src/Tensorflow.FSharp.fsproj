@@ -54,6 +54,7 @@
     <Compile Include="Datasets.fs" /> 
     <Compile Include="Operations.ArrayOps.fs" /> 
     <Compile Include="Operations.ArrayGrad.fs" />
+    <Compile Include="dsl.fs" />
   </ItemGroup>
 
 </Project>

@@ -1,27 +1,22 @@
-namespace TensorFlow.FSharp 
-
-#I __SOURCE_DIRECTORY__
-#r "netstandard"
-#r "../../tests/bin/Debug/net472/TensorFlow.FSharp.dll"
+namespace TensorFlow.FSharp.DSL
 
 open System
+open System.Collections.Generic
 open TensorFlow.FSharp
 
+/// Represents an inferred dimension
 type Dim =
     | DimMulInt of Dim * int
     | DimDivInt of Dim * int
     | DimVar of Dim option ref
     | Dim of int
     override dim.ToString() = 
+        match dim.TryValue with 
+        | Some v -> string v
+        | None ->  
         match dim with 
-        | DimMulInt (dim, n) -> 
-            match dim.TryValue with 
-            | Some v -> string (v*n)
-            | None -> dim.ToString() + "*" + string n 
-        | DimDivInt (dim, n) -> 
-            match dim.TryValue with 
-            | Some v -> string v
-            | None -> dim.ToString() + "/" + string n 
+        | DimMulInt (dim2, n) -> dim2.ToString() + "*" + string n 
+        | DimDivInt (dim2, n) -> dim2.ToString() + "/" + string n 
         | Dim n -> string n 
         | DimVar v -> 
             match v.Value with 
@@ -30,8 +25,8 @@ type Dim =
 
     member dim.TryValue = 
         match dim with 
-        | DimMulInt (dim,n) -> match dim.TryValue with None -> None | Some dimv -> Some (dimv*n) 
-        | DimDivInt (dim,n) -> match dim.TryValue with None -> None | Some dimv -> Some (dimv/n) 
+        | DimMulInt (dim2,n) -> match dim2.TryValue with None -> None | Some dimv -> Some (dimv*n) 
+        | DimDivInt (dim2,n) -> match dim2.TryValue with None -> None | Some dimv -> Some (dimv/n) 
         | Dim n -> Some n 
         | DimVar v -> 
             match v.Value with 
@@ -86,6 +81,7 @@ type Dim =
             | _, None -> failwithf "incomplete dimension %s" (dim2.ToString()) 
             | _ -> () // equal, see above
 
+/// Represents an inferred shape
 type Shape =
     | ShapeVar of Shape option ref
     | Shape of Dim[] 
@@ -98,6 +94,11 @@ type Shape =
                 match v.Value with 
                 | None -> Dim.Inferred
                 | Some sln -> sln.[idx]
+
+    member shape.AsRank1() = shape.[0]
+    member shape.AsRank2() = shape.[0], shape.[1]
+    member shape.AsRank3() = shape.[0], shape.[1], shape.[2]
+    member shape.AsRank4() = shape.[0], shape.[1], shape.[2], shape.[3] 
 
     member shape.Dimensions = 
         match shape with 
@@ -121,38 +122,58 @@ type Shape =
 
     static member Inferred = ShapeVar (ref None)
 
-    static member UnifyShapes (shape1: Shape) (shape2: Shape) = 
+    static member Unify (shape1: Shape) (shape2: Shape) = 
         match shape1, shape2 with 
         | ShapeVar ({ contents = None } as v1), ShapeVar ({ contents = None } as v2) when Object.ReferenceEquals(v1,v2) -> ()
         | ShapeVar ({ contents = None } as v1), _ -> v1 := Some shape2
         | _, ShapeVar ({ contents = None } as v2) -> v2 := Some shape1
-        | ShapeVar { contents = Some soln1}, _ -> Shape.UnifyShapes soln1 shape2
-        | _, ShapeVar { contents = Some soln2} -> Shape.UnifyShapes shape1 soln2
+        | ShapeVar { contents = Some soln1}, _ -> Shape.Unify soln1 shape2
+        | _, ShapeVar { contents = Some soln2} -> Shape.Unify shape1 soln2
         | Shape dims1, Shape dims2 -> 
             if dims1.Length <> dims2.Length then 
                 failwithf "mismatched shapes: %A and %A, dims1.Length = %d, dims2.Length = %d" shape1 shape2 dims1.Length dims2.Length
             (dims1, dims2) ||> Array.iter2 (fun d1 d2 -> Dim.Unify d1 d2)
 
     static member EquivShapes (shape1: Shape) (shape2: Shape) = 
-        Shape.UnifyShapes shape1 shape2
+        Shape.Unify shape1 shape2
         shape1
 
 [<AutoOpen>]
 module ShapeHelpers = 
 
-    let shape (ints: seq<int>) = Shape(Array.map Dim (Array.ofSeq ints))
+    /// Create a non-inferred shape
+    let shape (ints: seq<int>) = 
+        ints |> Array.ofSeq |> Array.map (fun n -> if n = -1 then Dim.Inferred else Dim n) |> Shape
 
-type DT() = class end
+/// Represents a differentiable tensor value, which later corresponds to a node in a TensorFlow graph
+type DT(shape: Shape) = 
 
-/// A differentiable tensor value
-type Ctxt = 
+    /// Get the inferred shape of the differentiable tensor 
+    member __.Shape = shape
+
+/// Represents a context for turning differentiable tensors into a TensorFlow graph
+type internal Ctxt = 
     { Graph: TFGraph 
+      Nodes: Dictionary<DT, TFOutput> // uses reference identity to ensure unique nodes from unique DT values
+      MomentNodes: Dictionary<DT, TFOutput * TFOutput> // uses reference identity to ensure unique Moment nodes from unique DT values
       Values: Map<string,DT> }
 
-type DT<'T>(shape: Shape, eval: (Ctxt -> TFOutput)) =
-    inherit DT()
+type internal WithScopeDisposable(name:string) = 
+    interface IDisposable with 
+        member __.Dispose() = ()
+    member __.Name = name        
 
-    member __.Apply(ctxt) = eval ctxt
+/// Represents a differentiable tensor value
+type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
+    inherit DT(shape)
+
+    member internal dt.Apply(ctxt: Ctxt) = 
+        match ctxt.Nodes.TryGetValue(dt) with 
+        | true, node -> node
+        | _ -> 
+           let res = eval ctxt
+           ctxt.Nodes.[dt] <- res
+           res
 
     static member (+) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
         let outputShape = Shape.EquivShapes v1.Shape v2.Shape
@@ -179,18 +200,17 @@ type DT<'T>(shape: Shape, eval: (Ctxt -> TFOutput)) =
     static member Tan (v: DT<'T>) : DT<'T> =  
         DT<_> (v.Shape, fun ctxt -> ctxt.Graph.Tan(v.Apply(ctxt)))
 
-    member __.Shape : Shape = shape
-
     override dt.ToString() = dt.Shape.ToString()
 
-type WithScopeDisposable(name:string) = 
-    interface IDisposable with 
-        member __.Dispose() = ()
-    member __.Name = name        
+    static member Diff (f: DT<'T> -> DT<'T>) (x: DT<'T>) : DT<'T> =  
+        let y = f x
+        DT<_> (y.Shape, fun ctxt -> 
+            let xnode = x.Apply(ctxt)
+            let ynode = y.Apply(ctxt)
+            let dynodes = ctxt.Graph.AddGradients([| ynode |], [| xnode |])
+            dynodes.[0])
 
-type DT with
-
-    static member Const (value: 'T, ?shape: Shape) : DT<'T> = 
+    static member Const (value: double, ?shape: Shape) : DT<'T> = 
         let shape = shape |> Option.defaultWith (fun () -> Shape.Inferred)
         DT<_> (shape, fun ctxt -> ctxt.Graph.Reshape(ctxt.Graph.Const(new TFTensor(value)), ctxt.Graph.Const(shape.AsTFTensor())))
 
@@ -218,55 +238,55 @@ type DT with
                          )
 
     static member Conv2D (input: DT<'T>, filters: DT<'T>, ?stride: int, ?padding: string) : DT<'T> = 
-    //input: V[N,H,W,C], filters: V[F;F;C;COut]) -> output:V[N,H,W,COut] 
+    //input: V[N,H,W,C], filters: V[F1;F2;C;COut]) -> output:V[N,H,W,COut] 
         let stride = defaultArg stride 1
         let padding = defaultArg padding "SAME"
-        let inputShape = input.Shape
         let filtersShape = filters.Shape
-        let N, H, W, C = inputShape.[0], inputShape.[1], inputShape.[2], inputShape.[3]
-        let F = filtersShape.[0]
-        let COut = filtersShape.[3]
-        Shape.UnifyShapes filtersShape (Shape [| F; F; C; COut |])
+        let N, H, W, C = input.Shape.AsRank4()
+        let F1, F2, C2, COut = filtersShape.AsRank4()
+        Dim.Unify C C2
         let outputShape = Shape [| N; H/stride; W/stride; COut |]
         DT<_> (outputShape, fun ctxt -> ctxt.Graph.Conv2D(input.Apply(ctxt), filters.Apply(ctxt),strides = [|1L;int64 stride;int64 stride;1L|], padding=padding))
+
+    // filter: 4-D with shape [filter_height, filter_width, in_channels, out_channels].
+    // out_backprop: 4-D with shape [batch, out_height, out_width, out_channels]. Gradients w.r.t. the output of the convolution.
+    // input_sizes: An integer vector representing the shape of input, where input is a 4-D [batch, in_height, in_width, in_channels] tensor.
+    // Output: 4-D with shape [batch, in_height, in_width, in_channels]. Gradient w.r.t. the input of the convolution.
 
     static member Conv2DBackpropInput(filters: DT<'T>, out_backprop: DT<'T>, ?stride: int, ?padding: string) : DT<'T> = 
         let stride = defaultArg stride 1
         let padding = defaultArg padding "SAME"
-        let inputShape = out_backprop.Shape
-        let filtersShape = filters.Shape
-        let N, H, W, C = inputShape.[0], inputShape.[1], inputShape.[2], inputShape.[3]
-        let F = filtersShape.[0]
-        let COut = filtersShape.[3]
-        Shape.UnifyShapes filtersShape (Shape [| F; F; C; COut |])
-        let outputShape = Shape [| N; H*stride; W*stride; COut |]
-        DT<_> (outputShape, fun ctxt -> 
-           let input_sizes = ctxt.Graph.Const(outputShape.AsTFTensor())
+        let N, out_height, out_width, out_channels = out_backprop.Shape.AsRank4()
+        let _filter_height, _filter_width, in_channels, out_channels2 = filters.Shape.AsRank4()
+        Dim.Unify out_channels out_channels2
+        let input_shape = Shape [| N; out_height*stride; out_width*stride; in_channels |]
+        DT<'T> (input_shape, fun ctxt -> 
+           let input_sizes = ctxt.Graph.Const(input_shape.AsTFTensor())
            ctxt.Graph.Conv2DBackpropInput(input_sizes, filters.Apply(ctxt), out_backprop.Apply(ctxt), strides = [|1L;int64 stride;int64 stride;1L|], padding=padding))
 
+    /// Clips tensor values to a specified min and max.
     static member ClipByValue (input: DT<'T>, low: DT<'T>, high: DT<'T>) : DT<'T> = 
         let outputShape = Shape.EquivShapes (Shape.EquivShapes input.Shape low.Shape) high.Shape
-        DT<_> (outputShape, fun ctxt -> ctxt.Graph.ClipByValue(input.Apply(ctxt), low.Apply(ctxt), high.Apply(ctxt)))
+        DT<'T> (outputShape, fun ctxt -> ctxt.Graph.ClipByValue(input.Apply(ctxt), low.Apply(ctxt), high.Apply(ctxt)))
 
-    static member Moments(dims: seq<int>, input: DT<'T>) : DT<'T> * DT<'T> = 
+    static member Moments(input: DT<'T>, ?axes: seq<int>) : DT<'T> * DT<'T> = 
         // Note: keep_dims = true
         let outputShape = input.Shape
-        // Note: avoid making two Moments here
-        let mutable cache = None
         let compute (ctxt: Ctxt) = 
-            match cache with 
-            | Some (ctxt2, res) when Object.ReferenceEquals(ctxt, ctxt2) -> res
+            match ctxt.MomentNodes.TryGetValue (input) with 
+            | true, res -> res
             | _ -> 
-                let res = ctxt.Graph.Moments(input.Apply(ctxt), ctxt.Graph.Const((shape dims).AsTFTensor()),keep_dims=true)
-                cache <- Some (ctxt, res)
+                let axes = match axes with None -> None | Some v -> Some (ctxt.Graph.Const((shape v).AsTFTensor()))
+                let res = ctxt.Graph.Moments(input.Apply(ctxt), ?axes=axes,keep_dims=true)
+                ctxt.MomentNodes.[input] <- res
                 res
 
-        DT<_> (outputShape, fun ctxt -> fst (compute ctxt)),
-        DT<_> (outputShape, fun ctxt -> snd (compute ctxt))
+        DT<'T> (outputShape, fun ctxt -> fst (compute ctxt)),
+        DT<'T> (outputShape, fun ctxt -> snd (compute ctxt))
 
     static member Relu(input: DT<'T>) : DT<'T> = 
         let outputShape = input.Shape
-        DT<_> (outputShape, fun ctxt -> ctxt.Graph.Relu(input.Apply(ctxt)))
+        DT<'T> (outputShape, fun ctxt -> ctxt.Graph.Relu(input.Apply(ctxt)))
 
     static member DecodeJpeg(contents:DT<string>, ?channels: int) : DT<int> = // V[int,H,W,C]
         let channels = defaultArg channels 3 // CHECK ME
@@ -282,7 +302,7 @@ type DT with
 
     static member UsingWithScope (name: string) (f: unit -> DT<'T>) : DT<'T> = 
         let dt = f()
-        DT<_> (dt.Shape, fun ctxt -> use _scope = ctxt.Graph.WithScope(name) in dt.Apply(ctxt))
+        DT<'T> (dt.Shape, fun ctxt -> use _scope = ctxt.Graph.WithScope(name) in dt.Apply(ctxt))
 
     static member CreateString(value: byte[]) : DT<string> = 
         let outputShape = shape [ 1 ]
@@ -290,15 +310,20 @@ type DT with
 
     static member ExpandDims(value: DT<'T>, [<ParamArray>] dims: int[]) : DT<'T> = 
         let outputShape = shape dims
-        DT<_> (outputShape, fun ctxt -> ctxt.Graph.ExpandDims(value.Apply(ctxt), ctxt.Graph.Const(outputShape.AsTFTensor())))
+        DT<'T> (outputShape, fun ctxt -> ctxt.Graph.ExpandDims(value.Apply(ctxt), ctxt.Graph.Const(outputShape.AsTFTensor())))
     //TF.ExpandDims[Dim](value: V[shape]) : V[Expanded(Dim,shape)]
 
     static member Run(value: DT<'T>, ?weights: seq<string * DT>) : TFTensor = 
         let sess = new TFSession()
         let graph = sess.Graph
-        let ctxt = { Graph = graph; Values = Map.ofSeq (defaultArg weights Seq.empty)}
+        let ctxt = 
+            { Graph = graph
+              MomentNodes = Dictionary(HashIdentity.Reference)
+              Nodes = Dictionary(HashIdentity.Reference)
+              Values = Map.ofSeq (defaultArg weights Seq.empty)}
         let node = value.Apply(ctxt)
         sess.Run([||],[||],[|node|]).[0]
+
 
 type TensorFlow = ReflectedDefinitionAttribute
 
@@ -353,3 +378,8 @@ module TFHelpers =
         let ds = Array4D.init r1 r2 r3 r4 (fun i j k m -> d.[i,j].[k,m])
         let sh = shape [ r1; r2; r3; r4 ]
         DT<_> (sh, (fun ctxt -> ctxt.Graph.Const(new TFTensor(ds))))
+
+    let inline relu (x: ^T) : ^T = 
+        (^T: (static member Relu : ^T -> ^T) (x))
+
+    let variable value name = DT.Variable (value, name)
