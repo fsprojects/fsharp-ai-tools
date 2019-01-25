@@ -8,6 +8,11 @@ The repo contains:
 
 2.	A DSL implementation for `tf { ... }` that supports first-pass shape-checking/inference and other nice things
 
+The most important result here is preliminary proof-of-concept that it is possible to build real, full-speed
+TF graphs using a fairly thin differentiable-DSL whose intended semantics are clear and relatively independent
+of TF, while still achieving some degree of cohabitation with the TF ecosystem (graphs are graphs, and we believe they
+can be saved/visualized using standard TF tools, and even made to interoperate with TF-Python).
+
 # The TensorFlow API for the F# Programming Language
 
 See `TensorFlow.FSharp`.  This API is designed in a similar way to `TensorFlowSharp`, but is implemented directly in F# and
