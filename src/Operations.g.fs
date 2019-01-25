@@ -20331,7 +20331,7 @@ type TFGraph with
         let desc = new TFOperationDesc (graph, "Pack", graph.MakeName ("Pack", name))
         desc.AddInputs (values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        desc.SetAttr ("N", n) |> ignore
+        if n <> -1L then desc.SetAttr ("N", n) |> ignore
         axis |> Option.iter (fun axis -> desc.SetAttr ("axis", axis) |> ignore)
         let op = desc.FinishOperation ()
         let mutable _idx = 0

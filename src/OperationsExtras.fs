@@ -24,7 +24,7 @@ type TFGraph with
             let shape = graph.GetTensorShape (input)
             if shape.IsFullySpecified then
                 // NOTE: The python code distinguishes between tensor and sparsetensor
-                graph.Const (new TFTensor([|0 .. shape.NumDimensions|]), TFDataType.Int32)
+                graph.Const (new TFTensor([|0 .. shape.NumDimensions-1|]), TFDataType.Int32)
             else
                 // Otherwise, we rely on Range and Rank to do the right thing at run-time.
                 graph.Range (graph.Const (new TFTensor(0)), graph.Rank (input), graph.Const (new TFTensor(1)))
@@ -433,8 +433,7 @@ type TFGraph with
         if axis < -expanded_num_dims || axis >= expanded_num_dims then
             raise (InvalidOperationException (sprintf "axis = %i not in [-%i, %i]" axis expanded_num_dims expanded_num_dims))
         else
-            failwith "todo figure out what the N parameter means and if we can make it optional"
-            graph.Pack (values,-1L, int64 axis, name);
+            graph.Pack (values,-1L, int64 axis, name)
 
     /// <summary>
     /// Creates a sequence of numbers.

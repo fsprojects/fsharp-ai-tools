@@ -723,18 +723,18 @@ and TFGraph internal (handle) =
     /// <returns>The partial derivatives, the size of the array is the same as the length of the <paramref name="y"/> array.</returns>
     /// <param name="y">The y elements.</param>
     /// <param name="x">The x elements.</param>
-    /// <param name="dx">Initial gradients, which represent the symbolic partial derivatives of some loss function `L` w.r.t. <paramref name="y"/> ).   
+    /// <param name="dy">Initial gradients, which represent the symbolic partial derivatives of some loss function `L` w.r.t. <paramref name="y"/> ).   
     /// If the parameter is null, the implementation will use dx for 'OnesLike' for all shapes in <paramref name="y"/></param>
     /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
     /// <remarks>
     /// d(y[0] + y[1]+ ...)/dx[0], d(y[0] + y[1] + ...)/dx[1]z...
     /// </remarks>
-    member this.AddGradients(y : TFOutput [], x : TFOutput [], ?dx : TFOutput [], ?status : TFStatus) : TFOutput [] =
+    member this.AddGradients(y : TFOutput [], x : TFOutput [], ?dy : TFOutput [], ?status : TFStatus) : TFOutput [] =
         if y = null then raise(ArgumentNullException ("y"))
         if x = null then raise(ArgumentNullException ("x"))
-        dx |> Option.iter (fun dx -> 
-            if dx.Length <> y.Length then 
-                raise(ArgumentException ("If dx is not null, the size of the gradients must match the size of y", "dx")))
+        dy |> Option.iter (fun dy -> 
+            if dy.Length <> y.Length then 
+                raise(ArgumentException ("If dy is not null, the size of the gradients must match the size of y", "dy")))
         let cstatus = TFStatus.Setup (?incoming=status)
         let ret = Array.zeroCreate<TF_Output> x.Length //new Output [x.Length]
         use pret = fixed &ret.[0]
@@ -742,7 +742,7 @@ and TFGraph internal (handle) =
         let x = x |> Array.map (fun x -> x.Struct)
         use py = fixed &y.[0]
         use px = fixed &x.[0] 
-        match dx with
+        match dy with
         | None ->
             TF_AddGradients (handle, py, y.Length, px, x.Length, NativePtr.ofNativeInt IntPtr.Zero, cstatus.Handle, pret)
         | Some(dx) ->
