@@ -38,8 +38,8 @@ module PlayWithTF =
     tf { return DT.ReverseV2 (vec [1.0; 2.0]) }
     |> DT.RunArray
 
-    let f x = tf { return x * x + v 4.0 * x }
-    let df x = DT.gradient f x
+    let f x = tf { return x *. x + v 4.0 *. x }
+    let df x = DT.diff f x
 
     df (v 3.0)
     |> DT.RunScalar
@@ -48,11 +48,11 @@ module PlayWithTF =
     tf { return vec [1.0; 2.0] + v 4.0 }
     |> DT.RunArray
 
-    tf { return reduceSum (vec [1.0; 2.0] + v 4.0) }
+    tf { return sum (vec [1.0; 2.0] + v 4.0) }
     |> DT.RunScalar
 
-    let f2 v = tf { return reduceSum (vec [1.0; 2.0] * v * v) }
-    let df2 v = DT.grad f2 v
+    let f2 x = tf { return sum (vec [1.0; 2.0] *. x *. x) }
+    let df2 x = DT.grad f2 x
 
     f2 (vec [1.0; 2.0])
     |> DT.RunScalar
@@ -64,7 +64,7 @@ module PlayWithTF =
     //(DT.Stack [| x.[1]; x.[0] |]).Shape
     //|> DT.RunArray
 
-    let f3 (x: DT<_>) = tf { return vec [1.0; 2.0] * x * DT.ReverseV2 x } //[ x1*x2; 2*x2*x1 ] 
+    let f3 (x: DT<_>) = tf { return vec [1.0; 2.0] *. x *. DT.ReverseV2 x } //[ x1*x2; 2*x2*x1 ] 
     let df3 x = DT.jacobian f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
     let expected (x1, x2) = array2D [| [| x2; x1 |]; [| 2.0*x2; 2.0*x1 |] |]  
 
@@ -96,24 +96,127 @@ module PlayWithTF =
     tf { return var (vec [ 1.0 ]) "x" + v 4.0 }
     |> fun dt -> DT.RunArray(dt, ["x", (vec [2.0] :> _)] )
 
-    tf { return var (vec [ 1.0 ]) "x" * var (vec [ 1.0 ]) "x" + v 4.0 }
+    tf { return var (vec [ 1.0 ]) "x" *. var (vec [ 1.0 ]) "x" + v 4.0 }
     |> DT.RunArray
 
     tf { return DT.Variable (vec [ 1.0 ], name="hey") + v 4.0 }
     |> fun dt -> DT.RunArray(dt, ["hey", upcast (vec [2.0])])
        // Gives 6.0
 
-module Example2 =
+module GradientAscentWithoutVariables =
     // Define a function which will be executed using TensorFlow
-    // computes [ x1*x1*x3 + x2*x2*x2 + x3*x3*x1 + x1*x1 ]
-    let f (xs: DT<'T>) = tf { return DT.ReduceSum (xs * xs * DT.ReverseV2 xs) } 
+    let f (x: DT<double>, y: DT<double>) = 
+        tf { return sin (v 0.5 *. x *. x - v 0.25 *. y *. y + v 3.0) *. cos (v 2.0 *. x + v 1.0 - exp y) }
 
     // Get the partial derivatives of the scalar function
     // computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
-    let df xs = DT.gradient f xs   
+    let df (x, y) = 
+        let dfs = DT.gradients (f (x,y))  [| x; y |] 
+        (dfs.[0], dfs.[1])
 
-    // Run the derivative 
-    df (vec [ 3.0; 4.0; 5.0 ]) |> DT.RunArray // returns [ 55.0; 48.0; 39.0 ]
+    let rate = 0.1
+
+    // Gradient ascent
+    let step (x, y) = 
+        let nodes = df (v x, v y) 
+        let dzx, dzy = nodes |> DT.RunScalarPair 
+        printfn "size = %f" (sqrt (dzx*dzx + dzy*dzy))
+        (x + rate * dzx, y + rate * dzy)
+
+    (-0.3, 0.3) |> Seq.unfold (fun pos -> Some (pos, step pos)) |> Seq.truncate 200 |> Seq.toArray
+
+(*
+module GradientDescentWithVariables =
+    // Define a function which will be executed using TensorFlow
+    let f (x: DT<double>, y: DT<double>) = 
+        tf { return sin (v 0.5 *. x *. x - v 0.25 *. y *. y + v 3.0) *. cos (v 2.0 *. x + v 1.0 - exp y) }
+
+    // Get the partial derivatives of the scalar function
+    // computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
+    let df (x, y) = 
+        let dfs = DT.gradients (f (x,y))  [| x; y |] 
+        (dfs.[0], dfs.[1])
+
+    let rate = 0.1
+    let step (x, y) = 
+        // Repeatedly run the derivative 
+        let dzx, dzy = df (v x, v y) 
+        let dzx = dzx |> DT.RunScalar 
+        let dzy = dzy |> DT.RunScalar 
+        printfn "size = %f" (sqrt (dzx*dzx + dzy*dzy))
+        (x + rate * dzx, y + rate * dzy)
+
+    (-0.3, 0.3) |> Seq.unfold (fun pos -> Some (pos, step pos)) |> Seq.truncate 200 |> Seq.toArray
+*)
+
+module ModelExample =
+    let modelSize = 10
+    let trainSize = 200
+    let rnd = Random()
+
+    /// The true function we use to generate the training data (also a linear model)
+    let trueCoeffs = [| for i in 0 .. modelSize - 1 -> double i |]
+    let trueFunction (xs: double[]) = Array.sum [| for i in 0 .. modelSize - 1 -> trueCoeffs.[i] * xs.[i] |]
+
+    /// Make the training data
+    let trainingInputs, trainingOutputs = 
+        [| for i in 1 .. trainSize -> 
+            let xs = [| for i in 0 .. modelSize - 1 -> rnd.NextDouble() |]
+            xs, trueFunction xs |]
+        |> Array.unzip
+
+    /// Evaluate the model for input and coefficients
+    let model (xs: DT<double>, coeffs: DT<double>) = 
+        tf { return DT.Sum (xs *. coeffs,axis= [| 1 |]) }
+
+    /// Evaluate the loss function for the model w.r.t. a true output
+    let loss (z: DT<double>) tgt = 
+        tf { let dz = z - tgt in return DT.Sum (dz *. dz) }
+
+    // Gradient of the loss function w.r.t. the coefficients
+    let dloss_dcoeffs (xs, y) coeffs = 
+        let xnodes = batchVec xs
+        let ynode = batchScalar y
+        let coeffnodes = vec coeffs
+        let coffnodesBatch = batchExtend coeffnodes
+        let z = loss (model (xnodes, coffnodesBatch)) ynode
+        DT.gradient z coeffnodes 
+
+    let rate = 0.001
+    let step inputs (coeffs: double[]) = 
+        let dz = dloss_dcoeffs inputs coeffs 
+        let coeffs = (vec coeffs - v rate *. dz) |> DT.RunArray
+        printfn "coeffs = %A, dz = %A" coeffs dz
+        coeffs
+
+    let initialCoeffs = [| for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize|]
+
+    // Train the inputs in one batch
+    let train inputs =
+        initialCoeffs |> Seq.unfold (fun coeffs -> Some (coeffs, step inputs coeffs)) |> Seq.truncate 200 |> Seq.last
+
+    train (trainingInputs, trainingOutputs)
+    //   [|0.007351991009; 1.004220712; 2.002591797; 3.018333918; 3.996983572; 4.981999364; 5.986054734; 7.005387338; 8.005461854; 8.991150034|]
+
+(*
+    let mutable weights1 = vec [ 3.0; 4.0; 5.0 ]
+	let mutable weights2 = vec [ 0.2; -0.3; 0.4 ]
+
+    let model (input: string) = 
+	    tf { weights1 * weights2 * v (double input.Length) } 
+
+    let loss input = 
+	    tf { return DT.Sum (model input) }
+		
+    let df input = DT.gradients (loss input) [ weights1; weights2 ]   
+
+	// An unsophisticated optimization loop
+	for input in [ "hello"; "goodbye" ] do
+	    let [| dweights1; dweights2 |] = df input
+	    if dweights1.Length + dweights2.Length < 0.
+		weights1 <- weights1 + dweights1
+	    weights2 <- weights2 + dweights2
+*)
 
 module NeuralTransferFragments =
     let input = matrix4 [ for i in 0 .. 9 -> [ for j in 1 .. 40 -> [ for k in 1 .. 40 -> [ for m in 0 .. 2 -> double (i+j+k+m) ]]]]
@@ -125,7 +228,7 @@ module NeuralTransferFragments =
              let scale = DT.Variable (v 1.0, name + "/scale")
              let epsilon = v 0.001
              let normalized = (input - mu) / sqrt (sigma_sq + epsilon)
-             return scale * normalized + shift }
+             return scale *. normalized + shift }
 
     let friendly4D (d : 'T[,,,]) =
         [| for i in 0..Array4D.length1 d - 1 -> [| for j in 0..Array4D.length2 d - 1 -> [| for k in 0..Array4D.length3 d - 1 -> [| for m in 0..Array4D.length4 d - 1 -> d.[i,j,k,m]  |]|]|]|]
@@ -142,7 +245,7 @@ module NeuralTransferFragments =
             else
                 Shape [| Dim filter_size; Dim filter_size; Dim.Inferred; Dim out_channels |]
         tf { let truncatedNormal = DT.TruncatedNormal(weights_shape)
-             return DT.Variable (truncatedNormal * v 0.1, name + "/weights") }
+             return DT.Variable (truncatedNormal *. v 0.1, name + "/weights") }
 
     let is_relu = 1
     let stride = 1
@@ -171,7 +274,7 @@ module NeuralTransferFragments =
            }
 
     let to_pixel_value (input: DT<double>) = 
-        tf { return tanh input * v 150.0 + (v 255.0 / v 2.0) }
+        tf { return tanh input *. v 150.0 + (v 255.0 / v 2.0) }
 
     // The style-transfer tf
 
