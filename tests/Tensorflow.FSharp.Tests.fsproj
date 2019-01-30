@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="..\..\lib\TensorFlow.Proto.dll" />
+    <Reference Include="..\lib\TensorFlow.Proto.dll" />
 <!--    <PackageReference Include="TensorFlowSharp" Version="1.11.0" /> -->
     <PackageReference Include="Argu" Version="5.1.0" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />
