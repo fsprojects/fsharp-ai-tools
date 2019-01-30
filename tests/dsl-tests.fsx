@@ -3,10 +3,10 @@
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
 
-#if RUN //LIVECHECKING
-#r "bin/Debug/net472/TensorFlow.FSharp.dll"
-#else
+#if LIVECHECKING
 #r "../src/TensorFlow.FSharp.LiveChecking/bin/Debug/netstandard2.0/TensorFlow.FSharp.LiveChecking.dll"
+#else
+#r "bin/Debug/net472/TensorFlow.FSharp.dll"
 #endif
 #nowarn "49"
 
