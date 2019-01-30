@@ -129,7 +129,7 @@ module NeuralStyles =
             let jpg = DT.DecodeJpeg(input_string)
             let decoded = DT.Cast<_, double>(jpg)
             let preprocessed = decoded - mean_pixel ()
-            let expanded = DT.ExpandDims(preprocessed, 0)
+            let expanded = DT.ExpandDims(preprocessed)
             return expanded
         }
 

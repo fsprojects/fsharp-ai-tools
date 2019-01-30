@@ -3,7 +3,11 @@
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
 
+#if RUN //LIVECHECKING
 #r "bin/Debug/net472/TensorFlow.FSharp.dll"
+#else
+#r "../src/TensorFlow.FSharp.LiveChecking/bin/Debug/netstandard2.0/TensorFlow.FSharp.LiveChecking.dll"
+#endif
 #nowarn "49"
 
 //open Argu
@@ -14,13 +18,14 @@ open TensorFlow.FSharp.DSL
 
 if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 
-let apply x f = f x
-
 module PlayWithTF = 
     tf { return v 1.0 }
     |> DT.RunScalar
 
     tf { return (vec [1.0; 2.0]) }
+    |> DT.RunArray
+
+    tf { return (vec [1.0; 2.0] + matrix [ [1.0; 2.0] ]) }
     |> DT.RunArray
 
     tf { return (vec [1.0]).[0] }
@@ -151,19 +156,30 @@ module GradientDescentWithVariables =
 
 module ModelExample =
     let modelSize = 10
-    let trainSize = 200
+    let checkSize = 3
+    let trainSize = 500
+    let validationSize = 100
     let rnd = Random()
+    let noise eps = (rnd.NextDouble() - 0.5) * eps 
 
-    /// The true function we use to generate the training data (also a linear model)
-    let trueCoeffs = [| for i in 0 .. modelSize - 1 -> double i |]
-    let trueFunction (xs: double[]) = Array.sum [| for i in 0 .. modelSize - 1 -> trueCoeffs.[i] * xs.[i] |]
+    /// The true function we use to generate the training data (also a linear model plus some noise)
+    let trueCoeffs = [| for i in 1 .. modelSize -> double i |]
+    let trueFunction (xs: double[]) = Array.sum [| for i in 0 .. modelSize - 1 -> trueCoeffs.[i] * xs.[i]  |] + noise 0.5
 
-    /// Make the training data
-    let trainingInputs, trainingOutputs = 
+    let makeData size = 
         [| for i in 1 .. trainSize -> 
             let xs = [| for i in 0 .. modelSize - 1 -> rnd.NextDouble() |]
             xs, trueFunction xs |]
         |> Array.unzip
+
+    /// Make the data used to symbolically check the model
+    let checkData = makeData checkSize
+
+    /// Make the training data
+    let trainData = makeData trainSize
+
+    /// Make the validation data
+    let validationInputs, validationOutputs = makeData validationSize
 
     /// Evaluate the model for input and coefficients
     let model (xs: DT<double>, coeffs: DT<double>) = 
@@ -171,58 +187,60 @@ module ModelExample =
 
     /// Evaluate the loss function for the model w.r.t. a true output
     let loss (z: DT<double>) tgt = 
-        tf { let dz = z - tgt in return DT.Sum (dz *. dz) }
+        tf { let dz = z - tgt
+             return DT.Sum (dz *. dz) / v (double modelSize) / v (double z.Shape.[0].Value) }
 
     // Gradient of the loss function w.r.t. the coefficients
-    let dloss_dcoeffs (xs, y) coeffs = 
+    let objective (xs, y) coeffs = 
         let xnodes = batchVec xs
         let ynode = batchScalar y
         let coeffnodes = vec coeffs
         let coffnodesBatch = batchExtend coeffnodes
-        let z = loss (model (xnodes, coffnodesBatch)) ynode
+        coeffnodes, loss (model (xnodes, coffnodesBatch)) ynode
+
+    // Gradient of the objective function w.r.t. the coefficients
+    let dobjective_dcoeffs (xs, y) coeffs = 
+        let coeffnodes, z = objective (xs, y) coeffs
         DT.gradient z coeffnodes 
 
-    let rate = 0.001
+    let validation coeffs = 
+        let _coeffnodes, z = objective (validationInputs, validationOutputs) coeffs 
+        z |> DT.RunScalar
+
+    // Note, the rate in this example is constant. Many practical optimizers use variable
+    // update (rate) - often reducing - which makes them more robust to poor convergence.
+    let rate = 2.0
     let step inputs (coeffs: double[]) = 
-        let dz = dloss_dcoeffs inputs coeffs 
+        let dz = dobjective_dcoeffs inputs coeffs 
         let coeffs = (vec coeffs - v rate *. dz) |> DT.RunArray
-        printfn "coeffs = %A, dz = %A" coeffs dz
+        printfn "coeffs = %A, dz = %A, validation = %A" coeffs dz (validation coeffs)
         coeffs
 
     let initialCoeffs = [| for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize|]
 
     // Train the inputs in one batch
-    let train inputs =
-        initialCoeffs |> Seq.unfold (fun coeffs -> Some (coeffs, step inputs coeffs)) |> Seq.truncate 200 |> Seq.last
+    let train inputs nsteps =
+        initialCoeffs |> Seq.unfold (fun coeffs -> Some (coeffs, step inputs coeffs)) |> Seq.truncate nsteps |> Seq.last
 
-    train (trainingInputs, trainingOutputs)
+    [<LiveCheck>]
+    let check1 = train checkData 1
+
+    [<LiveTest>]
+    let test1 = train trainData 10
+
+    let learnedCoeffs = train trainData 200
+     // [|1.017181246; 2.039034327; 2.968580146; 3.99544071; 4.935430581;
+     //   5.988228378; 7.030374908; 8.013975714; 9.020138699; 9.98575733|]
+
+    validation trueCoeffs
+    validation learnedCoeffs
     //   [|0.007351991009; 1.004220712; 2.002591797; 3.018333918; 3.996983572; 4.981999364; 5.986054734; 7.005387338; 8.005461854; 8.991150034|]
-
-(*
-    let mutable weights1 = vec [ 3.0; 4.0; 5.0 ]
-	let mutable weights2 = vec [ 0.2; -0.3; 0.4 ]
-
-    let model (input: string) = 
-	    tf { weights1 * weights2 * v (double input.Length) } 
-
-    let loss input = 
-	    tf { return DT.Sum (model input) }
-		
-    let df input = DT.gradients (loss input) [ weights1; weights2 ]   
-
-	// An unsophisticated optimization loop
-	for input in [ "hello"; "goodbye" ] do
-	    let [| dweights1; dweights2 |] = df input
-	    if dweights1.Length + dweights2.Length < 0.
-		weights1 <- weights1 + dweights1
-	    weights2 <- weights2 + dweights2
-*)
 
 module NeuralTransferFragments =
     let input = matrix4 [ for i in 0 .. 9 -> [ for j in 1 .. 40 -> [ for k in 1 .. 40 -> [ for m in 0 .. 2 -> double (i+j+k+m) ]]]]
     let name = "a"
     let instance_norm (input, name) =
-        tf { use _ = TF.WithScope(name + "/instance_norm")
+        tf { use _ = DT.WithScope(name + "/instance_norm")
              let mu, sigma_sq = DT.Moments (input, axes=[0;1])
              let shift = DT.Variable (v 0.0, name + "/shift")
              let scale = DT.Variable (v 1.0, name + "/scale")
@@ -417,7 +435,7 @@ let x = conv_layer (x, 3, 9, 1, false, "conv_t3")
     //graph.Variable( .MakeName("a", "b")
 
     //TFTensor(TFDataType.Double, [| 2;2|], )
-    (TFDataType.Double, [| 2;2|])
-    TFOutput
+    //(TFDataType.Double, [| 2;2|])
+    //TFOutput
     //graph.Inpu
 
