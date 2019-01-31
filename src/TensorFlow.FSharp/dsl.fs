@@ -46,16 +46,16 @@ type Dim =
 
     static member Inferred = DimVar (ref None)
 
-    static member Unify (dim1: Dim) (dim2: Dim) = 
+    static member Unify op (dim1: Dim) (dim2: Dim) = 
         match dim1.TryValue(), dim2.TryValue() with 
         | Some v1, Some v2 -> 
             if v1 <> v2 then 
-                failwithf "mismatched dimension %d and %d" v1 v2 
+                failwithf "mismatched dimension %d and %d for operator %s" v1 v2 op
         | _ -> 
         match dim1, dim2 with 
         // strip equations
-        | DimVar { contents = Some soln1}, _ -> Dim.Unify soln1 dim2
-        | _, DimVar { contents = Some soln2} -> Dim.Unify dim1 soln2
+        | DimVar { contents = Some soln1}, _ -> Dim.Unify op soln1 dim2
+        | _, DimVar { contents = Some soln2} -> Dim.Unify op dim1 soln2
         // check for identical variables
         | DimVar ({ contents = None } as v1), DimVar ({ contents = None } as v2) when Object.ReferenceEquals(v1,v2) -> ()
         // solve
@@ -63,27 +63,27 @@ type Dim =
         | _, DimVar ({ contents = None } as v2) -> v2 := Some dim1
         | Dim d1, Dim d2 -> 
             if d1 <> d2 then 
-                failwithf "mismatched dimensions, d1 = %d, d2 = %d" d1 d2
+                failwithf "mismatched dimensions, d1 = %d, d2 = %d for operator %s" d1 d2 op
         | DimMulInt (d1, n1), Dim d2 -> 
             if d2 % n1 <> 0 then 
-                failwithf "mismatched dimension %d and multiplier %d" d2 n1
-            Dim.Unify d1 (Dim (d2 / n1))
+                failwithf "mismatched dimension %d and multiplier %d for operator %s" d2 n1 op
+            Dim.Unify op d1 (Dim (d2 / n1))
         | Dim d1, DimMulInt (d2, n2) -> 
             if d1 % n2 <> 0 then 
-                failwithf "mismatched dimension %d and multiplier %d" d1 n2
-            Dim.Unify (Dim (d1 / n2)) d2
+                failwithf "mismatched dimension %d and multiplier %d for operator %s" d1 n2 op
+            Dim.Unify op (Dim (d1 / n2)) d2
         | DimMulInt (d1, n1), DimMulInt (d2, n2) -> 
             if n1 <> n2 then 
-                failwithf "mismatched dimension multipliers %d and %d" n1 n2
-            Dim.Unify d1 d2
+                failwithf "mismatched dimension multipliers %d and %d for operator %s" n1 n2 op
+            Dim.Unify op d1 d2
         | DimDivInt (d1, n1), DimDivInt (d2, n2) -> 
             if n1 <> n2 then 
-                failwithf "mismatched dimension divisors %d and %d" n1 n2
-            Dim.Unify d1 d2
+                failwithf "mismatched dimension divisors %d and %d for operator %s" n1 n2 op
+            Dim.Unify op d1 d2
         | _ -> 
             match dim1.TryValue(), dim2.TryValue() with 
-            | None, _ -> failwithf "incomplete dimension %s" (dim1.ToString()) 
-            | _, None -> failwithf "incomplete dimension %s" (dim2.ToString()) 
+            | None, _ -> failwithf "incomplete dimension %s for operator %s" (dim1.ToString()) op 
+            | _, None -> failwithf "incomplete dimension %s for operator %s" (dim2.ToString()) op
             | _ -> () // equal, see above
 
 /// Represents an inferred shape
@@ -115,7 +115,7 @@ type Shape =
 
     override shape.ToString() = 
         match shape with 
-        | Shape n -> sprintf "shape %A" [ for i in n -> i.ToString() ] 
+        | Shape n -> sprintf "shape [ %s ]" (String.concat " x " [ for i in n -> i.ToString() ]) 
         | ShapeVar v -> 
             match v.Value with 
             | None -> "shape ?" 
@@ -132,20 +132,20 @@ type Shape =
     static member DV with get() = (Shape [| Dim.Inferred |])
     static member DM with get() = (Shape [| Dim.Inferred; Dim.Inferred |])
 
-    static member Unify (shape1: Shape) (shape2: Shape) = 
+    static member Unify op (shape1: Shape) (shape2: Shape) = 
         match shape1, shape2 with 
-        | ShapeVar { contents = Some soln1}, _ -> Shape.Unify soln1 shape2
-        | _, ShapeVar { contents = Some soln2} -> Shape.Unify shape1 soln2
+        | ShapeVar { contents = Some soln1}, _ -> Shape.Unify op soln1 shape2
+        | _, ShapeVar { contents = Some soln2} -> Shape.Unify op shape1 soln2
         | ShapeVar ({ contents = None } as v1), ShapeVar ({ contents = None } as v2) when Object.ReferenceEquals(v1,v2) -> ()
         | ShapeVar ({ contents = None } as v1), _ -> v1 := Some shape2
         | _, ShapeVar ({ contents = None } as v2) -> v2 := Some shape1
         | Shape dims1, Shape dims2 -> 
             if dims1.Length <> dims2.Length then 
-                failwithf "mismatched shapes: %A and %A, dims1.Length = %d, dims2.Length = %d" shape1 shape2 dims1.Length dims2.Length
-            (dims1, dims2) ||> Array.iter2 (fun d1 d2 -> Dim.Unify d1 d2)
+                failwithf "mismatched shapes: %A and %A, dims1.Length = %d, dims2.Length = %d for operator %s" shape1 shape2 dims1.Length dims2.Length op
+            (dims1, dims2) ||> Array.iter2 (fun d1 d2 -> Dim.Unify op d1 d2)
 
-    static member EquivShapes (shape1: Shape) (shape2: Shape) = 
-        Shape.Unify shape1 shape2
+    static member EquivShapes op (shape1: Shape) (shape2: Shape) = 
+        Shape.Unify op shape1 shape2
         shape1
 
 [<AutoOpen>]
@@ -204,7 +204,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
 
     static member AddN (vs: DT<'T>[]) : DT<'T> = 
         let outputShape = vs.[0].Shape 
-        for v in vs do Shape.Unify outputShape v.Shape
+        for v in vs do Shape.Unify "AddN" outputShape v.Shape
 #if LIVECHECKING
         DT<_> (outputShape)
 #else
@@ -215,7 +215,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
     // TODO: this gives wrong shape when all inputs have size 1. Ugh
     static member Stack (vs: DT<'T>[]) : DT<'T> = 
         let inputShape = vs.[0].Shape
-        for v in vs do Shape.Unify inputShape v.Shape
+        for v in vs do Shape.Unify "Stack" inputShape v.Shape
         let outputShape = Shape [| yield Dim vs.Length; yield! inputShape.Dimensions |]
 #if LIVECHECKING
         DT<_> (outputShape)
@@ -224,7 +224,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
 #endif
 
     static member (+) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
-        let outputShape = Shape.EquivShapes v1.Shape v2.Shape
+        let outputShape = Shape.EquivShapes "(+)" v1.Shape v2.Shape
 #if LIVECHECKING
         DT<_> (outputShape)
 #else
@@ -232,7 +232,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
 #endif
 
     static member (-) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
-        let outputShape = Shape.EquivShapes v1.Shape v2.Shape
+        let outputShape = Shape.EquivShapes "(-)" v1.Shape v2.Shape
 #if LIVECHECKING
         DT<_> (outputShape)
 #else
@@ -240,7 +240,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
 #endif
 
     static member ( *. ) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
-        let outputShape = Shape.EquivShapes v1.Shape v2.Shape
+        let outputShape = Shape.EquivShapes "(*.)" v1.Shape v2.Shape
 #if LIVECHECKING
         DT<_> (outputShape)
 #else
@@ -252,7 +252,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
     //    DT<_> (outputShape, fun ctxt -> ctxt.Graph.MatMul(v1.Apply ctxt, v2.Apply ctxt))
 
     static member (/) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
-        let outputShape = Shape.EquivShapes v1.Shape v2.Shape
+        let outputShape = Shape.EquivShapes "(/)"v1.Shape v2.Shape
 #if LIVECHECKING
         DT<_> (outputShape)
 #else
@@ -325,7 +325,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
     // TODO : generalize beyond vectors
     member v.Item 
         with get (n: int) : DT<'T> = 
-            Shape.Unify v.Shape Shape.DV
+            Shape.Unify "Item (index notaion)" v.Shape Shape.DV
             let outputShape = Shape.D
 #if LIVECHECKING
             DT<'T> (outputShape)
@@ -339,7 +339,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
     // TODO : generalize beyond vectors
     member v.Item 
         with get (n1: int, n2: int) : DT<'T> = 
-            Shape.Unify v.Shape Shape.DV
+            Shape.Unify "Item (index notation)" v.Shape Shape.DV
             let outputShape = Shape.D
 #if LIVECHECKING
             DT<'T> (outputShape)
@@ -352,7 +352,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
 
     // TODO : generalize beyond vectors
     member v.GetSlice(startIndex: int option, endIndex: int option) =
-        Shape.Unify v.Shape Shape.DV
+        Shape.Unify "GetSlice" v.Shape Shape.DV
         // TODO attach a constraint to the dimension that the endIndex is in-bounds
         let startIndex = defaultArg startIndex 0
         if endIndex.IsNone then failwith "end index must be specified"
@@ -404,7 +404,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
         let n = dims.Length
         if n % 2 <> 0 then invalidArg "DiagPart: v" "expected a tensor with even rank"
         for i in 0 .. n - 1 do 
-            Dim.Unify dims.[i] dims.[n/2 + i]
+            Dim.Unify "DiagPart" dims.[i] dims.[n/2 + i]
         let outputShape = Shape (dims.[0 .. n/2 - 1 ])
         let outputShape = v.Shape
 #if LIVECHECKING
@@ -467,7 +467,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
 
     /// Add partial deriviatives of loss function
     static member internal AddGradients (y: (* D *) DT, (* D, DV, DM, ...  *) xs: DT[], (* D *) ?dy: DT) =  
-        Shape.Unify y.Shape Shape.D
+        Shape.Unify "AddGradients" y.Shape Shape.D
         let key = (y,xs,dy)
         xs |> Array.mapi (fun i x -> 
             let outputShape = x.Shape
@@ -537,7 +537,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
         let filtersShape = filters.Shape
         let N, H, W, C = input.Shape.AsRank4()
         let F1, F2, C2, COut = filtersShape.AsRank4()
-        Dim.Unify C C2
+        Dim.Unify "Conv2D" C C2
         let outputShape = Shape [| N; H/stride; W/stride; COut |]
 #if LIVECHECKING
         DT<'T> (outputShape)
@@ -555,7 +555,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
         let padding = defaultArg padding "SAME"
         let N, out_height, out_width, out_channels = out_backprop.Shape.AsRank4()
         let _filter_height, _filter_width, in_channels, out_channels2 = filters.Shape.AsRank4()
-        Dim.Unify out_channels out_channels2
+        Dim.Unify "Conv2DBackpropInput" out_channels out_channels2
         let input_shape = Shape [| N; out_height*stride; out_width*stride; in_channels |]
 #if LIVECHECKING
         DT<'T> (input_shape)
@@ -567,7 +567,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
 
     /// Clips tensor values to a specified min and max.
     static member ClipByValue (input: DT<'T>, low: DT<'T>, high: DT<'T>) : DT<'T> = 
-        let outputShape = Shape.EquivShapes (Shape.EquivShapes input.Shape low.Shape) high.Shape
+        let outputShape = Shape.EquivShapes "ClipByValue" (Shape.EquivShapes "ClipByValue" input.Shape low.Shape) high.Shape
 #if LIVECHECKING
         DT<'T> (outputShape)
 #else
@@ -778,15 +778,15 @@ module DT =
         (x |> f, diffN n f x)
 
     /// Original value and gradient of a vector-to-scalar function `f`, at point `x`. Reverse AD.
-    let evalAndGradient (f: DV<'T> -> D<'T>) (x: DV<'T>) : D<'T> * DV<'T> = 
-        Shape.Unify x.Shape Shape.DV
+    let evalAndGrad (f: DV<'T> -> D<'T>) (x: DV<'T>) : D<'T> * DV<'T> = 
+        Shape.Unify "evalAndGrad" x.Shape Shape.DV
         let y = f x
         let dy = gradient y x
         y, dy
 
     /// Gradient of a vector-to-scalar function `f`, at point `x`. Reverse AD.
     let grad (f: DV<'T> -> D<'T>) x : DV<'T> =
-        evalAndGradient f x |> snd
+        evalAndGrad f x |> snd
 
 (*
     /// Original value and gradient-vector product (directional derivative) of a vector-to-scalar function `f`, at point `x`, along vector `v`.
@@ -851,7 +851,7 @@ module DT =
 (*
     /// Original value, gradient-vector product (directional derivative), and Hessian-vector product of a vector-to-scalar function `f`, at point `x`, along vector `v`. Reverse-on-forward AD.
     let gradAndHessianv' (f: DV<'T> -> D<'T>) x v =
-        let gv, hv = evalAndGradient (fun xx -> gradv f xx v) x
+        let gv, hv = evalAndGrad (fun xx -> gradv f xx v) x
         (x |> f, gv, hv)
 
     /// Gradient-vector product (directional derivative) and Hessian-vector product of a vector-to-scalar function `f`, at point `x`, along vector `v`. Reverse-on-forward AD.
