@@ -159,6 +159,14 @@ and TFOutput(handle: IntPtr, ?index : int) =
     member this.Operation = new TFOperation (this.LLOperation)
 
     /// <summary>
+    /// The associated operation.
+    /// </summary>
+    /// <value>The operation.</value>
+    member this.Op = this.Operation
+
+    member this.Name = sprintf "%s:%i" this.Operation.Name this.Index
+
+    /// <summary>
     /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.Output"/>.
     /// </summary>
     /// <returns>A <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.Output"/>.</returns>
@@ -200,3 +208,5 @@ module TFOperationExtensions =
         member this.Outputs = [|for i in 0..this.NumOutputs - 1 -> TFOutput(this.Handle,i)|]
 
         member this.Inputs  = [|for i in 0..this.NumInputs - 1 -> TFInput(this.Handle,i)|]
+
+        member this.TryGetOutput(i:int) = if i >= 0 && i < this.NumOutputs then Some(this.[i]) else None

@@ -107,6 +107,8 @@ type DictionaryCount<'T when 'T : equality>() =
         this.Increment(x)
         value
 
+    member this.ContainsKey(x) = dict.ContainsKey(x)
+
 let isAssignableTo<'T> (x:_) = typeof<'T>.IsAssignableFrom(x.GetType())
 
 /// This is for value types

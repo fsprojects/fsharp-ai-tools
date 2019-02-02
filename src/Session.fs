@@ -5,7 +5,7 @@ open System.Collections.Generic
 open System
 open System.Runtime.InteropServices
 
-#nowarn "9"
+#nowarn "9" "51"
 /// <summary>
 /// Use the runner class to easily configure inputs, outputs and targets to be passed to the session runner.
 /// </summary>
@@ -62,6 +62,7 @@ type TFRunner internal (session : TFSession) =
     /// <param name="value">Value to assing to the incoming port.</param>
     member this.AddInput(input : string,  value : TFTensor) : TFRunner  = 
         if box value = null then  raise(ArgumentNullException("value"))
+        inputs.Add (session.Graph.GetTensorByName(input))
         inputValues.Add (value)
         this
 
@@ -74,14 +75,6 @@ type TFRunner internal (session : TFSession) =
         targets.AddRange(newTargets)
         this
 
-
-    /// Parses user strings that contain both the operation name and an index.
-    member this.ParseOutput (operation : string) = 
-        // TODO, wrap this in an option
-        match operation.Split(':') with
-        | [|op;Integer(idx)|] -> session.Graph.[op].[idx]
-        | [|op|] -> session.Graph.[operation].[0]
-        | _ -> failwithf "error parsing %s" operation
 
     /// <summary>
     /// Adds the specified operation names as the ones to be retrieved.
@@ -108,8 +101,8 @@ type TFRunner internal (session : TFSession) =
     /// <returns>The instance of runner, to allow chaining operations.</returns>
     /// <param name="operation">The name of the operation in the graph, which might be a simple name, or it might be name:index, 
     /// where the index is the .</param>
-    member this.Fetch(operation : string) : TFRunner = 
-        outputs.Add (this.ParseOutput(operation))
+    member this.Fetch(output : string) : TFRunner = 
+        outputs.Add (session.Graph.GetTensorByName(output))
         this
 
     /// <summary>
@@ -136,7 +129,7 @@ type TFRunner internal (session : TFSession) =
     /// <returns>The instance of runner, to allow chaining operations.</returns>
     /// <param name="outputs">The output sreferencing a specified tensor.</param>
     member this.Fetch ([<ParamArray>] outputsToFetch : string []) : TFRunner =
-        outputs.AddRange(outputsToFetch |> Array.map this.ParseOutput)
+        outputs.AddRange(outputsToFetch |> Array.map session.Graph.GetTensorByName)
         this
 
     /// <summary>
@@ -182,13 +175,14 @@ type TFRunner internal (session : TFSession) =
 /// a partial run.
 /// </remarks>
 and PartialRunToken(token:IntPtr) =
-
+    let mutable token = token
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern void TF_DeletePRunHandle (IntPtr partialRunHandle)
 
     member __.Dispose() =
         if token <> IntPtr.Zero then
             TF_DeletePRunHandle (token)
+            token <- IntPtr.Zero
 
     member __.Token = token
 
@@ -247,7 +241,7 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
 
     // extern void TF_SessionPRunSetup (TF_Session, const TF_Output *inputs, int ninputs, const TF_Output *outputs, int noutputs, const TF_Operation *const *target_opers, int ntargets, const char **handle, TF_Status *)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    static extern void TF_SessionPRunSetup (TF_Session session, TF_Output [] inputs, int ninputs, TF_Output [] outputs, int noutputs, TF_Operation [] target_opers, int ntargets, [<Out>] IntPtr returnHandle, TF_Status status)
+    static extern void TF_SessionPRunSetup (TF_Session session, TF_Output [] inputs, int ninputs, TF_Output [] outputs, int noutputs, TF_Operation [] target_opers, int ntargets, IntPtr* returnHandle, TF_Status status)
 
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern void TF_DeletePRunHandle (IntPtr partialRunHandle)
@@ -444,7 +438,7 @@ and TFSession private (handle:IntPtr, graph : TFGraph,  ?status : TFStatus) =
         let cstatus = TFStatus.Setup (?incoming=status)
         let tLen = targetOpers.Length
         let topers = targetOpers |> Array.map (fun x -> x.Handle)
-        TF_SessionPRunSetup (handle, inputs |> Array.map (fun x -> x.Struct), inputs.Length, outputs |> Array.map (fun x -> x.Struct), outputs.Length, topers, tLen, returnHandle, cstatus.Handle)
+        TF_SessionPRunSetup (handle, inputs |> Array.map (fun x -> x.Struct), inputs.Length, outputs |> Array.map (fun x -> x.Struct), outputs.Length, topers, tLen, &&returnHandle, cstatus.Handle)
         cstatus.CheckMaybeRaise (?incoming=status) |> ignore
         PartialRunToken(returnHandle)
 

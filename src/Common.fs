@@ -54,11 +54,6 @@ type TypeError(msg:string) =
 type GraphMismatchException(msg:string) =
     inherit Exception(msg)
 
-// type Operation with
-//     member this.try_get_output(i:int) = if i >= 0 && i < this.NumOutputs then Some(this.[i]) else None
-//     member this.``type`` = this.OpType
-//     member this.graph = this.Graph
-
 
 // module op_def_registery = 
 //     let get_registered_ops() = failwith "todo"
@@ -68,15 +63,14 @@ type GraphMismatchException(msg:string) =
 // module threading =
 //     let local() : bool = failwith "todo"
 
-// type Args = obj[]
-// type KWArgs = Map<string,obj>
+// these will likely need to be removed
+type Args = obj[]
+
+// these will likely need to be removed
+type KWArgs = Map<string,obj>
 
 
 // let isSameObject = LanguagePrimitives.PhysicalEquality
-
-// type Output with
-//     member this.name : string = failwith "todo"
-//     member this.device : string = failwith "todo"
 
 // /// Breadth first search through a graph, returns first found node if there is one
 // /// Skipping previously visited nodes
@@ -110,5 +104,5 @@ type GraphMismatchException(msg:string) =
 // // Also, it seems that GradientMapping is optional
 // type GradientFunction = (Operation*OperationGradients-> Output)
 
-// type ICallable =
-//     abstract member __call__ : unit -> unit
+type ICallable =
+     abstract member __call__ : unit -> unit

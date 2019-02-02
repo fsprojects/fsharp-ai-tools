@@ -56,7 +56,7 @@ type TFVariable internal (variableHandle : TF_Output, readHandle : TF_Output, as
     /// Returns the VarHandleOp that was created using the shape of the initial value.
     /// </summary>
     /// <value>The variable op.</value>
-    member __.VariableOp = variableHandle;
+    member __.VariableOp = new TFOutput(variableHandle);
 
     /// <summary>
     /// Returns the VarHandleOp (the VariableOp property).

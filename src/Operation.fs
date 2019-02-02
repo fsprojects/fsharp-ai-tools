@@ -5,6 +5,7 @@ namespace TensorFlow.FSharp
 open System
 open System.Runtime.InteropServices
 open System.Text
+open System.Text.RegularExpressions
 open TensorFlow.FSharp.Utils
 open FSharp.NativeInterop
 
@@ -18,7 +19,8 @@ open FSharp.NativeInterop
 /// <see cref="T:TensorFlow.Graph"/>, but they can also be constructed
 /// manually using the low-level <see cref="T:TensorFlow.TFOperationDesc"/> API.
 /// </remarks>
-type TFOperation((*graph : Graph,*) handle : IntPtr)  =
+/// NOTE: If you feel the need to keep a reference to graph consider using a mutually recursive namespace instead of passing an object reference around
+type TFOperation((*graph : obj,*) handle : IntPtr)  =
 
     let attrTypeToString(attrType : TFAttributeType, isList : bool) = 
         let name = 
@@ -42,7 +44,7 @@ type TFOperation((*graph : Graph,*) handle : IntPtr)  =
             |> Exception |> raise
 
     let voidToNativeInt x = x |> NativePtr.ofVoidPtr<int64> |> NativePtr.toNativeInt
-
+    static let VALID_OP_NAME_REGEX = new Regex("^[A-Za-z0-9.][A-Za-z0-9_.\\-/]*$",RegularExpressions.RegexOptions.Compiled)
     // extern const char * TF_OperationName (TF_Operation *oper)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern IntPtr TF_OperationName (TF_Operation oper)
@@ -169,6 +171,7 @@ type TFOperation((*graph : Graph,*) handle : IntPtr)  =
     /// <value>The handle.</value>
     member __.Handle = handle
 
+    //member internal this._graph = graph
     // Pointer to the graph, to keep it from collecting if there are Operations alive.
     // member this.graph = graph
 
@@ -493,6 +496,9 @@ type TFOperation((*graph : Graph,*) handle : IntPtr)  =
             box null :?> TFBuffer // TODO consider taking this out
         else 
             r
+
+    static member internal IsNameValid(name : string) = VALID_OP_NAME_REGEX.IsMatch(name)
+
 
     interface IComparable with 
         member this.CompareTo(x : obj) = 

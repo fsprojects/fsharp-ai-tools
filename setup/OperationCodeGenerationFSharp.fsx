@@ -95,6 +95,20 @@ let fsharptype (tfType : string) =
 
 let isReferenceType (tfType : string) = tfType.StartsWith ("list(") || tfType = "tensor" || tfType = "string" || tfType = "shape"
 
+/// Converts characters folowing underscores to upercase
+/// Removes underscores 
+let camelCase(pascal:string) =
+    [|
+        for i in 0..pascal.Length-1 do
+            let c = pascal.[i]
+            if c <> '_' then
+                yield
+                    if i > 0 && pascal.[i-1] = '_'
+                    then Char.ToUpper(c)
+                    else c
+    |] |> String
+
+
 // Maps a parameter name to a F# acceptable name, to avoid classhes with langauge keywords
 let paramMap (paramName : string) = 
     match paramName with
@@ -289,8 +303,12 @@ let run(dirs : string []) =
         // NOTE: All defaults are None, as the default is set by the op
         let needStatus = [|yield! requiredAttrs; yield! optionalAttrs|] |> Array.exists (fun x -> x.Type.Contains("TFTensor"))
         // NOTE: needStatus is not used anywhere
-        p (sprintf "let name = defaultArg name \"\"")
-        p (sprintf "let desc = new TFOperationDesc (graph, \"%s\", graph.MakeName (\"%s\", name))" oper.Name oper.Name)
+        //p (sprintf "let name = defaultArg name \"\"")
+        let opsCheck = 
+            oper.InputArgs |> Seq.toArray |> Array.map (fun inarg -> sprintf "yield%s %s" (if isListArg inarg then "!" else "") (paramMap inarg.Name)) |> String.concat "; "
+        //p (sprintf "use scope = graph.NameScope(name, \"%s\", [|%s|])" oper.Name opsCheck)
+        p (sprintf "graph.CheckOutputs([|%s|])" opsCheck)
+        p (sprintf "let desc = new TFOperationDesc (graph, \"%s\", graph.MakeName(name, \"%s\"))" oper.Name oper.Name)
         oper.InputArgs |> Seq.iter (fun arg -> p (sprintf "desc.AddInput%s (%s) |> ignore" ( if isListArg arg then "s" else "")  (paramMap arg.Name)))
         p "graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)"
         // If we have attributes

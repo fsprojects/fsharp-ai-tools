@@ -302,7 +302,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
 
     static member UsingWithScope (name: string) (f: unit -> DT<'T>) : DT<'T> = 
         let dt = f()
-        DT<'T> (dt.Shape, fun ctxt -> use _scope = ctxt.Graph.WithScope(name) in dt.Apply(ctxt))
+        DT<'T> (dt.Shape, fun ctxt -> use _scope = ctxt.Graph.NameScope(name) in dt.Apply(ctxt))
 
     static member CreateString(value: byte[]) : DT<string> = 
         let outputShape = shape [ 1 ]

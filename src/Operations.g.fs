@@ -27,8 +27,8 @@ type TFGraph with
     ///    Returns nothing but an exception.
     /// </remarks>
     member graph.Abort (?error_msg : string, ?exit_without_error : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Abort", graph.MakeName ("Abort", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "Abort", graph.MakeName(name, "Abort"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         error_msg |> Option.iter (fun error_msg -> desc.SetAttr ("error_msg", error_msg) |> ignore)
         exit_without_error |> Option.iter (fun exit_without_error -> desc.SetAttr ("exit_without_error", exit_without_error) |> ignore)
@@ -53,8 +53,8 @@ type TFGraph with
     ///    an output element, this operation computes \\(y = |x|\\).
     /// </remarks>
     member graph.Abs (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Abs", graph.MakeName ("Abs", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Abs", graph.MakeName(name, "Abs"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -90,8 +90,8 @@ type TFGraph with
     ///    Returns a <c>Tensor<c> of same shape and type as the elements of <c>inputs<c>.
     /// </remarks>
     member graph.AccumulateNV2 (inputs : TFOutput[], shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AccumulateNV2", graph.MakeName ("AccumulateNV2", name))
+        graph.CheckOutputs([|yield! inputs|])
+        let desc = new TFOperationDesc (graph, "AccumulateNV2", graph.MakeName(name, "AccumulateNV2"))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shape", shape) |> ignore
@@ -124,8 +124,8 @@ type TFGraph with
     ///    Does not add if local_step is lesser than the accumulator's global_step.
     /// </remarks>
     member graph.AccumulatorApplyGradient (handle : TFOutput, local_step : TFOutput, gradient : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AccumulatorApplyGradient", graph.MakeName ("AccumulatorApplyGradient", name))
+        graph.CheckOutputs([|yield handle; yield local_step; yield gradient|])
+        let desc = new TFOperationDesc (graph, "AccumulatorApplyGradient", graph.MakeName(name, "AccumulatorApplyGradient"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (local_step) |> ignore
         desc.AddInput (gradient) |> ignore
@@ -148,8 +148,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.AccumulatorNumAccumulated (handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AccumulatorNumAccumulated", graph.MakeName ("AccumulatorNumAccumulated", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "AccumulatorNumAccumulated", graph.MakeName(name, "AccumulatorNumAccumulated"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -179,8 +179,8 @@ type TFGraph with
     ///    new_global_step.
     /// </remarks>
     member graph.AccumulatorSetGlobalStep (handle : TFOutput, new_global_step : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AccumulatorSetGlobalStep", graph.MakeName ("AccumulatorSetGlobalStep", name))
+        graph.CheckOutputs([|yield handle; yield new_global_step|])
+        let desc = new TFOperationDesc (graph, "AccumulatorSetGlobalStep", graph.MakeName(name, "AccumulatorSetGlobalStep"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (new_global_step) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -216,8 +216,8 @@ type TFGraph with
     ///    global_step in the accumulator by 1, and resets the aggregate to 0.
     /// </remarks>
     member graph.AccumulatorTakeGradient (handle : TFOutput, num_required : TFOutput, dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AccumulatorTakeGradient", graph.MakeName ("AccumulatorTakeGradient", name))
+        graph.CheckOutputs([|yield handle; yield num_required|])
+        let desc = new TFOperationDesc (graph, "AccumulatorTakeGradient", graph.MakeName(name, "AccumulatorTakeGradient"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (num_required) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -241,8 +241,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Acos (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Acos", graph.MakeName ("Acos", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Acos", graph.MakeName(name, "Acos"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -264,8 +264,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Acosh (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Acosh", graph.MakeName ("Acosh", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Acosh", graph.MakeName(name, "Acosh"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -293,8 +293,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.Add (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Add", graph.MakeName ("Add", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "Add", graph.MakeName(name, "Add"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -363,8 +363,8 @@ type TFGraph with
     ///    <c>TakeManySparseFromTensorsMap<c>.  Ensure the Operations are colocated.
     /// </remarks>
     member graph.AddManySparseToTensorsMap (sparse_indices : TFOutput, sparse_values : TFOutput, sparse_shape : TFOutput, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AddManySparseToTensorsMap", graph.MakeName ("AddManySparseToTensorsMap", name))
+        graph.CheckOutputs([|yield sparse_indices; yield sparse_values; yield sparse_shape|])
+        let desc = new TFOperationDesc (graph, "AddManySparseToTensorsMap", graph.MakeName(name, "AddManySparseToTensorsMap"))
         desc.AddInput (sparse_indices) |> ignore
         desc.AddInput (sparse_values) |> ignore
         desc.AddInput (sparse_shape) |> ignore
@@ -391,8 +391,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.AddN (inputs : TFOutput[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AddN", graph.MakeName ("AddN", name))
+        graph.CheckOutputs([|yield! inputs|])
+        let desc = new TFOperationDesc (graph, "AddN", graph.MakeName(name, "AddN"))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -448,8 +448,8 @@ type TFGraph with
     ///    <c>TakeManySparseFromTensorsMap<c>.  Ensure the Operations are colocated.
     /// </remarks>
     member graph.AddSparseToTensorsMap (sparse_indices : TFOutput, sparse_values : TFOutput, sparse_shape : TFOutput, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AddSparseToTensorsMap", graph.MakeName ("AddSparseToTensorsMap", name))
+        graph.CheckOutputs([|yield sparse_indices; yield sparse_values; yield sparse_shape|])
+        let desc = new TFOperationDesc (graph, "AddSparseToTensorsMap", graph.MakeName(name, "AddSparseToTensorsMap"))
         desc.AddInput (sparse_indices) |> ignore
         desc.AddInput (sparse_values) |> ignore
         desc.AddInput (sparse_shape) |> ignore
@@ -481,8 +481,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.AddV2 (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AddV2", graph.MakeName ("AddV2", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "AddV2", graph.MakeName(name, "AddV2"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -511,8 +511,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.AdjustContrast (images : TFOutput, contrast_factor : TFOutput, min_value : TFOutput, max_value : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AdjustContrast", graph.MakeName ("AdjustContrast", name))
+        graph.CheckOutputs([|yield images; yield contrast_factor; yield min_value; yield max_value|])
+        let desc = new TFOperationDesc (graph, "AdjustContrast", graph.MakeName(name, "AdjustContrast"))
         desc.AddInput (images) |> ignore
         desc.AddInput (contrast_factor) |> ignore
         desc.AddInput (min_value) |> ignore
@@ -553,8 +553,8 @@ type TFGraph with
     ///    <c>(x - mean) * contrast_factor + mean<c>.
     /// </remarks>
     member graph.AdjustContrastv2 (images : TFOutput, contrast_factor : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AdjustContrastv2", graph.MakeName ("AdjustContrastv2", name))
+        graph.CheckOutputs([|yield images; yield contrast_factor|])
+        let desc = new TFOperationDesc (graph, "AdjustContrastv2", graph.MakeName(name, "AdjustContrastv2"))
         desc.AddInput (images) |> ignore
         desc.AddInput (contrast_factor) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -590,8 +590,8 @@ type TFGraph with
     ///    and then remapped back to RGB colorspace.
     /// </remarks>
     member graph.AdjustHue (images : TFOutput, delta : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AdjustHue", graph.MakeName ("AdjustHue", name))
+        graph.CheckOutputs([|yield images; yield delta|])
+        let desc = new TFOperationDesc (graph, "AdjustHue", graph.MakeName(name, "AdjustHue"))
         desc.AddInput (images) |> ignore
         desc.AddInput (delta) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -627,8 +627,8 @@ type TFGraph with
     ///    values, and then remapped back to RGB colorspace.
     /// </remarks>
     member graph.AdjustSaturation (images : TFOutput, scale : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AdjustSaturation", graph.MakeName ("AdjustSaturation", name))
+        graph.CheckOutputs([|yield images; yield scale|])
+        let desc = new TFOperationDesc (graph, "AdjustSaturation", graph.MakeName(name, "AdjustSaturation"))
         desc.AddInput (images) |> ignore
         desc.AddInput (scale) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -667,8 +667,8 @@ type TFGraph with
     ///    retained with length 1.
     /// </remarks>
     member graph.All (input : TFOutput, reduction_indices : TFOutput, ?keep_dims : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "All", graph.MakeName ("All", name))
+        graph.CheckOutputs([|yield input; yield reduction_indices|])
+        let desc = new TFOperationDesc (graph, "All", graph.MakeName(name, "All"))
         desc.AddInput (input) |> ignore
         desc.AddInput (reduction_indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -736,8 +736,8 @@ type TFGraph with
     ///    true labels.
     /// </remarks>
     member graph.AllCandidateSampler (true_classes : TFOutput, num_true : int64, num_sampled : int64, unique : bool, ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AllCandidateSampler", graph.MakeName ("AllCandidateSampler", name))
+        graph.CheckOutputs([|yield true_classes|])
+        let desc = new TFOperationDesc (graph, "AllCandidateSampler", graph.MakeName(name, "AllCandidateSampler"))
         desc.AddInput (true_classes) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_true", num_true) |> ignore
@@ -790,8 +790,8 @@ type TFGraph with
     ///    @end_compatibility
     /// </remarks>
     member graph.Angle (input : TFOutput, ?tOut : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Angle", graph.MakeName ("Angle", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Angle", graph.MakeName(name, "Angle"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         tOut |> Option.iter (fun tOut -> desc.SetAttr ("Tout", tOut) |> ignore)
@@ -820,8 +820,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.AnonymousIterator (output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AnonymousIterator", graph.MakeName ("AnonymousIterator", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "AnonymousIterator", graph.MakeName(name, "AnonymousIterator"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("output_types", output_types) |> ignore
         desc.SetAttr ("output_shapes", output_shapes) |> ignore
@@ -860,8 +860,8 @@ type TFGraph with
     ///    retained with length 1.
     /// </remarks>
     member graph.Any (input : TFOutput, reduction_indices : TFOutput, ?keep_dims : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Any", graph.MakeName ("Any", name))
+        graph.CheckOutputs([|yield input; yield reduction_indices|])
+        let desc = new TFOperationDesc (graph, "Any", graph.MakeName(name, "Any"))
         desc.AddInput (input) |> ignore
         desc.AddInput (reduction_indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -922,8 +922,8 @@ type TFGraph with
     ///    variable &amp;lt;- variable - learning_rate / (1 - beta1^t) * m_t / (v_t + epsilon)
     /// </remarks>
     member graph.ApplyAdaMax (var : TFOutput, m : TFOutput, v : TFOutput, beta1_power : TFOutput, lr : TFOutput, beta1 : TFOutput, beta2 : TFOutput, epsilon : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyAdaMax", graph.MakeName ("ApplyAdaMax", name))
+        graph.CheckOutputs([|yield var; yield m; yield v; yield beta1_power; yield lr; yield beta1; yield beta2; yield epsilon; yield grad|])
+        let desc = new TFOperationDesc (graph, "ApplyAdaMax", graph.MakeName(name, "ApplyAdaMax"))
         desc.AddInput (var) |> ignore
         desc.AddInput (m) |> ignore
         desc.AddInput (v) |> ignore
@@ -985,8 +985,8 @@ type TFGraph with
     ///    var -= update;
     /// </remarks>
     member graph.ApplyAdadelta (var : TFOutput, accum : TFOutput, accum_update : TFOutput, lr : TFOutput, rho : TFOutput, epsilon : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyAdadelta", graph.MakeName ("ApplyAdadelta", name))
+        graph.CheckOutputs([|yield var; yield accum; yield accum_update; yield lr; yield rho; yield epsilon; yield grad|])
+        let desc = new TFOperationDesc (graph, "ApplyAdadelta", graph.MakeName(name, "ApplyAdadelta"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (accum_update) |> ignore
@@ -1039,8 +1039,8 @@ type TFGraph with
     ///    var -= lr * grad * (1 / sqrt(accum))
     /// </remarks>
     member graph.ApplyAdagrad (var : TFOutput, accum : TFOutput, lr : TFOutput, grad : TFOutput, ?use_locking : bool, ?update_slots : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyAdagrad", graph.MakeName ("ApplyAdagrad", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield grad|])
+        let desc = new TFOperationDesc (graph, "ApplyAdagrad", graph.MakeName(name, "ApplyAdagrad"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -1095,8 +1095,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ApplyAdagradDA (var : TFOutput, gradient_accumulator : TFOutput, gradient_squared_accumulator : TFOutput, grad : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, global_step : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyAdagradDA", graph.MakeName ("ApplyAdagradDA", name))
+        graph.CheckOutputs([|yield var; yield gradient_accumulator; yield gradient_squared_accumulator; yield grad; yield lr; yield l1; yield l2; yield global_step|])
+        let desc = new TFOperationDesc (graph, "ApplyAdagradDA", graph.MakeName(name, "ApplyAdagradDA"))
         desc.AddInput (var) |> ignore
         desc.AddInput (gradient_accumulator) |> ignore
         desc.AddInput (gradient_squared_accumulator) |> ignore
@@ -1171,8 +1171,8 @@ type TFGraph with
     ///    $$variable := variable - lr_t * m_t / (\sqrt{v_t} + \epsilon)$$
     /// </remarks>
     member graph.ApplyAdam (var : TFOutput, m : TFOutput, v : TFOutput, beta1_power : TFOutput, beta2_power : TFOutput, lr : TFOutput, beta1 : TFOutput, beta2 : TFOutput, epsilon : TFOutput, grad : TFOutput, ?use_locking : bool, ?use_nesterov : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyAdam", graph.MakeName ("ApplyAdam", name))
+        graph.CheckOutputs([|yield var; yield m; yield v; yield beta1_power; yield beta2_power; yield lr; yield beta1; yield beta2; yield epsilon; yield grad|])
+        let desc = new TFOperationDesc (graph, "ApplyAdam", graph.MakeName(name, "ApplyAdam"))
         desc.AddInput (var) |> ignore
         desc.AddInput (m) |> ignore
         desc.AddInput (v) |> ignore
@@ -1236,8 +1236,8 @@ type TFGraph with
     ///    variable &amp;lt;- variable - lr_t * update
     /// </remarks>
     member graph.ApplyAddSign (var : TFOutput, m : TFOutput, lr : TFOutput, alpha : TFOutput, sign_decay : TFOutput, beta : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyAddSign", graph.MakeName ("ApplyAddSign", name))
+        graph.CheckOutputs([|yield var; yield m; yield lr; yield alpha; yield sign_decay; yield beta; yield grad|])
+        let desc = new TFOperationDesc (graph, "ApplyAddSign", graph.MakeName(name, "ApplyAddSign"))
         desc.AddInput (var) |> ignore
         desc.AddInput (m) |> ignore
         desc.AddInput (lr) |> ignore
@@ -1317,8 +1317,8 @@ type TFGraph with
     ///    var &amp;lt;- var - mom
     /// </remarks>
     member graph.ApplyCenteredRMSProp (var : TFOutput, mg : TFOutput, ms : TFOutput, mom : TFOutput, lr : TFOutput, rho : TFOutput, momentum : TFOutput, epsilon : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyCenteredRMSProp", graph.MakeName ("ApplyCenteredRMSProp", name))
+        graph.CheckOutputs([|yield var; yield mg; yield ms; yield mom; yield lr; yield rho; yield momentum; yield epsilon; yield grad|])
+        let desc = new TFOperationDesc (graph, "ApplyCenteredRMSProp", graph.MakeName(name, "ApplyCenteredRMSProp"))
         desc.AddInput (var) |> ignore
         desc.AddInput (mg) |> ignore
         desc.AddInput (ms) |> ignore
@@ -1385,8 +1385,8 @@ type TFGraph with
     ///    accum = accum_new
     /// </remarks>
     member graph.ApplyFtrl (var : TFOutput, accum : TFOutput, linear : TFOutput, grad : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, lr_power : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyFtrl", graph.MakeName ("ApplyFtrl", name))
+        graph.CheckOutputs([|yield var; yield accum; yield linear; yield grad; yield lr; yield l1; yield l2; yield lr_power|])
+        let desc = new TFOperationDesc (graph, "ApplyFtrl", graph.MakeName(name, "ApplyFtrl"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (linear) |> ignore
@@ -1456,8 +1456,8 @@ type TFGraph with
     ///    accum = accum_new
     /// </remarks>
     member graph.ApplyFtrlV2 (var : TFOutput, accum : TFOutput, linear : TFOutput, grad : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, l2_shrinkage : TFOutput, lr_power : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyFtrlV2", graph.MakeName ("ApplyFtrlV2", name))
+        graph.CheckOutputs([|yield var; yield accum; yield linear; yield grad; yield lr; yield l1; yield l2; yield l2_shrinkage; yield lr_power|])
+        let desc = new TFOperationDesc (graph, "ApplyFtrlV2", graph.MakeName(name, "ApplyFtrlV2"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (linear) |> ignore
@@ -1501,8 +1501,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ApplyGradientDescent (var : TFOutput, alpha : TFOutput, delta : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyGradientDescent", graph.MakeName ("ApplyGradientDescent", name))
+        graph.CheckOutputs([|yield var; yield alpha; yield delta|])
+        let desc = new TFOperationDesc (graph, "ApplyGradientDescent", graph.MakeName(name, "ApplyGradientDescent"))
         desc.AddInput (var) |> ignore
         desc.AddInput (alpha) |> ignore
         desc.AddInput (delta) |> ignore
@@ -1559,8 +1559,8 @@ type TFGraph with
     ///    var -= lr * accum
     /// </remarks>
     member graph.ApplyMomentum (var : TFOutput, accum : TFOutput, lr : TFOutput, grad : TFOutput, momentum : TFOutput, ?use_locking : bool, ?use_nesterov : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyMomentum", graph.MakeName ("ApplyMomentum", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield grad; yield momentum|])
+        let desc = new TFOperationDesc (graph, "ApplyMomentum", graph.MakeName(name, "ApplyMomentum"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -1619,8 +1619,8 @@ type TFGraph with
     ///    variable &amp;lt;- variable - lr_t * update
     /// </remarks>
     member graph.ApplyPowerSign (var : TFOutput, m : TFOutput, lr : TFOutput, logbase : TFOutput, sign_decay : TFOutput, beta : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyPowerSign", graph.MakeName ("ApplyPowerSign", name))
+        graph.CheckOutputs([|yield var; yield m; yield lr; yield logbase; yield sign_decay; yield beta; yield grad|])
+        let desc = new TFOperationDesc (graph, "ApplyPowerSign", graph.MakeName(name, "ApplyPowerSign"))
         desc.AddInput (var) |> ignore
         desc.AddInput (m) |> ignore
         desc.AddInput (lr) |> ignore
@@ -1676,8 +1676,8 @@ type TFGraph with
     ///    var = sign(prox_v)/(1+lr*l2) * max{|prox_v|-lr*l1,0}
     /// </remarks>
     member graph.ApplyProximalAdagrad (var : TFOutput, accum : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyProximalAdagrad", graph.MakeName ("ApplyProximalAdagrad", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield l1; yield l2; yield grad|])
+        let desc = new TFOperationDesc (graph, "ApplyProximalAdagrad", graph.MakeName(name, "ApplyProximalAdagrad"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -1728,8 +1728,8 @@ type TFGraph with
     ///    var = sign(prox_v)/(1+alpha*l2) * max{|prox_v|-alpha*l1,0}
     /// </remarks>
     member graph.ApplyProximalGradientDescent (var : TFOutput, alpha : TFOutput, l1 : TFOutput, l2 : TFOutput, delta : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyProximalGradientDescent", graph.MakeName ("ApplyProximalGradientDescent", name))
+        graph.CheckOutputs([|yield var; yield alpha; yield l1; yield l2; yield delta|])
+        let desc = new TFOperationDesc (graph, "ApplyProximalGradientDescent", graph.MakeName(name, "ApplyProximalGradientDescent"))
         desc.AddInput (var) |> ignore
         desc.AddInput (alpha) |> ignore
         desc.AddInput (l1) |> ignore
@@ -1796,8 +1796,8 @@ type TFGraph with
     ///    var &amp;lt;- var - mom
     /// </remarks>
     member graph.ApplyRMSProp (var : TFOutput, ms : TFOutput, mom : TFOutput, lr : TFOutput, rho : TFOutput, momentum : TFOutput, epsilon : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApplyRMSProp", graph.MakeName ("ApplyRMSProp", name))
+        graph.CheckOutputs([|yield var; yield ms; yield mom; yield lr; yield rho; yield momentum; yield epsilon; yield grad|])
+        let desc = new TFOperationDesc (graph, "ApplyRMSProp", graph.MakeName(name, "ApplyRMSProp"))
         desc.AddInput (var) |> ignore
         desc.AddInput (ms) |> ignore
         desc.AddInput (mom) |> ignore
@@ -1832,8 +1832,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ApproximateEqual (x : TFOutput, y : TFOutput, ?tolerance : float32,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ApproximateEqual", graph.MakeName ("ApproximateEqual", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "ApproximateEqual", graph.MakeName(name, "ApproximateEqual"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -1868,8 +1868,8 @@ type TFGraph with
     ///    Note that in case of ties the identity of the return value is not guaranteed.
     /// </remarks>
     member graph.ArgMax (input : TFOutput, dimension : TFOutput, ?output_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ArgMax", graph.MakeName ("ArgMax", name))
+        graph.CheckOutputs([|yield input; yield dimension|])
+        let desc = new TFOperationDesc (graph, "ArgMax", graph.MakeName(name, "ArgMax"))
         desc.AddInput (input) |> ignore
         desc.AddInput (dimension) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -1904,8 +1904,8 @@ type TFGraph with
     ///    Note that in case of ties the identity of the return value is not guaranteed.
     /// </remarks>
     member graph.ArgMin (input : TFOutput, dimension : TFOutput, ?output_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ArgMin", graph.MakeName ("ArgMin", name))
+        graph.CheckOutputs([|yield input; yield dimension|])
+        let desc = new TFOperationDesc (graph, "ArgMin", graph.MakeName(name, "ArgMin"))
         desc.AddInput (input) |> ignore
         desc.AddInput (dimension) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -1957,8 +1957,8 @@ type TFGraph with
     ///    types and boolean.
     /// </remarks>
     member graph.AsString (input : TFOutput, ?precision : int64, ?scientific : bool, ?shortest : bool, ?width : int64, ?fill : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AsString", graph.MakeName ("AsString", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "AsString", graph.MakeName(name, "AsString"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         precision |> Option.iter (fun precision -> desc.SetAttr ("precision", precision) |> ignore)
@@ -1985,8 +1985,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Asin (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Asin", graph.MakeName ("Asin", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Asin", graph.MakeName(name, "Asin"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -2008,8 +2008,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Asinh (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Asinh", graph.MakeName ("Asinh", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Asinh", graph.MakeName(name, "Asinh"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -2043,8 +2043,8 @@ type TFGraph with
     ///    <c>summarize<c> determines how many entries of the tensors to print.
     /// </remarks>
     member graph.Assert (condition : TFOutput, data : TFOutput[], ?summarize : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Assert", graph.MakeName ("Assert", name))
+        graph.CheckOutputs([|yield condition; yield! data|])
+        let desc = new TFOperationDesc (graph, "Assert", graph.MakeName(name, "Assert"))
         desc.AddInput (condition) |> ignore
         desc.AddInputs (data) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -2086,8 +2086,8 @@ type TFGraph with
     ///    This makes it easier to chain operations that need to use the reset value.
     /// </remarks>
     member graph.Assign (reference : TFOutput, value : TFOutput, ?validate_shape : bool, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Assign", graph.MakeName ("Assign", name))
+        graph.CheckOutputs([|yield reference; yield value|])
+        let desc = new TFOperationDesc (graph, "Assign", graph.MakeName(name, "Assign"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -2127,8 +2127,8 @@ type TFGraph with
     ///    This makes it easier to chain operations that need to use the reset value.
     /// </remarks>
     member graph.AssignAdd (reference : TFOutput, value : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AssignAdd", graph.MakeName ("AssignAdd", name))
+        graph.CheckOutputs([|yield reference; yield value|])
+        let desc = new TFOperationDesc (graph, "AssignAdd", graph.MakeName(name, "AssignAdd"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -2160,8 +2160,8 @@ type TFGraph with
     ///    see the incremented value or a subsequent newer one.
     /// </remarks>
     member graph.AssignAddVariableOp (resource : TFOutput, value : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AssignAddVariableOp", graph.MakeName ("AssignAddVariableOp", name))
+        graph.CheckOutputs([|yield resource; yield value|])
+        let desc = new TFOperationDesc (graph, "AssignAddVariableOp", graph.MakeName(name, "AssignAddVariableOp"))
         desc.AddInput (resource) |> ignore
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -2196,8 +2196,8 @@ type TFGraph with
     ///    This makes it easier to chain operations that need to use the reset value.
     /// </remarks>
     member graph.AssignSub (reference : TFOutput, value : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AssignSub", graph.MakeName ("AssignSub", name))
+        graph.CheckOutputs([|yield reference; yield value|])
+        let desc = new TFOperationDesc (graph, "AssignSub", graph.MakeName(name, "AssignSub"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -2229,8 +2229,8 @@ type TFGraph with
     ///    see the decremented value or a subsequent newer one.
     /// </remarks>
     member graph.AssignSubVariableOp (resource : TFOutput, value : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AssignSubVariableOp", graph.MakeName ("AssignSubVariableOp", name))
+        graph.CheckOutputs([|yield resource; yield value|])
+        let desc = new TFOperationDesc (graph, "AssignSubVariableOp", graph.MakeName(name, "AssignSubVariableOp"))
         desc.AddInput (resource) |> ignore
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -2258,8 +2258,8 @@ type TFGraph with
     ///    this value or a subsequent newer value of the variable.
     /// </remarks>
     member graph.AssignVariableOp (resource : TFOutput, value : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AssignVariableOp", graph.MakeName ("AssignVariableOp", name))
+        graph.CheckOutputs([|yield resource; yield value|])
+        let desc = new TFOperationDesc (graph, "AssignVariableOp", graph.MakeName(name, "AssignVariableOp"))
         desc.AddInput (resource) |> ignore
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -2279,8 +2279,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Atan (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Atan", graph.MakeName ("Atan", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Atan", graph.MakeName(name, "Atan"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -2311,8 +2311,8 @@ type TFGraph with
     ///    where \(r = \sqrt(x^2 + y^2) \).
     /// </remarks>
     member graph.Atan2 (y : TFOutput, x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Atan2", graph.MakeName ("Atan2", name))
+        graph.CheckOutputs([|yield y; yield x|])
+        let desc = new TFOperationDesc (graph, "Atan2", graph.MakeName(name, "Atan2"))
         desc.AddInput (y) |> ignore
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -2335,8 +2335,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Atanh (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Atanh", graph.MakeName ("Atanh", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Atanh", graph.MakeName(name, "Atanh"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -2399,8 +2399,8 @@ type TFGraph with
     ///    resulting spectrogram as a PNG image.
     /// </remarks>
     member graph.AudioSpectrogram (input : TFOutput, window_size : int64, stride : int64, ?magnitude_squared : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AudioSpectrogram", graph.MakeName ("AudioSpectrogram", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "AudioSpectrogram", graph.MakeName(name, "AudioSpectrogram"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("window_size", window_size) |> ignore
@@ -2450,8 +2450,8 @@ type TFGraph with
     ///    generated sequentially as '*tag*/audio/0', '*tag*/audio/1', etc.
     /// </remarks>
     member graph.AudioSummary (tag : TFOutput, tensor : TFOutput, sample_rate : float32, ?max_outputs : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AudioSummary", graph.MakeName ("AudioSummary", name))
+        graph.CheckOutputs([|yield tag; yield tensor|])
+        let desc = new TFOperationDesc (graph, "AudioSummary", graph.MakeName(name, "AudioSummary"))
         desc.AddInput (tag) |> ignore
         desc.AddInput (tensor) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -2501,8 +2501,8 @@ type TFGraph with
     ///    generated sequentially as '*tag*/audio/0', '*tag*/audio/1', etc.
     /// </remarks>
     member graph.AudioSummaryV2 (tag : TFOutput, tensor : TFOutput, sample_rate : TFOutput, ?max_outputs : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AudioSummaryV2", graph.MakeName ("AudioSummaryV2", name))
+        graph.CheckOutputs([|yield tag; yield tensor; yield sample_rate|])
+        let desc = new TFOperationDesc (graph, "AudioSummaryV2", graph.MakeName(name, "AudioSummaryV2"))
         desc.AddInput (tag) |> ignore
         desc.AddInput (tensor) |> ignore
         desc.AddInput (sample_rate) |> ignore
@@ -2550,8 +2550,8 @@ type TFGraph with
     ///    window in <c>value<c>.
     /// </remarks>
     member graph.AvgPool (value : TFOutput, ksize : int64[], strides : int64[], padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AvgPool", graph.MakeName ("AvgPool", name))
+        graph.CheckOutputs([|yield value|])
+        let desc = new TFOperationDesc (graph, "AvgPool", graph.MakeName(name, "AvgPool"))
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("ksize", ksize) |> ignore
@@ -2598,8 +2598,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.AvgPool3D (input : TFOutput, ksize : int64[], strides : int64[], padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AvgPool3D", graph.MakeName ("AvgPool3D", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "AvgPool3D", graph.MakeName(name, "AvgPool3D"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("ksize", ksize) |> ignore
@@ -2649,8 +2649,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.AvgPool3DGrad (orig_input_shape : TFOutput, grad : TFOutput, ksize : int64[], strides : int64[], padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AvgPool3DGrad", graph.MakeName ("AvgPool3DGrad", name))
+        graph.CheckOutputs([|yield orig_input_shape; yield grad|])
+        let desc = new TFOperationDesc (graph, "AvgPool3DGrad", graph.MakeName(name, "AvgPool3DGrad"))
         desc.AddInput (orig_input_shape) |> ignore
         desc.AddInput (grad) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -2700,8 +2700,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.AvgPoolGrad (orig_input_shape : TFOutput, grad : TFOutput, ksize : int64[], strides : int64[], padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "AvgPoolGrad", graph.MakeName ("AvgPoolGrad", name))
+        graph.CheckOutputs([|yield orig_input_shape; yield grad|])
+        let desc = new TFOperationDesc (graph, "AvgPoolGrad", graph.MakeName(name, "AvgPoolGrad"))
         desc.AddInput (orig_input_shape) |> ignore
         desc.AddInput (grad) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -2761,8 +2761,8 @@ type TFGraph with
     ///    and may be updated using BarrierInsertMany.
     /// </remarks>
     member graph.Barrier (component_types : TFDataType[], ?shapes : TFShape[], ?capacity : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Barrier", graph.MakeName ("Barrier", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "Barrier", graph.MakeName(name, "Barrier"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("component_types", component_types) |> ignore
         shapes |> Option.iter (fun shapes -> desc.SetAttr ("shapes", shapes) |> ignore)
@@ -2803,8 +2803,8 @@ type TFGraph with
     ///    Subsequent TakeMany operations that would block will fail immediately.
     /// </remarks>
     member graph.BarrierClose (handle : TFOutput, ?cancel_pending_enqueues : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BarrierClose", graph.MakeName ("BarrierClose", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "BarrierClose", graph.MakeName(name, "BarrierClose"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         cancel_pending_enqueues |> Option.iter (fun cancel_pending_enqueues -> desc.SetAttr ("cancel_pending_enqueues", cancel_pending_enqueues) |> ignore)
@@ -2827,8 +2827,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.BarrierIncompleteSize (handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BarrierIncompleteSize", graph.MakeName ("BarrierIncompleteSize", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "BarrierIncompleteSize", graph.MakeName(name, "BarrierIncompleteSize"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -2867,8 +2867,8 @@ type TFGraph with
     ///    INVALID_ARGUMENT, and leave the barrier in an undefined state.
     /// </remarks>
     member graph.BarrierInsertMany (handle : TFOutput, keys : TFOutput, values : TFOutput, component_index : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BarrierInsertMany", graph.MakeName ("BarrierInsertMany", name))
+        graph.CheckOutputs([|yield handle; yield keys; yield values|])
+        let desc = new TFOperationDesc (graph, "BarrierInsertMany", graph.MakeName(name, "BarrierInsertMany"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (keys) |> ignore
         desc.AddInput (values) |> ignore
@@ -2893,8 +2893,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.BarrierReadySize (handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BarrierReadySize", graph.MakeName ("BarrierReadySize", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "BarrierReadySize", graph.MakeName(name, "BarrierReadySize"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -2954,8 +2954,8 @@ type TFGraph with
     ///    into the barrier.
     /// </remarks>
     member graph.BarrierTakeMany (handle : TFOutput, num_elements : TFOutput, component_types : TFDataType[], ?allow_small_batch : bool, ?wait_for_incomplete : bool, ?timeout_ms : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BarrierTakeMany", graph.MakeName ("BarrierTakeMany", name))
+        graph.CheckOutputs([|yield handle; yield num_elements|])
+        let desc = new TFOperationDesc (graph, "BarrierTakeMany", graph.MakeName(name, "BarrierTakeMany"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (num_elements) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -3051,8 +3051,8 @@ type TFGraph with
     ///    T: the types of tensors to be batched.
     /// </remarks>
     member graph.Batch (in_tensors : TFOutput[], num_batch_threads : int64, max_batch_size : int64, batch_timeout_micros : int64, grad_timeout_micros : int64, ?max_enqueued_batches : int64, ?allowed_batch_sizes : int64[], ?container : string, ?shared_name : string, ?batching_queue : string,  ?name : string) : (TFOutput[]*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Batch", graph.MakeName ("Batch", name))
+        graph.CheckOutputs([|yield! in_tensors|])
+        let desc = new TFOperationDesc (graph, "Batch", graph.MakeName(name, "Batch"))
         desc.AddInputs (in_tensors) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_batch_threads", num_batch_threads) |> ignore
@@ -3095,8 +3095,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.BatchDataset (input_dataset : TFOutput, batch_size : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BatchDataset", graph.MakeName ("BatchDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield batch_size|])
+        let desc = new TFOperationDesc (graph, "BatchDataset", graph.MakeName(name, "BatchDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (batch_size) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -3132,8 +3132,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.BatchDatasetV2 (input_dataset : TFOutput, batch_size : TFOutput, drop_remainder : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BatchDatasetV2", graph.MakeName ("BatchDatasetV2", name))
+        graph.CheckOutputs([|yield input_dataset; yield batch_size; yield drop_remainder|])
+        let desc = new TFOperationDesc (graph, "BatchDatasetV2", graph.MakeName(name, "BatchDatasetV2"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (batch_size) |> ignore
         desc.AddInput (drop_remainder) |> ignore
@@ -3192,8 +3192,8 @@ type TFGraph with
     ///    output[..., :, :] = matrix(x[..., :, :]) * matrix(y[..., :, :])
     /// </remarks>
     member graph.BatchMatMul (x : TFOutput, y : TFOutput, ?adj_x : bool, ?adj_y : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BatchMatMul", graph.MakeName ("BatchMatMul", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "BatchMatMul", graph.MakeName(name, "BatchMatMul"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -3248,8 +3248,8 @@ type TFGraph with
     ///    This op is deprecated. Prefer <c>tf.nn.batch_normalization<c>.
     /// </remarks>
     member graph.BatchNormWithGlobalNormalization (t : TFOutput, m : TFOutput, v : TFOutput, beta : TFOutput, gamma : TFOutput, variance_epsilon : float32, scale_after_normalization : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BatchNormWithGlobalNormalization", graph.MakeName ("BatchNormWithGlobalNormalization", name))
+        graph.CheckOutputs([|yield t; yield m; yield v; yield beta; yield gamma|])
+        let desc = new TFOperationDesc (graph, "BatchNormWithGlobalNormalization", graph.MakeName(name, "BatchNormWithGlobalNormalization"))
         desc.AddInput (t) |> ignore
         desc.AddInput (m) |> ignore
         desc.AddInput (v) |> ignore
@@ -3312,8 +3312,8 @@ type TFGraph with
     ///    This op is deprecated. See <c>tf.nn.batch_normalization<c>.
     /// </remarks>
     member graph.BatchNormWithGlobalNormalizationGrad (t : TFOutput, m : TFOutput, v : TFOutput, gamma : TFOutput, backprop : TFOutput, variance_epsilon : float32, scale_after_normalization : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BatchNormWithGlobalNormalizationGrad", graph.MakeName ("BatchNormWithGlobalNormalizationGrad", name))
+        graph.CheckOutputs([|yield t; yield m; yield v; yield gamma; yield backprop|])
+        let desc = new TFOperationDesc (graph, "BatchNormWithGlobalNormalizationGrad", graph.MakeName(name, "BatchNormWithGlobalNormalizationGrad"))
         desc.AddInput (t) |> ignore
         desc.AddInput (m) |> ignore
         desc.AddInput (v) |> ignore
@@ -3438,8 +3438,8 @@ type TFGraph with
     ///    followed by cropping along the <c>height<c> and <c>width<c> dimensions.
     /// </remarks>
     member graph.BatchToSpace (input : TFOutput, crops : TFOutput, block_size : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BatchToSpace", graph.MakeName ("BatchToSpace", name))
+        graph.CheckOutputs([|yield input; yield crops|])
+        let desc = new TFOperationDesc (graph, "BatchToSpace", graph.MakeName(name, "BatchToSpace"))
         desc.AddInput (input) |> ignore
         desc.AddInput (crops) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -3587,8 +3587,8 @@ type TFGraph with
     ///    reverse of SpaceToBatch.  See below for a precise description.
     /// </remarks>
     member graph.BatchToSpaceND (input : TFOutput, block_shape : TFOutput, crops : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BatchToSpaceND", graph.MakeName ("BatchToSpaceND", name))
+        graph.CheckOutputs([|yield input; yield block_shape; yield crops|])
+        let desc = new TFOperationDesc (graph, "BatchToSpaceND", graph.MakeName(name, "BatchToSpaceND"))
         desc.AddInput (input) |> ignore
         desc.AddInput (block_shape) |> ignore
         desc.AddInput (crops) |> ignore
@@ -3618,8 +3618,8 @@ type TFGraph with
     ///    This function is faster and numerically stabler than <c>bessel_i0(x)<c>.
     /// </remarks>
     member graph.BesselI0e (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BesselI0e", graph.MakeName ("BesselI0e", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "BesselI0e", graph.MakeName(name, "BesselI0e"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -3647,8 +3647,8 @@ type TFGraph with
     ///    This function is faster and numerically stabler than <c>bessel_i1(x)<c>.
     /// </remarks>
     member graph.BesselI1e (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BesselI1e", graph.MakeName ("BesselI1e", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "BesselI1e", graph.MakeName(name, "BesselI1e"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -3689,8 +3689,8 @@ type TFGraph with
     ///    beta function.
     /// </remarks>
     member graph.Betainc (a : TFOutput, b : TFOutput, x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Betainc", graph.MakeName ("Betainc", name))
+        graph.CheckOutputs([|yield a; yield b; yield x|])
+        let desc = new TFOperationDesc (graph, "Betainc", graph.MakeName(name, "Betainc"))
         desc.AddInput (a) |> ignore
         desc.AddInput (b) |> ignore
         desc.AddInput (x) |> ignore
@@ -3733,8 +3733,8 @@ type TFGraph with
     ///    Broadcasting is supported, so <c>value<c> may have any number of dimensions.
     /// </remarks>
     member graph.BiasAdd (value : TFOutput, bias : TFOutput, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BiasAdd", graph.MakeName ("BiasAdd", name))
+        graph.CheckOutputs([|yield value; yield bias|])
+        let desc = new TFOperationDesc (graph, "BiasAdd", graph.MakeName(name, "BiasAdd"))
         desc.AddInput (value) |> ignore
         desc.AddInput (bias) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -3775,8 +3775,8 @@ type TFGraph with
     ///    the feature dimension is the third-to-last.
     /// </remarks>
     member graph.BiasAddGrad (out_backprop : TFOutput, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BiasAddGrad", graph.MakeName ("BiasAddGrad", name))
+        graph.CheckOutputs([|yield out_backprop|])
+        let desc = new TFOperationDesc (graph, "BiasAddGrad", graph.MakeName(name, "BiasAddGrad"))
         desc.AddInput (out_backprop) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         data_format |> Option.iter (fun data_format -> desc.SetAttr ("data_format", data_format) |> ignore)
@@ -3810,8 +3810,8 @@ type TFGraph with
     ///    Broadcasting is supported, so <c>value<c> may have any number of dimensions.
     /// </remarks>
     member graph.BiasAddV1 (value : TFOutput, bias : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BiasAddV1", graph.MakeName ("BiasAddV1", name))
+        graph.CheckOutputs([|yield value; yield bias|])
+        let desc = new TFOperationDesc (graph, "BiasAddV1", graph.MakeName(name, "BiasAddV1"))
         desc.AddInput (value) |> ignore
         desc.AddInput (bias) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -3854,8 +3854,8 @@ type TFGraph with
     ///    Values in <c>arr<c> outside of the range [0, size) are ignored.
     /// </remarks>
     member graph.Bincount (arr : TFOutput, size : TFOutput, weights : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Bincount", graph.MakeName ("Bincount", name))
+        graph.CheckOutputs([|yield arr; yield size; yield weights|])
+        let desc = new TFOperationDesc (graph, "Bincount", graph.MakeName(name, "Bincount"))
         desc.AddInput (arr) |> ignore
         desc.AddInput (size) |> ignore
         desc.AddInput (weights) |> ignore
@@ -3895,8 +3895,8 @@ type TFGraph with
     ///    endian orderings will give different results.
     /// </remarks>
     member graph.Bitcast (input : TFOutput, _type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Bitcast", graph.MakeName ("Bitcast", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Bitcast", graph.MakeName(name, "Bitcast"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("type", _type) |> ignore
@@ -3925,8 +3925,8 @@ type TFGraph with
     ///    computation is performed on the underlying representations of <c>x<c> and <c>y<c>.
     /// </remarks>
     member graph.BitwiseAnd (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BitwiseAnd", graph.MakeName ("BitwiseAnd", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "BitwiseAnd", graph.MakeName(name, "BitwiseAnd"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -3955,8 +3955,8 @@ type TFGraph with
     ///    computation is performed on the underlying representations of <c>x<c> and <c>y<c>.
     /// </remarks>
     member graph.BitwiseOr (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BitwiseOr", graph.MakeName ("BitwiseOr", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "BitwiseOr", graph.MakeName(name, "BitwiseOr"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -3985,8 +3985,8 @@ type TFGraph with
     ///    computation is performed on the underlying representations of <c>x<c> and <c>y<c>.
     /// </remarks>
     member graph.BitwiseXor (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BitwiseXor", graph.MakeName ("BitwiseXor", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "BitwiseXor", graph.MakeName(name, "BitwiseXor"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -4044,8 +4044,8 @@ type TFGraph with
     ///    The output shapes are compatible in a way that the first dimension of all tensors of all lists are the same and equal to the number of possible split nodes for each feature.
     /// </remarks>
     member graph.BoostedTreesCalculateBestGainsPerFeature (node_id_range : TFOutput, stats_summary_list : TFOutput[], l1 : TFOutput, l2 : TFOutput, tree_complexity : TFOutput, min_node_weight : TFOutput, max_splits : int64,  ?name : string) : (TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesCalculateBestGainsPerFeature", graph.MakeName ("BoostedTreesCalculateBestGainsPerFeature", name))
+        graph.CheckOutputs([|yield node_id_range; yield! stats_summary_list; yield l1; yield l2; yield tree_complexity; yield min_node_weight|])
+        let desc = new TFOperationDesc (graph, "BoostedTreesCalculateBestGainsPerFeature", graph.MakeName(name, "BoostedTreesCalculateBestGainsPerFeature"))
         desc.AddInput (node_id_range) |> ignore
         desc.AddInputs (stats_summary_list) |> ignore
         desc.AddInput (l1) |> ignore
@@ -4091,8 +4091,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.BoostedTreesCenterBias (tree_ensemble_handle : TFOutput, mean_gradients : TFOutput, mean_hessians : TFOutput, l1 : TFOutput, l2 : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesCenterBias", graph.MakeName ("BoostedTreesCenterBias", name))
+        graph.CheckOutputs([|yield tree_ensemble_handle; yield mean_gradients; yield mean_hessians; yield l1; yield l2|])
+        let desc = new TFOperationDesc (graph, "BoostedTreesCenterBias", graph.MakeName(name, "BoostedTreesCenterBias"))
         desc.AddInput (tree_ensemble_handle) |> ignore
         desc.AddInput (mean_gradients) |> ignore
         desc.AddInput (mean_hessians) |> ignore
@@ -4125,8 +4125,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.BoostedTreesCreateEnsemble (tree_ensemble_handle : TFOutput, stamp_token : TFOutput, tree_ensemble_serialized : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesCreateEnsemble", graph.MakeName ("BoostedTreesCreateEnsemble", name))
+        graph.CheckOutputs([|yield tree_ensemble_handle; yield stamp_token; yield tree_ensemble_serialized|])
+        let desc = new TFOperationDesc (graph, "BoostedTreesCreateEnsemble", graph.MakeName(name, "BoostedTreesCreateEnsemble"))
         desc.AddInput (tree_ensemble_handle) |> ignore
         desc.AddInput (stamp_token) |> ignore
         desc.AddInput (tree_ensemble_serialized) |> ignore
@@ -4157,8 +4157,8 @@ type TFGraph with
     ///    ensemble.
     /// </remarks>
     member graph.BoostedTreesDeserializeEnsemble (tree_ensemble_handle : TFOutput, stamp_token : TFOutput, tree_ensemble_serialized : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesDeserializeEnsemble", graph.MakeName ("BoostedTreesDeserializeEnsemble", name))
+        graph.CheckOutputs([|yield tree_ensemble_handle; yield stamp_token; yield tree_ensemble_serialized|])
+        let desc = new TFOperationDesc (graph, "BoostedTreesDeserializeEnsemble", graph.MakeName(name, "BoostedTreesDeserializeEnsemble"))
         desc.AddInput (tree_ensemble_handle) |> ignore
         desc.AddInput (stamp_token) |> ignore
         desc.AddInput (tree_ensemble_serialized) |> ignore
@@ -4183,8 +4183,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.BoostedTreesEnsembleResourceHandleOp (?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesEnsembleResourceHandleOp", graph.MakeName ("BoostedTreesEnsembleResourceHandleOp", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "BoostedTreesEnsembleResourceHandleOp", graph.MakeName(name, "BoostedTreesEnsembleResourceHandleOp"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
         shared_name |> Option.iter (fun shared_name -> desc.SetAttr ("shared_name", shared_name) |> ignore)
@@ -4221,8 +4221,8 @@ type TFGraph with
     ///    path used to compute directional feature contributions.
     /// </remarks>
     member graph.BoostedTreesExampleDebugOutputs (tree_ensemble_handle : TFOutput, bucketized_features : TFOutput[], logits_dimension : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesExampleDebugOutputs", graph.MakeName ("BoostedTreesExampleDebugOutputs", name))
+        graph.CheckOutputs([|yield tree_ensemble_handle; yield! bucketized_features|])
+        let desc = new TFOperationDesc (graph, "BoostedTreesExampleDebugOutputs", graph.MakeName(name, "BoostedTreesExampleDebugOutputs"))
         desc.AddInput (tree_ensemble_handle) |> ignore
         desc.AddInputs (bucketized_features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -4254,8 +4254,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.BoostedTreesGetEnsembleStates (tree_ensemble_handle : TFOutput,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesGetEnsembleStates", graph.MakeName ("BoostedTreesGetEnsembleStates", name))
+        graph.CheckOutputs([|yield tree_ensemble_handle|])
+        let desc = new TFOperationDesc (graph, "BoostedTreesGetEnsembleStates", graph.MakeName(name, "BoostedTreesGetEnsembleStates"))
         desc.AddInput (tree_ensemble_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -4305,8 +4305,8 @@ type TFGraph with
     ///    The summary stats contains gradients and hessians accumulated into the corresponding node and bucket for each example.
     /// </remarks>
     member graph.BoostedTreesMakeStatsSummary (node_ids : TFOutput, gradients : TFOutput, hessians : TFOutput, bucketized_features_list : TFOutput[], max_splits : int64, num_buckets : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesMakeStatsSummary", graph.MakeName ("BoostedTreesMakeStatsSummary", name))
+        graph.CheckOutputs([|yield node_ids; yield gradients; yield hessians; yield! bucketized_features_list|])
+        let desc = new TFOperationDesc (graph, "BoostedTreesMakeStatsSummary", graph.MakeName(name, "BoostedTreesMakeStatsSummary"))
         desc.AddInput (node_ids) |> ignore
         desc.AddInput (gradients) |> ignore
         desc.AddInput (hessians) |> ignore
@@ -4346,8 +4346,8 @@ type TFGraph with
     ///    It traverses all the trees and calculates the final score for each instance.
     /// </remarks>
     member graph.BoostedTreesPredict (tree_ensemble_handle : TFOutput, bucketized_features : TFOutput[], logits_dimension : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesPredict", graph.MakeName ("BoostedTreesPredict", name))
+        graph.CheckOutputs([|yield tree_ensemble_handle; yield! bucketized_features|])
+        let desc = new TFOperationDesc (graph, "BoostedTreesPredict", graph.MakeName(name, "BoostedTreesPredict"))
         desc.AddInput (tree_ensemble_handle) |> ignore
         desc.AddInputs (bucketized_features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -4375,8 +4375,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.BoostedTreesSerializeEnsemble (tree_ensemble_handle : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesSerializeEnsemble", graph.MakeName ("BoostedTreesSerializeEnsemble", name))
+        graph.CheckOutputs([|yield tree_ensemble_handle|])
+        let desc = new TFOperationDesc (graph, "BoostedTreesSerializeEnsemble", graph.MakeName(name, "BoostedTreesSerializeEnsemble"))
         desc.AddInput (tree_ensemble_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -4426,8 +4426,8 @@ type TFGraph with
     ///    calculates the updates to be pushed to the cache.
     /// </remarks>
     member graph.BoostedTreesTrainingPredict (tree_ensemble_handle : TFOutput, cached_tree_ids : TFOutput, cached_node_ids : TFOutput, bucketized_features : TFOutput[], logits_dimension : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesTrainingPredict", graph.MakeName ("BoostedTreesTrainingPredict", name))
+        graph.CheckOutputs([|yield tree_ensemble_handle; yield cached_tree_ids; yield cached_node_ids; yield! bucketized_features|])
+        let desc = new TFOperationDesc (graph, "BoostedTreesTrainingPredict", graph.MakeName(name, "BoostedTreesTrainingPredict"))
         desc.AddInput (tree_ensemble_handle) |> ignore
         desc.AddInput (cached_tree_ids) |> ignore
         desc.AddInput (cached_node_ids) |> ignore
@@ -4496,8 +4496,8 @@ type TFGraph with
     ///    or by starting a new tree.
     /// </remarks>
     member graph.BoostedTreesUpdateEnsemble (tree_ensemble_handle : TFOutput, feature_ids : TFOutput, node_ids : TFOutput[], gains : TFOutput[], thresholds : TFOutput[], left_node_contribs : TFOutput[], right_node_contribs : TFOutput[], max_depth : TFOutput, learning_rate : TFOutput, pruning_mode : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BoostedTreesUpdateEnsemble", graph.MakeName ("BoostedTreesUpdateEnsemble", name))
+        graph.CheckOutputs([|yield tree_ensemble_handle; yield feature_ids; yield! node_ids; yield! gains; yield! thresholds; yield! left_node_contribs; yield! right_node_contribs; yield max_depth; yield learning_rate|])
+        let desc = new TFOperationDesc (graph, "BoostedTreesUpdateEnsemble", graph.MakeName(name, "BoostedTreesUpdateEnsemble"))
         desc.AddInput (tree_ensemble_handle) |> ignore
         desc.AddInput (feature_ids) |> ignore
         desc.AddInputs (node_ids) |> ignore
@@ -4531,8 +4531,8 @@ type TFGraph with
     ///    broadcasted shape. <c>s0<c>, <c>s1<c> and <c>r0<c> are all integer vectors.
     /// </remarks>
     member graph.BroadcastArgs (s0 : TFOutput, s1 : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BroadcastArgs", graph.MakeName ("BroadcastArgs", name))
+        graph.CheckOutputs([|yield s0; yield s1|])
+        let desc = new TFOperationDesc (graph, "BroadcastArgs", graph.MakeName(name, "BroadcastArgs"))
         desc.AddInput (s0) |> ignore
         desc.AddInput (s1) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -4563,8 +4563,8 @@ type TFGraph with
     ///    This is typically used by gradient computations for a broadcasting operation.
     /// </remarks>
     member graph.BroadcastGradientArgs (s0 : TFOutput, s1 : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BroadcastGradientArgs", graph.MakeName ("BroadcastGradientArgs", name))
+        graph.CheckOutputs([|yield s0; yield s1|])
+        let desc = new TFOperationDesc (graph, "BroadcastGradientArgs", graph.MakeName(name, "BroadcastGradientArgs"))
         desc.AddInput (s0) |> ignore
         desc.AddInput (s1) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -4613,8 +4613,8 @@ type TFGraph with
     ///    is broadcasted to output Tensor with shape of <c>[3, 3]<c>.
     /// </remarks>
     member graph.BroadcastTo (input : TFOutput, shape : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BroadcastTo", graph.MakeName ("BroadcastTo", name))
+        graph.CheckOutputs([|yield input; yield shape|])
+        let desc = new TFOperationDesc (graph, "BroadcastTo", graph.MakeName(name, "BroadcastTo"))
         desc.AddInput (input) |> ignore
         desc.AddInput (shape) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -4658,8 +4658,8 @@ type TFGraph with
     ///    [1, 3]]
     /// </remarks>
     member graph.Bucketize (input : TFOutput, boundaries : float32[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Bucketize", graph.MakeName ("Bucketize", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Bucketize", graph.MakeName(name, "Bucketize"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("boundaries", boundaries) |> ignore
@@ -4688,8 +4688,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.BytesProducedStatsDataset (input_dataset : TFOutput, tag : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "BytesProducedStatsDataset", graph.MakeName ("BytesProducedStatsDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield tag|])
+        let desc = new TFOperationDesc (graph, "BytesProducedStatsDataset", graph.MakeName(name, "BytesProducedStatsDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (tag) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -4747,8 +4747,8 @@ type TFGraph with
     ///    returned if merge_repeated = False.
     /// </remarks>
     member graph.CTCBeamSearchDecoder (inputs : TFOutput, sequence_length : TFOutput, beam_width : int64, top_paths : int64, ?merge_repeated : bool,  ?name : string) : (TFOutput[]*TFOutput[]*TFOutput[]*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CTCBeamSearchDecoder", graph.MakeName ("CTCBeamSearchDecoder", name))
+        graph.CheckOutputs([|yield inputs; yield sequence_length|])
+        let desc = new TFOperationDesc (graph, "CTCBeamSearchDecoder", graph.MakeName(name, "CTCBeamSearchDecoder"))
         desc.AddInput (inputs) |> ignore
         desc.AddInput (sequence_length) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -4806,8 +4806,8 @@ type TFGraph with
     ///    element is emitted.
     /// </remarks>
     member graph.CTCGreedyDecoder (inputs : TFOutput, sequence_length : TFOutput, ?merge_repeated : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CTCGreedyDecoder", graph.MakeName ("CTCGreedyDecoder", name))
+        graph.CheckOutputs([|yield inputs; yield sequence_length|])
+        let desc = new TFOperationDesc (graph, "CTCGreedyDecoder", graph.MakeName(name, "CTCGreedyDecoder"))
         desc.AddInput (inputs) |> ignore
         desc.AddInput (sequence_length) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -4874,8 +4874,8 @@ type TFGraph with
     ///    should be e.g. linear projections of outputs by an LSTM.
     /// </remarks>
     member graph.CTCLoss (inputs : TFOutput, labels_indices : TFOutput, labels_values : TFOutput, sequence_length : TFOutput, ?preprocess_collapse_repeated : bool, ?ctc_merge_repeated : bool, ?ignore_longer_outputs_than_inputs : bool,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CTCLoss", graph.MakeName ("CTCLoss", name))
+        graph.CheckOutputs([|yield inputs; yield labels_indices; yield labels_values; yield sequence_length|])
+        let desc = new TFOperationDesc (graph, "CTCLoss", graph.MakeName(name, "CTCLoss"))
         desc.AddInput (inputs) |> ignore
         desc.AddInput (labels_indices) |> ignore
         desc.AddInput (labels_values) |> ignore
@@ -4919,8 +4919,8 @@ type TFGraph with
     ///    will the returned when used.
     /// </remarks>
     member graph.CacheDataset (input_dataset : TFOutput, filename : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CacheDataset", graph.MakeName ("CacheDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield filename|])
+        let desc = new TFOperationDesc (graph, "CacheDataset", graph.MakeName(name, "CacheDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (filename) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -4950,8 +4950,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Cast (x : TFOutput, dStT : TFDataType, ?tRuncate : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Cast", graph.MakeName ("Cast", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Cast", graph.MakeName(name, "Cast"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("DstT", dStT) |> ignore
@@ -4975,8 +4975,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Ceil (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Ceil", graph.MakeName ("Ceil", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Ceil", graph.MakeName(name, "Ceil"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -5005,8 +5005,8 @@ type TFGraph with
     ///    that are not a number (NaN) or infinity (Inf). Otherwise, passes <c>tensor<c> as-is.
     /// </remarks>
     member graph.CheckNumerics (tensor : TFOutput, message : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CheckNumerics", graph.MakeName ("CheckNumerics", name))
+        graph.CheckOutputs([|yield tensor|])
+        let desc = new TFOperationDesc (graph, "CheckNumerics", graph.MakeName(name, "CheckNumerics"))
         desc.AddInput (tensor) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("message", message) |> ignore
@@ -5046,8 +5046,8 @@ type TFGraph with
     ///    case it might be faster to use the CPU.
     /// </remarks>
     member graph.Cholesky (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Cholesky", graph.MakeName ("Cholesky", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Cholesky", graph.MakeName(name, "Cholesky"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -5082,8 +5082,8 @@ type TFGraph with
     ///    Iain Murray http://arxiv.org/abs/1602.07527.
     /// </remarks>
     member graph.CholeskyGrad (l : TFOutput, grad : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CholeskyGrad", graph.MakeName ("CholeskyGrad", name))
+        graph.CheckOutputs([|yield l; yield grad|])
+        let desc = new TFOperationDesc (graph, "CholeskyGrad", graph.MakeName(name, "CholeskyGrad"))
         desc.AddInput (l) |> ignore
         desc.AddInput (grad) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -5122,8 +5122,8 @@ type TFGraph with
     ///    greater than <c>clip_value_max<c> are set to <c>clip_value_max<c>.
     /// </remarks>
     member graph.ClipByValue (t : TFOutput, clip_value_min : TFOutput, clip_value_max : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ClipByValue", graph.MakeName ("ClipByValue", name))
+        graph.CheckOutputs([|yield t; yield clip_value_min; yield clip_value_max|])
+        let desc = new TFOperationDesc (graph, "ClipByValue", graph.MakeName(name, "ClipByValue"))
         desc.AddInput (t) |> ignore
         desc.AddInput (clip_value_min) |> ignore
         desc.AddInput (clip_value_max) |> ignore
@@ -5155,8 +5155,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.CollectiveBcastRecv (t : TFDataType, group_size : int64, group_key : int64, instance_key : int64, shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CollectiveBcastRecv", graph.MakeName ("CollectiveBcastRecv", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "CollectiveBcastRecv", graph.MakeName(name, "CollectiveBcastRecv"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("T", t) |> ignore
         desc.SetAttr ("group_size", group_size) |> ignore
@@ -5190,8 +5190,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.CollectiveBcastSend (input : TFOutput, group_size : int64, group_key : int64, instance_key : int64, shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CollectiveBcastSend", graph.MakeName ("CollectiveBcastSend", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "CollectiveBcastSend", graph.MakeName(name, "CollectiveBcastSend"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("group_size", group_size) |> ignore
@@ -5229,8 +5229,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.CollectiveReduce (input : TFOutput, group_size : int64, group_key : int64, instance_key : int64, merge_op : string, final_op : string, subdiv_offsets : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CollectiveReduce", graph.MakeName ("CollectiveReduce", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "CollectiveReduce", graph.MakeName(name, "CollectiveReduce"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("group_size", group_size) |> ignore
@@ -5288,8 +5288,8 @@ type TFGraph with
     ///    a <c>uint8<c> tensor shaped <c>[s0, s1, ..., s_n / 8]<c>.
     /// </remarks>
     member graph.CompareAndBitpack (input : TFOutput, threshold : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CompareAndBitpack", graph.MakeName ("CompareAndBitpack", name))
+        graph.CheckOutputs([|yield input; yield threshold|])
+        let desc = new TFOperationDesc (graph, "CompareAndBitpack", graph.MakeName(name, "CompareAndBitpack"))
         desc.AddInput (input) |> ignore
         desc.AddInput (threshold) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -5333,8 +5333,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Complex (real : TFOutput, imag : TFOutput, ?tOut : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Complex", graph.MakeName ("Complex", name))
+        graph.CheckOutputs([|yield real; yield imag|])
+        let desc = new TFOperationDesc (graph, "Complex", graph.MakeName(name, "Complex"))
         desc.AddInput (real) |> ignore
         desc.AddInput (imag) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -5367,8 +5367,8 @@ type TFGraph with
     ///    value is computed as \\( \sqrt{a^2 + b^2}\\).
     /// </remarks>
     member graph.ComplexAbs (x : TFOutput, ?tOut : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ComplexAbs", graph.MakeName ("ComplexAbs", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "ComplexAbs", graph.MakeName(name, "ComplexAbs"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         tOut |> Option.iter (fun tOut -> desc.SetAttr ("Tout", tOut) |> ignore)
@@ -5420,8 +5420,8 @@ type TFGraph with
     ///    making the classifier sure that they are sampled labels.
     /// </remarks>
     member graph.ComputeAccidentalHits (true_classes : TFOutput, sampled_candidates : TFOutput, num_true : int64, ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ComputeAccidentalHits", graph.MakeName ("ComputeAccidentalHits", name))
+        graph.CheckOutputs([|yield true_classes; yield sampled_candidates|])
+        let desc = new TFOperationDesc (graph, "ComputeAccidentalHits", graph.MakeName(name, "ComputeAccidentalHits"))
         desc.AddInput (true_classes) |> ignore
         desc.AddInput (sampled_candidates) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -5460,8 +5460,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Concat (concat_dim : TFOutput, values : TFOutput[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Concat", graph.MakeName ("Concat", name))
+        graph.CheckOutputs([|yield concat_dim; yield! values|])
+        let desc = new TFOperationDesc (graph, "Concat", graph.MakeName(name, "Concat"))
         desc.AddInput (concat_dim) |> ignore
         desc.AddInputs (values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -5502,8 +5502,8 @@ type TFGraph with
     ///    This is typically used by gradient computations for a concat operation.
     /// </remarks>
     member graph.ConcatOffset (concat_dim : TFOutput, shape : TFOutput[],  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ConcatOffset", graph.MakeName ("ConcatOffset", name))
+        graph.CheckOutputs([|yield concat_dim; yield! shape|])
+        let desc = new TFOperationDesc (graph, "ConcatOffset", graph.MakeName(name, "ConcatOffset"))
         desc.AddInput (concat_dim) |> ignore
         desc.AddInputs (shape) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -5535,8 +5535,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ConcatV2 (values : TFOutput[], axis : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ConcatV2", graph.MakeName ("ConcatV2", name))
+        graph.CheckOutputs([|yield! values; yield axis|])
+        let desc = new TFOperationDesc (graph, "ConcatV2", graph.MakeName(name, "ConcatV2"))
         desc.AddInputs (values) |> ignore
         desc.AddInput (axis) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -5565,8 +5565,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ConcatenateDataset (input_dataset : TFOutput, another_dataset : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ConcatenateDataset", graph.MakeName ("ConcatenateDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield another_dataset|])
+        let desc = new TFOperationDesc (graph, "ConcatenateDataset", graph.MakeName(name, "ConcatenateDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (another_dataset) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -5614,8 +5614,8 @@ type TFGraph with
     ///    the accumulator.
     /// </remarks>
     member graph.ConditionalAccumulator (dtype : TFDataType, shape : TFShape, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ConditionalAccumulator", graph.MakeName ("ConditionalAccumulator", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "ConditionalAccumulator", graph.MakeName(name, "ConditionalAccumulator"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
         desc.SetAttr ("shape", shape) |> ignore
@@ -5656,8 +5656,8 @@ type TFGraph with
     ///    system.
     /// </remarks>
     member graph.ConfigureDistributedTPU (?embedding_config : string, ?tpu_embedding_config : string, ?is_global_init : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ConfigureDistributedTPU", graph.MakeName ("ConfigureDistributedTPU", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "ConfigureDistributedTPU", graph.MakeName(name, "ConfigureDistributedTPU"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         embedding_config |> Option.iter (fun embedding_config -> desc.SetAttr ("embedding_config", embedding_config) |> ignore)
         tpu_embedding_config |> Option.iter (fun tpu_embedding_config -> desc.SetAttr ("tpu_embedding_config", tpu_embedding_config) |> ignore)
@@ -5696,8 +5696,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Conj (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Conj", graph.MakeName ("Conj", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Conj", graph.MakeName(name, "Conj"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -5726,8 +5726,8 @@ type TFGraph with
     ///    <c>y[i,j,k,...,s,t,u] == conj(x[perm[i], perm[j], perm[k],...,perm[s], perm[t], perm[u]])<c>
     /// </remarks>
     member graph.ConjugateTranspose (x : TFOutput, perm : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ConjugateTranspose", graph.MakeName ("ConjugateTranspose", name))
+        graph.CheckOutputs([|yield x; yield perm|])
+        let desc = new TFOperationDesc (graph, "ConjugateTranspose", graph.MakeName(name, "ConjugateTranspose"))
         desc.AddInput (x) |> ignore
         desc.AddInput (perm) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -5753,8 +5753,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Const (value : TFTensor, dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Const", graph.MakeName ("Const", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "Const", graph.MakeName(name, "Const"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("value", value (* cstatus *)) |> ignore;
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -5787,8 +5787,8 @@ type TFGraph with
     ///    be enforced via the <c>colocate_with<c> mechanism.
     /// </remarks>
     member graph.ConsumeMutexLock (mutex_lock : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ConsumeMutexLock", graph.MakeName ("ConsumeMutexLock", name))
+        graph.CheckOutputs([|yield mutex_lock|])
+        let desc = new TFOperationDesc (graph, "ConsumeMutexLock", graph.MakeName(name, "ConsumeMutexLock"))
         desc.AddInput (mutex_lock) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -5808,8 +5808,8 @@ type TFGraph with
     ///    Only useful as a placeholder for control edges.
     /// </remarks>
     member graph.ControlTrigger ( ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ControlTrigger", graph.MakeName ("ControlTrigger", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "ControlTrigger", graph.MakeName(name, "ControlTrigger"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
         op
@@ -5885,8 +5885,8 @@ type TFGraph with
     ///    horizontal and vertices strides, <c>strides = [1, stride, stride, 1]<c>.
     /// </remarks>
     member graph.Conv2D (input : TFOutput, filter : TFOutput, strides : int64[], padding : string, ?use_cudnn_on_gpu : bool, ?data_format : string, ?dilations : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Conv2D", graph.MakeName ("Conv2D", name))
+        graph.CheckOutputs([|yield input; yield filter|])
+        let desc = new TFOperationDesc (graph, "Conv2D", graph.MakeName(name, "Conv2D"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -5954,8 +5954,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Conv2DBackpropFilter (input : TFOutput, filter_sizes : TFOutput, out_backprop : TFOutput, strides : int64[], padding : string, ?use_cudnn_on_gpu : bool, ?data_format : string, ?dilations : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Conv2DBackpropFilter", graph.MakeName ("Conv2DBackpropFilter", name))
+        graph.CheckOutputs([|yield input; yield filter_sizes; yield out_backprop|])
+        let desc = new TFOperationDesc (graph, "Conv2DBackpropFilter", graph.MakeName(name, "Conv2DBackpropFilter"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter_sizes) |> ignore
         desc.AddInput (out_backprop) |> ignore
@@ -6023,8 +6023,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Conv2DBackpropInput (input_sizes : TFOutput, filter : TFOutput, out_backprop : TFOutput, strides : int64[], padding : string, ?use_cudnn_on_gpu : bool, ?data_format : string, ?dilations : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Conv2DBackpropInput", graph.MakeName ("Conv2DBackpropInput", name))
+        graph.CheckOutputs([|yield input_sizes; yield filter; yield out_backprop|])
+        let desc = new TFOperationDesc (graph, "Conv2DBackpropInput", graph.MakeName(name, "Conv2DBackpropInput"))
         desc.AddInput (input_sizes) |> ignore
         desc.AddInput (filter) |> ignore
         desc.AddInput (out_backprop) |> ignore
@@ -6088,8 +6088,8 @@ type TFGraph with
     ///    Our Conv3D implements a form of cross-correlation.
     /// </remarks>
     member graph.Conv3D (input : TFOutput, filter : TFOutput, strides : int64[], padding : string, ?data_format : string, ?dilations : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Conv3D", graph.MakeName ("Conv3D", name))
+        graph.CheckOutputs([|yield input; yield filter|])
+        let desc = new TFOperationDesc (graph, "Conv3D", graph.MakeName(name, "Conv3D"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -6135,8 +6135,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Conv3DBackpropFilter (input : TFOutput, filter : TFOutput, out_backprop : TFOutput, strides : int64[], padding : string, ?dilations : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Conv3DBackpropFilter", graph.MakeName ("Conv3DBackpropFilter", name))
+        graph.CheckOutputs([|yield input; yield filter; yield out_backprop|])
+        let desc = new TFOperationDesc (graph, "Conv3DBackpropFilter", graph.MakeName(name, "Conv3DBackpropFilter"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter) |> ignore
         desc.AddInput (out_backprop) |> ignore
@@ -6197,8 +6197,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Conv3DBackpropFilterV2 (input : TFOutput, filter_sizes : TFOutput, out_backprop : TFOutput, strides : int64[], padding : string, ?data_format : string, ?dilations : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Conv3DBackpropFilterV2", graph.MakeName ("Conv3DBackpropFilterV2", name))
+        graph.CheckOutputs([|yield input; yield filter_sizes; yield out_backprop|])
+        let desc = new TFOperationDesc (graph, "Conv3DBackpropFilterV2", graph.MakeName(name, "Conv3DBackpropFilterV2"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter_sizes) |> ignore
         desc.AddInput (out_backprop) |> ignore
@@ -6245,8 +6245,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Conv3DBackpropInput (input : TFOutput, filter : TFOutput, out_backprop : TFOutput, strides : int64[], padding : string, ?dilations : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Conv3DBackpropInput", graph.MakeName ("Conv3DBackpropInput", name))
+        graph.CheckOutputs([|yield input; yield filter; yield out_backprop|])
+        let desc = new TFOperationDesc (graph, "Conv3DBackpropInput", graph.MakeName(name, "Conv3DBackpropInput"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter) |> ignore
         desc.AddInput (out_backprop) |> ignore
@@ -6307,8 +6307,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Conv3DBackpropInputV2 (input_sizes : TFOutput, filter : TFOutput, out_backprop : TFOutput, strides : int64[], padding : string, ?data_format : string, ?dilations : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Conv3DBackpropInputV2", graph.MakeName ("Conv3DBackpropInputV2", name))
+        graph.CheckOutputs([|yield input_sizes; yield filter; yield out_backprop|])
+        let desc = new TFOperationDesc (graph, "Conv3DBackpropInputV2", graph.MakeName(name, "Conv3DBackpropInputV2"))
         desc.AddInput (input_sizes) |> ignore
         desc.AddInput (filter) |> ignore
         desc.AddInput (out_backprop) |> ignore
@@ -6360,8 +6360,8 @@ type TFGraph with
     ///    input or output.
     /// </remarks>
     member graph.Copy (input : TFOutput, ?tensor_name : string, ?debug_ops_spec : string[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Copy", graph.MakeName ("Copy", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Copy", graph.MakeName(name, "Copy"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         tensor_name |> Option.iter (fun tensor_name -> desc.SetAttr ("tensor_name", tensor_name) |> ignore)
@@ -6407,8 +6407,8 @@ type TFGraph with
     ///    Unlike the Copy Op, this op has HostMemory constraint on its input or output.
     /// </remarks>
     member graph.CopyHost (input : TFOutput, ?tensor_name : string, ?debug_ops_spec : string[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CopyHost", graph.MakeName ("CopyHost", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "CopyHost", graph.MakeName(name, "CopyHost"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         tensor_name |> Option.iter (fun tensor_name -> desc.SetAttr ("tensor_name", tensor_name) |> ignore)
@@ -6432,8 +6432,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Cos (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Cos", graph.MakeName ("Cos", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Cos", graph.MakeName(name, "Cos"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -6455,8 +6455,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Cosh (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Cosh", graph.MakeName ("Cosh", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Cosh", graph.MakeName(name, "Cosh"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -6485,8 +6485,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.CountUpTo (reference : TFOutput, limit : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CountUpTo", graph.MakeName ("CountUpTo", name))
+        graph.CheckOutputs([|yield reference|])
+        let desc = new TFOperationDesc (graph, "CountUpTo", graph.MakeName(name, "CountUpTo"))
         desc.AddInput (reference) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("limit", limit) |> ignore
@@ -6561,8 +6561,8 @@ type TFGraph with
     ///    <c>align_corners=True<c>.
     /// </remarks>
     member graph.CropAndResize (image : TFOutput, boxes : TFOutput, box_ind : TFOutput, crop_size : TFOutput, ?method : string, ?extrapolation_value : float32,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CropAndResize", graph.MakeName ("CropAndResize", name))
+        graph.CheckOutputs([|yield image; yield boxes; yield box_ind; yield crop_size|])
+        let desc = new TFOperationDesc (graph, "CropAndResize", graph.MakeName(name, "CropAndResize"))
         desc.AddInput (image) |> ignore
         desc.AddInput (boxes) |> ignore
         desc.AddInput (box_ind) |> ignore
@@ -6616,8 +6616,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.CropAndResizeGradBoxes (grads : TFOutput, image : TFOutput, boxes : TFOutput, box_ind : TFOutput, ?method : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CropAndResizeGradBoxes", graph.MakeName ("CropAndResizeGradBoxes", name))
+        graph.CheckOutputs([|yield grads; yield image; yield boxes; yield box_ind|])
+        let desc = new TFOperationDesc (graph, "CropAndResizeGradBoxes", graph.MakeName(name, "CropAndResizeGradBoxes"))
         desc.AddInput (grads) |> ignore
         desc.AddInput (image) |> ignore
         desc.AddInput (boxes) |> ignore
@@ -6673,8 +6673,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.CropAndResizeGradImage (grads : TFOutput, boxes : TFOutput, box_ind : TFOutput, image_size : TFOutput, t : TFDataType, ?method : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CropAndResizeGradImage", graph.MakeName ("CropAndResizeGradImage", name))
+        graph.CheckOutputs([|yield grads; yield boxes; yield box_ind; yield image_size|])
+        let desc = new TFOperationDesc (graph, "CropAndResizeGradImage", graph.MakeName(name, "CropAndResizeGradImage"))
         desc.AddInput (grads) |> ignore
         desc.AddInput (boxes) |> ignore
         desc.AddInput (box_ind) |> ignore
@@ -6711,8 +6711,8 @@ type TFGraph with
     ///    of corresponding 3-element vectors is cross-multiplied independently.
     /// </remarks>
     member graph.Cross (a : TFOutput, b : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Cross", graph.MakeName ("Cross", name))
+        graph.CheckOutputs([|yield a; yield b|])
+        let desc = new TFOperationDesc (graph, "Cross", graph.MakeName(name, "Cross"))
         desc.AddInput (a) |> ignore
         desc.AddInput (b) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -6752,8 +6752,8 @@ type TFGraph with
     ///    <c>[A+C+E+G, B+D+F+H, A+C+E+G, B+D+F+H, A+C+E+G, B+D+F+H, A+C+E+G, B+D+F+H]<c>.
     /// </remarks>
     member graph.CrossReplicaSum (input : TFOutput, group_assignment : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CrossReplicaSum", graph.MakeName ("CrossReplicaSum", name))
+        graph.CheckOutputs([|yield input; yield group_assignment|])
+        let desc = new TFOperationDesc (graph, "CrossReplicaSum", graph.MakeName(name, "CrossReplicaSum"))
         desc.AddInput (input) |> ignore
         desc.AddInput (group_assignment) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -6840,8 +6840,8 @@ type TFGraph with
     ///    is only produced if is_training is false.
     /// </remarks>
     member graph.CudnnRNN (input : TFOutput, input_h : TFOutput, input_c : TFOutput, parameters : TFOutput, ?rnn_mode : string, ?input_mode : string, ?direction : string, ?dropout : float32, ?seed : int64, ?seed2 : int64, ?is_training : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CudnnRNN", graph.MakeName ("CudnnRNN", name))
+        graph.CheckOutputs([|yield input; yield input_h; yield input_c; yield parameters|])
+        let desc = new TFOperationDesc (graph, "CudnnRNN", graph.MakeName(name, "CudnnRNN"))
         desc.AddInput (input) |> ignore
         desc.AddInput (input_h) |> ignore
         desc.AddInput (input_c) |> ignore
@@ -6963,8 +6963,8 @@ type TFGraph with
     ///    same shape as params.
     /// </remarks>
     member graph.CudnnRNNBackprop (input : TFOutput, input_h : TFOutput, input_c : TFOutput, parameters : TFOutput, output : TFOutput, output_h : TFOutput, output_c : TFOutput, output_backprop : TFOutput, output_h_backprop : TFOutput, output_c_backprop : TFOutput, reserve_space : TFOutput, ?rnn_mode : string, ?input_mode : string, ?direction : string, ?dropout : float32, ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CudnnRNNBackprop", graph.MakeName ("CudnnRNNBackprop", name))
+        graph.CheckOutputs([|yield input; yield input_h; yield input_c; yield parameters; yield output; yield output_h; yield output_c; yield output_backprop; yield output_h_backprop; yield output_c_backprop; yield reserve_space|])
+        let desc = new TFOperationDesc (graph, "CudnnRNNBackprop", graph.MakeName(name, "CudnnRNNBackprop"))
         desc.AddInput (input) |> ignore
         desc.AddInput (input_h) |> ignore
         desc.AddInput (input_c) |> ignore
@@ -7097,8 +7097,8 @@ type TFGraph with
     ///    same shape as params.
     /// </remarks>
     member graph.CudnnRNNBackpropV2 (input : TFOutput, input_h : TFOutput, input_c : TFOutput, parameters : TFOutput, output : TFOutput, output_h : TFOutput, output_c : TFOutput, output_backprop : TFOutput, output_h_backprop : TFOutput, output_c_backprop : TFOutput, reserve_space : TFOutput, host_reserved : TFOutput, ?rnn_mode : string, ?input_mode : string, ?direction : string, ?dropout : float32, ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CudnnRNNBackpropV2", graph.MakeName ("CudnnRNNBackpropV2", name))
+        graph.CheckOutputs([|yield input; yield input_h; yield input_c; yield parameters; yield output; yield output_h; yield output_c; yield output_backprop; yield output_h_backprop; yield output_c_backprop; yield reserve_space; yield host_reserved|])
+        let desc = new TFOperationDesc (graph, "CudnnRNNBackpropV2", graph.MakeName(name, "CudnnRNNBackpropV2"))
         desc.AddInput (input) |> ignore
         desc.AddInput (input_h) |> ignore
         desc.AddInput (input_c) |> ignore
@@ -7200,8 +7200,8 @@ type TFGraph with
     ///    seed2: the 2nd part of a seed to initialize dropout.
     /// </remarks>
     member graph.CudnnRNNCanonicalToParams (num_layers : TFOutput, num_units : TFOutput, input_size : TFOutput, weights : TFOutput[], biases : TFOutput[], ?rnn_mode : string, ?input_mode : string, ?direction : string, ?dropout : float32, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CudnnRNNCanonicalToParams", graph.MakeName ("CudnnRNNCanonicalToParams", name))
+        graph.CheckOutputs([|yield num_layers; yield num_units; yield input_size; yield! weights; yield! biases|])
+        let desc = new TFOperationDesc (graph, "CudnnRNNCanonicalToParams", graph.MakeName(name, "CudnnRNNCanonicalToParams"))
         desc.AddInput (num_layers) |> ignore
         desc.AddInput (num_units) |> ignore
         desc.AddInput (input_size) |> ignore
@@ -7282,8 +7282,8 @@ type TFGraph with
     ///    across different runs.
     /// </remarks>
     member graph.CudnnRNNParamsSize (num_layers : TFOutput, num_units : TFOutput, input_size : TFOutput, t : TFDataType, s : TFDataType, ?rnn_mode : string, ?input_mode : string, ?direction : string, ?dropout : float32, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CudnnRNNParamsSize", graph.MakeName ("CudnnRNNParamsSize", name))
+        graph.CheckOutputs([|yield num_layers; yield num_units; yield input_size|])
+        let desc = new TFOperationDesc (graph, "CudnnRNNParamsSize", graph.MakeName(name, "CudnnRNNParamsSize"))
         desc.AddInput (num_layers) |> ignore
         desc.AddInput (num_units) |> ignore
         desc.AddInput (input_size) |> ignore
@@ -7375,8 +7375,8 @@ type TFGraph with
     ///    seed2: the 2nd part of a seed to initialize dropout.
     /// </remarks>
     member graph.CudnnRNNParamsToCanonical (num_layers : TFOutput, num_units : TFOutput, input_size : TFOutput, parameters : TFOutput, num_params : int64, ?rnn_mode : string, ?input_mode : string, ?direction : string, ?dropout : float32, ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput[]*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CudnnRNNParamsToCanonical", graph.MakeName ("CudnnRNNParamsToCanonical", name))
+        graph.CheckOutputs([|yield num_layers; yield num_units; yield input_size; yield parameters|])
+        let desc = new TFOperationDesc (graph, "CudnnRNNParamsToCanonical", graph.MakeName(name, "CudnnRNNParamsToCanonical"))
         desc.AddInput (num_layers) |> ignore
         desc.AddInput (num_units) |> ignore
         desc.AddInput (input_size) |> ignore
@@ -7477,8 +7477,8 @@ type TFGraph with
     ///    device memory.
     /// </remarks>
     member graph.CudnnRNNV2 (input : TFOutput, input_h : TFOutput, input_c : TFOutput, parameters : TFOutput, ?rnn_mode : string, ?input_mode : string, ?direction : string, ?dropout : float32, ?seed : int64, ?seed2 : int64, ?is_training : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "CudnnRNNV2", graph.MakeName ("CudnnRNNV2", name))
+        graph.CheckOutputs([|yield input; yield input_h; yield input_c; yield parameters|])
+        let desc = new TFOperationDesc (graph, "CudnnRNNV2", graph.MakeName(name, "CudnnRNNV2"))
         desc.AddInput (input) |> ignore
         desc.AddInput (input_h) |> ignore
         desc.AddInput (input_c) |> ignore
@@ -7563,8 +7563,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Cumprod (x : TFOutput, axis : TFOutput, ?exclusive : bool, ?reverse : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Cumprod", graph.MakeName ("Cumprod", name))
+        graph.CheckOutputs([|yield x; yield axis|])
+        let desc = new TFOperationDesc (graph, "Cumprod", graph.MakeName(name, "Cumprod"))
         desc.AddInput (x) |> ignore
         desc.AddInput (axis) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -7634,8 +7634,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Cumsum (x : TFOutput, axis : TFOutput, ?exclusive : bool, ?reverse : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Cumsum", graph.MakeName ("Cumsum", name))
+        graph.CheckOutputs([|yield x; yield axis|])
+        let desc = new TFOperationDesc (graph, "Cumsum", graph.MakeName(name, "Cumsum"))
         desc.AddInput (x) |> ignore
         desc.AddInput (axis) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -7674,8 +7674,8 @@ type TFGraph with
     ///    the source data format.
     /// </remarks>
     member graph.DataFormatDimMap (x : TFOutput, ?src_format : string, ?dst_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DataFormatDimMap", graph.MakeName ("DataFormatDimMap", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "DataFormatDimMap", graph.MakeName(name, "DataFormatDimMap"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         src_format |> Option.iter (fun src_format -> desc.SetAttr ("src_format", src_format) |> ignore)
@@ -7712,8 +7712,8 @@ type TFGraph with
     ///    one in the source data format.
     /// </remarks>
     member graph.DataFormatVecPermute (x : TFOutput, ?src_format : string, ?dst_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DataFormatVecPermute", graph.MakeName ("DataFormatVecPermute", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "DataFormatVecPermute", graph.MakeName(name, "DataFormatVecPermute"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         src_format |> Option.iter (fun src_format -> desc.SetAttr ("src_format", src_format) |> ignore)
@@ -7742,8 +7742,8 @@ type TFGraph with
     ///    Returns a graph representation for <c>input_dataset<c>.
     /// </remarks>
     member graph.DatasetToGraph (input_dataset : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DatasetToGraph", graph.MakeName ("DatasetToGraph", name))
+        graph.CheckOutputs([|yield input_dataset|])
+        let desc = new TFOperationDesc (graph, "DatasetToGraph", graph.MakeName(name, "DatasetToGraph"))
         desc.AddInput (input_dataset) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -7771,8 +7771,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.DatasetToSingleElement (dataset : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DatasetToSingleElement", graph.MakeName ("DatasetToSingleElement", name))
+        graph.CheckOutputs([|yield dataset|])
+        let desc = new TFOperationDesc (graph, "DatasetToSingleElement", graph.MakeName(name, "DatasetToSingleElement"))
         desc.AddInput (dataset) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("output_types", output_types) |> ignore
@@ -7804,8 +7804,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.DatasetToTFRecord (input_dataset : TFOutput, filename : TFOutput, compression_type : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DatasetToTFRecord", graph.MakeName ("DatasetToTFRecord", name))
+        graph.CheckOutputs([|yield input_dataset; yield filename; yield compression_type|])
+        let desc = new TFOperationDesc (graph, "DatasetToTFRecord", graph.MakeName(name, "DatasetToTFRecord"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (filename) |> ignore
         desc.AddInput (compression_type) |> ignore
@@ -7831,8 +7831,8 @@ type TFGraph with
     ///    This op operates on non-reference-type tensors.
     /// </remarks>
     member graph.DebugGradientIdentity (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DebugGradientIdentity", graph.MakeName ("DebugGradientIdentity", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "DebugGradientIdentity", graph.MakeName(name, "DebugGradientIdentity"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -7859,8 +7859,8 @@ type TFGraph with
     ///    This op operates on reference-type tensors.
     /// </remarks>
     member graph.DebugGradientRefIdentity (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DebugGradientRefIdentity", graph.MakeName ("DebugGradientRefIdentity", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "DebugGradientRefIdentity", graph.MakeName(name, "DebugGradientRefIdentity"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -7908,8 +7908,8 @@ type TFGraph with
     ///    Provides an identity mapping of the non-Ref type input tensor for debugging.
     /// </remarks>
     member graph.DebugIdentity (input : TFOutput, ?device_name : string, ?tensor_name : string, ?debug_urls : string[], ?gated_grpc : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DebugIdentity", graph.MakeName ("DebugIdentity", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "DebugIdentity", graph.MakeName(name, "DebugIdentity"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         device_name |> Option.iter (fun device_name -> desc.SetAttr ("device_name", device_name) |> ignore)
@@ -7961,8 +7961,8 @@ type TFGraph with
     ///    Counts number of NaNs in the input tensor, for debugging.
     /// </remarks>
     member graph.DebugNanCount (input : TFOutput, ?device_name : string, ?tensor_name : string, ?debug_urls : string[], ?gated_grpc : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DebugNanCount", graph.MakeName ("DebugNanCount", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "DebugNanCount", graph.MakeName(name, "DebugNanCount"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         device_name |> Option.iter (fun device_name -> desc.SetAttr ("device_name", device_name) |> ignore)
@@ -8056,8 +8056,8 @@ type TFGraph with
     ///    Provide a basic summary of numeric value types, range and distribution.
     /// </remarks>
     member graph.DebugNumericSummary (input : TFOutput, ?device_name : string, ?tensor_name : string, ?debug_urls : string[], ?lower_bound : float32, ?upper_bound : float32, ?mute_if_healthy : bool, ?gated_grpc : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DebugNumericSummary", graph.MakeName ("DebugNumericSummary", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "DebugNumericSummary", graph.MakeName(name, "DebugNumericSummary"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         device_name |> Option.iter (fun device_name -> desc.SetAttr ("device_name", device_name) |> ignore)
@@ -8143,8 +8143,8 @@ type TFGraph with
     ///    decoding partial jpeg image.
     /// </remarks>
     member graph.DecodeAndCropJpeg (contents : TFOutput, crop_window : TFOutput, ?channels : int64, ?ratio : int64, ?fancy_upscaling : bool, ?try_recover_truncated : bool, ?acceptable_fraction : float32, ?dct_method : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodeAndCropJpeg", graph.MakeName ("DecodeAndCropJpeg", name))
+        graph.CheckOutputs([|yield contents; yield crop_window|])
+        let desc = new TFOperationDesc (graph, "DecodeAndCropJpeg", graph.MakeName(name, "DecodeAndCropJpeg"))
         desc.AddInput (contents) |> ignore
         desc.AddInput (crop_window) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -8179,8 +8179,8 @@ type TFGraph with
     ///    Web-safe means that input must use - and _ instead of + and /.
     /// </remarks>
     member graph.DecodeBase64 (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodeBase64", graph.MakeName ("DecodeBase64", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "DecodeBase64", graph.MakeName(name, "DecodeBase64"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -8217,8 +8217,8 @@ type TFGraph with
     ///    *   4: output an RGBA image.
     /// </remarks>
     member graph.DecodeBmp (contents : TFOutput, ?channels : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodeBmp", graph.MakeName ("DecodeBmp", name))
+        graph.CheckOutputs([|yield contents|])
+        let desc = new TFOperationDesc (graph, "DecodeBmp", graph.MakeName(name, "DecodeBmp"))
         desc.AddInput (contents) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         channels |> Option.iter (fun channels -> desc.SetAttr ("channels", channels) |> ignore)
@@ -8271,8 +8271,8 @@ type TFGraph with
     ///    Note that we allow leading and trailing spaces with int or float field.
     /// </remarks>
     member graph.DecodeCSV (records : TFOutput, record_defaults : TFOutput[], ?field_delim : string, ?use_quote_delim : bool, ?na_value : string, ?select_cols : int64[],  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodeCSV", graph.MakeName ("DecodeCSV", name))
+        graph.CheckOutputs([|yield records; yield! record_defaults|])
+        let desc = new TFOperationDesc (graph, "DecodeCSV", graph.MakeName(name, "DecodeCSV"))
         desc.AddInput (records) |> ignore
         desc.AddInputs (record_defaults) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -8315,8 +8315,8 @@ type TFGraph with
     ///    element in <c>bytes<c>.
     /// </remarks>
     member graph.DecodeCompressed (bytes : TFOutput, ?compression_type : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodeCompressed", graph.MakeName ("DecodeCompressed", name))
+        graph.CheckOutputs([|yield bytes|])
+        let desc = new TFOperationDesc (graph, "DecodeCompressed", graph.MakeName(name, "DecodeCompressed"))
         desc.AddInput (bytes) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         compression_type |> Option.iter (fun compression_type -> desc.SetAttr ("compression_type", compression_type) |> ignore)
@@ -8350,8 +8350,8 @@ type TFGraph with
     ///    <c>tf.image.decode_image<c>.
     /// </remarks>
     member graph.DecodeGif (contents : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodeGif", graph.MakeName ("DecodeGif", name))
+        graph.CheckOutputs([|yield contents|])
+        let desc = new TFOperationDesc (graph, "DecodeGif", graph.MakeName(name, "DecodeGif"))
         desc.AddInput (contents) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -8385,8 +8385,8 @@ type TFGraph with
     ///    Example-parsing ops.
     /// </remarks>
     member graph.DecodeJSONExample (json_examples : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodeJSONExample", graph.MakeName ("DecodeJSONExample", name))
+        graph.CheckOutputs([|yield json_examples|])
+        let desc = new TFOperationDesc (graph, "DecodeJSONExample", graph.MakeName(name, "DecodeJSONExample"))
         desc.AddInput (json_examples) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -8462,8 +8462,8 @@ type TFGraph with
     ///    the same, though it is cleaner to use <c>tf.image.decode_image<c>.
     /// </remarks>
     member graph.DecodeJpeg (contents : TFOutput, ?channels : int64, ?ratio : int64, ?fancy_upscaling : bool, ?try_recover_truncated : bool, ?acceptable_fraction : float32, ?dct_method : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodeJpeg", graph.MakeName ("DecodeJpeg", name))
+        graph.CheckOutputs([|yield contents|])
+        let desc = new TFOperationDesc (graph, "DecodeJpeg", graph.MakeName(name, "DecodeJpeg"))
         desc.AddInput (contents) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         channels |> Option.iter (fun channels -> desc.SetAttr ("channels", channels) |> ignore)
@@ -8517,8 +8517,8 @@ type TFGraph with
     ///    is the same, though it is cleaner to use <c>tf.image.decode_image<c>.
     /// </remarks>
     member graph.DecodePng (contents : TFOutput, ?channels : int64, ?dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodePng", graph.MakeName ("DecodePng", name))
+        graph.CheckOutputs([|yield contents|])
+        let desc = new TFOperationDesc (graph, "DecodePng", graph.MakeName(name, "DecodePng"))
         desc.AddInput (contents) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         channels |> Option.iter (fun channels -> desc.SetAttr ("channels", channels) |> ignore)
@@ -8623,8 +8623,8 @@ type TFGraph with
     ///    chosen using the <c>format<c> attribute.
     /// </remarks>
     member graph.DecodeProtoV2 (bytes : TFOutput, message_type : string, field_names : string[], output_types : TFDataType[], ?descriptor_source : string, ?message_format : string, ?sanitize : bool,  ?name : string) : (TFOutput*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodeProtoV2", graph.MakeName ("DecodeProtoV2", name))
+        graph.CheckOutputs([|yield bytes|])
+        let desc = new TFOperationDesc (graph, "DecodeProtoV2", graph.MakeName(name, "DecodeProtoV2"))
         desc.AddInput (bytes) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("message_type", message_type) |> ignore
@@ -8666,8 +8666,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.DecodeRaw (bytes : TFOutput, out_type : TFDataType, ?little_endian : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodeRaw", graph.MakeName ("DecodeRaw", name))
+        graph.CheckOutputs([|yield bytes|])
+        let desc = new TFOperationDesc (graph, "DecodeRaw", graph.MakeName(name, "DecodeRaw"))
         desc.AddInput (bytes) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("out_type", out_type) |> ignore
@@ -8719,8 +8719,8 @@ type TFGraph with
     ///    output shape of [10, 2].
     /// </remarks>
     member graph.DecodeWav (contents : TFOutput, ?desired_channels : int64, ?desired_samples : int64,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DecodeWav", graph.MakeName ("DecodeWav", name))
+        graph.CheckOutputs([|yield contents|])
+        let desc = new TFOperationDesc (graph, "DecodeWav", graph.MakeName(name, "DecodeWav"))
         desc.AddInput (contents) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desired_channels |> Option.iter (fun desired_channels -> desc.SetAttr ("desired_channels", desired_channels) |> ignore)
@@ -8749,8 +8749,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.DeepCopy (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DeepCopy", graph.MakeName ("DeepCopy", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "DeepCopy", graph.MakeName(name, "DeepCopy"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -8773,8 +8773,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.DeleteSessionTensor (handle : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DeleteSessionTensor", graph.MakeName ("DeleteSessionTensor", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "DeleteSessionTensor", graph.MakeName(name, "DeleteSessionTensor"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -8819,8 +8819,8 @@ type TFGraph with
     ///    <c>[0...n-1]<c> dimension of <c>set<c>.
     /// </remarks>
     member graph.DenseToDenseSetOperation (set1 : TFOutput, set2 : TFOutput, set_operation : string, ?validate_indices : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DenseToDenseSetOperation", graph.MakeName ("DenseToDenseSetOperation", name))
+        graph.CheckOutputs([|yield set1; yield set2|])
+        let desc = new TFOperationDesc (graph, "DenseToDenseSetOperation", graph.MakeName(name, "DenseToDenseSetOperation"))
         desc.AddInput (set1) |> ignore
         desc.AddInput (set2) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -8863,8 +8863,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.DenseToSparseBatchDataset (input_dataset : TFOutput, batch_size : TFOutput, row_shape : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DenseToSparseBatchDataset", graph.MakeName ("DenseToSparseBatchDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield batch_size; yield row_shape|])
+        let desc = new TFOperationDesc (graph, "DenseToSparseBatchDataset", graph.MakeName(name, "DenseToSparseBatchDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (batch_size) |> ignore
         desc.AddInput (row_shape) |> ignore
@@ -8933,8 +8933,8 @@ type TFGraph with
     ///    <c>[0...n-1]<c> dimension of <c>set<c>.
     /// </remarks>
     member graph.DenseToSparseSetOperation (set1 : TFOutput, set2_indices : TFOutput, set2_values : TFOutput, set2_shape : TFOutput, set_operation : string, ?validate_indices : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DenseToSparseSetOperation", graph.MakeName ("DenseToSparseSetOperation", name))
+        graph.CheckOutputs([|yield set1; yield set2_indices; yield set2_values; yield set2_shape|])
+        let desc = new TFOperationDesc (graph, "DenseToSparseSetOperation", graph.MakeName(name, "DenseToSparseSetOperation"))
         desc.AddInput (set1) |> ignore
         desc.AddInput (set2_indices) |> ignore
         desc.AddInput (set2_values) |> ignore
@@ -9062,8 +9062,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.DepthToSpace (input : TFOutput, block_size : int64, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DepthToSpace", graph.MakeName ("DepthToSpace", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "DepthToSpace", graph.MakeName(name, "DepthToSpace"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("block_size", block_size) |> ignore
@@ -9132,8 +9132,8 @@ type TFGraph with
     ///    horizontal and vertices strides, <c>strides = [1, stride, stride, 1]<c>.
     /// </remarks>
     member graph.DepthwiseConv2dNative (input : TFOutput, filter : TFOutput, strides : int64[], padding : string, ?data_format : string, ?dilations : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DepthwiseConv2dNative", graph.MakeName ("DepthwiseConv2dNative", name))
+        graph.CheckOutputs([|yield input; yield filter|])
+        let desc = new TFOperationDesc (graph, "DepthwiseConv2dNative", graph.MakeName(name, "DepthwiseConv2dNative"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -9200,8 +9200,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.DepthwiseConv2dNativeBackpropFilter (input : TFOutput, filter_sizes : TFOutput, out_backprop : TFOutput, strides : int64[], padding : string, ?data_format : string, ?dilations : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DepthwiseConv2dNativeBackpropFilter", graph.MakeName ("DepthwiseConv2dNativeBackpropFilter", name))
+        graph.CheckOutputs([|yield input; yield filter_sizes; yield out_backprop|])
+        let desc = new TFOperationDesc (graph, "DepthwiseConv2dNativeBackpropFilter", graph.MakeName(name, "DepthwiseConv2dNativeBackpropFilter"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter_sizes) |> ignore
         desc.AddInput (out_backprop) |> ignore
@@ -9269,8 +9269,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.DepthwiseConv2dNativeBackpropInput (input_sizes : TFOutput, filter : TFOutput, out_backprop : TFOutput, strides : int64[], padding : string, ?data_format : string, ?dilations : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DepthwiseConv2dNativeBackpropInput", graph.MakeName ("DepthwiseConv2dNativeBackpropInput", name))
+        graph.CheckOutputs([|yield input_sizes; yield filter; yield out_backprop|])
+        let desc = new TFOperationDesc (graph, "DepthwiseConv2dNativeBackpropInput", graph.MakeName(name, "DepthwiseConv2dNativeBackpropInput"))
         desc.AddInput (input_sizes) |> ignore
         desc.AddInput (filter) |> ignore
         desc.AddInput (out_backprop) |> ignore
@@ -9382,8 +9382,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Dequantize (input : TFOutput, min_range : TFOutput, max_range : TFOutput, ?mode : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Dequantize", graph.MakeName ("Dequantize", name))
+        graph.CheckOutputs([|yield input; yield min_range; yield max_range|])
+        let desc = new TFOperationDesc (graph, "Dequantize", graph.MakeName(name, "Dequantize"))
         desc.AddInput (input) |> ignore
         desc.AddInput (min_range) |> ignore
         desc.AddInput (max_range) |> ignore
@@ -9413,8 +9413,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.DeserializeIterator (resource_handle : TFOutput, serialized : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DeserializeIterator", graph.MakeName ("DeserializeIterator", name))
+        graph.CheckOutputs([|yield resource_handle; yield serialized|])
+        let desc = new TFOperationDesc (graph, "DeserializeIterator", graph.MakeName(name, "DeserializeIterator"))
         desc.AddInput (resource_handle) |> ignore
         desc.AddInput (serialized) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -9486,8 +9486,8 @@ type TFGraph with
     ///    shape = [2 50]
     /// </remarks>
     member graph.DeserializeManySparse (serialized_sparse : TFOutput, dtype : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DeserializeManySparse", graph.MakeName ("DeserializeManySparse", name))
+        graph.CheckOutputs([|yield serialized_sparse|])
+        let desc = new TFOperationDesc (graph, "DeserializeManySparse", graph.MakeName(name, "DeserializeManySparse"))
         desc.AddInput (serialized_sparse) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -9566,8 +9566,8 @@ type TFGraph with
     ///    shape = [2 50]
     /// </remarks>
     member graph.DeserializeSparse (serialized_sparse : TFOutput, dtype : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DeserializeSparse", graph.MakeName ("DeserializeSparse", name))
+        graph.CheckOutputs([|yield serialized_sparse|])
+        let desc = new TFOperationDesc (graph, "DeserializeSparse", graph.MakeName(name, "DeserializeSparse"))
         desc.AddInput (serialized_sparse) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -9604,8 +9604,8 @@ type TFGraph with
     ///    error status.
     /// </remarks>
     member graph.DestroyResourceOp (resource : TFOutput, ?ignore_lookup_error : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DestroyResourceOp", graph.MakeName ("DestroyResourceOp", name))
+        graph.CheckOutputs([|yield resource|])
+        let desc = new TFOperationDesc (graph, "DestroyResourceOp", graph.MakeName(name, "DestroyResourceOp"))
         desc.AddInput (resource) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         ignore_lookup_error |> Option.iter (fun ignore_lookup_error -> desc.SetAttr ("ignore_lookup_error", ignore_lookup_error) |> ignore)
@@ -9639,8 +9639,8 @@ type TFGraph with
     ///    Outputs the final value of the tensor pointed to by 'ref'.
     /// </remarks>
     member graph.DestroyTemporaryVariable (reference : TFOutput, var_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DestroyTemporaryVariable", graph.MakeName ("DestroyTemporaryVariable", name))
+        graph.CheckOutputs([|yield reference|])
+        let desc = new TFOperationDesc (graph, "DestroyTemporaryVariable", graph.MakeName(name, "DestroyTemporaryVariable"))
         desc.AddInput (reference) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("var_name", var_name) |> ignore
@@ -9683,8 +9683,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Diag (diagonal : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Diag", graph.MakeName ("Diag", name))
+        graph.CheckOutputs([|yield diagonal|])
+        let desc = new TFOperationDesc (graph, "Diag", graph.MakeName(name, "Diag"))
         desc.AddInput (diagonal) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -9728,8 +9728,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.DiagPart (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DiagPart", graph.MakeName ("DiagPart", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "DiagPart", graph.MakeName(name, "DiagPart"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -9754,8 +9754,8 @@ type TFGraph with
     ///    <c>Gamma(x)<c>), element-wise.
     /// </remarks>
     member graph.Digamma (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Digamma", graph.MakeName ("Digamma", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Digamma", graph.MakeName(name, "Digamma"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -9818,8 +9818,8 @@ type TFGraph with
     ///    negation of the erosion of <c>-input<c> by the reflected <c>filter<c>.
     /// </remarks>
     member graph.Dilation2D (input : TFOutput, filter : TFOutput, strides : int64[], rates : int64[], padding : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Dilation2D", graph.MakeName ("Dilation2D", name))
+        graph.CheckOutputs([|yield input; yield filter|])
+        let desc = new TFOperationDesc (graph, "Dilation2D", graph.MakeName(name, "Dilation2D"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -9864,8 +9864,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Dilation2DBackpropFilter (input : TFOutput, filter : TFOutput, out_backprop : TFOutput, strides : int64[], rates : int64[], padding : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Dilation2DBackpropFilter", graph.MakeName ("Dilation2DBackpropFilter", name))
+        graph.CheckOutputs([|yield input; yield filter; yield out_backprop|])
+        let desc = new TFOperationDesc (graph, "Dilation2DBackpropFilter", graph.MakeName(name, "Dilation2DBackpropFilter"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter) |> ignore
         desc.AddInput (out_backprop) |> ignore
@@ -9911,8 +9911,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Dilation2DBackpropInput (input : TFOutput, filter : TFOutput, out_backprop : TFOutput, strides : int64[], rates : int64[], padding : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Dilation2DBackpropInput", graph.MakeName ("Dilation2DBackpropInput", name))
+        graph.CheckOutputs([|yield input; yield filter; yield out_backprop|])
+        let desc = new TFOperationDesc (graph, "Dilation2DBackpropInput", graph.MakeName(name, "Dilation2DBackpropInput"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter) |> ignore
         desc.AddInput (out_backprop) |> ignore
@@ -9945,8 +9945,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.Div (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Div", graph.MakeName ("Div", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "Div", graph.MakeName(name, "Div"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -9976,8 +9976,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.DivNoNan (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DivNoNan", graph.MakeName ("DivNoNan", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "DivNoNan", graph.MakeName(name, "DivNoNan"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -10020,8 +10020,8 @@ type TFGraph with
     ///    Parts of the bounding box may fall outside the image.
     /// </remarks>
     member graph.DrawBoundingBoxes (images : TFOutput, boxes : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DrawBoundingBoxes", graph.MakeName ("DrawBoundingBoxes", name))
+        graph.CheckOutputs([|yield images; yield boxes|])
+        let desc = new TFOperationDesc (graph, "DrawBoundingBoxes", graph.MakeName(name, "DrawBoundingBoxes"))
         desc.AddInput (images) |> ignore
         desc.AddInput (boxes) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -10089,8 +10089,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.DynamicPartition (data : TFOutput, partitions : TFOutput, num_partitions : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DynamicPartition", graph.MakeName ("DynamicPartition", name))
+        graph.CheckOutputs([|yield data; yield partitions|])
+        let desc = new TFOperationDesc (graph, "DynamicPartition", graph.MakeName(name, "DynamicPartition"))
         desc.AddInput (data) |> ignore
         desc.AddInput (partitions) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -10180,8 +10180,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.DynamicStitch (indices : TFOutput[], data : TFOutput[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "DynamicStitch", graph.MakeName ("DynamicStitch", name))
+        graph.CheckOutputs([|yield! indices; yield! data|])
+        let desc = new TFOperationDesc (graph, "DynamicStitch", graph.MakeName(name, "DynamicStitch"))
         desc.AddInputs (indices) |> ignore
         desc.AddInputs (data) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -10269,8 +10269,8 @@ type TFGraph with
     ///    The inputs are:
     /// </remarks>
     member graph.EditDistance (hypothesis_indices : TFOutput, hypothesis_values : TFOutput, hypothesis_shape : TFOutput, truth_indices : TFOutput, truth_values : TFOutput, truth_shape : TFOutput, ?normalize : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "EditDistance", graph.MakeName ("EditDistance", name))
+        graph.CheckOutputs([|yield hypothesis_indices; yield hypothesis_values; yield hypothesis_shape; yield truth_indices; yield truth_values; yield truth_shape|])
+        let desc = new TFOperationDesc (graph, "EditDistance", graph.MakeName(name, "EditDistance"))
         desc.AddInput (hypothesis_indices) |> ignore
         desc.AddInput (hypothesis_values) |> ignore
         desc.AddInput (hypothesis_shape) |> ignore
@@ -10302,8 +10302,8 @@ type TFGraph with
     ///    ](http://arxiv.org/abs/1511.07289)
     /// </remarks>
     member graph.Elu (features : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Elu", graph.MakeName ("Elu", name))
+        graph.CheckOutputs([|yield features|])
+        let desc = new TFOperationDesc (graph, "Elu", graph.MakeName(name, "Elu"))
         desc.AddInput (features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -10331,8 +10331,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.EluGrad (gradients : TFOutput, outputs : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "EluGrad", graph.MakeName ("EluGrad", name))
+        graph.CheckOutputs([|yield gradients; yield outputs|])
+        let desc = new TFOperationDesc (graph, "EluGrad", graph.MakeName(name, "EluGrad"))
         desc.AddInput (gradients) |> ignore
         desc.AddInput (outputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -10365,8 +10365,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Empty (shape : TFOutput, dtype : TFDataType, ?init : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Empty", graph.MakeName ("Empty", name))
+        graph.CheckOutputs([|yield shape|])
+        let desc = new TFOperationDesc (graph, "Empty", graph.MakeName(name, "Empty"))
         desc.AddInput (shape) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -10400,8 +10400,8 @@ type TFGraph with
     ///    element_shape: a shape compatible with that of elements in the list.
     /// </remarks>
     member graph.EmptyTensorList (element_shape : TFOutput, element_dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "EmptyTensorList", graph.MakeName ("EmptyTensorList", name))
+        graph.CheckOutputs([|yield element_shape|])
+        let desc = new TFOperationDesc (graph, "EmptyTensorList", graph.MakeName(name, "EmptyTensorList"))
         desc.AddInput (element_shape) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("element_dtype", element_dtype) |> ignore
@@ -10438,8 +10438,8 @@ type TFGraph with
     ///    Web-safe means that the encoder uses - and _ instead of + and /.
     /// </remarks>
     member graph.EncodeBase64 (input : TFOutput, ?pad : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "EncodeBase64", graph.MakeName ("EncodeBase64", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "EncodeBase64", graph.MakeName(name, "EncodeBase64"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         pad |> Option.iter (fun pad -> desc.SetAttr ("pad", pad) |> ignore)
@@ -10519,8 +10519,8 @@ type TFGraph with
     ///    *   3: Output an RGB image.
     /// </remarks>
     member graph.EncodeJpeg (image : TFOutput, ?format : string, ?quality : int64, ?progressive : bool, ?optimize_size : bool, ?chroma_downsampling : bool, ?density_unit : string, ?x_density : int64, ?y_density : int64, ?xmp_metadata : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "EncodeJpeg", graph.MakeName ("EncodeJpeg", name))
+        graph.CheckOutputs([|yield image|])
+        let desc = new TFOperationDesc (graph, "EncodeJpeg", graph.MakeName(name, "EncodeJpeg"))
         desc.AddInput (image) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         format |> Option.iter (fun format -> desc.SetAttr ("format", format) |> ignore)
@@ -10570,8 +10570,8 @@ type TFGraph with
     ///    the smallest output, but is slower.
     /// </remarks>
     member graph.EncodePng (image : TFOutput, ?compression : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "EncodePng", graph.MakeName ("EncodePng", name))
+        graph.CheckOutputs([|yield image|])
+        let desc = new TFOperationDesc (graph, "EncodePng", graph.MakeName(name, "EncodePng"))
         desc.AddInput (image) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         compression |> Option.iter (fun compression -> desc.SetAttr ("compression", compression) |> ignore)
@@ -10647,8 +10647,8 @@ type TFGraph with
     ///    with sign wrapping if the input is of type <c>tf.int32<c>.
     /// </remarks>
     member graph.EncodeProto (sizes : TFOutput, values : TFOutput[], field_names : string[], message_type : string, ?descriptor_source : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "EncodeProto", graph.MakeName ("EncodeProto", name))
+        graph.CheckOutputs([|yield sizes; yield! values|])
+        let desc = new TFOperationDesc (graph, "EncodeProto", graph.MakeName(name, "EncodeProto"))
         desc.AddInput (sizes) |> ignore
         desc.AddInputs (values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -10688,8 +10688,8 @@ type TFGraph with
     ///    <c>sample_rate<c> is a scalar Tensor holding the rate to use (e.g. 44100).
     /// </remarks>
     member graph.EncodeWav (audio : TFOutput, sample_rate : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "EncodeWav", graph.MakeName ("EncodeWav", name))
+        graph.CheckOutputs([|yield audio; yield sample_rate|])
+        let desc = new TFOperationDesc (graph, "EncodeWav", graph.MakeName(name, "EncodeWav"))
         desc.AddInput (audio) |> ignore
         desc.AddInput (sample_rate) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -10721,8 +10721,8 @@ type TFGraph with
     ///    Returns the input tensor otherwise.
     /// </remarks>
     member graph.EnsureShape (input : TFOutput, shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "EnsureShape", graph.MakeName ("EnsureShape", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "EnsureShape", graph.MakeName(name, "EnsureShape"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shape", shape) |> ignore
@@ -10765,8 +10765,8 @@ type TFGraph with
     ///    are run in parallel in the child frame.
     /// </remarks>
     member graph.Enter (data : TFOutput, frame_name : string, ?is_constant : bool, ?parallel_iterations : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Enter", graph.MakeName ("Enter", name))
+        graph.CheckOutputs([|yield data|])
+        let desc = new TFOperationDesc (graph, "Enter", graph.MakeName(name, "Enter"))
         desc.AddInput (data) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("frame_name", frame_name) |> ignore
@@ -10797,8 +10797,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.Equal (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Equal", graph.MakeName ("Equal", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "Equal", graph.MakeName(name, "Equal"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -10821,8 +10821,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Erf (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Erf", graph.MakeName ("Erf", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Erf", graph.MakeName(name, "Erf"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -10844,8 +10844,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Erfc (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Erfc", graph.MakeName ("Erfc", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Erfc", graph.MakeName(name, "Erfc"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -10872,8 +10872,8 @@ type TFGraph with
     ///    Exit makes its input <c>data<c> available to the parent frame.
     /// </remarks>
     member graph.Exit (data : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Exit", graph.MakeName ("Exit", name))
+        graph.CheckOutputs([|yield data|])
+        let desc = new TFOperationDesc (graph, "Exit", graph.MakeName(name, "Exit"))
         desc.AddInput (data) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -10895,8 +10895,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Exp (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Exp", graph.MakeName ("Exp", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Exp", graph.MakeName(name, "Exp"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -10957,8 +10957,8 @@ type TFGraph with
     ///    size 1.
     /// </remarks>
     member graph.ExpandDims (input : TFOutput, dim : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ExpandDims", graph.MakeName ("ExpandDims", name))
+        graph.CheckOutputs([|yield input; yield dim|])
+        let desc = new TFOperationDesc (graph, "ExpandDims", graph.MakeName(name, "ExpandDims"))
         desc.AddInput (input) |> ignore
         desc.AddInput (dim) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -10984,8 +10984,8 @@ type TFGraph with
     ///    I.e., \\(y = (\exp x) - 1\\).
     /// </remarks>
     member graph.Expm1 (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Expm1", graph.MakeName ("Expm1", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Expm1", graph.MakeName(name, "Expm1"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -11058,8 +11058,8 @@ type TFGraph with
     ///    numbers of pixels.
     /// </remarks>
     member graph.ExtractGlimpse (input : TFOutput, size : TFOutput, offsets : TFOutput, ?centered : bool, ?normalized : bool, ?uniform_noise : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ExtractGlimpse", graph.MakeName ("ExtractGlimpse", name))
+        graph.CheckOutputs([|yield input; yield size; yield offsets|])
+        let desc = new TFOperationDesc (graph, "ExtractGlimpse", graph.MakeName(name, "ExtractGlimpse"))
         desc.AddInput (input) |> ignore
         desc.AddInput (size) |> ignore
         desc.AddInput (offsets) |> ignore
@@ -11117,8 +11117,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ExtractImagePatches (images : TFOutput, ksizes : int64[], strides : int64[], rates : int64[], padding : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ExtractImagePatches", graph.MakeName ("ExtractImagePatches", name))
+        graph.CheckOutputs([|yield images|])
+        let desc = new TFOperationDesc (graph, "ExtractImagePatches", graph.MakeName(name, "ExtractImagePatches"))
         desc.AddInput (images) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("ksizes", ksizes) |> ignore
@@ -11154,8 +11154,8 @@ type TFGraph with
     ///    This op only parses the image header, so it is much faster than DecodeJpeg.
     /// </remarks>
     member graph.ExtractJpegShape (contents : TFOutput, ?output_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ExtractJpegShape", graph.MakeName ("ExtractJpegShape", name))
+        graph.CheckOutputs([|yield contents|])
+        let desc = new TFOperationDesc (graph, "ExtractJpegShape", graph.MakeName(name, "ExtractJpegShape"))
         desc.AddInput (contents) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         output_type |> Option.iter (fun output_type -> desc.SetAttr ("output_type", output_type) |> ignore)
@@ -11189,8 +11189,8 @@ type TFGraph with
     ///    dimension of <c>input<c>.
     /// </remarks>
     member graph.FFT (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FFT", graph.MakeName ("FFT", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "FFT", graph.MakeName(name, "FFT"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -11223,8 +11223,8 @@ type TFGraph with
     ///    2 dimensions of <c>input<c>.
     /// </remarks>
     member graph.FFT2D (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FFT2D", graph.MakeName ("FFT2D", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "FFT2D", graph.MakeName(name, "FFT2D"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -11257,8 +11257,8 @@ type TFGraph with
     ///    dimensions of <c>input<c>.
     /// </remarks>
     member graph.FFT3D (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FFT3D", graph.MakeName ("FFT3D", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "FFT3D", graph.MakeName(name, "FFT3D"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -11304,8 +11304,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.FIFOQueue (component_types : TFDataType[], ?shapes : TFShape[], ?capacity : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FIFOQueue", graph.MakeName ("FIFOQueue", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "FIFOQueue", graph.MakeName(name, "FIFOQueue"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("component_types", component_types) |> ignore
         shapes |> Option.iter (fun shapes -> desc.SetAttr ("shapes", shapes) |> ignore)
@@ -11355,8 +11355,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.FIFOQueueV2 (component_types : TFDataType[], ?shapes : TFShape[], ?capacity : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FIFOQueueV2", graph.MakeName ("FIFOQueueV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "FIFOQueueV2", graph.MakeName(name, "FIFOQueueV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("component_types", component_types) |> ignore
         shapes |> Option.iter (fun shapes -> desc.SetAttr ("shapes", shapes) |> ignore)
@@ -11391,8 +11391,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.FakeParam (dtype : TFDataType, shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FakeParam", graph.MakeName ("FakeParam", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "FakeParam", graph.MakeName(name, "FakeParam"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
         desc.SetAttr ("shape", shape) |> ignore
@@ -11436,8 +11436,8 @@ type TFGraph with
     ///    Quantization is called fake since the output is still in floating point.
     /// </remarks>
     member graph.FakeQuantWithMinMaxArgs (inputs : TFOutput, ?min : float32, ?max : float32, ?num_bits : int64, ?narrow_range : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxArgs", graph.MakeName ("FakeQuantWithMinMaxArgs", name))
+        graph.CheckOutputs([|yield inputs|])
+        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxArgs", graph.MakeName(name, "FakeQuantWithMinMaxArgs"))
         desc.AddInput (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         min |> Option.iter (fun min -> desc.SetAttr ("min", min) |> ignore)
@@ -11481,8 +11481,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.FakeQuantWithMinMaxArgsGradient (gradients : TFOutput, inputs : TFOutput, ?min : float32, ?max : float32, ?num_bits : int64, ?narrow_range : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxArgsGradient", graph.MakeName ("FakeQuantWithMinMaxArgsGradient", name))
+        graph.CheckOutputs([|yield gradients; yield inputs|])
+        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxArgsGradient", graph.MakeName(name, "FakeQuantWithMinMaxArgsGradient"))
         desc.AddInput (gradients) |> ignore
         desc.AddInput (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -11531,8 +11531,8 @@ type TFGraph with
     ///    values.
     /// </remarks>
     member graph.FakeQuantWithMinMaxVars (inputs : TFOutput, min : TFOutput, max : TFOutput, ?num_bits : int64, ?narrow_range : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxVars", graph.MakeName ("FakeQuantWithMinMaxVars", name))
+        graph.CheckOutputs([|yield inputs; yield min; yield max|])
+        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxVars", graph.MakeName(name, "FakeQuantWithMinMaxVars"))
         desc.AddInput (inputs) |> ignore
         desc.AddInput (min) |> ignore
         desc.AddInput (max) |> ignore
@@ -11582,8 +11582,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.FakeQuantWithMinMaxVarsGradient (gradients : TFOutput, inputs : TFOutput, min : TFOutput, max : TFOutput, ?num_bits : int64, ?narrow_range : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxVarsGradient", graph.MakeName ("FakeQuantWithMinMaxVarsGradient", name))
+        graph.CheckOutputs([|yield gradients; yield inputs; yield min; yield max|])
+        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxVarsGradient", graph.MakeName(name, "FakeQuantWithMinMaxVarsGradient"))
         desc.AddInput (gradients) |> ignore
         desc.AddInput (inputs) |> ignore
         desc.AddInput (min) |> ignore
@@ -11637,8 +11637,8 @@ type TFGraph with
     ///    values.
     /// </remarks>
     member graph.FakeQuantWithMinMaxVarsPerChannel (inputs : TFOutput, min : TFOutput, max : TFOutput, ?num_bits : int64, ?narrow_range : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxVarsPerChannel", graph.MakeName ("FakeQuantWithMinMaxVarsPerChannel", name))
+        graph.CheckOutputs([|yield inputs; yield min; yield max|])
+        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxVarsPerChannel", graph.MakeName(name, "FakeQuantWithMinMaxVarsPerChannel"))
         desc.AddInput (inputs) |> ignore
         desc.AddInput (min) |> ignore
         desc.AddInput (max) |> ignore
@@ -11691,8 +11691,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.FakeQuantWithMinMaxVarsPerChannelGradient (gradients : TFOutput, inputs : TFOutput, min : TFOutput, max : TFOutput, ?num_bits : int64, ?narrow_range : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxVarsPerChannelGradient", graph.MakeName ("FakeQuantWithMinMaxVarsPerChannelGradient", name))
+        graph.CheckOutputs([|yield gradients; yield inputs; yield min; yield max|])
+        let desc = new TFOperationDesc (graph, "FakeQuantWithMinMaxVarsPerChannelGradient", graph.MakeName(name, "FakeQuantWithMinMaxVarsPerChannelGradient"))
         desc.AddInput (gradients) |> ignore
         desc.AddInput (inputs) |> ignore
         desc.AddInput (min) |> ignore
@@ -11723,8 +11723,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.FakeQueue (resource : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FakeQueue", graph.MakeName ("FakeQueue", name))
+        graph.CheckOutputs([|yield resource|])
+        let desc = new TFOperationDesc (graph, "FakeQueue", graph.MakeName(name, "FakeQueue"))
         desc.AddInput (resource) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -11775,8 +11775,8 @@ type TFGraph with
     ///    based on other runtime Tensors, unlike <c>tf.constant<c>.
     /// </remarks>
     member graph.Fill (dims : TFOutput, value : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Fill", graph.MakeName ("Fill", name))
+        graph.CheckOutputs([|yield dims; yield value|])
+        let desc = new TFOperationDesc (graph, "Fill", graph.MakeName(name, "Fill"))
         desc.AddInput (dims) |> ignore
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -11803,8 +11803,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.FilterByLastComponentDataset (input_dataset : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FilterByLastComponentDataset", graph.MakeName ("FilterByLastComponentDataset", name))
+        graph.CheckOutputs([|yield input_dataset|])
+        let desc = new TFOperationDesc (graph, "FilterByLastComponentDataset", graph.MakeName(name, "FilterByLastComponentDataset"))
         desc.AddInput (input_dataset) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("output_types", output_types) |> ignore
@@ -11844,8 +11844,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.FixedLengthRecordDataset (filenames : TFOutput, header_bytes : TFOutput, record_bytes : TFOutput, footer_bytes : TFOutput, buffer_size : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FixedLengthRecordDataset", graph.MakeName ("FixedLengthRecordDataset", name))
+        graph.CheckOutputs([|yield filenames; yield header_bytes; yield record_bytes; yield footer_bytes; yield buffer_size|])
+        let desc = new TFOperationDesc (graph, "FixedLengthRecordDataset", graph.MakeName(name, "FixedLengthRecordDataset"))
         desc.AddInput (filenames) |> ignore
         desc.AddInput (header_bytes) |> ignore
         desc.AddInput (record_bytes) |> ignore
@@ -11896,8 +11896,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.FixedLengthRecordReader (record_bytes : int64, ?header_bytes : int64, ?footer_bytes : int64, ?hop_bytes : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FixedLengthRecordReader", graph.MakeName ("FixedLengthRecordReader", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "FixedLengthRecordReader", graph.MakeName(name, "FixedLengthRecordReader"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("record_bytes", record_bytes) |> ignore
         header_bytes |> Option.iter (fun header_bytes -> desc.SetAttr ("header_bytes", header_bytes) |> ignore)
@@ -11954,8 +11954,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.FixedLengthRecordReaderV2 (record_bytes : int64, ?header_bytes : int64, ?footer_bytes : int64, ?hop_bytes : int64, ?container : string, ?shared_name : string, ?encoding : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FixedLengthRecordReaderV2", graph.MakeName ("FixedLengthRecordReaderV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "FixedLengthRecordReaderV2", graph.MakeName(name, "FixedLengthRecordReaderV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("record_bytes", record_bytes) |> ignore
         header_bytes |> Option.iter (fun header_bytes -> desc.SetAttr ("header_bytes", header_bytes) |> ignore)
@@ -12076,8 +12076,8 @@ type TFGraph with
     ///    true labels.
     /// </remarks>
     member graph.FixedUnigramCandidateSampler (true_classes : TFOutput, num_true : int64, num_sampled : int64, unique : bool, range_max : int64, ?vocab_file : string, ?distortion : float32, ?num_reserved_ids : int64, ?num_shards : int64, ?shard : int64, ?unigrams : float32[], ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FixedUnigramCandidateSampler", graph.MakeName ("FixedUnigramCandidateSampler", name))
+        graph.CheckOutputs([|yield true_classes|])
+        let desc = new TFOperationDesc (graph, "FixedUnigramCandidateSampler", graph.MakeName(name, "FixedUnigramCandidateSampler"))
         desc.AddInput (true_classes) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_true", num_true) |> ignore
@@ -12115,8 +12115,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Floor (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Floor", graph.MakeName ("Floor", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Floor", graph.MakeName(name, "Floor"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -12144,8 +12144,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.FloorDiv (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FloorDiv", graph.MakeName ("FloorDiv", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "FloorDiv", graph.MakeName(name, "FloorDiv"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -12177,8 +12177,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.FloorMod (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FloorMod", graph.MakeName ("FloorMod", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "FloorMod", graph.MakeName(name, "FloorMod"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -12255,8 +12255,8 @@ type TFGraph with
     ///    pooling region.
     /// </remarks>
     member graph.FractionalAvgPool (value : TFOutput, pooling_ratio : float32[], ?pseudo_random : bool, ?overlapping : bool, ?deterministic : bool, ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FractionalAvgPool", graph.MakeName ("FractionalAvgPool", name))
+        graph.CheckOutputs([|yield value|])
+        let desc = new TFOperationDesc (graph, "FractionalAvgPool", graph.MakeName(name, "FractionalAvgPool"))
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("pooling_ratio", pooling_ratio) |> ignore
@@ -12321,8 +12321,8 @@ type TFGraph with
     ///    tensor.
     /// </remarks>
     member graph.FractionalAvgPoolGrad (orig_input_tensor_shape : TFOutput, out_backprop : TFOutput, row_pooling_sequence : TFOutput, col_pooling_sequence : TFOutput, ?overlapping : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FractionalAvgPoolGrad", graph.MakeName ("FractionalAvgPoolGrad", name))
+        graph.CheckOutputs([|yield orig_input_tensor_shape; yield out_backprop; yield row_pooling_sequence; yield col_pooling_sequence|])
+        let desc = new TFOperationDesc (graph, "FractionalAvgPoolGrad", graph.MakeName(name, "FractionalAvgPoolGrad"))
         desc.AddInput (orig_input_tensor_shape) |> ignore
         desc.AddInput (out_backprop) |> ignore
         desc.AddInput (row_pooling_sequence) |> ignore
@@ -12426,8 +12426,8 @@ type TFGraph with
     ///    [Benjamin Graham, Fractional Max-Pooling](http://arxiv.org/abs/1412.6071)
     /// </remarks>
     member graph.FractionalMaxPool (value : TFOutput, pooling_ratio : float32[], ?pseudo_random : bool, ?overlapping : bool, ?deterministic : bool, ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FractionalMaxPool", graph.MakeName ("FractionalMaxPool", name))
+        graph.CheckOutputs([|yield value|])
+        let desc = new TFOperationDesc (graph, "FractionalMaxPool", graph.MakeName(name, "FractionalMaxPool"))
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("pooling_ratio", pooling_ratio) |> ignore
@@ -12488,8 +12488,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.FractionalMaxPoolGrad (orig_input : TFOutput, orig_output : TFOutput, out_backprop : TFOutput, row_pooling_sequence : TFOutput, col_pooling_sequence : TFOutput, ?overlapping : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FractionalMaxPoolGrad", graph.MakeName ("FractionalMaxPoolGrad", name))
+        graph.CheckOutputs([|yield orig_input; yield orig_output; yield out_backprop; yield row_pooling_sequence; yield col_pooling_sequence|])
+        let desc = new TFOperationDesc (graph, "FractionalMaxPoolGrad", graph.MakeName(name, "FractionalMaxPoolGrad"))
         desc.AddInput (orig_input) |> ignore
         desc.AddInput (orig_output) |> ignore
         desc.AddInput (out_backprop) |> ignore
@@ -12558,8 +12558,8 @@ type TFGraph with
     ///    The size of 1D Tensors matches the dimension C of the 4D Tensors.
     /// </remarks>
     member graph.FusedBatchNorm (x : TFOutput, scale : TFOutput, offset : TFOutput, mean : TFOutput, variance : TFOutput, ?epsilon : float32, ?data_format : string, ?is_training : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FusedBatchNorm", graph.MakeName ("FusedBatchNorm", name))
+        graph.CheckOutputs([|yield x; yield scale; yield offset; yield mean; yield variance|])
+        let desc = new TFOperationDesc (graph, "FusedBatchNorm", graph.MakeName(name, "FusedBatchNorm"))
         desc.AddInput (x) |> ignore
         desc.AddInput (scale) |> ignore
         desc.AddInput (offset) |> ignore
@@ -12641,8 +12641,8 @@ type TFGraph with
     ///    The size of 1D Tensors matches the dimension C of the 4D Tensors.
     /// </remarks>
     member graph.FusedBatchNormGrad (y_backprop : TFOutput, x : TFOutput, scale : TFOutput, reserve_space_1 : TFOutput, reserve_space_2 : TFOutput, ?epsilon : float32, ?data_format : string, ?is_training : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FusedBatchNormGrad", graph.MakeName ("FusedBatchNormGrad", name))
+        graph.CheckOutputs([|yield y_backprop; yield x; yield scale; yield reserve_space_1; yield reserve_space_2|])
+        let desc = new TFOperationDesc (graph, "FusedBatchNormGrad", graph.MakeName(name, "FusedBatchNormGrad"))
         desc.AddInput (y_backprop) |> ignore
         desc.AddInput (x) |> ignore
         desc.AddInput (scale) |> ignore
@@ -12724,8 +12724,8 @@ type TFGraph with
     ///    The size of 1D Tensors matches the dimension C of the 4D Tensors.
     /// </remarks>
     member graph.FusedBatchNormGradV2 (y_backprop : TFOutput, x : TFOutput, scale : TFOutput, reserve_space_1 : TFOutput, reserve_space_2 : TFOutput, ?epsilon : float32, ?data_format : string, ?is_training : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FusedBatchNormGradV2", graph.MakeName ("FusedBatchNormGradV2", name))
+        graph.CheckOutputs([|yield y_backprop; yield x; yield scale; yield reserve_space_1; yield reserve_space_2|])
+        let desc = new TFOperationDesc (graph, "FusedBatchNormGradV2", graph.MakeName(name, "FusedBatchNormGradV2"))
         desc.AddInput (y_backprop) |> ignore
         desc.AddInput (x) |> ignore
         desc.AddInput (scale) |> ignore
@@ -12804,8 +12804,8 @@ type TFGraph with
     ///    The size of 1D Tensors matches the dimension C of the 4D Tensors.
     /// </remarks>
     member graph.FusedBatchNormV2 (x : TFOutput, scale : TFOutput, offset : TFOutput, mean : TFOutput, variance : TFOutput, ?epsilon : float32, ?data_format : string, ?is_training : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FusedBatchNormV2", graph.MakeName ("FusedBatchNormV2", name))
+        graph.CheckOutputs([|yield x; yield scale; yield offset; yield mean; yield variance|])
+        let desc = new TFOperationDesc (graph, "FusedBatchNormV2", graph.MakeName(name, "FusedBatchNormV2"))
         desc.AddInput (x) |> ignore
         desc.AddInput (scale) |> ignore
         desc.AddInput (offset) |> ignore
@@ -12873,8 +12873,8 @@ type TFGraph with
     ///    operator is primarily an optimization to minimize memory usage.
     /// </remarks>
     member graph.FusedPadConv2D (input : TFOutput, paddings : TFOutput, filter : TFOutput, mode : string, strides : int64[], padding : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FusedPadConv2D", graph.MakeName ("FusedPadConv2D", name))
+        graph.CheckOutputs([|yield input; yield paddings; yield filter|])
+        let desc = new TFOperationDesc (graph, "FusedPadConv2D", graph.MakeName(name, "FusedPadConv2D"))
         desc.AddInput (input) |> ignore
         desc.AddInput (paddings) |> ignore
         desc.AddInput (filter) |> ignore
@@ -12940,8 +12940,8 @@ type TFGraph with
     ///    operator is primarily an optimization to minimize memory usage.
     /// </remarks>
     member graph.FusedResizeAndPadConv2D (input : TFOutput, size : TFOutput, paddings : TFOutput, filter : TFOutput, mode : string, strides : int64[], padding : string, ?resize_align_corners : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "FusedResizeAndPadConv2D", graph.MakeName ("FusedResizeAndPadConv2D", name))
+        graph.CheckOutputs([|yield input; yield size; yield paddings; yield filter|])
+        let desc = new TFOperationDesc (graph, "FusedResizeAndPadConv2D", graph.MakeName(name, "FusedResizeAndPadConv2D"))
         desc.AddInput (input) |> ignore
         desc.AddInput (size) |> ignore
         desc.AddInput (paddings) |> ignore
@@ -13002,8 +13002,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.Gather (parameters : TFOutput, indices : TFOutput, ?validate_indices : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Gather", graph.MakeName ("Gather", name))
+        graph.CheckOutputs([|yield parameters; yield indices|])
+        let desc = new TFOperationDesc (graph, "Gather", graph.MakeName(name, "Gather"))
         desc.AddInput (parameters) |> ignore
         desc.AddInput (indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -13139,8 +13139,8 @@ type TFGraph with
     ///    See also <c>tf.gather<c> and <c>tf.batch_gather<c>.
     /// </remarks>
     member graph.GatherNd (parameters : TFOutput, indices : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "GatherNd", graph.MakeName ("GatherNd", name))
+        graph.CheckOutputs([|yield parameters; yield indices|])
+        let desc = new TFOperationDesc (graph, "GatherNd", graph.MakeName(name, "GatherNd"))
         desc.AddInput (parameters) |> ignore
         desc.AddInput (indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -13203,8 +13203,8 @@ type TFGraph with
     ///    See also <c>tf.batch_gather<c> and <c>tf.gather_nd<c>.
     /// </remarks>
     member graph.GatherV2 (parameters : TFOutput, indices : TFOutput, axis : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "GatherV2", graph.MakeName ("GatherV2", name))
+        graph.CheckOutputs([|yield parameters; yield indices; yield axis|])
+        let desc = new TFOperationDesc (graph, "GatherV2", graph.MakeName(name, "GatherV2"))
         desc.AddInput (parameters) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (axis) |> ignore
@@ -13278,8 +13278,8 @@ type TFGraph with
     ///    does (as opposed to tf.feature_to_id(), which uses a CuckooTable).
     /// </remarks>
     member graph.GenerateVocabRemapping (new_vocab_file : TFOutput, old_vocab_file : TFOutput, new_vocab_offset : int64, num_new_vocab : int64, ?old_vocab_size : int64,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "GenerateVocabRemapping", graph.MakeName ("GenerateVocabRemapping", name))
+        graph.CheckOutputs([|yield new_vocab_file; yield old_vocab_file|])
+        let desc = new TFOperationDesc (graph, "GenerateVocabRemapping", graph.MakeName(name, "GenerateVocabRemapping"))
         desc.AddInput (new_vocab_file) |> ignore
         desc.AddInput (old_vocab_file) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -13310,8 +13310,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.GetSessionHandle (value : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "GetSessionHandle", graph.MakeName ("GetSessionHandle", name))
+        graph.CheckOutputs([|yield value|])
+        let desc = new TFOperationDesc (graph, "GetSessionHandle", graph.MakeName(name, "GetSessionHandle"))
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -13336,8 +13336,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.GetSessionHandleV2 (value : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "GetSessionHandleV2", graph.MakeName ("GetSessionHandleV2", name))
+        graph.CheckOutputs([|yield value|])
+        let desc = new TFOperationDesc (graph, "GetSessionHandleV2", graph.MakeName(name, "GetSessionHandleV2"))
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -13364,8 +13364,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.GetSessionTensor (handle : TFOutput, dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "GetSessionTensor", graph.MakeName ("GetSessionTensor", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "GetSessionTensor", graph.MakeName(name, "GetSessionTensor"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -13394,8 +13394,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.Greater (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Greater", graph.MakeName ("Greater", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "Greater", graph.MakeName(name, "Greater"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -13424,8 +13424,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.GreaterEqual (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "GreaterEqual", graph.MakeName ("GreaterEqual", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "GreaterEqual", graph.MakeName(name, "GreaterEqual"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -13456,8 +13456,8 @@ type TFGraph with
     ///    Returns the input tensor without modification.
     /// </remarks>
     member graph.GuaranteeConst (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "GuaranteeConst", graph.MakeName ("GuaranteeConst", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "GuaranteeConst", graph.MakeName(name, "GuaranteeConst"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -13488,8 +13488,8 @@ type TFGraph with
     ///    See <c>rgb_to_hsv<c> for a description of the HSV encoding.
     /// </remarks>
     member graph.HSVToRGB (images : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "HSVToRGB", graph.MakeName ("HSVToRGB", name))
+        graph.CheckOutputs([|yield images|])
+        let desc = new TFOperationDesc (graph, "HSVToRGB", graph.MakeName(name, "HSVToRGB"))
         desc.AddInput (images) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -13536,8 +13536,8 @@ type TFGraph with
     ///    table will be immutable.
     /// </remarks>
     member graph.HashTable (key_dtype : TFDataType, value_dtype : TFDataType, ?container : string, ?shared_name : string, ?use_node_name_sharing : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "HashTable", graph.MakeName ("HashTable", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "HashTable", graph.MakeName(name, "HashTable"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("key_dtype", key_dtype) |> ignore
         desc.SetAttr ("value_dtype", value_dtype) |> ignore
@@ -13588,8 +13588,8 @@ type TFGraph with
     ///    table will be immutable.
     /// </remarks>
     member graph.HashTableV2 (key_dtype : TFDataType, value_dtype : TFDataType, ?container : string, ?shared_name : string, ?use_node_name_sharing : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "HashTableV2", graph.MakeName ("HashTableV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "HashTableV2", graph.MakeName(name, "HashTableV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("key_dtype", key_dtype) |> ignore
         desc.SetAttr ("value_dtype", value_dtype) |> ignore
@@ -13645,8 +13645,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.HistogramFixedWidth (values : TFOutput, value_range : TFOutput, nbins : TFOutput, ?dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "HistogramFixedWidth", graph.MakeName ("HistogramFixedWidth", name))
+        graph.CheckOutputs([|yield values; yield value_range; yield nbins|])
+        let desc = new TFOperationDesc (graph, "HistogramFixedWidth", graph.MakeName(name, "HistogramFixedWidth"))
         desc.AddInput (values) |> ignore
         desc.AddInput (value_range) |> ignore
         desc.AddInput (nbins) |> ignore
@@ -13683,8 +13683,8 @@ type TFGraph with
     ///    This op reports an <c>InvalidArgument<c> error if any value is not finite.
     /// </remarks>
     member graph.HistogramSummary (tag : TFOutput, values : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "HistogramSummary", graph.MakeName ("HistogramSummary", name))
+        graph.CheckOutputs([|yield tag; yield values|])
+        let desc = new TFOperationDesc (graph, "HistogramSummary", graph.MakeName(name, "HistogramSummary"))
         desc.AddInput (tag) |> ignore
         desc.AddInput (values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -13710,8 +13710,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.HostConst (value : TFTensor, dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "HostConst", graph.MakeName ("HostConst", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "HostConst", graph.MakeName(name, "HostConst"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("value", value (* cstatus *)) |> ignore;
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -13745,8 +13745,8 @@ type TFGraph with
     ///    inner-most dimension of <c>input<c>.
     /// </remarks>
     member graph.IFFT (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IFFT", graph.MakeName ("IFFT", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "IFFT", graph.MakeName(name, "IFFT"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -13779,8 +13779,8 @@ type TFGraph with
     ///    inner-most 2 dimensions of <c>input<c>.
     /// </remarks>
     member graph.IFFT2D (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IFFT2D", graph.MakeName ("IFFT2D", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "IFFT2D", graph.MakeName(name, "IFFT2D"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -13813,8 +13813,8 @@ type TFGraph with
     ///    inner-most 3 dimensions of <c>input<c>.
     /// </remarks>
     member graph.IFFT3D (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IFFT3D", graph.MakeName ("IFFT3D", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "IFFT3D", graph.MakeName(name, "IFFT3D"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -13862,8 +13862,8 @@ type TFGraph with
     ///    larger, the dimension is padded with zeros.
     /// </remarks>
     member graph.IRFFT (input : TFOutput, fft_length : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IRFFT", graph.MakeName ("IRFFT", name))
+        graph.CheckOutputs([|yield input; yield fft_length|])
+        let desc = new TFOperationDesc (graph, "IRFFT", graph.MakeName(name, "IRFFT"))
         desc.AddInput (input) |> ignore
         desc.AddInput (fft_length) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -13913,8 +13913,8 @@ type TFGraph with
     ///    the dimension is padded with zeros.
     /// </remarks>
     member graph.IRFFT2D (input : TFOutput, fft_length : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IRFFT2D", graph.MakeName ("IRFFT2D", name))
+        graph.CheckOutputs([|yield input; yield fft_length|])
+        let desc = new TFOperationDesc (graph, "IRFFT2D", graph.MakeName(name, "IRFFT2D"))
         desc.AddInput (input) |> ignore
         desc.AddInput (fft_length) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -13964,8 +13964,8 @@ type TFGraph with
     ///    the dimension is padded with zeros.
     /// </remarks>
     member graph.IRFFT3D (input : TFOutput, fft_length : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IRFFT3D", graph.MakeName ("IRFFT3D", name))
+        graph.CheckOutputs([|yield input; yield fft_length|])
+        let desc = new TFOperationDesc (graph, "IRFFT3D", graph.MakeName(name, "IRFFT3D"))
         desc.AddInput (input) |> ignore
         desc.AddInput (fft_length) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -13988,8 +13988,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Identity (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Identity", graph.MakeName ("Identity", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Identity", graph.MakeName(name, "Identity"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -14028,8 +14028,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.IdentityN (input : TFOutput[],  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IdentityN", graph.MakeName ("IdentityN", name))
+        graph.CheckOutputs([|yield! input|])
+        let desc = new TFOperationDesc (graph, "IdentityN", graph.MakeName(name, "IdentityN"))
         desc.AddInputs (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -14064,8 +14064,8 @@ type TFGraph with
     ///    work string and output (work, work).
     /// </remarks>
     member graph.IdentityReader (?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IdentityReader", graph.MakeName ("IdentityReader", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "IdentityReader", graph.MakeName(name, "IdentityReader"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
         shared_name |> Option.iter (fun shared_name -> desc.SetAttr ("shared_name", shared_name) |> ignore)
@@ -14101,8 +14101,8 @@ type TFGraph with
     ///    work string and output (work, work).
     /// </remarks>
     member graph.IdentityReaderV2 (?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IdentityReaderV2", graph.MakeName ("IdentityReaderV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "IdentityReaderV2", graph.MakeName(name, "IdentityReaderV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
         shared_name |> Option.iter (fun shared_name -> desc.SetAttr ("shared_name", shared_name) |> ignore)
@@ -14142,8 +14142,8 @@ type TFGraph with
     ///    Gamma function.
     /// </remarks>
     member graph.Igamma (a : TFOutput, x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Igamma", graph.MakeName ("Igamma", name))
+        graph.CheckOutputs([|yield a; yield x|])
+        let desc = new TFOperationDesc (graph, "Igamma", graph.MakeName(name, "Igamma"))
         desc.AddInput (a) |> ignore
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -14168,8 +14168,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.IgammaGradA (a : TFOutput, x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IgammaGradA", graph.MakeName ("IgammaGradA", name))
+        graph.CheckOutputs([|yield a; yield x|])
+        let desc = new TFOperationDesc (graph, "IgammaGradA", graph.MakeName(name, "IgammaGradA"))
         desc.AddInput (a) |> ignore
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -14208,8 +14208,8 @@ type TFGraph with
     ///    Gamma function.
     /// </remarks>
     member graph.Igammac (a : TFOutput, x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Igammac", graph.MakeName ("Igammac", name))
+        graph.CheckOutputs([|yield a; yield x|])
+        let desc = new TFOperationDesc (graph, "Igammac", graph.MakeName(name, "Igammac"))
         desc.AddInput (a) |> ignore
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -14248,8 +14248,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Imag (input : TFOutput, ?tOut : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Imag", graph.MakeName ("Imag", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Imag", graph.MakeName(name, "Imag"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         tOut |> Option.iter (fun tOut -> desc.SetAttr ("Tout", tOut) |> ignore)
@@ -14321,8 +14321,8 @@ type TFGraph with
     ///    red.
     /// </remarks>
     member graph.ImageSummary (tag : TFOutput, tensor : TFOutput, ?max_images : int64, ?bad_color : TFTensor,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ImageSummary", graph.MakeName ("ImageSummary", name))
+        graph.CheckOutputs([|yield tag; yield tensor|])
+        let desc = new TFOperationDesc (graph, "ImageSummary", graph.MakeName(name, "ImageSummary"))
         desc.AddInput (tag) |> ignore
         desc.AddInput (tensor) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -14358,8 +14358,8 @@ type TFGraph with
     ///    The current implementation memmaps the tensor from a file.
     /// </remarks>
     member graph.ImmutableConst (dtype : TFDataType, shape : TFShape, memory_region_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ImmutableConst", graph.MakeName ("ImmutableConst", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "ImmutableConst", graph.MakeName(name, "ImmutableConst"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
         desc.SetAttr ("shape", shape) |> ignore
@@ -14407,8 +14407,8 @@ type TFGraph with
     ///    $$out_i = predictions_{i, targets_i} \in TopKIncludingTies(predictions_i)$$
     /// </remarks>
     member graph.InTopK (predictions : TFOutput, targets : TFOutput, k : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InTopK", graph.MakeName ("InTopK", name))
+        graph.CheckOutputs([|yield predictions; yield targets|])
+        let desc = new TFOperationDesc (graph, "InTopK", graph.MakeName(name, "InTopK"))
         desc.AddInput (predictions) |> ignore
         desc.AddInput (targets) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -14456,8 +14456,8 @@ type TFGraph with
     ///    $$out_i = predictions_{i, targets_i} \in TopKIncludingTies(predictions_i)$$
     /// </remarks>
     member graph.InTopKV2 (predictions : TFOutput, targets : TFOutput, k : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InTopKV2", graph.MakeName ("InTopKV2", name))
+        graph.CheckOutputs([|yield predictions; yield targets; yield k|])
+        let desc = new TFOperationDesc (graph, "InTopKV2", graph.MakeName(name, "InTopKV2"))
         desc.AddInput (predictions) |> ignore
         desc.AddInput (targets) |> ignore
         desc.AddInput (k) |> ignore
@@ -14486,8 +14486,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.InfeedDequeue (dtype : TFDataType, shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InfeedDequeue", graph.MakeName ("InfeedDequeue", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "InfeedDequeue", graph.MakeName(name, "InfeedDequeue"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
         desc.SetAttr ("shape", shape) |> ignore
@@ -14518,8 +14518,8 @@ type TFGraph with
     ///    simultaneously as an XLA tuple.
     /// </remarks>
     member graph.InfeedDequeueTuple (dtypes : TFDataType[], shapes : TFShape[],  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InfeedDequeueTuple", graph.MakeName ("InfeedDequeueTuple", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "InfeedDequeueTuple", graph.MakeName(name, "InfeedDequeueTuple"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
         desc.SetAttr ("shapes", shapes) |> ignore
@@ -14553,8 +14553,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.InfeedEnqueue (input : TFOutput, ?shape : TFShape, ?device_ordinal : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InfeedEnqueue", graph.MakeName ("InfeedEnqueue", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "InfeedEnqueue", graph.MakeName(name, "InfeedEnqueue"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         shape |> Option.iter (fun shape -> desc.SetAttr ("shape", shape) |> ignore)
@@ -14585,8 +14585,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.InfeedEnqueueTuple (inputs : TFOutput[], shapes : TFShape[], ?device_ordinal : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InfeedEnqueueTuple", graph.MakeName ("InfeedEnqueueTuple", name))
+        graph.CheckOutputs([|yield! inputs|])
+        let desc = new TFOperationDesc (graph, "InfeedEnqueueTuple", graph.MakeName(name, "InfeedEnqueueTuple"))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shapes", shapes) |> ignore
@@ -14614,8 +14614,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.InitializeTable (table_handle : TFOutput, keys : TFOutput, values : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InitializeTable", graph.MakeName ("InitializeTable", name))
+        graph.CheckOutputs([|yield table_handle; yield keys; yield values|])
+        let desc = new TFOperationDesc (graph, "InitializeTable", graph.MakeName(name, "InitializeTable"))
         desc.AddInput (table_handle) |> ignore
         desc.AddInput (keys) |> ignore
         desc.AddInput (values) |> ignore
@@ -14667,8 +14667,8 @@ type TFGraph with
     ///    on <c>delimiter<c>.
     /// </remarks>
     member graph.InitializeTableFromTextFile (table_handle : TFOutput, filename : TFOutput, key_index : int64, value_index : int64, ?vocab_size : int64, ?delimiter : string,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InitializeTableFromTextFile", graph.MakeName ("InitializeTableFromTextFile", name))
+        graph.CheckOutputs([|yield table_handle; yield filename|])
+        let desc = new TFOperationDesc (graph, "InitializeTableFromTextFile", graph.MakeName(name, "InitializeTableFromTextFile"))
         desc.AddInput (table_handle) |> ignore
         desc.AddInput (filename) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -14723,8 +14723,8 @@ type TFGraph with
     ///    on <c>delimiter<c>.
     /// </remarks>
     member graph.InitializeTableFromTextFileV2 (table_handle : TFOutput, filename : TFOutput, key_index : int64, value_index : int64, ?vocab_size : int64, ?delimiter : string,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InitializeTableFromTextFileV2", graph.MakeName ("InitializeTableFromTextFileV2", name))
+        graph.CheckOutputs([|yield table_handle; yield filename|])
+        let desc = new TFOperationDesc (graph, "InitializeTableFromTextFileV2", graph.MakeName(name, "InitializeTableFromTextFileV2"))
         desc.AddInput (table_handle) |> ignore
         desc.AddInput (filename) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -14755,8 +14755,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.InitializeTableV2 (table_handle : TFOutput, keys : TFOutput, values : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InitializeTableV2", graph.MakeName ("InitializeTableV2", name))
+        graph.CheckOutputs([|yield table_handle; yield keys; yield values|])
+        let desc = new TFOperationDesc (graph, "InitializeTableV2", graph.MakeName(name, "InitializeTableV2"))
         desc.AddInput (table_handle) |> ignore
         desc.AddInput (keys) |> ignore
         desc.AddInput (values) |> ignore
@@ -14787,8 +14787,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.InplaceAdd (x : TFOutput, i : TFOutput, v : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InplaceAdd", graph.MakeName ("InplaceAdd", name))
+        graph.CheckOutputs([|yield x; yield i; yield v|])
+        let desc = new TFOperationDesc (graph, "InplaceAdd", graph.MakeName(name, "InplaceAdd"))
         desc.AddInput (x) |> ignore
         desc.AddInput (i) |> ignore
         desc.AddInput (v) |> ignore
@@ -14822,8 +14822,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.InplaceSub (x : TFOutput, i : TFOutput, v : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InplaceSub", graph.MakeName ("InplaceSub", name))
+        graph.CheckOutputs([|yield x; yield i; yield v|])
+        let desc = new TFOperationDesc (graph, "InplaceSub", graph.MakeName(name, "InplaceSub"))
         desc.AddInput (x) |> ignore
         desc.AddInput (i) |> ignore
         desc.AddInput (v) |> ignore
@@ -14857,8 +14857,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.InplaceUpdate (x : TFOutput, i : TFOutput, v : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InplaceUpdate", graph.MakeName ("InplaceUpdate", name))
+        graph.CheckOutputs([|yield x; yield i; yield v|])
+        let desc = new TFOperationDesc (graph, "InplaceUpdate", graph.MakeName(name, "InplaceUpdate"))
         desc.AddInput (x) |> ignore
         desc.AddInput (i) |> ignore
         desc.AddInput (v) |> ignore
@@ -14885,8 +14885,8 @@ type TFGraph with
     ///    I.e., \\(y = 1 / x\\).
     /// </remarks>
     member graph.Inv (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Inv", graph.MakeName ("Inv", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Inv", graph.MakeName(name, "Inv"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -14914,8 +14914,8 @@ type TFGraph with
     ///    is the corresponding input gradient.
     /// </remarks>
     member graph.InvGrad (y : TFOutput, dy : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InvGrad", graph.MakeName ("InvGrad", name))
+        graph.CheckOutputs([|yield y; yield dy|])
+        let desc = new TFOperationDesc (graph, "InvGrad", graph.MakeName(name, "InvGrad"))
         desc.AddInput (y) |> ignore
         desc.AddInput (dy) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -14942,8 +14942,8 @@ type TFGraph with
     ///    computation is performed on the underlying representation of x.
     /// </remarks>
     member graph.Invert (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Invert", graph.MakeName ("Invert", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Invert", graph.MakeName(name, "Invert"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -14984,8 +14984,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.InvertPermutation (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "InvertPermutation", graph.MakeName ("InvertPermutation", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "InvertPermutation", graph.MakeName(name, "InvertPermutation"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -15009,8 +15009,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.IsBoostedTreesEnsembleInitialized (tree_ensemble_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IsBoostedTreesEnsembleInitialized", graph.MakeName ("IsBoostedTreesEnsembleInitialized", name))
+        graph.CheckOutputs([|yield tree_ensemble_handle|])
+        let desc = new TFOperationDesc (graph, "IsBoostedTreesEnsembleInitialized", graph.MakeName(name, "IsBoostedTreesEnsembleInitialized"))
         desc.AddInput (tree_ensemble_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -15037,8 +15037,8 @@ type TFGraph with
     ///    @end_compatibility
     /// </remarks>
     member graph.IsFinite (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IsFinite", graph.MakeName ("IsFinite", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "IsFinite", graph.MakeName(name, "IsFinite"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -15065,8 +15065,8 @@ type TFGraph with
     ///    @end_compatibility
     /// </remarks>
     member graph.IsInf (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IsInf", graph.MakeName ("IsInf", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "IsInf", graph.MakeName(name, "IsInf"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -15093,8 +15093,8 @@ type TFGraph with
     ///    @end_compatibility
     /// </remarks>
     member graph.IsNan (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IsNan", graph.MakeName ("IsNan", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "IsNan", graph.MakeName(name, "IsNan"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -15120,8 +15120,8 @@ type TFGraph with
     ///    Outputs boolean scalar indicating whether the tensor has been initialized.
     /// </remarks>
     member graph.IsVariableInitialized (reference : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IsVariableInitialized", graph.MakeName ("IsVariableInitialized", name))
+        graph.CheckOutputs([|yield reference|])
+        let desc = new TFOperationDesc (graph, "IsVariableInitialized", graph.MakeName(name, "IsVariableInitialized"))
         desc.AddInput (reference) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -15151,8 +15151,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Iterator (shared_name : string, container : string, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Iterator", graph.MakeName ("Iterator", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "Iterator", graph.MakeName(name, "Iterator"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shared_name", shared_name) |> ignore
         desc.SetAttr ("container", container) |> ignore
@@ -15189,8 +15189,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.IteratorFromStringHandle (string_handle : TFOutput, ?output_types : TFDataType[], ?output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IteratorFromStringHandle", graph.MakeName ("IteratorFromStringHandle", name))
+        graph.CheckOutputs([|yield string_handle|])
+        let desc = new TFOperationDesc (graph, "IteratorFromStringHandle", graph.MakeName(name, "IteratorFromStringHandle"))
         desc.AddInput (string_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         output_types |> Option.iter (fun output_types -> desc.SetAttr ("output_types", output_types) |> ignore)
@@ -15218,8 +15218,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.IteratorGetNext (iterator : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IteratorGetNext", graph.MakeName ("IteratorGetNext", name))
+        graph.CheckOutputs([|yield iterator|])
+        let desc = new TFOperationDesc (graph, "IteratorGetNext", graph.MakeName(name, "IteratorGetNext"))
         desc.AddInput (iterator) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("output_types", output_types) |> ignore
@@ -15247,8 +15247,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.IteratorGetNextAsOptional (iterator : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IteratorGetNextAsOptional", graph.MakeName ("IteratorGetNextAsOptional", name))
+        graph.CheckOutputs([|yield iterator|])
+        let desc = new TFOperationDesc (graph, "IteratorGetNextAsOptional", graph.MakeName(name, "IteratorGetNextAsOptional"))
         desc.AddInput (iterator) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("output_types", output_types) |> ignore
@@ -15282,8 +15282,8 @@ type TFGraph with
     ///    operations (e.g. in eager mode).
     /// </remarks>
     member graph.IteratorGetNextSync (iterator : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IteratorGetNextSync", graph.MakeName ("IteratorGetNextSync", name))
+        graph.CheckOutputs([|yield iterator|])
+        let desc = new TFOperationDesc (graph, "IteratorGetNextSync", graph.MakeName(name, "IteratorGetNextSync"))
         desc.AddInput (iterator) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("output_types", output_types) |> ignore
@@ -15309,8 +15309,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.IteratorToStringHandle (resource_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "IteratorToStringHandle", graph.MakeName ("IteratorToStringHandle", name))
+        graph.CheckOutputs([|yield resource_handle|])
+        let desc = new TFOperationDesc (graph, "IteratorToStringHandle", graph.MakeName(name, "IteratorToStringHandle"))
         desc.AddInput (resource_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -15339,8 +15339,8 @@ type TFGraph with
     ///    output = sum(t ** 2) / 2
     /// </remarks>
     member graph.L2Loss (t : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "L2Loss", graph.MakeName ("L2Loss", name))
+        graph.CheckOutputs([|yield t|])
+        let desc = new TFOperationDesc (graph, "L2Loss", graph.MakeName(name, "L2Loss"))
         desc.AddInput (t) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -15371,8 +15371,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.LMDBReader (?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LMDBReader", graph.MakeName ("LMDBReader", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "LMDBReader", graph.MakeName(name, "LMDBReader"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
         shared_name |> Option.iter (fun shared_name -> desc.SetAttr ("shared_name", shared_name) |> ignore)
@@ -15425,8 +15425,8 @@ type TFGraph with
     ///    convolutional neural networks (NIPS 2012)](http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks).
     /// </remarks>
     member graph.LRN (input : TFOutput, ?depth_radius : int64, ?bias : float32, ?alpha : float32, ?beta : float32,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LRN", graph.MakeName ("LRN", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "LRN", graph.MakeName(name, "LRN"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         depth_radius |> Option.iter (fun depth_radius -> desc.SetAttr ("depth_radius", depth_radius) |> ignore)
@@ -15476,8 +15476,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.LRNGrad (input_grads : TFOutput, input_image : TFOutput, output_image : TFOutput, ?depth_radius : int64, ?bias : float32, ?alpha : float32, ?beta : float32,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LRNGrad", graph.MakeName ("LRNGrad", name))
+        graph.CheckOutputs([|yield input_grads; yield input_image; yield output_image|])
+        let desc = new TFOperationDesc (graph, "LRNGrad", graph.MakeName(name, "LRNGrad"))
         desc.AddInput (input_grads) |> ignore
         desc.AddInput (input_image) |> ignore
         desc.AddInput (output_image) |> ignore
@@ -15511,8 +15511,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.LatencyStatsDataset (input_dataset : TFOutput, tag : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LatencyStatsDataset", graph.MakeName ("LatencyStatsDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield tag|])
+        let desc = new TFOperationDesc (graph, "LatencyStatsDataset", graph.MakeName(name, "LatencyStatsDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (tag) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -15584,8 +15584,8 @@ type TFGraph with
     ///    true labels.
     /// </remarks>
     member graph.LearnedUnigramCandidateSampler (true_classes : TFOutput, num_true : int64, num_sampled : int64, unique : bool, range_max : int64, ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LearnedUnigramCandidateSampler", graph.MakeName ("LearnedUnigramCandidateSampler", name))
+        graph.CheckOutputs([|yield true_classes|])
+        let desc = new TFOperationDesc (graph, "LearnedUnigramCandidateSampler", graph.MakeName(name, "LearnedUnigramCandidateSampler"))
         desc.AddInput (true_classes) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_true", num_true) |> ignore
@@ -15623,8 +15623,8 @@ type TFGraph with
     ///    result is implementation defined.
     /// </remarks>
     member graph.LeftShift (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LeftShift", graph.MakeName ("LeftShift", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "LeftShift", graph.MakeName(name, "LeftShift"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -15653,8 +15653,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.Less (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Less", graph.MakeName ("Less", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "Less", graph.MakeName(name, "Less"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -15683,8 +15683,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.LessEqual (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LessEqual", graph.MakeName ("LessEqual", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "LessEqual", graph.MakeName(name, "LessEqual"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -15707,8 +15707,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Lgamma (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Lgamma", graph.MakeName ("Lgamma", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Lgamma", graph.MakeName(name, "Lgamma"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -15749,8 +15749,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.LinSpace (start : TFOutput, stop : TFOutput, num : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LinSpace", graph.MakeName ("LinSpace", name))
+        graph.CheckOutputs([|yield start; yield stop; yield num|])
+        let desc = new TFOperationDesc (graph, "LinSpace", graph.MakeName(name, "LinSpace"))
         desc.AddInput (start) |> ignore
         desc.AddInput (stop) |> ignore
         desc.AddInput (num) |> ignore
@@ -15807,8 +15807,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.ListDiff (x : TFOutput, y : TFOutput, ?out_idx : TFDataType,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ListDiff", graph.MakeName ("ListDiff", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "ListDiff", graph.MakeName(name, "ListDiff"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -15905,8 +15905,8 @@ type TFGraph with
     ///    [0.25,    -0.25,      42]]
     /// </remarks>
     member graph.LoadAndRemapMatrix (ckpt_path : TFOutput, old_tensor_name : TFOutput, row_remapping : TFOutput, col_remapping : TFOutput, initializing_values : TFOutput, num_rows : int64, num_cols : int64, ?max_rows_in_memory : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LoadAndRemapMatrix", graph.MakeName ("LoadAndRemapMatrix", name))
+        graph.CheckOutputs([|yield ckpt_path; yield old_tensor_name; yield row_remapping; yield col_remapping; yield initializing_values|])
+        let desc = new TFOperationDesc (graph, "LoadAndRemapMatrix", graph.MakeName(name, "LoadAndRemapMatrix"))
         desc.AddInput (ckpt_path) |> ignore
         desc.AddInput (old_tensor_name) |> ignore
         desc.AddInput (row_remapping) |> ignore
@@ -15938,8 +15938,8 @@ type TFGraph with
     ///    I.e., \\(y = \log_e x\\).
     /// </remarks>
     member graph.Log (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Log", graph.MakeName ("Log", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Log", graph.MakeName(name, "Log"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -15964,8 +15964,8 @@ type TFGraph with
     ///    I.e., \\(y = \log_e (1 + x)\\).
     /// </remarks>
     member graph.Log1p (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Log1p", graph.MakeName ("Log1p", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Log1p", graph.MakeName(name, "Log1p"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -16003,8 +16003,8 @@ type TFGraph with
     ///    permutation matrix.
     /// </remarks>
     member graph.LogMatrixDeterminant (input : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LogMatrixDeterminant", graph.MakeName ("LogMatrixDeterminant", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "LogMatrixDeterminant", graph.MakeName(name, "LogMatrixDeterminant"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -16035,8 +16035,8 @@ type TFGraph with
     ///    logsoftmax[i, j] = logits[i, j] - log(sum(exp(logits[i])))
     /// </remarks>
     member graph.LogSoftmax (logits : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LogSoftmax", graph.MakeName ("LogSoftmax", name))
+        graph.CheckOutputs([|yield logits|])
+        let desc = new TFOperationDesc (graph, "LogSoftmax", graph.MakeName(name, "LogSoftmax"))
         desc.AddInput (logits) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -16105,8 +16105,8 @@ type TFGraph with
     ///    true labels.
     /// </remarks>
     member graph.LogUniformCandidateSampler (true_classes : TFOutput, num_true : int64, num_sampled : int64, unique : bool, range_max : int64, ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LogUniformCandidateSampler", graph.MakeName ("LogUniformCandidateSampler", name))
+        graph.CheckOutputs([|yield true_classes|])
+        let desc = new TFOperationDesc (graph, "LogUniformCandidateSampler", graph.MakeName(name, "LogUniformCandidateSampler"))
         desc.AddInput (true_classes) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_true", num_true) |> ignore
@@ -16144,8 +16144,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.LogicalAnd (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LogicalAnd", graph.MakeName ("LogicalAnd", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "LogicalAnd", graph.MakeName(name, "LogicalAnd"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -16168,8 +16168,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.LogicalNot (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LogicalNot", graph.MakeName ("LogicalNot", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "LogicalNot", graph.MakeName(name, "LogicalNot"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -16197,8 +16197,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.LogicalOr (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LogicalOr", graph.MakeName ("LogicalOr", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "LogicalOr", graph.MakeName(name, "LogicalOr"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -16229,8 +16229,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.LookupTableExport (table_handle : TFOutput, tKeys : TFDataType, tValues : TFDataType,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LookupTableExport", graph.MakeName ("LookupTableExport", name))
+        graph.CheckOutputs([|yield table_handle|])
+        let desc = new TFOperationDesc (graph, "LookupTableExport", graph.MakeName(name, "LookupTableExport"))
         desc.AddInput (table_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("Tkeys", tKeys) |> ignore
@@ -16264,8 +16264,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.LookupTableExportV2 (table_handle : TFOutput, tKeys : TFDataType, tValues : TFDataType,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LookupTableExportV2", graph.MakeName ("LookupTableExportV2", name))
+        graph.CheckOutputs([|yield table_handle|])
+        let desc = new TFOperationDesc (graph, "LookupTableExportV2", graph.MakeName(name, "LookupTableExportV2"))
         desc.AddInput (table_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("Tkeys", tKeys) |> ignore
@@ -16306,8 +16306,8 @@ type TFGraph with
     ///    table. It must also be of the same type as the table values.
     /// </remarks>
     member graph.LookupTableFind (table_handle : TFOutput, keys : TFOutput, default_value : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LookupTableFind", graph.MakeName ("LookupTableFind", name))
+        graph.CheckOutputs([|yield table_handle; yield keys; yield default_value|])
+        let desc = new TFOperationDesc (graph, "LookupTableFind", graph.MakeName(name, "LookupTableFind"))
         desc.AddInput (table_handle) |> ignore
         desc.AddInput (keys) |> ignore
         desc.AddInput (default_value) |> ignore
@@ -16346,8 +16346,8 @@ type TFGraph with
     ///    table. It must also be of the same type as the table values.
     /// </remarks>
     member graph.LookupTableFindV2 (table_handle : TFOutput, keys : TFOutput, default_value : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LookupTableFindV2", graph.MakeName ("LookupTableFindV2", name))
+        graph.CheckOutputs([|yield table_handle; yield keys; yield default_value|])
+        let desc = new TFOperationDesc (graph, "LookupTableFindV2", graph.MakeName(name, "LookupTableFindV2"))
         desc.AddInput (table_handle) |> ignore
         desc.AddInput (keys) |> ignore
         desc.AddInput (default_value) |> ignore
@@ -16382,8 +16382,8 @@ type TFGraph with
     ///    The tensor <c>values<c> must be of the type of the table values.
     /// </remarks>
     member graph.LookupTableImport (table_handle : TFOutput, keys : TFOutput, values : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LookupTableImport", graph.MakeName ("LookupTableImport", name))
+        graph.CheckOutputs([|yield table_handle; yield keys; yield values|])
+        let desc = new TFOperationDesc (graph, "LookupTableImport", graph.MakeName(name, "LookupTableImport"))
         desc.AddInput (table_handle) |> ignore
         desc.AddInput (keys) |> ignore
         desc.AddInput (values) |> ignore
@@ -16415,8 +16415,8 @@ type TFGraph with
     ///    The tensor <c>values<c> must be of the type of the table values.
     /// </remarks>
     member graph.LookupTableImportV2 (table_handle : TFOutput, keys : TFOutput, values : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LookupTableImportV2", graph.MakeName ("LookupTableImportV2", name))
+        graph.CheckOutputs([|yield table_handle; yield keys; yield values|])
+        let desc = new TFOperationDesc (graph, "LookupTableImportV2", graph.MakeName(name, "LookupTableImportV2"))
         desc.AddInput (table_handle) |> ignore
         desc.AddInput (keys) |> ignore
         desc.AddInput (values) |> ignore
@@ -16448,8 +16448,8 @@ type TFGraph with
     ///    The tensor <c>values<c> must be of the type of the table values.
     /// </remarks>
     member graph.LookupTableInsert (table_handle : TFOutput, keys : TFOutput, values : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LookupTableInsert", graph.MakeName ("LookupTableInsert", name))
+        graph.CheckOutputs([|yield table_handle; yield keys; yield values|])
+        let desc = new TFOperationDesc (graph, "LookupTableInsert", graph.MakeName(name, "LookupTableInsert"))
         desc.AddInput (table_handle) |> ignore
         desc.AddInput (keys) |> ignore
         desc.AddInput (values) |> ignore
@@ -16481,8 +16481,8 @@ type TFGraph with
     ///    The tensor <c>values<c> must be of the type of the table values.
     /// </remarks>
     member graph.LookupTableInsertV2 (table_handle : TFOutput, keys : TFOutput, values : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LookupTableInsertV2", graph.MakeName ("LookupTableInsertV2", name))
+        graph.CheckOutputs([|yield table_handle; yield keys; yield values|])
+        let desc = new TFOperationDesc (graph, "LookupTableInsertV2", graph.MakeName(name, "LookupTableInsertV2"))
         desc.AddInput (table_handle) |> ignore
         desc.AddInput (keys) |> ignore
         desc.AddInput (values) |> ignore
@@ -16505,8 +16505,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.LookupTableSize (table_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LookupTableSize", graph.MakeName ("LookupTableSize", name))
+        graph.CheckOutputs([|yield table_handle|])
+        let desc = new TFOperationDesc (graph, "LookupTableSize", graph.MakeName(name, "LookupTableSize"))
         desc.AddInput (table_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -16530,8 +16530,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.LookupTableSizeV2 (table_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LookupTableSizeV2", graph.MakeName ("LookupTableSizeV2", name))
+        graph.CheckOutputs([|yield table_handle|])
+        let desc = new TFOperationDesc (graph, "LookupTableSizeV2", graph.MakeName(name, "LookupTableSizeV2"))
         desc.AddInput (table_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -16559,8 +16559,8 @@ type TFGraph with
     ///    "pivot" switches of a loop.
     /// </remarks>
     member graph.LoopCond (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "LoopCond", graph.MakeName ("LoopCond", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "LoopCond", graph.MakeName(name, "LoopCond"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -16588,8 +16588,8 @@ type TFGraph with
     ///    iterator in <c>iterator<c> to the first element of <c>dataset<c>.
     /// </remarks>
     member graph.MakeIterator (dataset : TFOutput, iterator : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MakeIterator", graph.MakeName ("MakeIterator", name))
+        graph.CheckOutputs([|yield dataset; yield iterator|])
+        let desc = new TFOperationDesc (graph, "MakeIterator", graph.MakeName(name, "MakeIterator"))
         desc.AddInput (dataset) |> ignore
         desc.AddInput (iterator) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -16621,8 +16621,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.MapClear (dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MapClear", graph.MakeName ("MapClear", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "MapClear", graph.MakeName(name, "MapClear"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
         capacity |> Option.iter (fun capacity -> desc.SetAttr ("capacity", capacity) |> ignore)
@@ -16657,8 +16657,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MapIncompleteSize (dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MapIncompleteSize", graph.MakeName ("MapIncompleteSize", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "MapIncompleteSize", graph.MakeName(name, "MapIncompleteSize"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
         capacity |> Option.iter (fun capacity -> desc.SetAttr ("capacity", capacity) |> ignore)
@@ -16704,8 +16704,8 @@ type TFGraph with
     ///    this op will block until it does.
     /// </remarks>
     member graph.MapPeek (key : TFOutput, indices : TFOutput, dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MapPeek", graph.MakeName ("MapPeek", name))
+        graph.CheckOutputs([|yield key; yield indices|])
+        let desc = new TFOperationDesc (graph, "MapPeek", graph.MakeName(name, "MapPeek"))
         desc.AddInput (key) |> ignore
         desc.AddInput (indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -16745,8 +16745,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MapSize (dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MapSize", graph.MakeName ("MapSize", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "MapSize", graph.MakeName(name, "MapSize"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
         capacity |> Option.iter (fun capacity -> desc.SetAttr ("capacity", capacity) |> ignore)
@@ -16798,8 +16798,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.MapStage (key : TFOutput, indices : TFOutput, values : TFOutput[], dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MapStage", graph.MakeName ("MapStage", name))
+        graph.CheckOutputs([|yield key; yield indices; yield! values|])
+        let desc = new TFOperationDesc (graph, "MapStage", graph.MakeName(name, "MapStage"))
         desc.AddInput (key) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInputs (values) |> ignore
@@ -16845,8 +16845,8 @@ type TFGraph with
     ///    does not contain this key, the op will block until it does.
     /// </remarks>
     member graph.MapUnstage (key : TFOutput, indices : TFOutput, dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MapUnstage", graph.MakeName ("MapUnstage", name))
+        graph.CheckOutputs([|yield key; yield indices|])
+        let desc = new TFOperationDesc (graph, "MapUnstage", graph.MakeName(name, "MapUnstage"))
         desc.AddInput (key) |> ignore
         desc.AddInput (indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -16895,8 +16895,8 @@ type TFGraph with
     ///    does not contain elements, the op will block until it does.
     /// </remarks>
     member graph.MapUnstageNoKey (indices : TFOutput, dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : (TFOutput*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MapUnstageNoKey", graph.MakeName ("MapUnstageNoKey", name))
+        graph.CheckOutputs([|yield indices|])
+        let desc = new TFOperationDesc (graph, "MapUnstageNoKey", graph.MakeName(name, "MapUnstageNoKey"))
         desc.AddInput (indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
@@ -16944,8 +16944,8 @@ type TFGraph with
     ///    cublas.
     /// </remarks>
     member graph.MatMul (a : TFOutput, b : TFOutput, ?transpose_a : bool, ?transpose_b : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatMul", graph.MakeName ("MatMul", name))
+        graph.CheckOutputs([|yield a; yield b|])
+        let desc = new TFOperationDesc (graph, "MatMul", graph.MakeName(name, "MatMul"))
         desc.AddInput (a) |> ignore
         desc.AddInput (b) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -16977,8 +16977,8 @@ type TFGraph with
     ///    Note also that the order of filenames returned can be non-deterministic.
     /// </remarks>
     member graph.MatchingFiles (pattern : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatchingFiles", graph.MakeName ("MatchingFiles", name))
+        graph.CheckOutputs([|yield pattern|])
+        let desc = new TFOperationDesc (graph, "MatchingFiles", graph.MakeName(name, "MatchingFiles"))
         desc.AddInput (pattern) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -17051,8 +17051,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.MatrixBandPart (input : TFOutput, num_lower : TFOutput, num_upper : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatrixBandPart", graph.MakeName ("MatrixBandPart", name))
+        graph.CheckOutputs([|yield input; yield num_lower; yield num_upper|])
+        let desc = new TFOperationDesc (graph, "MatrixBandPart", graph.MakeName(name, "MatrixBandPart"))
         desc.AddInput (input) |> ignore
         desc.AddInput (num_lower) |> ignore
         desc.AddInput (num_upper) |> ignore
@@ -17083,8 +17083,8 @@ type TFGraph with
     ///    for all input submatrices <c>[..., :, :]<c>.
     /// </remarks>
     member graph.MatrixDeterminant (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatrixDeterminant", graph.MakeName ("MatrixDeterminant", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "MatrixDeterminant", graph.MakeName(name, "MatrixDeterminant"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -17136,8 +17136,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.MatrixDiag (diagonal : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatrixDiag", graph.MakeName ("MatrixDiag", name))
+        graph.CheckOutputs([|yield diagonal|])
+        let desc = new TFOperationDesc (graph, "MatrixDiag", graph.MakeName(name, "MatrixDiag"))
         desc.AddInput (diagonal) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -17192,8 +17192,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.MatrixDiagPart (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatrixDiagPart", graph.MakeName ("MatrixDiagPart", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "MatrixDiagPart", graph.MakeName(name, "MatrixDiagPart"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -17215,8 +17215,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MatrixExponential (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatrixExponential", graph.MakeName ("MatrixExponential", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "MatrixExponential", graph.MakeName(name, "MatrixExponential"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -17260,8 +17260,8 @@ type TFGraph with
     ///    garbage result.
     /// </remarks>
     member graph.MatrixInverse (input : TFOutput, ?adjoint : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatrixInverse", graph.MakeName ("MatrixInverse", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "MatrixInverse", graph.MakeName(name, "MatrixInverse"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         adjoint |> Option.iter (fun adjoint -> desc.SetAttr ("adjoint", adjoint) |> ignore)
@@ -17307,8 +17307,8 @@ type TFGraph with
     ///    containing the exponential for all input submatrices <c>[..., :, :]<c>.
     /// </remarks>
     member graph.MatrixLogarithm (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatrixLogarithm", graph.MakeName ("MatrixLogarithm", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "MatrixLogarithm", graph.MakeName(name, "MatrixLogarithm"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -17349,8 +17349,8 @@ type TFGraph with
     ///    * <c>output[i, j, k, ..., m, n] = input[i, j, k, ..., m, n]<c> for <c>m != n<c>.
     /// </remarks>
     member graph.MatrixSetDiag (input : TFOutput, diagonal : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatrixSetDiag", graph.MakeName ("MatrixSetDiag", name))
+        graph.CheckOutputs([|yield input; yield diagonal|])
+        let desc = new TFOperationDesc (graph, "MatrixSetDiag", graph.MakeName(name, "MatrixSetDiag"))
         desc.AddInput (input) |> ignore
         desc.AddInput (diagonal) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -17391,8 +17391,8 @@ type TFGraph with
     ///    <c>adjoint(matrix[..., :, :]) * output[..., :, :] = rhs[..., :, :]<c>.
     /// </remarks>
     member graph.MatrixSolve (matrix : TFOutput, rhs : TFOutput, ?adjoint : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatrixSolve", graph.MakeName ("MatrixSolve", name))
+        graph.CheckOutputs([|yield matrix; yield rhs|])
+        let desc = new TFOperationDesc (graph, "MatrixSolve", graph.MakeName(name, "MatrixSolve"))
         desc.AddInput (matrix) |> ignore
         desc.AddInput (rhs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -17467,8 +17467,8 @@ type TFGraph with
     ///    <c>l2_regularizer<c> is ignored.
     /// </remarks>
     member graph.MatrixSolveLs (matrix : TFOutput, rhs : TFOutput, l2_regularizer : TFOutput, ?fast : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatrixSolveLs", graph.MakeName ("MatrixSolveLs", name))
+        graph.CheckOutputs([|yield matrix; yield rhs; yield l2_regularizer|])
+        let desc = new TFOperationDesc (graph, "MatrixSolveLs", graph.MakeName(name, "MatrixSolveLs"))
         desc.AddInput (matrix) |> ignore
         desc.AddInput (rhs) |> ignore
         desc.AddInput (l2_regularizer) |> ignore
@@ -17529,8 +17529,8 @@ type TFGraph with
     ///    <c>adjoint(matrix[..., i, k]) * output[..., k, j] = rhs[..., i, j]<c>.
     /// </remarks>
     member graph.MatrixTriangularSolve (matrix : TFOutput, rhs : TFOutput, ?lower : bool, ?adjoint : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MatrixTriangularSolve", graph.MakeName ("MatrixTriangularSolve", name))
+        graph.CheckOutputs([|yield matrix; yield rhs|])
+        let desc = new TFOperationDesc (graph, "MatrixTriangularSolve", graph.MakeName(name, "MatrixTriangularSolve"))
         desc.AddInput (matrix) |> ignore
         desc.AddInput (rhs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -17571,8 +17571,8 @@ type TFGraph with
     ///    retained with length 1.
     /// </remarks>
     member graph.Max (input : TFOutput, reduction_indices : TFOutput, ?keep_dims : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Max", graph.MakeName ("Max", name))
+        graph.CheckOutputs([|yield input; yield reduction_indices|])
+        let desc = new TFOperationDesc (graph, "Max", graph.MakeName(name, "Max"))
         desc.AddInput (input) |> ignore
         desc.AddInput (reduction_indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -17616,8 +17616,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MaxPool (input : TFOutput, ksize : int64[], strides : int64[], padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPool", graph.MakeName ("MaxPool", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "MaxPool", graph.MakeName(name, "MaxPool"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("ksize", ksize) |> ignore
@@ -17664,8 +17664,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MaxPool3D (input : TFOutput, ksize : int64[], strides : int64[], padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPool3D", graph.MakeName ("MaxPool3D", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "MaxPool3D", graph.MakeName(name, "MaxPool3D"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("ksize", ksize) |> ignore
@@ -17717,8 +17717,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MaxPool3DGrad (orig_input : TFOutput, orig_output : TFOutput, grad : TFOutput, ksize : int64[], strides : int64[], padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPool3DGrad", graph.MakeName ("MaxPool3DGrad", name))
+        graph.CheckOutputs([|yield orig_input; yield orig_output; yield grad|])
+        let desc = new TFOperationDesc (graph, "MaxPool3DGrad", graph.MakeName(name, "MaxPool3DGrad"))
         desc.AddInput (orig_input) |> ignore
         desc.AddInput (orig_output) |> ignore
         desc.AddInput (grad) |> ignore
@@ -17773,8 +17773,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MaxPool3DGradGrad (orig_input : TFOutput, orig_output : TFOutput, grad : TFOutput, ksize : int64[], strides : int64[], padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPool3DGradGrad", graph.MakeName ("MaxPool3DGradGrad", name))
+        graph.CheckOutputs([|yield orig_input; yield orig_output; yield grad|])
+        let desc = new TFOperationDesc (graph, "MaxPool3DGradGrad", graph.MakeName(name, "MaxPool3DGradGrad"))
         desc.AddInput (orig_input) |> ignore
         desc.AddInput (orig_output) |> ignore
         desc.AddInput (grad) |> ignore
@@ -17828,8 +17828,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MaxPoolGrad (orig_input : TFOutput, orig_output : TFOutput, grad : TFOutput, ksize : int64[], strides : int64[], padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPoolGrad", graph.MakeName ("MaxPoolGrad", name))
+        graph.CheckOutputs([|yield orig_input; yield orig_output; yield grad|])
+        let desc = new TFOperationDesc (graph, "MaxPoolGrad", graph.MakeName(name, "MaxPoolGrad"))
         desc.AddInput (orig_input) |> ignore
         desc.AddInput (orig_output) |> ignore
         desc.AddInput (grad) |> ignore
@@ -17883,8 +17883,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MaxPoolGradGrad (orig_input : TFOutput, orig_output : TFOutput, grad : TFOutput, ksize : int64[], strides : int64[], padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPoolGradGrad", graph.MakeName ("MaxPoolGradGrad", name))
+        graph.CheckOutputs([|yield orig_input; yield orig_output; yield grad|])
+        let desc = new TFOperationDesc (graph, "MaxPoolGradGrad", graph.MakeName(name, "MaxPoolGradGrad"))
         desc.AddInput (orig_input) |> ignore
         desc.AddInput (orig_output) |> ignore
         desc.AddInput (grad) |> ignore
@@ -17938,8 +17938,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MaxPoolGradGradV2 (orig_input : TFOutput, orig_output : TFOutput, grad : TFOutput, ksize : TFOutput, strides : TFOutput, padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPoolGradGradV2", graph.MakeName ("MaxPoolGradGradV2", name))
+        graph.CheckOutputs([|yield orig_input; yield orig_output; yield grad; yield ksize; yield strides|])
+        let desc = new TFOperationDesc (graph, "MaxPoolGradGradV2", graph.MakeName(name, "MaxPoolGradGradV2"))
         desc.AddInput (orig_input) |> ignore
         desc.AddInput (orig_output) |> ignore
         desc.AddInput (grad) |> ignore
@@ -17986,8 +17986,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MaxPoolGradGradWithArgmax (input : TFOutput, grad : TFOutput, argmax : TFOutput, ksize : int64[], strides : int64[], padding : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPoolGradGradWithArgmax", graph.MakeName ("MaxPoolGradGradWithArgmax", name))
+        graph.CheckOutputs([|yield input; yield grad; yield argmax|])
+        let desc = new TFOperationDesc (graph, "MaxPoolGradGradWithArgmax", graph.MakeName(name, "MaxPoolGradGradWithArgmax"))
         desc.AddInput (input) |> ignore
         desc.AddInput (grad) |> ignore
         desc.AddInput (argmax) |> ignore
@@ -18040,8 +18040,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MaxPoolGradV2 (orig_input : TFOutput, orig_output : TFOutput, grad : TFOutput, ksize : TFOutput, strides : TFOutput, padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPoolGradV2", graph.MakeName ("MaxPoolGradV2", name))
+        graph.CheckOutputs([|yield orig_input; yield orig_output; yield grad; yield ksize; yield strides|])
+        let desc = new TFOperationDesc (graph, "MaxPoolGradV2", graph.MakeName(name, "MaxPoolGradV2"))
         desc.AddInput (orig_input) |> ignore
         desc.AddInput (orig_output) |> ignore
         desc.AddInput (grad) |> ignore
@@ -18088,8 +18088,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MaxPoolGradWithArgmax (input : TFOutput, grad : TFOutput, argmax : TFOutput, ksize : int64[], strides : int64[], padding : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPoolGradWithArgmax", graph.MakeName ("MaxPoolGradWithArgmax", name))
+        graph.CheckOutputs([|yield input; yield grad; yield argmax|])
+        let desc = new TFOperationDesc (graph, "MaxPoolGradWithArgmax", graph.MakeName(name, "MaxPoolGradWithArgmax"))
         desc.AddInput (input) |> ignore
         desc.AddInput (grad) |> ignore
         desc.AddInput (argmax) |> ignore
@@ -18136,8 +18136,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MaxPoolV2 (input : TFOutput, ksize : TFOutput, strides : TFOutput, padding : string, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPoolV2", graph.MakeName ("MaxPoolV2", name))
+        graph.CheckOutputs([|yield input; yield ksize; yield strides|])
+        let desc = new TFOperationDesc (graph, "MaxPoolV2", graph.MakeName(name, "MaxPoolV2"))
         desc.AddInput (input) |> ignore
         desc.AddInput (ksize) |> ignore
         desc.AddInput (strides) |> ignore
@@ -18190,8 +18190,8 @@ type TFGraph with
     ///    in a safe backwards compatible way, especially due to flattening.
     /// </remarks>
     member graph.MaxPoolWithArgmax (input : TFOutput, ksize : int64[], strides : int64[], padding : string, ?tArgmax : TFDataType,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MaxPoolWithArgmax", graph.MakeName ("MaxPoolWithArgmax", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "MaxPoolWithArgmax", graph.MakeName(name, "MaxPoolWithArgmax"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("ksize", ksize) |> ignore
@@ -18225,8 +18225,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.Maximum (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Maximum", graph.MakeName ("Maximum", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "Maximum", graph.MakeName(name, "Maximum"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -18265,8 +18265,8 @@ type TFGraph with
     ///    retained with length 1.
     /// </remarks>
     member graph.Mean (input : TFOutput, reduction_indices : TFOutput, ?keep_dims : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Mean", graph.MakeName ("Mean", name))
+        graph.CheckOutputs([|yield input; yield reduction_indices|])
+        let desc = new TFOperationDesc (graph, "Mean", graph.MakeName(name, "Mean"))
         desc.AddInput (input) |> ignore
         desc.AddInput (reduction_indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -18301,8 +18301,8 @@ type TFGraph with
     ///    <c>value_index<c> to its index in <c>inputs<c>.
     /// </remarks>
     member graph.Merge (inputs : TFOutput[],  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Merge", graph.MakeName ("Merge", name))
+        graph.CheckOutputs([|yield! inputs|])
+        let desc = new TFOperationDesc (graph, "Merge", graph.MakeName(name, "Merge"))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -18338,8 +18338,8 @@ type TFGraph with
     ///    in the summaries to merge use the same tag.
     /// </remarks>
     member graph.MergeSummary (inputs : TFOutput[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MergeSummary", graph.MakeName ("MergeSummary", name))
+        graph.CheckOutputs([|yield! inputs|])
+        let desc = new TFOperationDesc (graph, "MergeSummary", graph.MakeName(name, "MergeSummary"))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -18380,8 +18380,8 @@ type TFGraph with
     ///    user-facing temporary locations.
     /// </remarks>
     member graph.MergeV2Checkpoints (checkpoint_prefixes : TFOutput, destination_prefix : TFOutput, ?delete_old_dirs : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MergeV2Checkpoints", graph.MakeName ("MergeV2Checkpoints", name))
+        graph.CheckOutputs([|yield checkpoint_prefixes; yield destination_prefix|])
+        let desc = new TFOperationDesc (graph, "MergeV2Checkpoints", graph.MakeName(name, "MergeV2Checkpoints"))
         desc.AddInput (checkpoint_prefixes) |> ignore
         desc.AddInput (destination_prefix) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -18433,8 +18433,8 @@ type TFGraph with
     ///    is a good resource to learn more.
     /// </remarks>
     member graph.Mfcc (spectrogram : TFOutput, sample_rate : TFOutput, ?upper_frequency_limit : float32, ?lower_frequency_limit : float32, ?filterbank_channel_count : int64, ?dct_coefficient_count : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Mfcc", graph.MakeName ("Mfcc", name))
+        graph.CheckOutputs([|yield spectrogram; yield sample_rate|])
+        let desc = new TFOperationDesc (graph, "Mfcc", graph.MakeName(name, "Mfcc"))
         desc.AddInput (spectrogram) |> ignore
         desc.AddInput (sample_rate) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -18477,8 +18477,8 @@ type TFGraph with
     ///    retained with length 1.
     /// </remarks>
     member graph.Min (input : TFOutput, reduction_indices : TFOutput, ?keep_dims : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Min", graph.MakeName ("Min", name))
+        graph.CheckOutputs([|yield input; yield reduction_indices|])
+        let desc = new TFOperationDesc (graph, "Min", graph.MakeName(name, "Min"))
         desc.AddInput (input) |> ignore
         desc.AddInput (reduction_indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -18508,8 +18508,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.Minimum (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Minimum", graph.MakeName ("Minimum", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "Minimum", graph.MakeName(name, "Minimum"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -18572,8 +18572,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.MirrorPad (input : TFOutput, paddings : TFOutput, mode : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MirrorPad", graph.MakeName ("MirrorPad", name))
+        graph.CheckOutputs([|yield input; yield paddings|])
+        let desc = new TFOperationDesc (graph, "MirrorPad", graph.MakeName(name, "MirrorPad"))
         desc.AddInput (input) |> ignore
         desc.AddInput (paddings) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -18626,8 +18626,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.MirrorPadGrad (input : TFOutput, paddings : TFOutput, mode : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MirrorPadGrad", graph.MakeName ("MirrorPadGrad", name))
+        graph.CheckOutputs([|yield input; yield paddings|])
+        let desc = new TFOperationDesc (graph, "MirrorPadGrad", graph.MakeName(name, "MirrorPadGrad"))
         desc.AddInput (input) |> ignore
         desc.AddInput (paddings) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -18660,8 +18660,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.Mod (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Mod", graph.MakeName ("Mod", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "Mod", graph.MakeName(name, "Mod"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -18690,8 +18690,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.Mul (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Mul", graph.MakeName ("Mul", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "Mul", graph.MakeName(name, "Mul"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -18733,8 +18733,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Multinomial (logits : TFOutput, num_samples : TFOutput, ?seed : int64, ?seed2 : int64, ?output_dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Multinomial", graph.MakeName ("Multinomial", name))
+        graph.CheckOutputs([|yield logits; yield num_samples|])
+        let desc = new TFOperationDesc (graph, "Multinomial", graph.MakeName(name, "Multinomial"))
         desc.AddInput (logits) |> ignore
         desc.AddInput (num_samples) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -18801,8 +18801,8 @@ type TFGraph with
     ///    the insert operations. It does not support the initialization operation.
     /// </remarks>
     member graph.MutableDenseHashTable (empty_key : TFOutput, value_dtype : TFDataType, ?container : string, ?shared_name : string, ?use_node_name_sharing : bool, ?value_shape : TFShape, ?initial_num_buckets : int64, ?max_load_factor : float32,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MutableDenseHashTable", graph.MakeName ("MutableDenseHashTable", name))
+        graph.CheckOutputs([|yield empty_key|])
+        let desc = new TFOperationDesc (graph, "MutableDenseHashTable", graph.MakeName(name, "MutableDenseHashTable"))
         desc.AddInput (empty_key) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("value_dtype", value_dtype) |> ignore
@@ -18872,8 +18872,8 @@ type TFGraph with
     ///    the insert operations. It does not support the initialization operation.
     /// </remarks>
     member graph.MutableDenseHashTableV2 (empty_key : TFOutput, value_dtype : TFDataType, ?container : string, ?shared_name : string, ?use_node_name_sharing : bool, ?value_shape : TFShape, ?initial_num_buckets : int64, ?max_load_factor : float32,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MutableDenseHashTableV2", graph.MakeName ("MutableDenseHashTableV2", name))
+        graph.CheckOutputs([|yield empty_key|])
+        let desc = new TFOperationDesc (graph, "MutableDenseHashTableV2", graph.MakeName(name, "MutableDenseHashTableV2"))
         desc.AddInput (empty_key) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("value_dtype", value_dtype) |> ignore
@@ -18927,8 +18927,8 @@ type TFGraph with
     ///    the insert operations. It does not support the initialization operation.
     /// </remarks>
     member graph.MutableHashTable (key_dtype : TFDataType, value_dtype : TFDataType, ?container : string, ?shared_name : string, ?use_node_name_sharing : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MutableHashTable", graph.MakeName ("MutableHashTable", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "MutableHashTable", graph.MakeName(name, "MutableHashTable"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("key_dtype", key_dtype) |> ignore
         desc.SetAttr ("value_dtype", value_dtype) |> ignore
@@ -18980,8 +18980,8 @@ type TFGraph with
     ///    the insert operations. It does not support the initialization operation.
     /// </remarks>
     member graph.MutableHashTableOfTensors (key_dtype : TFDataType, value_dtype : TFDataType, ?container : string, ?shared_name : string, ?use_node_name_sharing : bool, ?value_shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MutableHashTableOfTensors", graph.MakeName ("MutableHashTableOfTensors", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "MutableHashTableOfTensors", graph.MakeName(name, "MutableHashTableOfTensors"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("key_dtype", key_dtype) |> ignore
         desc.SetAttr ("value_dtype", value_dtype) |> ignore
@@ -19034,8 +19034,8 @@ type TFGraph with
     ///    the insert operations. It does not support the initialization operation.
     /// </remarks>
     member graph.MutableHashTableOfTensorsV2 (key_dtype : TFDataType, value_dtype : TFDataType, ?container : string, ?shared_name : string, ?use_node_name_sharing : bool, ?value_shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MutableHashTableOfTensorsV2", graph.MakeName ("MutableHashTableOfTensorsV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "MutableHashTableOfTensorsV2", graph.MakeName(name, "MutableHashTableOfTensorsV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("key_dtype", key_dtype) |> ignore
         desc.SetAttr ("value_dtype", value_dtype) |> ignore
@@ -19087,8 +19087,8 @@ type TFGraph with
     ///    the insert operations. It does not support the initialization operation.
     /// </remarks>
     member graph.MutableHashTableV2 (key_dtype : TFDataType, value_dtype : TFDataType, ?container : string, ?shared_name : string, ?use_node_name_sharing : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MutableHashTableV2", graph.MakeName ("MutableHashTableV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "MutableHashTableV2", graph.MakeName(name, "MutableHashTableV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("key_dtype", key_dtype) |> ignore
         desc.SetAttr ("value_dtype", value_dtype) |> ignore
@@ -19158,8 +19158,8 @@ type TFGraph with
     ///    wish to ensure the usage is exclusive.
     /// </remarks>
     member graph.MutexLock (mutex : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MutexLock", graph.MakeName ("MutexLock", name))
+        graph.CheckOutputs([|yield mutex|])
+        let desc = new TFOperationDesc (graph, "MutexLock", graph.MakeName(name, "MutexLock"))
         desc.AddInput (mutex) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -19190,8 +19190,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.MutexV2 (?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "MutexV2", graph.MakeName ("MutexV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "MutexV2", graph.MakeName(name, "MutexV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
         shared_name |> Option.iter (fun shared_name -> desc.SetAttr ("shared_name", shared_name) |> ignore)
@@ -19217,8 +19217,8 @@ type TFGraph with
     ///    I.e., \\(y = -x\\).
     /// </remarks>
     member graph.Neg (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Neg", graph.MakeName ("Neg", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Neg", graph.MakeName(name, "Neg"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -19258,8 +19258,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.NegTrain (w_in : TFOutput, w_out : TFOutput, examples : TFOutput, labels : TFOutput, lr : TFOutput, vocab_count : int64[], num_negative_samples : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "NegTrain", graph.MakeName ("NegTrain", name))
+        graph.CheckOutputs([|yield w_in; yield w_out; yield examples; yield labels; yield lr|])
+        let desc = new TFOperationDesc (graph, "NegTrain", graph.MakeName(name, "NegTrain"))
         desc.AddInput (w_in) |> ignore
         desc.AddInput (w_out) |> ignore
         desc.AddInput (examples) |> ignore
@@ -19286,8 +19286,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.NextIteration (data : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "NextIteration", graph.MakeName ("NextIteration", name))
+        graph.CheckOutputs([|yield data|])
+        let desc = new TFOperationDesc (graph, "NextIteration", graph.MakeName(name, "NextIteration"))
         desc.AddInput (data) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -19307,8 +19307,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.NoOp ( ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "NoOp", graph.MakeName ("NoOp", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "NoOp", graph.MakeName(name, "NoOp"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
         op
@@ -19360,8 +19360,8 @@ type TFGraph with
     ///    selected_boxes = tf.gather(boxes, selected_indices)
     /// </remarks>
     member graph.NonMaxSuppression (boxes : TFOutput, scores : TFOutput, max_output_size : TFOutput, ?iou_threshold : float32,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "NonMaxSuppression", graph.MakeName ("NonMaxSuppression", name))
+        graph.CheckOutputs([|yield boxes; yield scores; yield max_output_size|])
+        let desc = new TFOperationDesc (graph, "NonMaxSuppression", graph.MakeName(name, "NonMaxSuppression"))
         desc.AddInput (boxes) |> ignore
         desc.AddInput (scores) |> ignore
         desc.AddInput (max_output_size) |> ignore
@@ -19421,8 +19421,8 @@ type TFGraph with
     ///    selected_boxes = tf.gather(boxes, selected_indices)
     /// </remarks>
     member graph.NonMaxSuppressionV2 (boxes : TFOutput, scores : TFOutput, max_output_size : TFOutput, iou_threshold : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "NonMaxSuppressionV2", graph.MakeName ("NonMaxSuppressionV2", name))
+        graph.CheckOutputs([|yield boxes; yield scores; yield max_output_size; yield iou_threshold|])
+        let desc = new TFOperationDesc (graph, "NonMaxSuppressionV2", graph.MakeName(name, "NonMaxSuppressionV2"))
         desc.AddInput (boxes) |> ignore
         desc.AddInput (scores) |> ignore
         desc.AddInput (max_output_size) |> ignore
@@ -19485,8 +19485,8 @@ type TFGraph with
     ///    selected_boxes = tf.gather(boxes, selected_indices)
     /// </remarks>
     member graph.NonMaxSuppressionV3 (boxes : TFOutput, scores : TFOutput, max_output_size : TFOutput, iou_threshold : TFOutput, score_threshold : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "NonMaxSuppressionV3", graph.MakeName ("NonMaxSuppressionV3", name))
+        graph.CheckOutputs([|yield boxes; yield scores; yield max_output_size; yield iou_threshold; yield score_threshold|])
+        let desc = new TFOperationDesc (graph, "NonMaxSuppressionV3", graph.MakeName(name, "NonMaxSuppressionV3"))
         desc.AddInput (boxes) |> ignore
         desc.AddInput (scores) |> ignore
         desc.AddInput (max_output_size) |> ignore
@@ -19558,8 +19558,8 @@ type TFGraph with
     ///    selected_boxes = tf.gather(boxes, selected_indices)
     /// </remarks>
     member graph.NonMaxSuppressionV4 (boxes : TFOutput, scores : TFOutput, max_output_size : TFOutput, iou_threshold : TFOutput, score_threshold : TFOutput, ?pad_to_max_output_size : bool,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "NonMaxSuppressionV4", graph.MakeName ("NonMaxSuppressionV4", name))
+        graph.CheckOutputs([|yield boxes; yield scores; yield max_output_size; yield iou_threshold; yield score_threshold|])
+        let desc = new TFOperationDesc (graph, "NonMaxSuppressionV4", graph.MakeName(name, "NonMaxSuppressionV4"))
         desc.AddInput (boxes) |> ignore
         desc.AddInput (scores) |> ignore
         desc.AddInput (max_output_size) |> ignore
@@ -19624,8 +19624,8 @@ type TFGraph with
     ///    selected_boxes = tf.gather(boxes, selected_indices)
     /// </remarks>
     member graph.NonMaxSuppressionWithOverlaps (overlaps : TFOutput, scores : TFOutput, max_output_size : TFOutput, overlap_threshold : TFOutput, score_threshold : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "NonMaxSuppressionWithOverlaps", graph.MakeName ("NonMaxSuppressionWithOverlaps", name))
+        graph.CheckOutputs([|yield overlaps; yield scores; yield max_output_size; yield overlap_threshold; yield score_threshold|])
+        let desc = new TFOperationDesc (graph, "NonMaxSuppressionWithOverlaps", graph.MakeName(name, "NonMaxSuppressionWithOverlaps"))
         desc.AddInput (overlaps) |> ignore
         desc.AddInput (scores) |> ignore
         desc.AddInput (max_output_size) |> ignore
@@ -19657,8 +19657,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.NotEqual (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "NotEqual", graph.MakeName ("NotEqual", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "NotEqual", graph.MakeName(name, "NotEqual"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -19701,8 +19701,8 @@ type TFGraph with
     ///    values.shape = input.shape[:-1]
     /// </remarks>
     member graph.NthElement (input : TFOutput, n : TFOutput, ?reverse : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "NthElement", graph.MakeName ("NthElement", name))
+        graph.CheckOutputs([|yield input; yield n|])
+        let desc = new TFOperationDesc (graph, "NthElement", graph.MakeName(name, "NthElement"))
         desc.AddInput (input) |> ignore
         desc.AddInput (n) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -19834,8 +19834,8 @@ type TFGraph with
     ///    ]<c><c><c>
     /// </remarks>
     member graph.OneHot (indices : TFOutput, depth : TFOutput, on_value : TFOutput, off_value : TFOutput, ?axis : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OneHot", graph.MakeName ("OneHot", name))
+        graph.CheckOutputs([|yield indices; yield depth; yield on_value; yield off_value|])
+        let desc = new TFOperationDesc (graph, "OneHot", graph.MakeName(name, "OneHot"))
         desc.AddInput (indices) |> ignore
         desc.AddInput (depth) |> ignore
         desc.AddInput (on_value) |> ignore
@@ -19863,8 +19863,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.OnesLike (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OnesLike", graph.MakeName ("OnesLike", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "OnesLike", graph.MakeName(name, "OnesLike"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -19897,8 +19897,8 @@ type TFGraph with
     ///    Creates a dataset by applying optimizations to <c>input_dataset<c>.
     /// </remarks>
     member graph.OptimizeDataset (input_dataset : TFOutput, optimizations : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OptimizeDataset", graph.MakeName ("OptimizeDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield optimizations|])
+        let desc = new TFOperationDesc (graph, "OptimizeDataset", graph.MakeName(name, "OptimizeDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (optimizations) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -19923,8 +19923,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.OptionalFromValue (components : TFOutput[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OptionalFromValue", graph.MakeName ("OptionalFromValue", name))
+        graph.CheckOutputs([|yield! components|])
+        let desc = new TFOperationDesc (graph, "OptionalFromValue", graph.MakeName(name, "OptionalFromValue"))
         desc.AddInputs (components) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -19950,8 +19950,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.OptionalGetValue (optional : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OptionalGetValue", graph.MakeName ("OptionalGetValue", name))
+        graph.CheckOutputs([|yield optional|])
+        let desc = new TFOperationDesc (graph, "OptionalGetValue", graph.MakeName(name, "OptionalGetValue"))
         desc.AddInput (optional) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("output_types", output_types) |> ignore
@@ -19975,8 +19975,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.OptionalHasValue (optional : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OptionalHasValue", graph.MakeName ("OptionalHasValue", name))
+        graph.CheckOutputs([|yield optional|])
+        let desc = new TFOperationDesc (graph, "OptionalHasValue", graph.MakeName(name, "OptionalHasValue"))
         desc.AddInput (optional) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -19996,8 +19996,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.OptionalNone ( ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OptionalNone", graph.MakeName ("OptionalNone", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "OptionalNone", graph.MakeName(name, "OptionalNone"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
         let mutable _idx = 0
@@ -20030,8 +20030,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.OrderedMapClear (dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OrderedMapClear", graph.MakeName ("OrderedMapClear", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "OrderedMapClear", graph.MakeName(name, "OrderedMapClear"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
         capacity |> Option.iter (fun capacity -> desc.SetAttr ("capacity", capacity) |> ignore)
@@ -20066,8 +20066,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.OrderedMapIncompleteSize (dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OrderedMapIncompleteSize", graph.MakeName ("OrderedMapIncompleteSize", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "OrderedMapIncompleteSize", graph.MakeName(name, "OrderedMapIncompleteSize"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
         capacity |> Option.iter (fun capacity -> desc.SetAttr ("capacity", capacity) |> ignore)
@@ -20114,8 +20114,8 @@ type TFGraph with
     ///    performance.
     /// </remarks>
     member graph.OrderedMapPeek (key : TFOutput, indices : TFOutput, dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OrderedMapPeek", graph.MakeName ("OrderedMapPeek", name))
+        graph.CheckOutputs([|yield key; yield indices|])
+        let desc = new TFOperationDesc (graph, "OrderedMapPeek", graph.MakeName(name, "OrderedMapPeek"))
         desc.AddInput (key) |> ignore
         desc.AddInput (indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -20155,8 +20155,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.OrderedMapSize (dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OrderedMapSize", graph.MakeName ("OrderedMapSize", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "OrderedMapSize", graph.MakeName(name, "OrderedMapSize"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
         capacity |> Option.iter (fun capacity -> desc.SetAttr ("capacity", capacity) |> ignore)
@@ -20211,8 +20211,8 @@ type TFGraph with
     ///    associative container.   Elements are ordered by key.
     /// </remarks>
     member graph.OrderedMapStage (key : TFOutput, indices : TFOutput, values : TFOutput[], dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OrderedMapStage", graph.MakeName ("OrderedMapStage", name))
+        graph.CheckOutputs([|yield key; yield indices; yield! values|])
+        let desc = new TFOperationDesc (graph, "OrderedMapStage", graph.MakeName(name, "OrderedMapStage"))
         desc.AddInput (key) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInputs (values) |> ignore
@@ -20258,8 +20258,8 @@ type TFGraph with
     ///    does not contain this key, the op will block until it does.
     /// </remarks>
     member graph.OrderedMapUnstage (key : TFOutput, indices : TFOutput, dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OrderedMapUnstage", graph.MakeName ("OrderedMapUnstage", name))
+        graph.CheckOutputs([|yield key; yield indices|])
+        let desc = new TFOperationDesc (graph, "OrderedMapUnstage", graph.MakeName(name, "OrderedMapUnstage"))
         desc.AddInput (key) |> ignore
         desc.AddInput (indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -20308,8 +20308,8 @@ type TFGraph with
     ///    does not contain elements, the op will block until it does.
     /// </remarks>
     member graph.OrderedMapUnstageNoKey (indices : TFOutput, dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : (TFOutput*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OrderedMapUnstageNoKey", graph.MakeName ("OrderedMapUnstageNoKey", name))
+        graph.CheckOutputs([|yield indices|])
+        let desc = new TFOperationDesc (graph, "OrderedMapUnstageNoKey", graph.MakeName(name, "OrderedMapUnstageNoKey"))
         desc.AddInput (indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
@@ -20352,8 +20352,8 @@ type TFGraph with
     ///    block indefinitely until data is available.
     /// </remarks>
     member graph.OutfeedDequeue (dtype : TFDataType, shape : TFShape, ?device_ordinal : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OutfeedDequeue", graph.MakeName ("OutfeedDequeue", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "OutfeedDequeue", graph.MakeName(name, "OutfeedDequeue"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
         desc.SetAttr ("shape", shape) |> ignore
@@ -20392,8 +20392,8 @@ type TFGraph with
     ///    Output <c>i<c> corresponds to XLA tuple element <c>i<c>.
     /// </remarks>
     member graph.OutfeedDequeueTuple (dtypes : TFDataType[], shapes : TFShape[], ?device_ordinal : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OutfeedDequeueTuple", graph.MakeName ("OutfeedDequeueTuple", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "OutfeedDequeueTuple", graph.MakeName(name, "OutfeedDequeueTuple"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
         desc.SetAttr ("shapes", shapes) |> ignore
@@ -20418,8 +20418,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.OutfeedEnqueue (input : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OutfeedEnqueue", graph.MakeName ("OutfeedEnqueue", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "OutfeedEnqueue", graph.MakeName(name, "OutfeedEnqueue"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -20440,8 +20440,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.OutfeedEnqueueTuple (inputs : TFOutput[],  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "OutfeedEnqueueTuple", graph.MakeName ("OutfeedEnqueueTuple", name))
+        graph.CheckOutputs([|yield! inputs|])
+        let desc = new TFOperationDesc (graph, "OutfeedEnqueueTuple", graph.MakeName(name, "OutfeedEnqueueTuple"))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -20488,8 +20488,8 @@ type TFGraph with
     ///    This is the opposite of <c>unpack<c>.
     /// </remarks>
     member graph.Pack (values : TFOutput[], ?axis : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Pack", graph.MakeName ("Pack", name))
+        graph.CheckOutputs([|yield! values|])
+        let desc = new TFOperationDesc (graph, "Pack", graph.MakeName(name, "Pack"))
         desc.AddInputs (values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         axis |> Option.iter (fun axis -> desc.SetAttr ("axis", axis) |> ignore)
@@ -20539,8 +20539,8 @@ type TFGraph with
     ///    
     /// </remarks>
     member graph.Pad (input : TFOutput, paddings : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Pad", graph.MakeName ("Pad", name))
+        graph.CheckOutputs([|yield input; yield paddings|])
+        let desc = new TFOperationDesc (graph, "Pad", graph.MakeName(name, "Pad"))
         desc.AddInput (input) |> ignore
         desc.AddInput (paddings) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -20593,8 +20593,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.PadV2 (input : TFOutput, paddings : TFOutput, constant_values : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PadV2", graph.MakeName ("PadV2", name))
+        graph.CheckOutputs([|yield input; yield paddings; yield constant_values|])
+        let desc = new TFOperationDesc (graph, "PadV2", graph.MakeName(name, "PadV2"))
         desc.AddInput (input) |> ignore
         desc.AddInput (paddings) |> ignore
         desc.AddInput (constant_values) |> ignore
@@ -20634,8 +20634,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.PaddedBatchDataset (input_dataset : TFOutput, batch_size : TFOutput, padded_shapes : TFOutput[], padding_values : TFOutput[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PaddedBatchDataset", graph.MakeName ("PaddedBatchDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield batch_size; yield! padded_shapes; yield! padding_values|])
+        let desc = new TFOperationDesc (graph, "PaddedBatchDataset", graph.MakeName(name, "PaddedBatchDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (batch_size) |> ignore
         desc.AddInputs (padded_shapes) |> ignore
@@ -20681,8 +20681,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.PaddedBatchDatasetV2 (input_dataset : TFOutput, batch_size : TFOutput, padded_shapes : TFOutput[], padding_values : TFOutput[], drop_remainder : TFOutput, output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PaddedBatchDatasetV2", graph.MakeName ("PaddedBatchDatasetV2", name))
+        graph.CheckOutputs([|yield input_dataset; yield batch_size; yield! padded_shapes; yield! padding_values; yield drop_remainder|])
+        let desc = new TFOperationDesc (graph, "PaddedBatchDatasetV2", graph.MakeName(name, "PaddedBatchDatasetV2"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (batch_size) |> ignore
         desc.AddInputs (padded_shapes) |> ignore
@@ -20742,8 +20742,8 @@ type TFGraph with
     ///    size of any given element in the minibatch.  See below for details.
     /// </remarks>
     member graph.PaddingFIFOQueue (component_types : TFDataType[], ?shapes : TFShape[], ?capacity : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PaddingFIFOQueue", graph.MakeName ("PaddingFIFOQueue", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "PaddingFIFOQueue", graph.MakeName(name, "PaddingFIFOQueue"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("component_types", component_types) |> ignore
         shapes |> Option.iter (fun shapes -> desc.SetAttr ("shapes", shapes) |> ignore)
@@ -20802,8 +20802,8 @@ type TFGraph with
     ///    size of any given element in the minibatch.  See below for details.
     /// </remarks>
     member graph.PaddingFIFOQueueV2 (component_types : TFDataType[], ?shapes : TFShape[], ?capacity : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PaddingFIFOQueueV2", graph.MakeName ("PaddingFIFOQueueV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "PaddingFIFOQueueV2", graph.MakeName(name, "PaddingFIFOQueueV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("component_types", component_types) |> ignore
         shapes |> Option.iter (fun shapes -> desc.SetAttr ("shapes", shapes) |> ignore)
@@ -20854,8 +20854,8 @@ type TFGraph with
     ///    some situations this can provide a performance benefit.
     /// </remarks>
     member graph.ParallelConcat (values : TFOutput[], shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ParallelConcat", graph.MakeName ("ParallelConcat", name))
+        graph.CheckOutputs([|yield! values|])
+        let desc = new TFOperationDesc (graph, "ParallelConcat", graph.MakeName(name, "ParallelConcat"))
         desc.AddInputs (values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shape", shape) |> ignore
@@ -20943,8 +20943,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.ParallelDynamicStitch (indices : TFOutput[], data : TFOutput[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ParallelDynamicStitch", graph.MakeName ("ParallelDynamicStitch", name))
+        graph.CheckOutputs([|yield! indices; yield! data|])
+        let desc = new TFOperationDesc (graph, "ParallelDynamicStitch", graph.MakeName(name, "ParallelDynamicStitch"))
         desc.AddInputs (indices) |> ignore
         desc.AddInputs (data) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -20997,8 +20997,8 @@ type TFGraph with
     ///    stores the parameters for each batch.
     /// </remarks>
     member graph.ParameterizedTruncatedNormal (shape : TFOutput, means : TFOutput, stdevs : TFOutput, minvals : TFOutput, maxvals : TFOutput, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ParameterizedTruncatedNormal", graph.MakeName ("ParameterizedTruncatedNormal", name))
+        graph.CheckOutputs([|yield shape; yield means; yield stdevs; yield minvals; yield maxvals|])
+        let desc = new TFOperationDesc (graph, "ParameterizedTruncatedNormal", graph.MakeName(name, "ParameterizedTruncatedNormal"))
         desc.AddInput (shape) |> ignore
         desc.AddInput (means) |> ignore
         desc.AddInput (stdevs) |> ignore
@@ -21082,8 +21082,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.ParseExample (serialized : TFOutput, names : TFOutput, sparse_keys : TFOutput[], dense_keys : TFOutput[], dense_defaults : TFOutput[], sparse_types : TFDataType[], dense_shapes : TFShape[],  ?name : string) : (TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ParseExample", graph.MakeName ("ParseExample", name))
+        graph.CheckOutputs([|yield serialized; yield names; yield! sparse_keys; yield! dense_keys; yield! dense_defaults|])
+        let desc = new TFOperationDesc (graph, "ParseExample", graph.MakeName(name, "ParseExample"))
         desc.AddInput (serialized) |> ignore
         desc.AddInput (names) |> ignore
         desc.AddInputs (sparse_keys) |> ignore
@@ -21150,8 +21150,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ParseExampleDataset (input_dataset : TFOutput, num_parallel_calls : TFOutput, dense_defaults : TFOutput[], sparse_keys : string[], dense_keys : string[], sparse_types : TFDataType[], dense_shapes : TFShape[], output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ParseExampleDataset", graph.MakeName ("ParseExampleDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield num_parallel_calls; yield! dense_defaults|])
+        let desc = new TFOperationDesc (graph, "ParseExampleDataset", graph.MakeName(name, "ParseExampleDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (num_parallel_calls) |> ignore
         desc.AddInputs (dense_defaults) |> ignore
@@ -21280,8 +21280,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.ParseSequenceExample (serialized : TFOutput, debug_name : TFOutput, context_dense_defaults : TFOutput[], feature_list_dense_missing_assumed_empty : string[], context_sparse_keys : string[], context_dense_keys : string[], feature_list_sparse_keys : string[], feature_list_dense_keys : string[], ?nContext_sparse : int64, ?nContext_dense : int64, ?nFeature_list_sparse : int64, ?nFeature_list_dense : int64, ?context_sparse_types : TFDataType[], ?feature_list_dense_types : TFDataType[], ?context_dense_shapes : TFShape[], ?feature_list_sparse_types : TFDataType[], ?feature_list_dense_shapes : TFShape[],  ?name : string) : (TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ParseSequenceExample", graph.MakeName ("ParseSequenceExample", name))
+        graph.CheckOutputs([|yield serialized; yield debug_name; yield! context_dense_defaults|])
+        let desc = new TFOperationDesc (graph, "ParseSequenceExample", graph.MakeName(name, "ParseSequenceExample"))
         desc.AddInput (serialized) |> ignore
         desc.AddInput (debug_name) |> ignore
         desc.AddInputs (context_dense_defaults) |> ignore
@@ -21374,8 +21374,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.ParseSingleExample (serialized : TFOutput, dense_defaults : TFOutput[], num_sparse : int64, sparse_keys : string[], dense_keys : string[], sparse_types : TFDataType[], dense_shapes : TFShape[],  ?name : string) : (TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ParseSingleExample", graph.MakeName ("ParseSingleExample", name))
+        graph.CheckOutputs([|yield serialized; yield! dense_defaults|])
+        let desc = new TFOperationDesc (graph, "ParseSingleExample", graph.MakeName(name, "ParseSingleExample"))
         desc.AddInput (serialized) |> ignore
         desc.AddInputs (dense_defaults) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -21492,8 +21492,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.ParseSingleSequenceExample (serialized : TFOutput, feature_list_dense_missing_assumed_empty : TFOutput, context_sparse_keys : TFOutput[], context_dense_keys : TFOutput[], feature_list_sparse_keys : TFOutput[], feature_list_dense_keys : TFOutput[], context_dense_defaults : TFOutput[], debug_name : TFOutput, ?context_sparse_types : TFDataType[], ?feature_list_dense_types : TFDataType[], ?context_dense_shapes : TFShape[], ?feature_list_sparse_types : TFDataType[], ?feature_list_dense_shapes : TFShape[],  ?name : string) : (TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ParseSingleSequenceExample", graph.MakeName ("ParseSingleSequenceExample", name))
+        graph.CheckOutputs([|yield serialized; yield feature_list_dense_missing_assumed_empty; yield! context_sparse_keys; yield! context_dense_keys; yield! feature_list_sparse_keys; yield! feature_list_dense_keys; yield! context_dense_defaults; yield debug_name|])
+        let desc = new TFOperationDesc (graph, "ParseSingleSequenceExample", graph.MakeName(name, "ParseSingleSequenceExample"))
         desc.AddInput (serialized) |> ignore
         desc.AddInput (feature_list_dense_missing_assumed_empty) |> ignore
         desc.AddInputs (context_sparse_keys) |> ignore
@@ -21540,8 +21540,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ParseTensor (serialized : TFOutput, out_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ParseTensor", graph.MakeName ("ParseTensor", name))
+        graph.CheckOutputs([|yield serialized|])
+        let desc = new TFOperationDesc (graph, "ParseTensor", graph.MakeName(name, "ParseTensor"))
         desc.AddInput (serialized) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("out_type", out_type) |> ignore
@@ -21576,8 +21576,8 @@ type TFGraph with
     ///    provide attrs that enable the fed value to be checked at runtime.
     /// </remarks>
     member graph.Placeholder (dtype : TFDataType, ?shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Placeholder", graph.MakeName ("Placeholder", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "Placeholder", graph.MakeName(name, "Placeholder"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
         shape |> Option.iter (fun shape -> desc.SetAttr ("shape", shape) |> ignore)
@@ -21611,8 +21611,8 @@ type TFGraph with
     ///    provide attrs that enable the fed value to be checked at runtime.
     /// </remarks>
     member graph.PlaceholderV2 (dtype : TFDataType, shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PlaceholderV2", graph.MakeName ("PlaceholderV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "PlaceholderV2", graph.MakeName(name, "PlaceholderV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
         desc.SetAttr ("shape", shape) |> ignore
@@ -21640,8 +21640,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.PlaceholderWithDefault (input : TFOutput, shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PlaceholderWithDefault", graph.MakeName ("PlaceholderWithDefault", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "PlaceholderWithDefault", graph.MakeName(name, "PlaceholderWithDefault"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shape", shape) |> ignore
@@ -21674,8 +21674,8 @@ type TFGraph with
     ///    where \\(\psi(x)\\) is the digamma function.
     /// </remarks>
     member graph.Polygamma (a : TFOutput, x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Polygamma", graph.MakeName ("Polygamma", name))
+        graph.CheckOutputs([|yield a; yield x|])
+        let desc = new TFOperationDesc (graph, "Polygamma", graph.MakeName(name, "Polygamma"))
         desc.AddInput (a) |> ignore
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -21706,8 +21706,8 @@ type TFGraph with
     ///    8- or 16-bit inputs and then aggregate the resulting counts.
     /// </remarks>
     member graph.PopulationCount (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PopulationCount", graph.MakeName ("PopulationCount", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "PopulationCount", graph.MakeName(name, "PopulationCount"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -21741,8 +21741,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Pow (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Pow", graph.MakeName ("Pow", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "Pow", graph.MakeName(name, "Pow"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -21773,8 +21773,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.PrefetchDataset (input_dataset : TFOutput, buffer_size : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PrefetchDataset", graph.MakeName ("PrefetchDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield buffer_size|])
+        let desc = new TFOperationDesc (graph, "PrefetchDataset", graph.MakeName(name, "PrefetchDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (buffer_size) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -21815,8 +21815,8 @@ type TFGraph with
     ///    gradients in some corner cases.
     /// </remarks>
     member graph.PreventGradient (input : TFOutput, ?message : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PreventGradient", graph.MakeName ("PreventGradient", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "PreventGradient", graph.MakeName(name, "PreventGradient"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         message |> Option.iter (fun message -> desc.SetAttr ("message", message) |> ignore)
@@ -21859,8 +21859,8 @@ type TFGraph with
     ///    Passes <c>input<c> through to <c>output<c> and prints <c>data<c> when evaluating.
     /// </remarks>
     member graph.Print (input : TFOutput, data : TFOutput[], ?message : string, ?first_n : int64, ?summarize : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Print", graph.MakeName ("Print", name))
+        graph.CheckOutputs([|yield input; yield! data|])
+        let desc = new TFOperationDesc (graph, "Print", graph.MakeName(name, "Print"))
         desc.AddInput (input) |> ignore
         desc.AddInputs (data) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -21917,8 +21917,8 @@ type TFGraph with
     ///    entry in their input (resp. output) lists.
     /// </remarks>
     member graph.PriorityQueue (shapes : TFShape[], ?component_types : TFDataType[], ?capacity : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PriorityQueue", graph.MakeName ("PriorityQueue", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "PriorityQueue", graph.MakeName(name, "PriorityQueue"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shapes", shapes) |> ignore
         component_types |> Option.iter (fun component_types -> desc.SetAttr ("component_types", component_types) |> ignore)
@@ -21975,8 +21975,8 @@ type TFGraph with
     ///    entry in their input (resp. output) lists.
     /// </remarks>
     member graph.PriorityQueueV2 (shapes : TFShape[], ?component_types : TFDataType[], ?capacity : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "PriorityQueueV2", graph.MakeName ("PriorityQueueV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "PriorityQueueV2", graph.MakeName(name, "PriorityQueueV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shapes", shapes) |> ignore
         component_types |> Option.iter (fun component_types -> desc.SetAttr ("component_types", component_types) |> ignore)
@@ -22018,8 +22018,8 @@ type TFGraph with
     ///    retained with length 1.
     /// </remarks>
     member graph.Prod (input : TFOutput, reduction_indices : TFOutput, ?keep_dims : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Prod", graph.MakeName ("Prod", name))
+        graph.CheckOutputs([|yield input; yield reduction_indices|])
+        let desc = new TFOperationDesc (graph, "Prod", graph.MakeName(name, "Prod"))
         desc.AddInput (input) |> ignore
         desc.AddInput (reduction_indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -22068,8 +22068,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Qr (input : TFOutput, ?full_matrices : bool,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Qr", graph.MakeName ("Qr", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Qr", graph.MakeName(name, "Qr"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         full_matrices |> Option.iter (fun full_matrices -> desc.SetAttr ("full_matrices", full_matrices) |> ignore)
@@ -22109,8 +22109,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.QuantizeAndDequantize (input : TFOutput, ?signed_input : bool, ?num_bits : int64, ?range_given : bool, ?input_min : float32, ?input_max : float32,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizeAndDequantize", graph.MakeName ("QuantizeAndDequantize", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "QuantizeAndDequantize", graph.MakeName(name, "QuantizeAndDequantize"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         signed_input |> Option.iter (fun signed_input -> desc.SetAttr ("signed_input", signed_input) |> ignore)
@@ -22213,8 +22213,8 @@ type TFGraph with
     ///    
     /// </remarks>
     member graph.QuantizeAndDequantizeV2 (input : TFOutput, input_min : TFOutput, input_max : TFOutput, ?signed_input : bool, ?num_bits : int64, ?range_given : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizeAndDequantizeV2", graph.MakeName ("QuantizeAndDequantizeV2", name))
+        graph.CheckOutputs([|yield input; yield input_min; yield input_max|])
+        let desc = new TFOperationDesc (graph, "QuantizeAndDequantizeV2", graph.MakeName(name, "QuantizeAndDequantizeV2"))
         desc.AddInput (input) |> ignore
         desc.AddInput (input_min) |> ignore
         desc.AddInput (input_max) |> ignore
@@ -22257,8 +22257,8 @@ type TFGraph with
     ///    tensor, so its value can change during training.
     /// </remarks>
     member graph.QuantizeAndDequantizeV3 (input : TFOutput, input_min : TFOutput, input_max : TFOutput, num_bits : TFOutput, ?signed_input : bool, ?range_given : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizeAndDequantizeV3", graph.MakeName ("QuantizeAndDequantizeV3", name))
+        graph.CheckOutputs([|yield input; yield input_min; yield input_max; yield num_bits|])
+        let desc = new TFOperationDesc (graph, "QuantizeAndDequantizeV3", graph.MakeName(name, "QuantizeAndDequantizeV3"))
         desc.AddInput (input) |> ignore
         desc.AddInput (input_min) |> ignore
         desc.AddInput (input_max) |> ignore
@@ -22322,8 +22322,8 @@ type TFGraph with
     ///    minimal loss of accuracy.
     /// </remarks>
     member graph.QuantizeDownAndShrinkRange (input : TFOutput, input_min : TFOutput, input_max : TFOutput, out_type : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizeDownAndShrinkRange", graph.MakeName ("QuantizeDownAndShrinkRange", name))
+        graph.CheckOutputs([|yield input; yield input_min; yield input_max|])
+        let desc = new TFOperationDesc (graph, "QuantizeDownAndShrinkRange", graph.MakeName(name, "QuantizeDownAndShrinkRange"))
         desc.AddInput (input) |> ignore
         desc.AddInput (input_min) |> ignore
         desc.AddInput (input_max) |> ignore
@@ -22470,8 +22470,8 @@ type TFGraph with
     ///    operations that have to perform further calculations on them.
     /// </remarks>
     member graph.QuantizeV2 (input : TFOutput, min_range : TFOutput, max_range : TFOutput, t : TFDataType, ?mode : string, ?round_mode : string,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizeV2", graph.MakeName ("QuantizeV2", name))
+        graph.CheckOutputs([|yield input; yield min_range; yield max_range|])
+        let desc = new TFOperationDesc (graph, "QuantizeV2", graph.MakeName(name, "QuantizeV2"))
         desc.AddInput (input) |> ignore
         desc.AddInput (min_range) |> ignore
         desc.AddInput (max_range) |> ignore
@@ -22526,8 +22526,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.QuantizedAdd (x : TFOutput, y : TFOutput, min_x : TFOutput, max_x : TFOutput, min_y : TFOutput, max_y : TFOutput, ?tOutput : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedAdd", graph.MakeName ("QuantizedAdd", name))
+        graph.CheckOutputs([|yield x; yield y; yield min_x; yield max_x; yield min_y; yield max_y|])
+        let desc = new TFOperationDesc (graph, "QuantizedAdd", graph.MakeName(name, "QuantizedAdd"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         desc.AddInput (min_x) |> ignore
@@ -22581,8 +22581,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.QuantizedAvgPool (input : TFOutput, min_input : TFOutput, max_input : TFOutput, ksize : int64[], strides : int64[], padding : string,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedAvgPool", graph.MakeName ("QuantizedAvgPool", name))
+        graph.CheckOutputs([|yield input; yield min_input; yield max_input|])
+        let desc = new TFOperationDesc (graph, "QuantizedAvgPool", graph.MakeName(name, "QuantizedAvgPool"))
         desc.AddInput (input) |> ignore
         desc.AddInput (min_input) |> ignore
         desc.AddInput (max_input) |> ignore
@@ -22680,8 +22680,8 @@ type TFGraph with
     ///    <c>tf.nn.batch_normalization<c>.
     /// </remarks>
     member graph.QuantizedBatchNormWithGlobalNormalization (t : TFOutput, t_min : TFOutput, t_max : TFOutput, m : TFOutput, m_min : TFOutput, m_max : TFOutput, v : TFOutput, v_min : TFOutput, v_max : TFOutput, beta : TFOutput, beta_min : TFOutput, beta_max : TFOutput, gamma : TFOutput, gamma_min : TFOutput, gamma_max : TFOutput, out_type : TFDataType, variance_epsilon : float32, scale_after_normalization : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedBatchNormWithGlobalNormalization", graph.MakeName ("QuantizedBatchNormWithGlobalNormalization", name))
+        graph.CheckOutputs([|yield t; yield t_min; yield t_max; yield m; yield m_min; yield m_max; yield v; yield v_min; yield v_max; yield beta; yield beta_min; yield beta_max; yield gamma; yield gamma_min; yield gamma_max|])
+        let desc = new TFOperationDesc (graph, "QuantizedBatchNormWithGlobalNormalization", graph.MakeName(name, "QuantizedBatchNormWithGlobalNormalization"))
         desc.AddInput (t) |> ignore
         desc.AddInput (t_min) |> ignore
         desc.AddInput (t_max) |> ignore
@@ -22748,8 +22748,8 @@ type TFGraph with
     ///    Broadcasts the values of bias on dimensions 0..N-2 of 'input'.
     /// </remarks>
     member graph.QuantizedBiasAdd (input : TFOutput, bias : TFOutput, min_input : TFOutput, max_input : TFOutput, min_bias : TFOutput, max_bias : TFOutput, out_type : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedBiasAdd", graph.MakeName ("QuantizedBiasAdd", name))
+        graph.CheckOutputs([|yield input; yield bias; yield min_input; yield max_input; yield min_bias; yield max_bias|])
+        let desc = new TFOperationDesc (graph, "QuantizedBiasAdd", graph.MakeName(name, "QuantizedBiasAdd"))
         desc.AddInput (input) |> ignore
         desc.AddInput (bias) |> ignore
         desc.AddInput (min_input) |> ignore
@@ -22799,8 +22799,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.QuantizedConcat (concat_dim : TFOutput, values : TFOutput[], input_mins : TFOutput[], input_maxes : TFOutput[],  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedConcat", graph.MakeName ("QuantizedConcat", name))
+        graph.CheckOutputs([|yield concat_dim; yield! values; yield! input_mins; yield! input_maxes|])
+        let desc = new TFOperationDesc (graph, "QuantizedConcat", graph.MakeName(name, "QuantizedConcat"))
         desc.AddInput (concat_dim) |> ignore
         desc.AddInputs (values) |> ignore
         desc.AddInputs (input_mins) |> ignore
@@ -22872,8 +22872,8 @@ type TFGraph with
     ///    taking the returned minimum and maximum values into account.
     /// </remarks>
     member graph.QuantizedConv2D (input : TFOutput, filter : TFOutput, min_input : TFOutput, max_input : TFOutput, min_filter : TFOutput, max_filter : TFOutput, strides : int64[], padding : string, ?out_type : TFDataType, ?dilations : int64[],  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedConv2D", graph.MakeName ("QuantizedConv2D", name))
+        graph.CheckOutputs([|yield input; yield filter; yield min_input; yield max_input; yield min_filter; yield max_filter|])
+        let desc = new TFOperationDesc (graph, "QuantizedConv2D", graph.MakeName(name, "QuantizedConv2D"))
         desc.AddInput (input) |> ignore
         desc.AddInput (filter) |> ignore
         desc.AddInput (min_input) |> ignore
@@ -22941,8 +22941,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.QuantizedInstanceNorm (x : TFOutput, x_min : TFOutput, x_max : TFOutput, ?output_range_given : bool, ?given_y_min : float32, ?given_y_max : float32, ?variance_epsilon : float32, ?min_separation : float32,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedInstanceNorm", graph.MakeName ("QuantizedInstanceNorm", name))
+        graph.CheckOutputs([|yield x; yield x_min; yield x_max|])
+        let desc = new TFOperationDesc (graph, "QuantizedInstanceNorm", graph.MakeName(name, "QuantizedInstanceNorm"))
         desc.AddInput (x) |> ignore
         desc.AddInput (x_min) |> ignore
         desc.AddInput (x_max) |> ignore
@@ -23017,8 +23017,8 @@ type TFGraph with
     ///    non-zero).
     /// </remarks>
     member graph.QuantizedMatMul (a : TFOutput, b : TFOutput, min_a : TFOutput, max_a : TFOutput, min_b : TFOutput, max_b : TFOutput, ?tOutput : TFDataType, ?transpose_a : bool, ?transpose_b : bool, ?tActivation : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedMatMul", graph.MakeName ("QuantizedMatMul", name))
+        graph.CheckOutputs([|yield a; yield b; yield min_a; yield max_a; yield min_b; yield max_b|])
+        let desc = new TFOperationDesc (graph, "QuantizedMatMul", graph.MakeName(name, "QuantizedMatMul"))
         desc.AddInput (a) |> ignore
         desc.AddInput (b) |> ignore
         desc.AddInput (min_a) |> ignore
@@ -23075,8 +23075,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.QuantizedMaxPool (input : TFOutput, min_input : TFOutput, max_input : TFOutput, ksize : int64[], strides : int64[], padding : string,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedMaxPool", graph.MakeName ("QuantizedMaxPool", name))
+        graph.CheckOutputs([|yield input; yield min_input; yield max_input|])
+        let desc = new TFOperationDesc (graph, "QuantizedMaxPool", graph.MakeName(name, "QuantizedMaxPool"))
         desc.AddInput (input) |> ignore
         desc.AddInput (min_input) |> ignore
         desc.AddInput (max_input) |> ignore
@@ -23131,8 +23131,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.QuantizedMul (x : TFOutput, y : TFOutput, min_x : TFOutput, max_x : TFOutput, min_y : TFOutput, max_y : TFOutput, ?tOutput : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedMul", graph.MakeName ("QuantizedMul", name))
+        graph.CheckOutputs([|yield x; yield y; yield min_x; yield max_x; yield min_y; yield max_y|])
+        let desc = new TFOperationDesc (graph, "QuantizedMul", graph.MakeName(name, "QuantizedMul"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         desc.AddInput (min_x) |> ignore
@@ -23177,8 +23177,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.QuantizedRelu (features : TFOutput, min_features : TFOutput, max_features : TFOutput, ?out_type : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedRelu", graph.MakeName ("QuantizedRelu", name))
+        graph.CheckOutputs([|yield features; yield min_features; yield max_features|])
+        let desc = new TFOperationDesc (graph, "QuantizedRelu", graph.MakeName(name, "QuantizedRelu"))
         desc.AddInput (features) |> ignore
         desc.AddInput (min_features) |> ignore
         desc.AddInput (max_features) |> ignore
@@ -23220,8 +23220,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.QuantizedRelu6 (features : TFOutput, min_features : TFOutput, max_features : TFOutput, ?out_type : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedRelu6", graph.MakeName ("QuantizedRelu6", name))
+        graph.CheckOutputs([|yield features; yield min_features; yield max_features|])
+        let desc = new TFOperationDesc (graph, "QuantizedRelu6", graph.MakeName(name, "QuantizedRelu6"))
         desc.AddInput (features) |> ignore
         desc.AddInput (min_features) |> ignore
         desc.AddInput (max_features) |> ignore
@@ -23265,8 +23265,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.QuantizedReluX (features : TFOutput, max_value : TFOutput, min_features : TFOutput, max_features : TFOutput, ?out_type : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedReluX", graph.MakeName ("QuantizedReluX", name))
+        graph.CheckOutputs([|yield features; yield max_value; yield min_features; yield max_features|])
+        let desc = new TFOperationDesc (graph, "QuantizedReluX", graph.MakeName(name, "QuantizedReluX"))
         desc.AddInput (features) |> ignore
         desc.AddInput (max_value) |> ignore
         desc.AddInput (min_features) |> ignore
@@ -23312,8 +23312,8 @@ type TFGraph with
     ///   <code>
     /// </remarks>
     member graph.QuantizedReshape (tensor : TFOutput, shape : TFOutput, input_min : TFOutput, input_max : TFOutput,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedReshape", graph.MakeName ("QuantizedReshape", name))
+        graph.CheckOutputs([|yield tensor; yield shape; yield input_min; yield input_max|])
+        let desc = new TFOperationDesc (graph, "QuantizedReshape", graph.MakeName(name, "QuantizedReshape"))
         desc.AddInput (tensor) |> ignore
         desc.AddInput (shape) |> ignore
         desc.AddInput (input_min) |> ignore
@@ -23364,8 +23364,8 @@ type TFGraph with
     ///    Input images and output images must be quantized types.
     /// </remarks>
     member graph.QuantizedResizeBilinear (images : TFOutput, size : TFOutput, min : TFOutput, max : TFOutput, ?align_corners : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QuantizedResizeBilinear", graph.MakeName ("QuantizedResizeBilinear", name))
+        graph.CheckOutputs([|yield images; yield size; yield min; yield max|])
+        let desc = new TFOperationDesc (graph, "QuantizedResizeBilinear", graph.MakeName(name, "QuantizedResizeBilinear"))
         desc.AddInput (images) |> ignore
         desc.AddInput (size) |> ignore
         desc.AddInput (min) |> ignore
@@ -23408,8 +23408,8 @@ type TFGraph with
     ///    operations that would block will fail immediately.
     /// </remarks>
     member graph.QueueClose (handle : TFOutput, ?cancel_pending_enqueues : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueClose", graph.MakeName ("QueueClose", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "QueueClose", graph.MakeName(name, "QueueClose"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         cancel_pending_enqueues |> Option.iter (fun cancel_pending_enqueues -> desc.SetAttr ("cancel_pending_enqueues", cancel_pending_enqueues) |> ignore)
@@ -23442,8 +23442,8 @@ type TFGraph with
     ///    operations that would block will fail immediately.
     /// </remarks>
     member graph.QueueCloseV2 (handle : TFOutput, ?cancel_pending_enqueues : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueCloseV2", graph.MakeName ("QueueCloseV2", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "QueueCloseV2", graph.MakeName(name, "QueueCloseV2"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         cancel_pending_enqueues |> Option.iter (fun cancel_pending_enqueues -> desc.SetAttr ("cancel_pending_enqueues", cancel_pending_enqueues) |> ignore)
@@ -23482,8 +23482,8 @@ type TFGraph with
     ///    has been dequeued (or 'timeout_ms' elapses, if specified).
     /// </remarks>
     member graph.QueueDequeue (handle : TFOutput, component_types : TFDataType[], ?timeout_ms : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueDequeue", graph.MakeName ("QueueDequeue", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "QueueDequeue", graph.MakeName(name, "QueueDequeue"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("component_types", component_types) |> ignore
@@ -23536,8 +23536,8 @@ type TFGraph with
     ///    have been dequeued (or 'timeout_ms' elapses, if specified).
     /// </remarks>
     member graph.QueueDequeueMany (handle : TFOutput, n : TFOutput, component_types : TFDataType[], ?timeout_ms : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueDequeueMany", graph.MakeName ("QueueDequeueMany", name))
+        graph.CheckOutputs([|yield handle; yield n|])
+        let desc = new TFOperationDesc (graph, "QueueDequeueMany", graph.MakeName(name, "QueueDequeueMany"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (n) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -23591,8 +23591,8 @@ type TFGraph with
     ///    have been dequeued (or 'timeout_ms' elapses, if specified).
     /// </remarks>
     member graph.QueueDequeueManyV2 (handle : TFOutput, n : TFOutput, component_types : TFDataType[], ?timeout_ms : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueDequeueManyV2", graph.MakeName ("QueueDequeueManyV2", name))
+        graph.CheckOutputs([|yield handle; yield n|])
+        let desc = new TFOperationDesc (graph, "QueueDequeueManyV2", graph.MakeName(name, "QueueDequeueManyV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (n) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -23650,8 +23650,8 @@ type TFGraph with
     ///    component of the dequeued tuple.
     /// </remarks>
     member graph.QueueDequeueUpTo (handle : TFOutput, n : TFOutput, component_types : TFDataType[], ?timeout_ms : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueDequeueUpTo", graph.MakeName ("QueueDequeueUpTo", name))
+        graph.CheckOutputs([|yield handle; yield n|])
+        let desc = new TFOperationDesc (graph, "QueueDequeueUpTo", graph.MakeName(name, "QueueDequeueUpTo"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (n) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -23709,8 +23709,8 @@ type TFGraph with
     ///    component of the dequeued tuple.
     /// </remarks>
     member graph.QueueDequeueUpToV2 (handle : TFOutput, n : TFOutput, component_types : TFDataType[], ?timeout_ms : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueDequeueUpToV2", graph.MakeName ("QueueDequeueUpToV2", name))
+        graph.CheckOutputs([|yield handle; yield n|])
+        let desc = new TFOperationDesc (graph, "QueueDequeueUpToV2", graph.MakeName(name, "QueueDequeueUpToV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (n) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -23754,8 +23754,8 @@ type TFGraph with
     ///    has been dequeued (or 'timeout_ms' elapses, if specified).
     /// </remarks>
     member graph.QueueDequeueV2 (handle : TFOutput, component_types : TFDataType[], ?timeout_ms : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueDequeueV2", graph.MakeName ("QueueDequeueV2", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "QueueDequeueV2", graph.MakeName(name, "QueueDequeueV2"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("component_types", component_types) |> ignore
@@ -23796,8 +23796,8 @@ type TFGraph with
     ///    element has been enqueued (or 'timeout_ms' elapses, if specified).
     /// </remarks>
     member graph.QueueEnqueue (handle : TFOutput, components : TFOutput[], ?timeout_ms : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueEnqueue", graph.MakeName ("QueueEnqueue", name))
+        graph.CheckOutputs([|yield handle; yield! components|])
+        let desc = new TFOperationDesc (graph, "QueueEnqueue", graph.MakeName(name, "QueueEnqueue"))
         desc.AddInput (handle) |> ignore
         desc.AddInputs (components) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -23840,8 +23840,8 @@ type TFGraph with
     ///    elements have been enqueued (or 'timeout_ms' elapses, if specified).
     /// </remarks>
     member graph.QueueEnqueueMany (handle : TFOutput, components : TFOutput[], ?timeout_ms : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueEnqueueMany", graph.MakeName ("QueueEnqueueMany", name))
+        graph.CheckOutputs([|yield handle; yield! components|])
+        let desc = new TFOperationDesc (graph, "QueueEnqueueMany", graph.MakeName(name, "QueueEnqueueMany"))
         desc.AddInput (handle) |> ignore
         desc.AddInputs (components) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -23884,8 +23884,8 @@ type TFGraph with
     ///    elements have been enqueued (or 'timeout_ms' elapses, if specified).
     /// </remarks>
     member graph.QueueEnqueueManyV2 (handle : TFOutput, components : TFOutput[], ?timeout_ms : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueEnqueueManyV2", graph.MakeName ("QueueEnqueueManyV2", name))
+        graph.CheckOutputs([|yield handle; yield! components|])
+        let desc = new TFOperationDesc (graph, "QueueEnqueueManyV2", graph.MakeName(name, "QueueEnqueueManyV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInputs (components) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -23923,8 +23923,8 @@ type TFGraph with
     ///    element has been enqueued (or 'timeout_ms' elapses, if specified).
     /// </remarks>
     member graph.QueueEnqueueV2 (handle : TFOutput, components : TFOutput[], ?timeout_ms : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueEnqueueV2", graph.MakeName ("QueueEnqueueV2", name))
+        graph.CheckOutputs([|yield handle; yield! components|])
+        let desc = new TFOperationDesc (graph, "QueueEnqueueV2", graph.MakeName(name, "QueueEnqueueV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInputs (components) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -23950,8 +23950,8 @@ type TFGraph with
     ///    is open.
     /// </remarks>
     member graph.QueueIsClosed (handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueIsClosed", graph.MakeName ("QueueIsClosed", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "QueueIsClosed", graph.MakeName(name, "QueueIsClosed"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -23978,8 +23978,8 @@ type TFGraph with
     ///    is open.
     /// </remarks>
     member graph.QueueIsClosedV2 (handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueIsClosedV2", graph.MakeName ("QueueIsClosedV2", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "QueueIsClosedV2", graph.MakeName(name, "QueueIsClosedV2"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -24003,8 +24003,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.QueueSize (handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueSize", graph.MakeName ("QueueSize", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "QueueSize", graph.MakeName(name, "QueueSize"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -24028,8 +24028,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.QueueSizeV2 (handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "QueueSizeV2", graph.MakeName ("QueueSizeV2", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "QueueSizeV2", graph.MakeName(name, "QueueSizeV2"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -24074,8 +24074,8 @@ type TFGraph with
     ///    the dimension is padded with zeros.
     /// </remarks>
     member graph.RFFT (input : TFOutput, fft_length : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RFFT", graph.MakeName ("RFFT", name))
+        graph.CheckOutputs([|yield input; yield fft_length|])
+        let desc = new TFOperationDesc (graph, "RFFT", graph.MakeName(name, "RFFT"))
         desc.AddInput (input) |> ignore
         desc.AddInput (fft_length) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -24123,8 +24123,8 @@ type TFGraph with
     ///    the dimension is padded with zeros.
     /// </remarks>
     member graph.RFFT2D (input : TFOutput, fft_length : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RFFT2D", graph.MakeName ("RFFT2D", name))
+        graph.CheckOutputs([|yield input; yield fft_length|])
+        let desc = new TFOperationDesc (graph, "RFFT2D", graph.MakeName(name, "RFFT2D"))
         desc.AddInput (input) |> ignore
         desc.AddInput (fft_length) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -24172,8 +24172,8 @@ type TFGraph with
     ///    the dimension is padded with zeros.
     /// </remarks>
     member graph.RFFT3D (input : TFOutput, fft_length : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RFFT3D", graph.MakeName ("RFFT3D", name))
+        graph.CheckOutputs([|yield input; yield fft_length|])
+        let desc = new TFOperationDesc (graph, "RFFT3D", graph.MakeName(name, "RFFT3D"))
         desc.AddInput (input) |> ignore
         desc.AddInput (fft_length) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -24207,8 +24207,8 @@ type TFGraph with
     ///    corresponds to pure red, hue 1/3 is pure green, and 2/3 is pure blue.
     /// </remarks>
     member graph.RGBToHSV (images : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RGBToHSV", graph.MakeName ("RGBToHSV", name))
+        graph.CheckOutputs([|yield images|])
+        let desc = new TFOperationDesc (graph, "RGBToHSV", graph.MakeName(name, "RGBToHSV"))
         desc.AddInput (images) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -24253,8 +24253,8 @@ type TFGraph with
     ///    area will fit inside the original image.
     /// </remarks>
     member graph.RandomCrop (image : TFOutput, size : TFOutput, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomCrop", graph.MakeName ("RandomCrop", name))
+        graph.CheckOutputs([|yield image; yield size|])
+        let desc = new TFOperationDesc (graph, "RandomCrop", graph.MakeName(name, "RandomCrop"))
         desc.AddInput (image) |> ignore
         desc.AddInput (size) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -24289,8 +24289,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.RandomDataset (seed : TFOutput, seed2 : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomDataset", graph.MakeName ("RandomDataset", name))
+        graph.CheckOutputs([|yield seed; yield seed2|])
+        let desc = new TFOperationDesc (graph, "RandomDataset", graph.MakeName(name, "RandomDataset"))
         desc.AddInput (seed) |> ignore
         desc.AddInput (seed2) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -24339,8 +24339,8 @@ type TFGraph with
     ///    See http://dl.acm.org/citation.cfm?id=358414
     /// </remarks>
     member graph.RandomGamma (shape : TFOutput, alpha : TFOutput, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomGamma", graph.MakeName ("RandomGamma", name))
+        graph.CheckOutputs([|yield shape; yield alpha|])
+        let desc = new TFOperationDesc (graph, "RandomGamma", graph.MakeName(name, "RandomGamma"))
         desc.AddInput (shape) |> ignore
         desc.AddInput (alpha) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -24367,8 +24367,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.RandomGammaGrad (alpha : TFOutput, sample : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomGammaGrad", graph.MakeName ("RandomGammaGrad", name))
+        graph.CheckOutputs([|yield alpha; yield sample|])
+        let desc = new TFOperationDesc (graph, "RandomGammaGrad", graph.MakeName(name, "RandomGammaGrad"))
         desc.AddInput (alpha) |> ignore
         desc.AddInput (sample) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -24399,8 +24399,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.RandomPoisson (shape : TFOutput, rate : TFOutput, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomPoisson", graph.MakeName ("RandomPoisson", name))
+        graph.CheckOutputs([|yield shape; yield rate|])
+        let desc = new TFOperationDesc (graph, "RandomPoisson", graph.MakeName(name, "RandomPoisson"))
         desc.AddInput (shape) |> ignore
         desc.AddInput (rate) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -24458,8 +24458,8 @@ type TFGraph with
     ///    Programming, Volume 2. Addison Wesley
     /// </remarks>
     member graph.RandomPoissonV2 (shape : TFOutput, rate : TFOutput, ?seed : int64, ?seed2 : int64, ?dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomPoissonV2", graph.MakeName ("RandomPoissonV2", name))
+        graph.CheckOutputs([|yield shape; yield rate|])
+        let desc = new TFOperationDesc (graph, "RandomPoissonV2", graph.MakeName(name, "RandomPoissonV2"))
         desc.AddInput (shape) |> ignore
         desc.AddInput (rate) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -24509,8 +24509,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.RandomShuffle (value : TFOutput, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomShuffle", graph.MakeName ("RandomShuffle", name))
+        graph.CheckOutputs([|yield value|])
+        let desc = new TFOperationDesc (graph, "RandomShuffle", graph.MakeName(name, "RandomShuffle"))
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         seed |> Option.iter (fun seed -> desc.SetAttr ("seed", seed) |> ignore)
@@ -24573,8 +24573,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.RandomShuffleQueue (component_types : TFDataType[], ?shapes : TFShape[], ?capacity : int64, ?min_after_dequeue : int64, ?seed : int64, ?seed2 : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomShuffleQueue", graph.MakeName ("RandomShuffleQueue", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "RandomShuffleQueue", graph.MakeName(name, "RandomShuffleQueue"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("component_types", component_types) |> ignore
         shapes |> Option.iter (fun shapes -> desc.SetAttr ("shapes", shapes) |> ignore)
@@ -24642,8 +24642,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.RandomShuffleQueueV2 (component_types : TFDataType[], ?shapes : TFShape[], ?capacity : int64, ?min_after_dequeue : int64, ?seed : int64, ?seed2 : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomShuffleQueueV2", graph.MakeName ("RandomShuffleQueueV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "RandomShuffleQueueV2", graph.MakeName(name, "RandomShuffleQueueV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("component_types", component_types) |> ignore
         shapes |> Option.iter (fun shapes -> desc.SetAttr ("shapes", shapes) |> ignore)
@@ -24690,8 +24690,8 @@ type TFGraph with
     ///    The generated values will have mean 0 and standard deviation 1.
     /// </remarks>
     member graph.RandomStandardNormal (shape : TFOutput, dtype : TFDataType, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomStandardNormal", graph.MakeName ("RandomStandardNormal", name))
+        graph.CheckOutputs([|yield shape|])
+        let desc = new TFOperationDesc (graph, "RandomStandardNormal", graph.MakeName(name, "RandomStandardNormal"))
         desc.AddInput (shape) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -24735,8 +24735,8 @@ type TFGraph with
     ///    lower bound 0 is included in the range, while the upper bound 1 is excluded.
     /// </remarks>
     member graph.RandomUniform (shape : TFOutput, dtype : TFDataType, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomUniform", graph.MakeName ("RandomUniform", name))
+        graph.CheckOutputs([|yield shape|])
+        let desc = new TFOperationDesc (graph, "RandomUniform", graph.MakeName(name, "RandomUniform"))
         desc.AddInput (shape) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -24788,8 +24788,8 @@ type TFGraph with
     ///    smaller than the range of the output (either <c>2^32<c> or <c>2^64<c>).
     /// </remarks>
     member graph.RandomUniformInt (shape : TFOutput, minval : TFOutput, maxval : TFOutput, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RandomUniformInt", graph.MakeName ("RandomUniformInt", name))
+        graph.CheckOutputs([|yield shape; yield minval; yield maxval|])
+        let desc = new TFOperationDesc (graph, "RandomUniformInt", graph.MakeName(name, "RandomUniformInt"))
         desc.AddInput (shape) |> ignore
         desc.AddInput (minval) |> ignore
         desc.AddInput (maxval) |> ignore
@@ -24836,8 +24836,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Range (start : TFOutput, limit : TFOutput, delta : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Range", graph.MakeName ("Range", name))
+        graph.CheckOutputs([|yield start; yield limit; yield delta|])
+        let desc = new TFOperationDesc (graph, "Range", graph.MakeName(name, "Range"))
         desc.AddInput (start) |> ignore
         desc.AddInput (limit) |> ignore
         desc.AddInput (delta) |> ignore
@@ -24872,8 +24872,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.RangeDataset (start : TFOutput, stop : TFOutput, step : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RangeDataset", graph.MakeName ("RangeDataset", name))
+        graph.CheckOutputs([|yield start; yield stop; yield step|])
+        let desc = new TFOperationDesc (graph, "RangeDataset", graph.MakeName(name, "RangeDataset"))
         desc.AddInput (start) |> ignore
         desc.AddInput (stop) |> ignore
         desc.AddInput (step) |> ignore
@@ -24914,8 +24914,8 @@ type TFGraph with
     ///    of the tensor. Rank is also known as "order", "degree", or "ndims."
     /// </remarks>
     member graph.Rank (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Rank", graph.MakeName ("Rank", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Rank", graph.MakeName(name, "Rank"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -24937,8 +24937,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ReadFile (filename : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReadFile", graph.MakeName ("ReadFile", name))
+        graph.CheckOutputs([|yield filename|])
+        let desc = new TFOperationDesc (graph, "ReadFile", graph.MakeName(name, "ReadFile"))
         desc.AddInput (filename) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -24972,8 +24972,8 @@ type TFGraph with
     ///    operation.
     /// </remarks>
     member graph.ReadVariableOp (resource : TFOutput, dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReadVariableOp", graph.MakeName ("ReadVariableOp", name))
+        graph.CheckOutputs([|yield resource|])
+        let desc = new TFOperationDesc (graph, "ReadVariableOp", graph.MakeName(name, "ReadVariableOp"))
         desc.AddInput (resource) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -25001,8 +25001,8 @@ type TFGraph with
     ///    succeeded.
     /// </remarks>
     member graph.ReaderNumRecordsProduced (reader_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderNumRecordsProduced", graph.MakeName ("ReaderNumRecordsProduced", name))
+        graph.CheckOutputs([|yield reader_handle|])
+        let desc = new TFOperationDesc (graph, "ReaderNumRecordsProduced", graph.MakeName(name, "ReaderNumRecordsProduced"))
         desc.AddInput (reader_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25029,8 +25029,8 @@ type TFGraph with
     ///    succeeded.
     /// </remarks>
     member graph.ReaderNumRecordsProducedV2 (reader_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderNumRecordsProducedV2", graph.MakeName ("ReaderNumRecordsProducedV2", name))
+        graph.CheckOutputs([|yield reader_handle|])
+        let desc = new TFOperationDesc (graph, "ReaderNumRecordsProducedV2", graph.MakeName(name, "ReaderNumRecordsProducedV2"))
         desc.AddInput (reader_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25053,8 +25053,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ReaderNumWorkUnitsCompleted (reader_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderNumWorkUnitsCompleted", graph.MakeName ("ReaderNumWorkUnitsCompleted", name))
+        graph.CheckOutputs([|yield reader_handle|])
+        let desc = new TFOperationDesc (graph, "ReaderNumWorkUnitsCompleted", graph.MakeName(name, "ReaderNumWorkUnitsCompleted"))
         desc.AddInput (reader_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25077,8 +25077,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ReaderNumWorkUnitsCompletedV2 (reader_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderNumWorkUnitsCompletedV2", graph.MakeName ("ReaderNumWorkUnitsCompletedV2", name))
+        graph.CheckOutputs([|yield reader_handle|])
+        let desc = new TFOperationDesc (graph, "ReaderNumWorkUnitsCompletedV2", graph.MakeName(name, "ReaderNumWorkUnitsCompletedV2"))
         desc.AddInput (reader_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25112,8 +25112,8 @@ type TFGraph with
     ///    with the previous file).
     /// </remarks>
     member graph.ReaderRead (reader_handle : TFOutput, queue_handle : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderRead", graph.MakeName ("ReaderRead", name))
+        graph.CheckOutputs([|yield reader_handle; yield queue_handle|])
+        let desc = new TFOperationDesc (graph, "ReaderRead", graph.MakeName(name, "ReaderRead"))
         desc.AddInput (reader_handle) |> ignore
         desc.AddInput (queue_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -25154,8 +25154,8 @@ type TFGraph with
     ///    It may return less than <c>num_records<c> even before the last batch.
     /// </remarks>
     member graph.ReaderReadUpTo (reader_handle : TFOutput, queue_handle : TFOutput, num_records : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderReadUpTo", graph.MakeName ("ReaderReadUpTo", name))
+        graph.CheckOutputs([|yield reader_handle; yield queue_handle; yield num_records|])
+        let desc = new TFOperationDesc (graph, "ReaderReadUpTo", graph.MakeName(name, "ReaderReadUpTo"))
         desc.AddInput (reader_handle) |> ignore
         desc.AddInput (queue_handle) |> ignore
         desc.AddInput (num_records) |> ignore
@@ -25197,8 +25197,8 @@ type TFGraph with
     ///    It may return less than <c>num_records<c> even before the last batch.
     /// </remarks>
     member graph.ReaderReadUpToV2 (reader_handle : TFOutput, queue_handle : TFOutput, num_records : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderReadUpToV2", graph.MakeName ("ReaderReadUpToV2", name))
+        graph.CheckOutputs([|yield reader_handle; yield queue_handle; yield num_records|])
+        let desc = new TFOperationDesc (graph, "ReaderReadUpToV2", graph.MakeName(name, "ReaderReadUpToV2"))
         desc.AddInput (reader_handle) |> ignore
         desc.AddInput (queue_handle) |> ignore
         desc.AddInput (num_records) |> ignore
@@ -25236,8 +25236,8 @@ type TFGraph with
     ///    with the previous file).
     /// </remarks>
     member graph.ReaderReadV2 (reader_handle : TFOutput, queue_handle : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderReadV2", graph.MakeName ("ReaderReadV2", name))
+        graph.CheckOutputs([|yield reader_handle; yield queue_handle|])
+        let desc = new TFOperationDesc (graph, "ReaderReadV2", graph.MakeName(name, "ReaderReadV2"))
         desc.AddInput (reader_handle) |> ignore
         desc.AddInput (queue_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -25263,8 +25263,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.ReaderReset (reader_handle : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderReset", graph.MakeName ("ReaderReset", name))
+        graph.CheckOutputs([|yield reader_handle|])
+        let desc = new TFOperationDesc (graph, "ReaderReset", graph.MakeName(name, "ReaderReset"))
         desc.AddInput (reader_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25284,8 +25284,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.ReaderResetV2 (reader_handle : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderResetV2", graph.MakeName ("ReaderResetV2", name))
+        graph.CheckOutputs([|yield reader_handle|])
+        let desc = new TFOperationDesc (graph, "ReaderResetV2", graph.MakeName(name, "ReaderResetV2"))
         desc.AddInput (reader_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25313,8 +25313,8 @@ type TFGraph with
     ///    Unimplemented error.
     /// </remarks>
     member graph.ReaderRestoreState (reader_handle : TFOutput, state : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderRestoreState", graph.MakeName ("ReaderRestoreState", name))
+        graph.CheckOutputs([|yield reader_handle; yield state|])
+        let desc = new TFOperationDesc (graph, "ReaderRestoreState", graph.MakeName(name, "ReaderRestoreState"))
         desc.AddInput (reader_handle) |> ignore
         desc.AddInput (state) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -25343,8 +25343,8 @@ type TFGraph with
     ///    Unimplemented error.
     /// </remarks>
     member graph.ReaderRestoreStateV2 (reader_handle : TFOutput, state : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderRestoreStateV2", graph.MakeName ("ReaderRestoreStateV2", name))
+        graph.CheckOutputs([|yield reader_handle; yield state|])
+        let desc = new TFOperationDesc (graph, "ReaderRestoreStateV2", graph.MakeName(name, "ReaderRestoreStateV2"))
         desc.AddInput (reader_handle) |> ignore
         desc.AddInput (state) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -25369,8 +25369,8 @@ type TFGraph with
     ///    Unimplemented error.
     /// </remarks>
     member graph.ReaderSerializeState (reader_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderSerializeState", graph.MakeName ("ReaderSerializeState", name))
+        graph.CheckOutputs([|yield reader_handle|])
+        let desc = new TFOperationDesc (graph, "ReaderSerializeState", graph.MakeName(name, "ReaderSerializeState"))
         desc.AddInput (reader_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25397,8 +25397,8 @@ type TFGraph with
     ///    Unimplemented error.
     /// </remarks>
     member graph.ReaderSerializeStateV2 (reader_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReaderSerializeStateV2", graph.MakeName ("ReaderSerializeStateV2", name))
+        graph.CheckOutputs([|yield reader_handle|])
+        let desc = new TFOperationDesc (graph, "ReaderSerializeStateV2", graph.MakeName(name, "ReaderSerializeStateV2"))
         desc.AddInput (reader_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25436,8 +25436,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Real (input : TFOutput, ?tOut : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Real", graph.MakeName ("Real", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Real", graph.MakeName(name, "Real"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         tOut |> Option.iter (fun tOut -> desc.SetAttr ("Tout", tOut) |> ignore)
@@ -25468,8 +25468,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.RealDiv (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RealDiv", graph.MakeName ("RealDiv", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "RealDiv", graph.MakeName(name, "RealDiv"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -25495,8 +25495,8 @@ type TFGraph with
     ///    I.e., \\(y = 1 / x\\).
     /// </remarks>
     member graph.Reciprocal (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Reciprocal", graph.MakeName ("Reciprocal", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Reciprocal", graph.MakeName(name, "Reciprocal"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25524,8 +25524,8 @@ type TFGraph with
     ///    is the corresponding input gradient.
     /// </remarks>
     member graph.ReciprocalGrad (y : TFOutput, dy : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReciprocalGrad", graph.MakeName ("ReciprocalGrad", name))
+        graph.CheckOutputs([|yield y; yield dy|])
+        let desc = new TFOperationDesc (graph, "ReciprocalGrad", graph.MakeName(name, "ReciprocalGrad"))
         desc.AddInput (y) |> ignore
         desc.AddInput (dy) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -25576,8 +25576,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.RecordInput (file_pattern : string, ?file_random_seed : int64, ?file_shuffle_shift_ratio : float32, ?file_buffer_size : int64, ?file_parallelism : int64, ?batch_size : int64, ?compression_type : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RecordInput", graph.MakeName ("RecordInput", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "RecordInput", graph.MakeName(name, "RecordInput"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("file_pattern", file_pattern) |> ignore
         file_random_seed |> Option.iter (fun file_random_seed -> desc.SetAttr ("file_random_seed", file_random_seed) |> ignore)
@@ -25646,8 +25646,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.ReduceJoin (inputs : TFOutput, reduction_indices : TFOutput, ?keep_dims : bool, ?separator : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReduceJoin", graph.MakeName ("ReduceJoin", name))
+        graph.CheckOutputs([|yield inputs; yield reduction_indices|])
+        let desc = new TFOperationDesc (graph, "ReduceJoin", graph.MakeName(name, "ReduceJoin"))
         desc.AddInput (inputs) |> ignore
         desc.AddInput (reduction_indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -25691,8 +25691,8 @@ type TFGraph with
     ///    are run in parallel in the child frame.
     /// </remarks>
     member graph.RefEnter (data : TFOutput, frame_name : string, ?is_constant : bool, ?parallel_iterations : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RefEnter", graph.MakeName ("RefEnter", name))
+        graph.CheckOutputs([|yield data|])
+        let desc = new TFOperationDesc (graph, "RefEnter", graph.MakeName(name, "RefEnter"))
         desc.AddInput (data) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("frame_name", frame_name) |> ignore
@@ -25722,8 +25722,8 @@ type TFGraph with
     ///    Exit makes its input <c>data<c> available to the parent frame.
     /// </remarks>
     member graph.RefExit (data : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RefExit", graph.MakeName ("RefExit", name))
+        graph.CheckOutputs([|yield data|])
+        let desc = new TFOperationDesc (graph, "RefExit", graph.MakeName(name, "RefExit"))
         desc.AddInput (data) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25745,8 +25745,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.RefIdentity (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RefIdentity", graph.MakeName ("RefIdentity", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "RefIdentity", graph.MakeName(name, "RefIdentity"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25779,8 +25779,8 @@ type TFGraph with
     ///    <c>value_index<c> to its index in <c>inputs<c>.
     /// </remarks>
     member graph.RefMerge (inputs : TFOutput[],  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RefMerge", graph.MakeName ("RefMerge", name))
+        graph.CheckOutputs([|yield! inputs|])
+        let desc = new TFOperationDesc (graph, "RefMerge", graph.MakeName(name, "RefMerge"))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25806,8 +25806,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.RefNextIteration (data : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RefNextIteration", graph.MakeName ("RefNextIteration", name))
+        graph.CheckOutputs([|yield data|])
+        let desc = new TFOperationDesc (graph, "RefNextIteration", graph.MakeName(name, "RefNextIteration"))
         desc.AddInput (data) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25834,8 +25834,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.RefSelect (index : TFOutput, inputs : TFOutput[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RefSelect", graph.MakeName ("RefSelect", name))
+        graph.CheckOutputs([|yield index; yield! inputs|])
+        let desc = new TFOperationDesc (graph, "RefSelect", graph.MakeName(name, "RefSelect"))
         desc.AddInput (index) |> ignore
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -25871,8 +25871,8 @@ type TFGraph with
     ///    See also <c>Switch<c> and <c>Merge<c>.
     /// </remarks>
     member graph.RefSwitch (data : TFOutput, pred : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RefSwitch", graph.MakeName ("RefSwitch", name))
+        graph.CheckOutputs([|yield data; yield pred|])
+        let desc = new TFOperationDesc (graph, "RefSwitch", graph.MakeName(name, "RefSwitch"))
         desc.AddInput (data) |> ignore
         desc.AddInput (pred) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -25910,8 +25910,8 @@ type TFGraph with
     ///    The pattern follows the re2 syntax (https://github.com/google/re2/wiki/Syntax)
     /// </remarks>
     member graph.RegexFullMatch (input : TFOutput, pattern : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RegexFullMatch", graph.MakeName ("RegexFullMatch", name))
+        graph.CheckOutputs([|yield input; yield pattern|])
+        let desc = new TFOperationDesc (graph, "RegexFullMatch", graph.MakeName(name, "RegexFullMatch"))
         desc.AddInput (input) |> ignore
         desc.AddInput (pattern) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -25950,8 +25950,8 @@ type TFGraph with
     ///    It follows the re2 syntax (https://github.com/google/re2/wiki/Syntax)
     /// </remarks>
     member graph.RegexReplace (input : TFOutput, pattern : TFOutput, rewrite : TFOutput, ?replace_global : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RegexReplace", graph.MakeName ("RegexReplace", name))
+        graph.CheckOutputs([|yield input; yield pattern; yield rewrite|])
+        let desc = new TFOperationDesc (graph, "RegexReplace", graph.MakeName(name, "RegexReplace"))
         desc.AddInput (input) |> ignore
         desc.AddInput (pattern) |> ignore
         desc.AddInput (rewrite) |> ignore
@@ -25976,8 +25976,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Relu (features : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Relu", graph.MakeName ("Relu", name))
+        graph.CheckOutputs([|yield features|])
+        let desc = new TFOperationDesc (graph, "Relu", graph.MakeName(name, "Relu"))
         desc.AddInput (features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -25999,8 +25999,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Relu6 (features : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Relu6", graph.MakeName ("Relu6", name))
+        graph.CheckOutputs([|yield features|])
+        let desc = new TFOperationDesc (graph, "Relu6", graph.MakeName(name, "Relu6"))
         desc.AddInput (features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -26029,8 +26029,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Relu6Grad (gradients : TFOutput, features : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Relu6Grad", graph.MakeName ("Relu6Grad", name))
+        graph.CheckOutputs([|yield gradients; yield features|])
+        let desc = new TFOperationDesc (graph, "Relu6Grad", graph.MakeName(name, "Relu6Grad"))
         desc.AddInput (gradients) |> ignore
         desc.AddInput (features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -26059,8 +26059,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ReluGrad (gradients : TFOutput, features : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReluGrad", graph.MakeName ("ReluGrad", name))
+        graph.CheckOutputs([|yield gradients; yield features|])
+        let desc = new TFOperationDesc (graph, "ReluGrad", graph.MakeName(name, "ReluGrad"))
         desc.AddInput (gradients) |> ignore
         desc.AddInput (features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -26100,8 +26100,8 @@ type TFGraph with
     ///    will be passed to consumer nodes as outputs of this node.
     /// </remarks>
     member graph.RemoteFusedGraphExecute (inputs : TFOutput[], tOutputs : TFDataType[], serialized_remote_fused_graph_execute_info : string,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RemoteFusedGraphExecute", graph.MakeName ("RemoteFusedGraphExecute", name))
+        graph.CheckOutputs([|yield! inputs|])
+        let desc = new TFOperationDesc (graph, "RemoteFusedGraphExecute", graph.MakeName(name, "RemoteFusedGraphExecute"))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("Toutputs", tOutputs) |> ignore
@@ -26133,8 +26133,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.RepeatDataset (input_dataset : TFOutput, count : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RepeatDataset", graph.MakeName ("RepeatDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield count|])
+        let desc = new TFOperationDesc (graph, "RepeatDataset", graph.MakeName(name, "RepeatDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (count) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -26173,8 +26173,8 @@ type TFGraph with
     ///    Requantize.
     /// </remarks>
     member graph.RequantizationRange (input : TFOutput, input_min : TFOutput, input_max : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RequantizationRange", graph.MakeName ("RequantizationRange", name))
+        graph.CheckOutputs([|yield input; yield input_min; yield input_max|])
+        let desc = new TFOperationDesc (graph, "RequantizationRange", graph.MakeName(name, "RequantizationRange"))
         desc.AddInput (input) |> ignore
         desc.AddInput (input_min) |> ignore
         desc.AddInput (input_max) |> ignore
@@ -26227,8 +26227,8 @@ type TFGraph with
     ///    value in the 16-bit data should be interpreted as -1.0f, and a 65535 means 1.0f.
     /// </remarks>
     member graph.Requantize (input : TFOutput, input_min : TFOutput, input_max : TFOutput, requested_output_min : TFOutput, requested_output_max : TFOutput, out_type : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Requantize", graph.MakeName ("Requantize", name))
+        graph.CheckOutputs([|yield input; yield input_min; yield input_max; yield requested_output_min; yield requested_output_max|])
+        let desc = new TFOperationDesc (graph, "Requantize", graph.MakeName(name, "Requantize"))
         desc.AddInput (input) |> ignore
         desc.AddInput (input_min) |> ignore
         desc.AddInput (input_max) |> ignore
@@ -26320,8 +26320,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Reshape (tensor : TFOutput, shape : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Reshape", graph.MakeName ("Reshape", name))
+        graph.CheckOutputs([|yield tensor; yield shape|])
+        let desc = new TFOperationDesc (graph, "Reshape", graph.MakeName(name, "Reshape"))
         desc.AddInput (tensor) |> ignore
         desc.AddInput (shape) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -26369,8 +26369,8 @@ type TFGraph with
     ///    area that intersects the footprint.  This is the same as OpenCV's INTER_AREA.
     /// </remarks>
     member graph.ResizeArea (images : TFOutput, size : TFOutput, ?align_corners : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResizeArea", graph.MakeName ("ResizeArea", name))
+        graph.CheckOutputs([|yield images; yield size|])
+        let desc = new TFOperationDesc (graph, "ResizeArea", graph.MakeName(name, "ResizeArea"))
         desc.AddInput (images) |> ignore
         desc.AddInput (size) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -26409,8 +26409,8 @@ type TFGraph with
     ///    Input images can be of different types but output images are always float.
     /// </remarks>
     member graph.ResizeBicubic (images : TFOutput, size : TFOutput, ?align_corners : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResizeBicubic", graph.MakeName ("ResizeBicubic", name))
+        graph.CheckOutputs([|yield images; yield size|])
+        let desc = new TFOperationDesc (graph, "ResizeBicubic", graph.MakeName(name, "ResizeBicubic"))
         desc.AddInput (images) |> ignore
         desc.AddInput (size) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -26447,8 +26447,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ResizeBicubicGrad (grads : TFOutput, original_image : TFOutput, ?align_corners : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResizeBicubicGrad", graph.MakeName ("ResizeBicubicGrad", name))
+        graph.CheckOutputs([|yield grads; yield original_image|])
+        let desc = new TFOperationDesc (graph, "ResizeBicubicGrad", graph.MakeName(name, "ResizeBicubicGrad"))
         desc.AddInput (grads) |> ignore
         desc.AddInput (original_image) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -26487,8 +26487,8 @@ type TFGraph with
     ///    Input images can be of different types but output images are always float.
     /// </remarks>
     member graph.ResizeBilinear (images : TFOutput, size : TFOutput, ?align_corners : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResizeBilinear", graph.MakeName ("ResizeBilinear", name))
+        graph.CheckOutputs([|yield images; yield size|])
+        let desc = new TFOperationDesc (graph, "ResizeBilinear", graph.MakeName(name, "ResizeBilinear"))
         desc.AddInput (images) |> ignore
         desc.AddInput (size) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -26525,8 +26525,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ResizeBilinearGrad (grads : TFOutput, original_image : TFOutput, ?align_corners : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResizeBilinearGrad", graph.MakeName ("ResizeBilinearGrad", name))
+        graph.CheckOutputs([|yield grads; yield original_image|])
+        let desc = new TFOperationDesc (graph, "ResizeBilinearGrad", graph.MakeName(name, "ResizeBilinearGrad"))
         desc.AddInput (grads) |> ignore
         desc.AddInput (original_image) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -26562,8 +26562,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ResizeNearestNeighbor (images : TFOutput, size : TFOutput, ?align_corners : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResizeNearestNeighbor", graph.MakeName ("ResizeNearestNeighbor", name))
+        graph.CheckOutputs([|yield images; yield size|])
+        let desc = new TFOperationDesc (graph, "ResizeNearestNeighbor", graph.MakeName(name, "ResizeNearestNeighbor"))
         desc.AddInput (images) |> ignore
         desc.AddInput (size) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -26599,8 +26599,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ResizeNearestNeighborGrad (grads : TFOutput, size : TFOutput, ?align_corners : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResizeNearestNeighborGrad", graph.MakeName ("ResizeNearestNeighborGrad", name))
+        graph.CheckOutputs([|yield grads; yield size|])
+        let desc = new TFOperationDesc (graph, "ResizeNearestNeighborGrad", graph.MakeName(name, "ResizeNearestNeighborGrad"))
         desc.AddInput (grads) |> ignore
         desc.AddInput (size) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -26660,8 +26660,8 @@ type TFGraph with
     ///    variable &amp;lt;- variable - learning_rate / (1 - beta1^t) * m_t / (v_t + epsilon)
     /// </remarks>
     member graph.ResourceApplyAdaMax (var : TFOutput, m : TFOutput, v : TFOutput, beta1_power : TFOutput, lr : TFOutput, beta1 : TFOutput, beta2 : TFOutput, epsilon : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyAdaMax", graph.MakeName ("ResourceApplyAdaMax", name))
+        graph.CheckOutputs([|yield var; yield m; yield v; yield beta1_power; yield lr; yield beta1; yield beta2; yield epsilon; yield grad|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyAdaMax", graph.MakeName(name, "ResourceApplyAdaMax"))
         desc.AddInput (var) |> ignore
         desc.AddInput (m) |> ignore
         desc.AddInput (v) |> ignore
@@ -26719,8 +26719,8 @@ type TFGraph with
     ///    var -= update;
     /// </remarks>
     member graph.ResourceApplyAdadelta (var : TFOutput, accum : TFOutput, accum_update : TFOutput, lr : TFOutput, rho : TFOutput, epsilon : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyAdadelta", graph.MakeName ("ResourceApplyAdadelta", name))
+        graph.CheckOutputs([|yield var; yield accum; yield accum_update; yield lr; yield rho; yield epsilon; yield grad|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyAdadelta", graph.MakeName(name, "ResourceApplyAdadelta"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (accum_update) |> ignore
@@ -26769,8 +26769,8 @@ type TFGraph with
     ///    var -= lr * grad * (1 / sqrt(accum))
     /// </remarks>
     member graph.ResourceApplyAdagrad (var : TFOutput, accum : TFOutput, lr : TFOutput, grad : TFOutput, ?use_locking : bool, ?update_slots : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyAdagrad", graph.MakeName ("ResourceApplyAdagrad", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield grad|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyAdagrad", graph.MakeName(name, "ResourceApplyAdagrad"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -26821,8 +26821,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.ResourceApplyAdagradDA (var : TFOutput, gradient_accumulator : TFOutput, gradient_squared_accumulator : TFOutput, grad : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, global_step : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyAdagradDA", graph.MakeName ("ResourceApplyAdagradDA", name))
+        graph.CheckOutputs([|yield var; yield gradient_accumulator; yield gradient_squared_accumulator; yield grad; yield lr; yield l1; yield l2; yield global_step|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyAdagradDA", graph.MakeName(name, "ResourceApplyAdagradDA"))
         desc.AddInput (var) |> ignore
         desc.AddInput (gradient_accumulator) |> ignore
         desc.AddInput (gradient_squared_accumulator) |> ignore
@@ -26893,8 +26893,8 @@ type TFGraph with
     ///    $$variable := variable - lr_t * m_t / (\sqrt{v_t} + \epsilon)$$
     /// </remarks>
     member graph.ResourceApplyAdam (var : TFOutput, m : TFOutput, v : TFOutput, beta1_power : TFOutput, beta2_power : TFOutput, lr : TFOutput, beta1 : TFOutput, beta2 : TFOutput, epsilon : TFOutput, grad : TFOutput, ?use_locking : bool, ?use_nesterov : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyAdam", graph.MakeName ("ResourceApplyAdam", name))
+        graph.CheckOutputs([|yield var; yield m; yield v; yield beta1_power; yield beta2_power; yield lr; yield beta1; yield beta2; yield epsilon; yield grad|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyAdam", graph.MakeName(name, "ResourceApplyAdam"))
         desc.AddInput (var) |> ignore
         desc.AddInput (m) |> ignore
         desc.AddInput (v) |> ignore
@@ -26954,8 +26954,8 @@ type TFGraph with
     ///    variable &amp;lt;- variable - lr_t * update
     /// </remarks>
     member graph.ResourceApplyAddSign (var : TFOutput, m : TFOutput, lr : TFOutput, alpha : TFOutput, sign_decay : TFOutput, beta : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyAddSign", graph.MakeName ("ResourceApplyAddSign", name))
+        graph.CheckOutputs([|yield var; yield m; yield lr; yield alpha; yield sign_decay; yield beta; yield grad|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyAddSign", graph.MakeName(name, "ResourceApplyAddSign"))
         desc.AddInput (var) |> ignore
         desc.AddInput (m) |> ignore
         desc.AddInput (lr) |> ignore
@@ -27031,8 +27031,8 @@ type TFGraph with
     ///    var &amp;lt;- var - mom
     /// </remarks>
     member graph.ResourceApplyCenteredRMSProp (var : TFOutput, mg : TFOutput, ms : TFOutput, mom : TFOutput, lr : TFOutput, rho : TFOutput, momentum : TFOutput, epsilon : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyCenteredRMSProp", graph.MakeName ("ResourceApplyCenteredRMSProp", name))
+        graph.CheckOutputs([|yield var; yield mg; yield ms; yield mom; yield lr; yield rho; yield momentum; yield epsilon; yield grad|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyCenteredRMSProp", graph.MakeName(name, "ResourceApplyCenteredRMSProp"))
         desc.AddInput (var) |> ignore
         desc.AddInput (mg) |> ignore
         desc.AddInput (ms) |> ignore
@@ -27095,8 +27095,8 @@ type TFGraph with
     ///    accum = accum_new
     /// </remarks>
     member graph.ResourceApplyFtrl (var : TFOutput, accum : TFOutput, linear : TFOutput, grad : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, lr_power : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyFtrl", graph.MakeName ("ResourceApplyFtrl", name))
+        graph.CheckOutputs([|yield var; yield accum; yield linear; yield grad; yield lr; yield l1; yield l2; yield lr_power|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyFtrl", graph.MakeName(name, "ResourceApplyFtrl"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (linear) |> ignore
@@ -27162,8 +27162,8 @@ type TFGraph with
     ///    accum = accum_new
     /// </remarks>
     member graph.ResourceApplyFtrlV2 (var : TFOutput, accum : TFOutput, linear : TFOutput, grad : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, l2_shrinkage : TFOutput, lr_power : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyFtrlV2", graph.MakeName ("ResourceApplyFtrlV2", name))
+        graph.CheckOutputs([|yield var; yield accum; yield linear; yield grad; yield lr; yield l1; yield l2; yield l2_shrinkage; yield lr_power|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyFtrlV2", graph.MakeName(name, "ResourceApplyFtrlV2"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (linear) |> ignore
@@ -27203,8 +27203,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.ResourceApplyGradientDescent (var : TFOutput, alpha : TFOutput, delta : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyGradientDescent", graph.MakeName ("ResourceApplyGradientDescent", name))
+        graph.CheckOutputs([|yield var; yield alpha; yield delta|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyGradientDescent", graph.MakeName(name, "ResourceApplyGradientDescent"))
         desc.AddInput (var) |> ignore
         desc.AddInput (alpha) |> ignore
         desc.AddInput (delta) |> ignore
@@ -27257,8 +27257,8 @@ type TFGraph with
     ///    var -= lr * accum
     /// </remarks>
     member graph.ResourceApplyMomentum (var : TFOutput, accum : TFOutput, lr : TFOutput, grad : TFOutput, momentum : TFOutput, ?use_locking : bool, ?use_nesterov : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyMomentum", graph.MakeName ("ResourceApplyMomentum", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield grad; yield momentum|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyMomentum", graph.MakeName(name, "ResourceApplyMomentum"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -27313,8 +27313,8 @@ type TFGraph with
     ///    variable &amp;lt;- variable - lr_t * update
     /// </remarks>
     member graph.ResourceApplyPowerSign (var : TFOutput, m : TFOutput, lr : TFOutput, logbase : TFOutput, sign_decay : TFOutput, beta : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyPowerSign", graph.MakeName ("ResourceApplyPowerSign", name))
+        graph.CheckOutputs([|yield var; yield m; yield lr; yield logbase; yield sign_decay; yield beta; yield grad|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyPowerSign", graph.MakeName(name, "ResourceApplyPowerSign"))
         desc.AddInput (var) |> ignore
         desc.AddInput (m) |> ignore
         desc.AddInput (lr) |> ignore
@@ -27366,8 +27366,8 @@ type TFGraph with
     ///    var = sign(prox_v)/(1+lr*l2) * max{|prox_v|-lr*l1,0}
     /// </remarks>
     member graph.ResourceApplyProximalAdagrad (var : TFOutput, accum : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyProximalAdagrad", graph.MakeName ("ResourceApplyProximalAdagrad", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield l1; yield l2; yield grad|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyProximalAdagrad", graph.MakeName(name, "ResourceApplyProximalAdagrad"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -27414,8 +27414,8 @@ type TFGraph with
     ///    var = sign(prox_v)/(1+alpha*l2) * max{|prox_v|-alpha*l1,0}
     /// </remarks>
     member graph.ResourceApplyProximalGradientDescent (var : TFOutput, alpha : TFOutput, l1 : TFOutput, l2 : TFOutput, delta : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyProximalGradientDescent", graph.MakeName ("ResourceApplyProximalGradientDescent", name))
+        graph.CheckOutputs([|yield var; yield alpha; yield l1; yield l2; yield delta|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyProximalGradientDescent", graph.MakeName(name, "ResourceApplyProximalGradientDescent"))
         desc.AddInput (var) |> ignore
         desc.AddInput (alpha) |> ignore
         desc.AddInput (l1) |> ignore
@@ -27478,8 +27478,8 @@ type TFGraph with
     ///    var &amp;lt;- var - mom
     /// </remarks>
     member graph.ResourceApplyRMSProp (var : TFOutput, ms : TFOutput, mom : TFOutput, lr : TFOutput, rho : TFOutput, momentum : TFOutput, epsilon : TFOutput, grad : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceApplyRMSProp", graph.MakeName ("ResourceApplyRMSProp", name))
+        graph.CheckOutputs([|yield var; yield ms; yield mom; yield lr; yield rho; yield momentum; yield epsilon; yield grad|])
+        let desc = new TFOperationDesc (graph, "ResourceApplyRMSProp", graph.MakeName(name, "ResourceApplyRMSProp"))
         desc.AddInput (var) |> ignore
         desc.AddInput (ms) |> ignore
         desc.AddInput (mom) |> ignore
@@ -27515,8 +27515,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ResourceCountUpTo (resource : TFOutput, limit : int64, t : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceCountUpTo", graph.MakeName ("ResourceCountUpTo", name))
+        graph.CheckOutputs([|yield resource|])
+        let desc = new TFOperationDesc (graph, "ResourceCountUpTo", graph.MakeName(name, "ResourceCountUpTo"))
         desc.AddInput (resource) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("limit", limit) |> ignore
@@ -27562,8 +27562,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.ResourceGather (resource : TFOutput, indices : TFOutput, dtype : TFDataType, ?validate_indices : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceGather", graph.MakeName ("ResourceGather", name))
+        graph.CheckOutputs([|yield resource; yield indices|])
+        let desc = new TFOperationDesc (graph, "ResourceGather", graph.MakeName(name, "ResourceGather"))
         desc.AddInput (resource) |> ignore
         desc.AddInput (indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -27616,8 +27616,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.ResourceScatterAdd (resource : TFOutput, indices : TFOutput, updates : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceScatterAdd", graph.MakeName ("ResourceScatterAdd", name))
+        graph.CheckOutputs([|yield resource; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ResourceScatterAdd", graph.MakeName(name, "ResourceScatterAdd"))
         desc.AddInput (resource) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -27666,8 +27666,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.ResourceScatterDiv (resource : TFOutput, indices : TFOutput, updates : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceScatterDiv", graph.MakeName ("ResourceScatterDiv", name))
+        graph.CheckOutputs([|yield resource; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ResourceScatterDiv", graph.MakeName(name, "ResourceScatterDiv"))
         desc.AddInput (resource) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -27716,8 +27716,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.ResourceScatterMax (resource : TFOutput, indices : TFOutput, updates : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceScatterMax", graph.MakeName ("ResourceScatterMax", name))
+        graph.CheckOutputs([|yield resource; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ResourceScatterMax", graph.MakeName(name, "ResourceScatterMax"))
         desc.AddInput (resource) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -27766,8 +27766,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.ResourceScatterMin (resource : TFOutput, indices : TFOutput, updates : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceScatterMin", graph.MakeName ("ResourceScatterMin", name))
+        graph.CheckOutputs([|yield resource; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ResourceScatterMin", graph.MakeName(name, "ResourceScatterMin"))
         desc.AddInput (resource) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -27816,8 +27816,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.ResourceScatterMul (resource : TFOutput, indices : TFOutput, updates : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceScatterMul", graph.MakeName ("ResourceScatterMul", name))
+        graph.CheckOutputs([|yield resource; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ResourceScatterMul", graph.MakeName(name, "ResourceScatterMul"))
         desc.AddInput (resource) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -27890,8 +27890,8 @@ type TFGraph with
     ///    slices.
     /// </remarks>
     member graph.ResourceScatterNdAdd (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceScatterNdAdd", graph.MakeName ("ResourceScatterNdAdd", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ResourceScatterNdAdd", graph.MakeName(name, "ResourceScatterNdAdd"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -27965,8 +27965,8 @@ type TFGraph with
     ///    slices.
     /// </remarks>
     member graph.ResourceScatterNdUpdate (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceScatterNdUpdate", graph.MakeName ("ResourceScatterNdUpdate", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ResourceScatterNdUpdate", graph.MakeName(name, "ResourceScatterNdUpdate"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -28016,8 +28016,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.ResourceScatterSub (resource : TFOutput, indices : TFOutput, updates : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceScatterSub", graph.MakeName ("ResourceScatterSub", name))
+        graph.CheckOutputs([|yield resource; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ResourceScatterSub", graph.MakeName(name, "ResourceScatterSub"))
         desc.AddInput (resource) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -28057,8 +28057,8 @@ type TFGraph with
     ///    ref[indices[i, ..., j], ...] = updates[i, ..., j, ...]
     /// </remarks>
     member graph.ResourceScatterUpdate (resource : TFOutput, indices : TFOutput, updates : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceScatterUpdate", graph.MakeName ("ResourceScatterUpdate", name))
+        graph.CheckOutputs([|yield resource; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ResourceScatterUpdate", graph.MakeName(name, "ResourceScatterUpdate"))
         desc.AddInput (resource) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -28105,8 +28105,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.ResourceSparseApplyAdadelta (var : TFOutput, accum : TFOutput, accum_update : TFOutput, lr : TFOutput, rho : TFOutput, epsilon : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceSparseApplyAdadelta", graph.MakeName ("ResourceSparseApplyAdadelta", name))
+        graph.CheckOutputs([|yield var; yield accum; yield accum_update; yield lr; yield rho; yield epsilon; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "ResourceSparseApplyAdadelta", graph.MakeName(name, "ResourceSparseApplyAdadelta"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (accum_update) |> ignore
@@ -28160,8 +28160,8 @@ type TFGraph with
     ///    var -= lr * grad * (1 / sqrt(accum))
     /// </remarks>
     member graph.ResourceSparseApplyAdagrad (var : TFOutput, accum : TFOutput, lr : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool, ?update_slots : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceSparseApplyAdagrad", graph.MakeName ("ResourceSparseApplyAdagrad", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "ResourceSparseApplyAdagrad", graph.MakeName(name, "ResourceSparseApplyAdagrad"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -28216,8 +28216,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.ResourceSparseApplyAdagradDA (var : TFOutput, gradient_accumulator : TFOutput, gradient_squared_accumulator : TFOutput, grad : TFOutput, indices : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, global_step : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceSparseApplyAdagradDA", graph.MakeName ("ResourceSparseApplyAdagradDA", name))
+        graph.CheckOutputs([|yield var; yield gradient_accumulator; yield gradient_squared_accumulator; yield grad; yield indices; yield lr; yield l1; yield l2; yield global_step|])
+        let desc = new TFOperationDesc (graph, "ResourceSparseApplyAdagradDA", graph.MakeName(name, "ResourceSparseApplyAdagradDA"))
         desc.AddInput (var) |> ignore
         desc.AddInput (gradient_accumulator) |> ignore
         desc.AddInput (gradient_squared_accumulator) |> ignore
@@ -28296,8 +28296,8 @@ type TFGraph with
     ///    var &amp;lt;- var - mom
     /// </remarks>
     member graph.ResourceSparseApplyCenteredRMSProp (var : TFOutput, mg : TFOutput, ms : TFOutput, mom : TFOutput, lr : TFOutput, rho : TFOutput, momentum : TFOutput, epsilon : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceSparseApplyCenteredRMSProp", graph.MakeName ("ResourceSparseApplyCenteredRMSProp", name))
+        graph.CheckOutputs([|yield var; yield mg; yield ms; yield mom; yield lr; yield rho; yield momentum; yield epsilon; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "ResourceSparseApplyCenteredRMSProp", graph.MakeName(name, "ResourceSparseApplyCenteredRMSProp"))
         desc.AddInput (var) |> ignore
         desc.AddInput (mg) |> ignore
         desc.AddInput (ms) |> ignore
@@ -28365,8 +28365,8 @@ type TFGraph with
     ///    accum = accum_new
     /// </remarks>
     member graph.ResourceSparseApplyFtrl (var : TFOutput, accum : TFOutput, linear : TFOutput, grad : TFOutput, indices : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, lr_power : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceSparseApplyFtrl", graph.MakeName ("ResourceSparseApplyFtrl", name))
+        graph.CheckOutputs([|yield var; yield accum; yield linear; yield grad; yield indices; yield lr; yield l1; yield l2; yield lr_power|])
+        let desc = new TFOperationDesc (graph, "ResourceSparseApplyFtrl", graph.MakeName(name, "ResourceSparseApplyFtrl"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (linear) |> ignore
@@ -28437,8 +28437,8 @@ type TFGraph with
     ///    accum = accum_new
     /// </remarks>
     member graph.ResourceSparseApplyFtrlV2 (var : TFOutput, accum : TFOutput, linear : TFOutput, grad : TFOutput, indices : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, l2_shrinkage : TFOutput, lr_power : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceSparseApplyFtrlV2", graph.MakeName ("ResourceSparseApplyFtrlV2", name))
+        graph.CheckOutputs([|yield var; yield accum; yield linear; yield grad; yield indices; yield lr; yield l1; yield l2; yield l2_shrinkage; yield lr_power|])
+        let desc = new TFOperationDesc (graph, "ResourceSparseApplyFtrlV2", graph.MakeName(name, "ResourceSparseApplyFtrlV2"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (linear) |> ignore
@@ -28503,8 +28503,8 @@ type TFGraph with
     ///    var -= lr * accum
     /// </remarks>
     member graph.ResourceSparseApplyMomentum (var : TFOutput, accum : TFOutput, lr : TFOutput, grad : TFOutput, indices : TFOutput, momentum : TFOutput, ?use_locking : bool, ?use_nesterov : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceSparseApplyMomentum", graph.MakeName ("ResourceSparseApplyMomentum", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield grad; yield indices; yield momentum|])
+        let desc = new TFOperationDesc (graph, "ResourceSparseApplyMomentum", graph.MakeName(name, "ResourceSparseApplyMomentum"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -28561,8 +28561,8 @@ type TFGraph with
     ///    var = sign(prox_v)/(1+lr*l2) * max{|prox_v|-lr*l1,0}
     /// </remarks>
     member graph.ResourceSparseApplyProximalAdagrad (var : TFOutput, accum : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceSparseApplyProximalAdagrad", graph.MakeName ("ResourceSparseApplyProximalAdagrad", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield l1; yield l2; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "ResourceSparseApplyProximalAdagrad", graph.MakeName(name, "ResourceSparseApplyProximalAdagrad"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -28614,8 +28614,8 @@ type TFGraph with
     ///    var = sign(prox_v)/(1+alpha*l2) * max{|prox_v|-alpha*l1,0}
     /// </remarks>
     member graph.ResourceSparseApplyProximalGradientDescent (var : TFOutput, alpha : TFOutput, l1 : TFOutput, l2 : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceSparseApplyProximalGradientDescent", graph.MakeName ("ResourceSparseApplyProximalGradientDescent", name))
+        graph.CheckOutputs([|yield var; yield alpha; yield l1; yield l2; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "ResourceSparseApplyProximalGradientDescent", graph.MakeName(name, "ResourceSparseApplyProximalGradientDescent"))
         desc.AddInput (var) |> ignore
         desc.AddInput (alpha) |> ignore
         desc.AddInput (l1) |> ignore
@@ -28682,8 +28682,8 @@ type TFGraph with
     ///    var &amp;lt;- var - mom
     /// </remarks>
     member graph.ResourceSparseApplyRMSProp (var : TFOutput, ms : TFOutput, mom : TFOutput, lr : TFOutput, rho : TFOutput, momentum : TFOutput, epsilon : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceSparseApplyRMSProp", graph.MakeName ("ResourceSparseApplyRMSProp", name))
+        graph.CheckOutputs([|yield var; yield ms; yield mom; yield lr; yield rho; yield momentum; yield epsilon; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "ResourceSparseApplyRMSProp", graph.MakeName(name, "ResourceSparseApplyRMSProp"))
         desc.AddInput (var) |> ignore
         desc.AddInput (ms) |> ignore
         desc.AddInput (mom) |> ignore
@@ -28742,8 +28742,8 @@ type TFGraph with
     ///    shape must be exactly the shape produced by the slice of <c>ref<c>.
     /// </remarks>
     member graph.ResourceStridedSliceAssign (reference : TFOutput, _begin : TFOutput, _end : TFOutput, strides : TFOutput, value : TFOutput, ?begin_mask : int64, ?end_mask : int64, ?ellipsis_mask : int64, ?new_axis_mask : int64, ?shrink_axis_mask : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ResourceStridedSliceAssign", graph.MakeName ("ResourceStridedSliceAssign", name))
+        graph.CheckOutputs([|yield reference; yield _begin; yield _end; yield strides; yield value|])
+        let desc = new TFOperationDesc (graph, "ResourceStridedSliceAssign", graph.MakeName(name, "ResourceStridedSliceAssign"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (_begin) |> ignore
         desc.AddInput (_end) |> ignore
@@ -28804,8 +28804,8 @@ type TFGraph with
     ///    See also <c>RestoreSlice<c>.
     /// </remarks>
     member graph.Restore (file_pattern : TFOutput, tensor_name : TFOutput, dt : TFDataType, ?preferred_shard : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Restore", graph.MakeName ("Restore", name))
+        graph.CheckOutputs([|yield file_pattern; yield tensor_name|])
+        let desc = new TFOperationDesc (graph, "Restore", graph.MakeName(name, "Restore"))
         desc.AddInput (file_pattern) |> ignore
         desc.AddInput (tensor_name) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -28857,8 +28857,8 @@ type TFGraph with
     ///    elements of the <c>shapes_and_slices<c> input of the <c>SaveSlices<c> op.
     /// </remarks>
     member graph.RestoreSlice (file_pattern : TFOutput, tensor_name : TFOutput, shape_and_slice : TFOutput, dt : TFDataType, ?preferred_shard : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RestoreSlice", graph.MakeName ("RestoreSlice", name))
+        graph.CheckOutputs([|yield file_pattern; yield tensor_name; yield shape_and_slice|])
+        let desc = new TFOperationDesc (graph, "RestoreSlice", graph.MakeName(name, "RestoreSlice"))
         desc.AddInput (file_pattern) |> ignore
         desc.AddInput (tensor_name) |> ignore
         desc.AddInput (shape_and_slice) |> ignore
@@ -28913,8 +28913,8 @@ type TFGraph with
     ///    Callers must ensure all the named tensors are indeed stored in the checkpoint.
     /// </remarks>
     member graph.RestoreV2 (prefix : TFOutput, tensor_names : TFOutput, shape_and_slices : TFOutput, dtypes : TFDataType[],  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RestoreV2", graph.MakeName ("RestoreV2", name))
+        graph.CheckOutputs([|yield prefix; yield tensor_names; yield shape_and_slices|])
+        let desc = new TFOperationDesc (graph, "RestoreV2", graph.MakeName(name, "RestoreV2"))
         desc.AddInput (prefix) |> ignore
         desc.AddInput (tensor_names) |> ignore
         desc.AddInput (shape_and_slices) |> ignore
@@ -28990,8 +28990,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Reverse (tensor : TFOutput, dims : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Reverse", graph.MakeName ("Reverse", name))
+        graph.CheckOutputs([|yield tensor; yield dims|])
+        let desc = new TFOperationDesc (graph, "Reverse", graph.MakeName(name, "Reverse"))
         desc.AddInput (tensor) |> ignore
         desc.AddInput (dims) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -29083,8 +29083,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.ReverseSequence (input : TFOutput, seq_lengths : TFOutput, seq_dim : int64, ?batch_dim : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReverseSequence", graph.MakeName ("ReverseSequence", name))
+        graph.CheckOutputs([|yield input; yield seq_lengths|])
+        let desc = new TFOperationDesc (graph, "ReverseSequence", graph.MakeName(name, "ReverseSequence"))
         desc.AddInput (input) |> ignore
         desc.AddInput (seq_lengths) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -29163,8 +29163,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.ReverseV2 (tensor : TFOutput, axis : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ReverseV2", graph.MakeName ("ReverseV2", name))
+        graph.CheckOutputs([|yield tensor; yield axis|])
+        let desc = new TFOperationDesc (graph, "ReverseV2", graph.MakeName(name, "ReverseV2"))
         desc.AddInput (tensor) |> ignore
         desc.AddInput (axis) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -29196,8 +29196,8 @@ type TFGraph with
     ///    the result is implementation defined.
     /// </remarks>
     member graph.RightShift (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RightShift", graph.MakeName ("RightShift", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "RightShift", graph.MakeName(name, "RightShift"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -29231,8 +29231,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Rint (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Rint", graph.MakeName ("Rint", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Rint", graph.MakeName(name, "Rint"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -29291,8 +29291,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Roll (input : TFOutput, shift : TFOutput, axis : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Roll", graph.MakeName ("Roll", name))
+        graph.CheckOutputs([|yield input; yield shift; yield axis|])
+        let desc = new TFOperationDesc (graph, "Roll", graph.MakeName(name, "Roll"))
         desc.AddInput (input) |> ignore
         desc.AddInput (shift) |> ignore
         desc.AddInput (axis) |> ignore
@@ -29320,8 +29320,8 @@ type TFGraph with
     ///    according to the current system rounding mode use std::cint.
     /// </remarks>
     member graph.Round (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Round", graph.MakeName ("Round", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Round", graph.MakeName(name, "Round"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -29423,8 +29423,8 @@ type TFGraph with
     ///    See the <c>TryRpc<c> op if you prefer to handle RPC failures manually in the graph.
     /// </remarks>
     member graph.Rpc (address : TFOutput, method : TFOutput, request : TFOutput, ?protocol : string, ?fail_fast : bool, ?timeout_in_ms : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Rpc", graph.MakeName ("Rpc", name))
+        graph.CheckOutputs([|yield address; yield method; yield request|])
+        let desc = new TFOperationDesc (graph, "Rpc", graph.MakeName(name, "Rpc"))
         desc.AddInput (address) |> ignore
         desc.AddInput (method) |> ignore
         desc.AddInput (request) |> ignore
@@ -29454,8 +29454,8 @@ type TFGraph with
     ///    I.e., \\(y = 1 / \sqrt{x}\\).
     /// </remarks>
     member graph.Rsqrt (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Rsqrt", graph.MakeName ("Rsqrt", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Rsqrt", graph.MakeName(name, "Rsqrt"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -29483,8 +29483,8 @@ type TFGraph with
     ///    is the corresponding input gradient.
     /// </remarks>
     member graph.RsqrtGrad (y : TFOutput, dy : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "RsqrtGrad", graph.MakeName ("RsqrtGrad", name))
+        graph.CheckOutputs([|yield y; yield dy|])
+        let desc = new TFOperationDesc (graph, "RsqrtGrad", graph.MakeName(name, "RsqrtGrad"))
         desc.AddInput (y) |> ignore
         desc.AddInput (dy) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -29598,8 +29598,8 @@ type TFGraph with
     ///    false and no bounding boxes are supplied, an error is raised.
     /// </remarks>
     member graph.SampleDistortedBoundingBox (image_size : TFOutput, bounding_boxes : TFOutput, ?seed : int64, ?seed2 : int64, ?min_object_covered : float32, ?aspect_ratio_range : float32[], ?area_range : float32[], ?max_attempts : int64, ?use_image_if_no_bounding_boxes : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SampleDistortedBoundingBox", graph.MakeName ("SampleDistortedBoundingBox", name))
+        graph.CheckOutputs([|yield image_size; yield bounding_boxes|])
+        let desc = new TFOperationDesc (graph, "SampleDistortedBoundingBox", graph.MakeName(name, "SampleDistortedBoundingBox"))
         desc.AddInput (image_size) |> ignore
         desc.AddInput (bounding_boxes) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -29723,8 +29723,8 @@ type TFGraph with
     ///    false and no bounding boxes are supplied, an error is raised.
     /// </remarks>
     member graph.SampleDistortedBoundingBoxV2 (image_size : TFOutput, bounding_boxes : TFOutput, min_object_covered : TFOutput, ?seed : int64, ?seed2 : int64, ?aspect_ratio_range : float32[], ?area_range : float32[], ?max_attempts : int64, ?use_image_if_no_bounding_boxes : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SampleDistortedBoundingBoxV2", graph.MakeName ("SampleDistortedBoundingBoxV2", name))
+        graph.CheckOutputs([|yield image_size; yield bounding_boxes; yield min_object_covered|])
+        let desc = new TFOperationDesc (graph, "SampleDistortedBoundingBoxV2", graph.MakeName(name, "SampleDistortedBoundingBoxV2"))
         desc.AddInput (image_size) |> ignore
         desc.AddInput (bounding_boxes) |> ignore
         desc.AddInput (min_object_covered) |> ignore
@@ -29772,8 +29772,8 @@ type TFGraph with
     ///    See also <c>SaveSlices<c>.
     /// </remarks>
     member graph.Save (filename : TFOutput, tensor_names : TFOutput, data : TFOutput[],  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Save", graph.MakeName ("Save", name))
+        graph.CheckOutputs([|yield filename; yield tensor_names; yield! data|])
+        let desc = new TFOperationDesc (graph, "Save", graph.MakeName(name, "Save"))
         desc.AddInput (filename) |> ignore
         desc.AddInput (tensor_names) |> ignore
         desc.AddInputs (data) |> ignore
@@ -29829,8 +29829,8 @@ type TFGraph with
     ///    See also <c>Save<c>.
     /// </remarks>
     member graph.SaveSlices (filename : TFOutput, tensor_names : TFOutput, shapes_and_slices : TFOutput, data : TFOutput[],  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SaveSlices", graph.MakeName ("SaveSlices", name))
+        graph.CheckOutputs([|yield filename; yield tensor_names; yield shapes_and_slices; yield! data|])
+        let desc = new TFOperationDesc (graph, "SaveSlices", graph.MakeName(name, "SaveSlices"))
         desc.AddInput (filename) |> ignore
         desc.AddInput (tensor_names) |> ignore
         desc.AddInput (shapes_and_slices) |> ignore
@@ -29869,8 +29869,8 @@ type TFGraph with
     ///    and correspondingly well-formed.
     /// </remarks>
     member graph.SaveV2 (prefix : TFOutput, tensor_names : TFOutput, shape_and_slices : TFOutput, tensors : TFOutput[],  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SaveV2", graph.MakeName ("SaveV2", name))
+        graph.CheckOutputs([|yield prefix; yield tensor_names; yield shape_and_slices; yield! tensors|])
+        let desc = new TFOperationDesc (graph, "SaveV2", graph.MakeName(name, "SaveV2"))
         desc.AddInput (prefix) |> ignore
         desc.AddInput (tensor_names) |> ignore
         desc.AddInput (shape_and_slices) |> ignore
@@ -29901,8 +29901,8 @@ type TFGraph with
     ///    has a summary value for each tag-value pair in <c>tags<c> and <c>values<c>.
     /// </remarks>
     member graph.ScalarSummary (tags : TFOutput, values : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScalarSummary", graph.MakeName ("ScalarSummary", name))
+        graph.CheckOutputs([|yield tags; yield values|])
+        let desc = new TFOperationDesc (graph, "ScalarSummary", graph.MakeName(name, "ScalarSummary"))
         desc.AddInput (tags) |> ignore
         desc.AddInput (values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -29963,8 +29963,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.ScatterAdd (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterAdd", graph.MakeName ("ScatterAdd", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ScatterAdd", graph.MakeName(name, "ScatterAdd"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -30025,8 +30025,8 @@ type TFGraph with
     ///    Requires <c>updates.shape = indices.shape + ref.shape[1:]<c> or <c>updates.shape = []<c>.
     /// </remarks>
     member graph.ScatterDiv (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterDiv", graph.MakeName ("ScatterDiv", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ScatterDiv", graph.MakeName(name, "ScatterDiv"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -30089,8 +30089,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.ScatterMax (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterMax", graph.MakeName ("ScatterMax", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ScatterMax", graph.MakeName(name, "ScatterMax"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -30153,8 +30153,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.ScatterMin (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterMin", graph.MakeName ("ScatterMin", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ScatterMin", graph.MakeName(name, "ScatterMin"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -30215,8 +30215,8 @@ type TFGraph with
     ///    Requires <c>updates.shape = indices.shape + ref.shape[1:]<c> or <c>updates.shape = []<c>.
     /// </remarks>
     member graph.ScatterMul (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterMul", graph.MakeName ("ScatterMul", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ScatterMul", graph.MakeName(name, "ScatterMul"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -30330,8 +30330,8 @@ type TFGraph with
     ///    On GPU, if an out of bound index is found, the index is ignored.
     /// </remarks>
     member graph.ScatterNd (indices : TFOutput, updates : TFOutput, shape : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterNd", graph.MakeName ("ScatterNd", name))
+        graph.CheckOutputs([|yield indices; yield updates; yield shape|])
+        let desc = new TFOperationDesc (graph, "ScatterNd", graph.MakeName(name, "ScatterNd"))
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
         desc.AddInput (shape) |> ignore
@@ -30405,8 +30405,8 @@ type TFGraph with
     ///    slices.
     /// </remarks>
     member graph.ScatterNdAdd (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterNdAdd", graph.MakeName ("ScatterNdAdd", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ScatterNdAdd", graph.MakeName(name, "ScatterNdAdd"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -30477,8 +30477,8 @@ type TFGraph with
     ///    See <c>tf.scatter_nd<c> for more details about how to make updates to slices.
     /// </remarks>
     member graph.ScatterNdNonAliasingAdd (input : TFOutput, indices : TFOutput, updates : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterNdNonAliasingAdd", graph.MakeName ("ScatterNdNonAliasingAdd", name))
+        graph.CheckOutputs([|yield input; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ScatterNdNonAliasingAdd", graph.MakeName(name, "ScatterNdNonAliasingAdd"))
         desc.AddInput (input) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -30552,8 +30552,8 @@ type TFGraph with
     ///    slices.
     /// </remarks>
     member graph.ScatterNdSub (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterNdSub", graph.MakeName ("ScatterNdSub", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ScatterNdSub", graph.MakeName(name, "ScatterNdSub"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -30632,8 +30632,8 @@ type TFGraph with
     ///    See also <c>tf.scatter_update<c> and <c>tf.batch_scatter_update<c>.
     /// </remarks>
     member graph.ScatterNdUpdate (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterNdUpdate", graph.MakeName ("ScatterNdUpdate", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ScatterNdUpdate", graph.MakeName(name, "ScatterNdUpdate"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -30696,8 +30696,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.ScatterSub (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterSub", graph.MakeName ("ScatterSub", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ScatterSub", graph.MakeName(name, "ScatterSub"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -30765,8 +30765,8 @@ type TFGraph with
     ///    See also <c>tf.batch_scatter_update<c> and <c>tf.scatter_nd_update<c>.
     /// </remarks>
     member graph.ScatterUpdate (reference : TFOutput, indices : TFOutput, updates : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ScatterUpdate", graph.MakeName ("ScatterUpdate", name))
+        graph.CheckOutputs([|yield reference; yield indices; yield updates|])
+        let desc = new TFOperationDesc (graph, "ScatterUpdate", graph.MakeName(name, "ScatterUpdate"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (updates) |> ignore
@@ -30794,8 +30794,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SdcaFprint (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SdcaFprint", graph.MakeName ("SdcaFprint", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "SdcaFprint", graph.MakeName(name, "SdcaFprint"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -30898,8 +30898,8 @@ type TFGraph with
     ///    Dominik Csiba, Zheng Qu, Peter Richtarik. 2015
     /// </remarks>
     member graph.SdcaOptimizer (sparse_example_indices : TFOutput[], sparse_feature_indices : TFOutput[], sparse_feature_values : TFOutput[], dense_features : TFOutput[], example_weights : TFOutput, example_labels : TFOutput, sparse_indices : TFOutput[], sparse_weights : TFOutput[], dense_weights : TFOutput[], example_state_data : TFOutput, loss_type : string, l1 : float32, l2 : float32, num_loss_partitions : int64, num_inner_iterations : int64, ?adaptative : bool,  ?name : string) : (TFOutput*TFOutput[]*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SdcaOptimizer", graph.MakeName ("SdcaOptimizer", name))
+        graph.CheckOutputs([|yield! sparse_example_indices; yield! sparse_feature_indices; yield! sparse_feature_values; yield! dense_features; yield example_weights; yield example_labels; yield! sparse_indices; yield! sparse_weights; yield! dense_weights; yield example_state_data|])
+        let desc = new TFOperationDesc (graph, "SdcaOptimizer", graph.MakeName(name, "SdcaOptimizer"))
         desc.AddInputs (sparse_example_indices) |> ignore
         desc.AddInputs (sparse_feature_indices) |> ignore
         desc.AddInputs (sparse_feature_values) |> ignore
@@ -30947,8 +30947,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.SdcaShrinkL1 (weights : TFOutput[], l1 : float32, l2 : float32,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SdcaShrinkL1", graph.MakeName ("SdcaShrinkL1", name))
+        graph.CheckOutputs([|yield! weights|])
+        let desc = new TFOperationDesc (graph, "SdcaShrinkL1", graph.MakeName(name, "SdcaShrinkL1"))
         desc.AddInputs (weights) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("l1", l1) |> ignore
@@ -30990,8 +30990,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.SegmentMax (data : TFOutput, segment_ids : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SegmentMax", graph.MakeName ("SegmentMax", name))
+        graph.CheckOutputs([|yield data; yield segment_ids|])
+        let desc = new TFOperationDesc (graph, "SegmentMax", graph.MakeName(name, "SegmentMax"))
         desc.AddInput (data) |> ignore
         desc.AddInput (segment_ids) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -31036,8 +31036,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.SegmentMean (data : TFOutput, segment_ids : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SegmentMean", graph.MakeName ("SegmentMean", name))
+        graph.CheckOutputs([|yield data; yield segment_ids|])
+        let desc = new TFOperationDesc (graph, "SegmentMean", graph.MakeName(name, "SegmentMean"))
         desc.AddInput (data) |> ignore
         desc.AddInput (segment_ids) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -31081,8 +31081,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.SegmentMin (data : TFOutput, segment_ids : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SegmentMin", graph.MakeName ("SegmentMin", name))
+        graph.CheckOutputs([|yield data; yield segment_ids|])
+        let desc = new TFOperationDesc (graph, "SegmentMin", graph.MakeName(name, "SegmentMin"))
         desc.AddInput (data) |> ignore
         desc.AddInput (segment_ids) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -31126,8 +31126,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.SegmentProd (data : TFOutput, segment_ids : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SegmentProd", graph.MakeName ("SegmentProd", name))
+        graph.CheckOutputs([|yield data; yield segment_ids|])
+        let desc = new TFOperationDesc (graph, "SegmentProd", graph.MakeName(name, "SegmentProd"))
         desc.AddInput (data) |> ignore
         desc.AddInput (segment_ids) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -31171,8 +31171,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.SegmentSum (data : TFOutput, segment_ids : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SegmentSum", graph.MakeName ("SegmentSum", name))
+        graph.CheckOutputs([|yield data; yield segment_ids|])
+        let desc = new TFOperationDesc (graph, "SegmentSum", graph.MakeName(name, "SegmentSum"))
         desc.AddInput (data) |> ignore
         desc.AddInput (segment_ids) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -31244,8 +31244,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Select (condition : TFOutput, t : TFOutput, e : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Select", graph.MakeName ("Select", name))
+        graph.CheckOutputs([|yield condition; yield t; yield e|])
+        let desc = new TFOperationDesc (graph, "Select", graph.MakeName(name, "Select"))
         desc.AddInput (condition) |> ignore
         desc.AddInput (t) |> ignore
         desc.AddInput (e) |> ignore
@@ -31280,8 +31280,8 @@ type TFGraph with
     ///    are sorted in non-decreasing order.
     /// </remarks>
     member graph.SelfAdjointEig (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SelfAdjointEig", graph.MakeName ("SelfAdjointEig", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "SelfAdjointEig", graph.MakeName(name, "SelfAdjointEig"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -31325,8 +31325,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.SelfAdjointEigV2 (input : TFOutput, ?compute_v : bool,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SelfAdjointEigV2", graph.MakeName ("SelfAdjointEigV2", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "SelfAdjointEigV2", graph.MakeName(name, "SelfAdjointEigV2"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         compute_v |> Option.iter (fun compute_v -> desc.SetAttr ("compute_v", compute_v) |> ignore)
@@ -31360,8 +31360,8 @@ type TFGraph with
     ///    See [Self-Normalizing Neural Networks](https://arxiv.org/abs/1706.02515)
     /// </remarks>
     member graph.Selu (features : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Selu", graph.MakeName ("Selu", name))
+        graph.CheckOutputs([|yield features|])
+        let desc = new TFOperationDesc (graph, "Selu", graph.MakeName(name, "Selu"))
         desc.AddInput (features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -31389,8 +31389,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SeluGrad (gradients : TFOutput, outputs : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SeluGrad", graph.MakeName ("SeluGrad", name))
+        graph.CheckOutputs([|yield gradients; yield outputs|])
+        let desc = new TFOperationDesc (graph, "SeluGrad", graph.MakeName(name, "SeluGrad"))
         desc.AddInput (gradients) |> ignore
         desc.AddInput (outputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -31416,8 +31416,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SerializeIterator (resource_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SerializeIterator", graph.MakeName ("SerializeIterator", name))
+        graph.CheckOutputs([|yield resource_handle|])
+        let desc = new TFOperationDesc (graph, "SerializeIterator", graph.MakeName(name, "SerializeIterator"))
         desc.AddInput (resource_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -31460,8 +31460,8 @@ type TFGraph with
     ///    The minibatch size <c>N<c> is extracted from <c>sparse_shape[0]<c>.
     /// </remarks>
     member graph.SerializeManySparse (sparse_indices : TFOutput, sparse_values : TFOutput, sparse_shape : TFOutput, ?out_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SerializeManySparse", graph.MakeName ("SerializeManySparse", name))
+        graph.CheckOutputs([|yield sparse_indices; yield sparse_values; yield sparse_shape|])
+        let desc = new TFOperationDesc (graph, "SerializeManySparse", graph.MakeName(name, "SerializeManySparse"))
         desc.AddInput (sparse_indices) |> ignore
         desc.AddInput (sparse_values) |> ignore
         desc.AddInput (sparse_shape) |> ignore
@@ -31498,8 +31498,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SerializeSparse (sparse_indices : TFOutput, sparse_values : TFOutput, sparse_shape : TFOutput, ?out_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SerializeSparse", graph.MakeName ("SerializeSparse", name))
+        graph.CheckOutputs([|yield sparse_indices; yield sparse_values; yield sparse_shape|])
+        let desc = new TFOperationDesc (graph, "SerializeSparse", graph.MakeName(name, "SerializeSparse"))
         desc.AddInput (sparse_indices) |> ignore
         desc.AddInput (sparse_values) |> ignore
         desc.AddInput (sparse_shape) |> ignore
@@ -31526,8 +31526,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SerializeTensor (tensor : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SerializeTensor", graph.MakeName ("SerializeTensor", name))
+        graph.CheckOutputs([|yield tensor|])
+        let desc = new TFOperationDesc (graph, "SerializeTensor", graph.MakeName(name, "SerializeTensor"))
         desc.AddInput (tensor) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -31570,8 +31570,8 @@ type TFGraph with
     ///    indices.
     /// </remarks>
     member graph.SetSize (set_indices : TFOutput, set_values : TFOutput, set_shape : TFOutput, ?validate_indices : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SetSize", graph.MakeName ("SetSize", name))
+        graph.CheckOutputs([|yield set_indices; yield set_values; yield set_shape|])
+        let desc = new TFOperationDesc (graph, "SetSize", graph.MakeName(name, "SetSize"))
         desc.AddInput (set_indices) |> ignore
         desc.AddInput (set_values) |> ignore
         desc.AddInput (set_shape) |> ignore
@@ -31609,8 +31609,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Shape (input : TFOutput, ?out_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Shape", graph.MakeName ("Shape", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Shape", graph.MakeName(name, "Shape"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         out_type |> Option.iter (fun out_type -> desc.SetAttr ("out_type", out_type) |> ignore)
@@ -31639,8 +31639,8 @@ type TFGraph with
     ///    This operation returns N 1-D integer tensors representing shape of <c>input[i]s<c>.
     /// </remarks>
     member graph.ShapeN (input : TFOutput[], ?out_type : TFDataType,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ShapeN", graph.MakeName ("ShapeN", name))
+        graph.CheckOutputs([|yield! input|])
+        let desc = new TFOperationDesc (graph, "ShapeN", graph.MakeName(name, "ShapeN"))
         desc.AddInputs (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         out_type |> Option.iter (fun out_type -> desc.SetAttr ("out_type", out_type) |> ignore)
@@ -31670,8 +31670,8 @@ type TFGraph with
     ///    %s-%05d-of-%05d, basename, shard, num_shards.
     /// </remarks>
     member graph.ShardedFilename (basename : TFOutput, shard : TFOutput, num_shards : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ShardedFilename", graph.MakeName ("ShardedFilename", name))
+        graph.CheckOutputs([|yield basename; yield shard; yield num_shards|])
+        let desc = new TFOperationDesc (graph, "ShardedFilename", graph.MakeName(name, "ShardedFilename"))
         desc.AddInput (basename) |> ignore
         desc.AddInput (shard) |> ignore
         desc.AddInput (num_shards) |> ignore
@@ -31697,8 +31697,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ShardedFilespec (basename : TFOutput, num_shards : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ShardedFilespec", graph.MakeName ("ShardedFilespec", name))
+        graph.CheckOutputs([|yield basename; yield num_shards|])
+        let desc = new TFOperationDesc (graph, "ShardedFilespec", graph.MakeName(name, "ShardedFilespec"))
         desc.AddInput (basename) |> ignore
         desc.AddInput (num_shards) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -31745,8 +31745,8 @@ type TFGraph with
     ///    pseudorandomly.
     /// </remarks>
     member graph.ShuffleAndRepeatDataset (input_dataset : TFOutput, buffer_size : TFOutput, seed : TFOutput, seed2 : TFOutput, count : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ShuffleAndRepeatDataset", graph.MakeName ("ShuffleAndRepeatDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield buffer_size; yield seed; yield seed2; yield count|])
+        let desc = new TFOperationDesc (graph, "ShuffleAndRepeatDataset", graph.MakeName(name, "ShuffleAndRepeatDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (buffer_size) |> ignore
         desc.AddInput (seed) |> ignore
@@ -31799,8 +31799,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ShuffleDataset (input_dataset : TFOutput, buffer_size : TFOutput, seed : TFOutput, seed2 : TFOutput, output_types : TFDataType[], output_shapes : TFShape[], ?reshuffle_each_iteration : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ShuffleDataset", graph.MakeName ("ShuffleDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield buffer_size; yield seed; yield seed2|])
+        let desc = new TFOperationDesc (graph, "ShuffleDataset", graph.MakeName(name, "ShuffleDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (buffer_size) |> ignore
         desc.AddInput (seed) |> ignore
@@ -31829,8 +31829,8 @@ type TFGraph with
     ///    an error if no system is running.
     /// </remarks>
     member graph.ShutdownDistributedTPU ( ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ShutdownDistributedTPU", graph.MakeName ("ShutdownDistributedTPU", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "ShutdownDistributedTPU", graph.MakeName(name, "ShutdownDistributedTPU"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
         op
@@ -31851,8 +31851,8 @@ type TFGraph with
     ///    Specifically, <c>y = 1 / (1 + exp(-x))<c>.
     /// </remarks>
     member graph.Sigmoid (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Sigmoid", graph.MakeName ("Sigmoid", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Sigmoid", graph.MakeName(name, "Sigmoid"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -31880,8 +31880,8 @@ type TFGraph with
     ///    <c>dy<c> is the corresponding input gradient.
     /// </remarks>
     member graph.SigmoidGrad (y : TFOutput, dy : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SigmoidGrad", graph.MakeName ("SigmoidGrad", name))
+        graph.CheckOutputs([|yield y; yield dy|])
+        let desc = new TFOperationDesc (graph, "SigmoidGrad", graph.MakeName(name, "SigmoidGrad"))
         desc.AddInput (y) |> ignore
         desc.AddInput (dy) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -31909,8 +31909,8 @@ type TFGraph with
     ///    For complex numbers, <c>y = sign(x) = x / |x|<c> if <c>x != 0<c>, otherwise <c>y = 0<c>.
     /// </remarks>
     member graph.Sign (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Sign", graph.MakeName ("Sign", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Sign", graph.MakeName(name, "Sign"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -31932,8 +31932,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Sin (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Sin", graph.MakeName ("Sin", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Sin", graph.MakeName(name, "Sin"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -31955,8 +31955,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Sinh (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Sinh", graph.MakeName ("Sinh", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Sinh", graph.MakeName(name, "Sinh"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -31982,8 +31982,8 @@ type TFGraph with
     ///    A placeholder for input pipeline graph optimizations.
     /// </remarks>
     member graph.SinkDataset (input_dataset : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SinkDataset", graph.MakeName ("SinkDataset", name))
+        graph.CheckOutputs([|yield input_dataset|])
+        let desc = new TFOperationDesc (graph, "SinkDataset", graph.MakeName(name, "SinkDataset"))
         desc.AddInput (input_dataset) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -32019,8 +32019,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Size (input : TFOutput, ?out_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Size", graph.MakeName ("Size", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Size", graph.MakeName(name, "Size"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         out_type |> Option.iter (fun out_type -> desc.SetAttr ("out_type", out_type) |> ignore)
@@ -32051,8 +32051,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SkipDataset (input_dataset : TFOutput, count : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SkipDataset", graph.MakeName ("SkipDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield count|])
+        let desc = new TFOperationDesc (graph, "SkipDataset", graph.MakeName(name, "SkipDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (count) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -32103,8 +32103,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.Skipgram (filename : string, batch_size : int64, ?window_size : int64, ?min_count : int64, ?subsample : float32,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Skipgram", graph.MakeName ("Skipgram", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "Skipgram", graph.MakeName(name, "Skipgram"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("filename", filename) |> ignore
         desc.SetAttr ("batch_size", batch_size) |> ignore
@@ -32160,8 +32160,8 @@ type TFGraph with
     ///    0 &amp;lt;= begin[i] &amp;lt;= begin[i] + size[i] &amp;lt;= Di  for i in [0, n)
     /// </remarks>
     member graph.Slice (input : TFOutput, _begin : TFOutput, size : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Slice", graph.MakeName ("Slice", name))
+        graph.CheckOutputs([|yield input; yield _begin; yield size|])
+        let desc = new TFOperationDesc (graph, "Slice", graph.MakeName(name, "Slice"))
         desc.AddInput (input) |> ignore
         desc.AddInput (_begin) |> ignore
         desc.AddInput (size) |> ignore
@@ -32201,8 +32201,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SlideDataset (input_dataset : TFOutput, window_size : TFOutput, window_shift : TFOutput, window_stride : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SlideDataset", graph.MakeName ("SlideDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield window_size; yield window_shift; yield window_stride|])
+        let desc = new TFOperationDesc (graph, "SlideDataset", graph.MakeName(name, "SlideDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (window_size) |> ignore
         desc.AddInput (window_shift) |> ignore
@@ -32229,8 +32229,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Snapshot (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Snapshot", graph.MakeName ("Snapshot", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Snapshot", graph.MakeName(name, "Snapshot"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -32259,8 +32259,8 @@ type TFGraph with
     ///    $$softmax[i, j] = exp(logits[i, j]) / sum_j(exp(logits[i, j]))$$
     /// </remarks>
     member graph.Softmax (logits : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Softmax", graph.MakeName ("Softmax", name))
+        graph.CheckOutputs([|yield logits|])
+        let desc = new TFOperationDesc (graph, "Softmax", graph.MakeName(name, "Softmax"))
         desc.AddInput (logits) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -32294,8 +32294,8 @@ type TFGraph with
     ///    Inputs are the logits, not probabilities.
     /// </remarks>
     member graph.SoftmaxCrossEntropyWithLogits (features : TFOutput, labels : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SoftmaxCrossEntropyWithLogits", graph.MakeName ("SoftmaxCrossEntropyWithLogits", name))
+        graph.CheckOutputs([|yield features; yield labels|])
+        let desc = new TFOperationDesc (graph, "SoftmaxCrossEntropyWithLogits", graph.MakeName(name, "SoftmaxCrossEntropyWithLogits"))
         desc.AddInput (features) |> ignore
         desc.AddInput (labels) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -32320,8 +32320,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Softplus (features : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Softplus", graph.MakeName ("Softplus", name))
+        graph.CheckOutputs([|yield features|])
+        let desc = new TFOperationDesc (graph, "Softplus", graph.MakeName(name, "Softplus"))
         desc.AddInput (features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -32348,8 +32348,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SoftplusGrad (gradients : TFOutput, features : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SoftplusGrad", graph.MakeName ("SoftplusGrad", name))
+        graph.CheckOutputs([|yield gradients; yield features|])
+        let desc = new TFOperationDesc (graph, "SoftplusGrad", graph.MakeName(name, "SoftplusGrad"))
         desc.AddInput (gradients) |> ignore
         desc.AddInput (features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -32372,8 +32372,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Softsign (features : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Softsign", graph.MakeName ("Softsign", name))
+        graph.CheckOutputs([|yield features|])
+        let desc = new TFOperationDesc (graph, "Softsign", graph.MakeName(name, "Softsign"))
         desc.AddInput (features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -32400,8 +32400,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SoftsignGrad (gradients : TFOutput, features : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SoftsignGrad", graph.MakeName ("SoftsignGrad", name))
+        graph.CheckOutputs([|yield gradients; yield features|])
+        let desc = new TFOperationDesc (graph, "SoftsignGrad", graph.MakeName(name, "SoftsignGrad"))
         desc.AddInput (gradients) |> ignore
         desc.AddInput (features) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -32523,8 +32523,8 @@ type TFGraph with
     ///    block size.
     /// </remarks>
     member graph.SpaceToBatch (input : TFOutput, paddings : TFOutput, block_size : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SpaceToBatch", graph.MakeName ("SpaceToBatch", name))
+        graph.CheckOutputs([|yield input; yield paddings|])
+        let desc = new TFOperationDesc (graph, "SpaceToBatch", graph.MakeName(name, "SpaceToBatch"))
         desc.AddInput (input) |> ignore
         desc.AddInput (paddings) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -32673,8 +32673,8 @@ type TFGraph with
     ///    precise description.
     /// </remarks>
     member graph.SpaceToBatchND (input : TFOutput, block_shape : TFOutput, paddings : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SpaceToBatchND", graph.MakeName ("SpaceToBatchND", name))
+        graph.CheckOutputs([|yield input; yield block_shape; yield paddings|])
+        let desc = new TFOperationDesc (graph, "SpaceToBatchND", graph.MakeName(name, "SpaceToBatchND"))
         desc.AddInput (input) |> ignore
         desc.AddInput (block_shape) |> ignore
         desc.AddInput (paddings) |> ignore
@@ -32789,8 +32789,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.SpaceToDepth (input : TFOutput, block_size : int64, ?data_format : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SpaceToDepth", graph.MakeName ("SpaceToDepth", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "SpaceToDepth", graph.MakeName(name, "SpaceToDepth"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("block_size", block_size) |> ignore
@@ -32838,8 +32838,8 @@ type TFGraph with
     ///    global_step.
     /// </remarks>
     member graph.SparseAccumulatorApplyGradient (handle : TFOutput, local_step : TFOutput, gradient_indices : TFOutput, gradient_values : TFOutput, gradient_shape : TFOutput, has_known_shape : bool,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseAccumulatorApplyGradient", graph.MakeName ("SparseAccumulatorApplyGradient", name))
+        graph.CheckOutputs([|yield handle; yield local_step; yield gradient_indices; yield gradient_values; yield gradient_shape|])
+        let desc = new TFOperationDesc (graph, "SparseAccumulatorApplyGradient", graph.MakeName(name, "SparseAccumulatorApplyGradient"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (local_step) |> ignore
         desc.AddInput (gradient_indices) |> ignore
@@ -32883,8 +32883,8 @@ type TFGraph with
     ///    aggregate to 0.
     /// </remarks>
     member graph.SparseAccumulatorTakeGradient (handle : TFOutput, num_required : TFOutput, dtype : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseAccumulatorTakeGradient", graph.MakeName ("SparseAccumulatorTakeGradient", name))
+        graph.CheckOutputs([|yield handle; yield num_required|])
+        let desc = new TFOperationDesc (graph, "SparseAccumulatorTakeGradient", graph.MakeName(name, "SparseAccumulatorTakeGradient"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (num_required) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -32951,8 +32951,8 @@ type TFGraph with
     ///    In the following shapes, <c>nnz<c> is the count after taking <c>thresh<c> into account.
     /// </remarks>
     member graph.SparseAdd (a_indices : TFOutput, a_values : TFOutput, a_shape : TFOutput, b_indices : TFOutput, b_values : TFOutput, b_shape : TFOutput, thresh : TFOutput,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseAdd", graph.MakeName ("SparseAdd", name))
+        graph.CheckOutputs([|yield a_indices; yield a_values; yield a_shape; yield b_indices; yield b_values; yield b_shape; yield thresh|])
+        let desc = new TFOperationDesc (graph, "SparseAdd", graph.MakeName(name, "SparseAdd"))
         desc.AddInput (a_indices) |> ignore
         desc.AddInput (a_values) |> ignore
         desc.AddInput (a_shape) |> ignore
@@ -33007,8 +33007,8 @@ type TFGraph with
     ///    values of A and B.
     /// </remarks>
     member graph.SparseAddGrad (backprop_val_grad : TFOutput, a_indices : TFOutput, b_indices : TFOutput, sum_indices : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseAddGrad", graph.MakeName ("SparseAddGrad", name))
+        graph.CheckOutputs([|yield backprop_val_grad; yield a_indices; yield b_indices; yield sum_indices|])
+        let desc = new TFOperationDesc (graph, "SparseAddGrad", graph.MakeName(name, "SparseAddGrad"))
         desc.AddInput (backprop_val_grad) |> ignore
         desc.AddInput (a_indices) |> ignore
         desc.AddInput (b_indices) |> ignore
@@ -33062,8 +33062,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SparseApplyAdadelta (var : TFOutput, accum : TFOutput, accum_update : TFOutput, lr : TFOutput, rho : TFOutput, epsilon : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseApplyAdadelta", graph.MakeName ("SparseApplyAdadelta", name))
+        graph.CheckOutputs([|yield var; yield accum; yield accum_update; yield lr; yield rho; yield epsilon; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "SparseApplyAdadelta", graph.MakeName(name, "SparseApplyAdadelta"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (accum_update) |> ignore
@@ -33121,8 +33121,8 @@ type TFGraph with
     ///    $$var -= lr * grad * (1 / sqrt(accum))$$
     /// </remarks>
     member graph.SparseApplyAdagrad (var : TFOutput, accum : TFOutput, lr : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool, ?update_slots : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseApplyAdagrad", graph.MakeName ("SparseApplyAdagrad", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "SparseApplyAdagrad", graph.MakeName(name, "SparseApplyAdagrad"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -33181,8 +33181,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SparseApplyAdagradDA (var : TFOutput, gradient_accumulator : TFOutput, gradient_squared_accumulator : TFOutput, grad : TFOutput, indices : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, global_step : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseApplyAdagradDA", graph.MakeName ("SparseApplyAdagradDA", name))
+        graph.CheckOutputs([|yield var; yield gradient_accumulator; yield gradient_squared_accumulator; yield grad; yield indices; yield lr; yield l1; yield l2; yield global_step|])
+        let desc = new TFOperationDesc (graph, "SparseApplyAdagradDA", graph.MakeName(name, "SparseApplyAdagradDA"))
         desc.AddInput (var) |> ignore
         desc.AddInput (gradient_accumulator) |> ignore
         desc.AddInput (gradient_squared_accumulator) |> ignore
@@ -33265,8 +33265,8 @@ type TFGraph with
     ///    $$var &amp;lt;- var - mom$$
     /// </remarks>
     member graph.SparseApplyCenteredRMSProp (var : TFOutput, mg : TFOutput, ms : TFOutput, mom : TFOutput, lr : TFOutput, rho : TFOutput, momentum : TFOutput, epsilon : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseApplyCenteredRMSProp", graph.MakeName ("SparseApplyCenteredRMSProp", name))
+        graph.CheckOutputs([|yield var; yield mg; yield ms; yield mom; yield lr; yield rho; yield momentum; yield epsilon; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "SparseApplyCenteredRMSProp", graph.MakeName(name, "SparseApplyCenteredRMSProp"))
         desc.AddInput (var) |> ignore
         desc.AddInput (mg) |> ignore
         desc.AddInput (ms) |> ignore
@@ -33338,8 +33338,8 @@ type TFGraph with
     ///    $$accum = accum_{new}$$
     /// </remarks>
     member graph.SparseApplyFtrl (var : TFOutput, accum : TFOutput, linear : TFOutput, grad : TFOutput, indices : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, lr_power : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseApplyFtrl", graph.MakeName ("SparseApplyFtrl", name))
+        graph.CheckOutputs([|yield var; yield accum; yield linear; yield grad; yield indices; yield lr; yield l1; yield l2; yield lr_power|])
+        let desc = new TFOperationDesc (graph, "SparseApplyFtrl", graph.MakeName(name, "SparseApplyFtrl"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (linear) |> ignore
@@ -33414,8 +33414,8 @@ type TFGraph with
     ///    accum = accum_new
     /// </remarks>
     member graph.SparseApplyFtrlV2 (var : TFOutput, accum : TFOutput, linear : TFOutput, grad : TFOutput, indices : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, l2_shrinkage : TFOutput, lr_power : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseApplyFtrlV2", graph.MakeName ("SparseApplyFtrlV2", name))
+        graph.CheckOutputs([|yield var; yield accum; yield linear; yield grad; yield indices; yield lr; yield l1; yield l2; yield l2_shrinkage; yield lr_power|])
+        let desc = new TFOperationDesc (graph, "SparseApplyFtrlV2", graph.MakeName(name, "SparseApplyFtrlV2"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (linear) |> ignore
@@ -33484,8 +33484,8 @@ type TFGraph with
     ///    $$var -= lr * accum$$
     /// </remarks>
     member graph.SparseApplyMomentum (var : TFOutput, accum : TFOutput, lr : TFOutput, grad : TFOutput, indices : TFOutput, momentum : TFOutput, ?use_locking : bool, ?use_nesterov : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseApplyMomentum", graph.MakeName ("SparseApplyMomentum", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield grad; yield indices; yield momentum|])
+        let desc = new TFOperationDesc (graph, "SparseApplyMomentum", graph.MakeName(name, "SparseApplyMomentum"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -33546,8 +33546,8 @@ type TFGraph with
     ///    $$var = sign(prox_v)/(1+lr*l2) * max{|prox_v|-lr*l1,0}$$
     /// </remarks>
     member graph.SparseApplyProximalAdagrad (var : TFOutput, accum : TFOutput, lr : TFOutput, l1 : TFOutput, l2 : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseApplyProximalAdagrad", graph.MakeName ("SparseApplyProximalAdagrad", name))
+        graph.CheckOutputs([|yield var; yield accum; yield lr; yield l1; yield l2; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "SparseApplyProximalAdagrad", graph.MakeName(name, "SparseApplyProximalAdagrad"))
         desc.AddInput (var) |> ignore
         desc.AddInput (accum) |> ignore
         desc.AddInput (lr) |> ignore
@@ -33603,8 +33603,8 @@ type TFGraph with
     ///    $$var = sign(prox_v)/(1+alpha*l2) * max{|prox_v|-alpha*l1,0}$$
     /// </remarks>
     member graph.SparseApplyProximalGradientDescent (var : TFOutput, alpha : TFOutput, l1 : TFOutput, l2 : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseApplyProximalGradientDescent", graph.MakeName ("SparseApplyProximalGradientDescent", name))
+        graph.CheckOutputs([|yield var; yield alpha; yield l1; yield l2; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "SparseApplyProximalGradientDescent", graph.MakeName(name, "SparseApplyProximalGradientDescent"))
         desc.AddInput (var) |> ignore
         desc.AddInput (alpha) |> ignore
         desc.AddInput (l1) |> ignore
@@ -33675,8 +33675,8 @@ type TFGraph with
     ///    $$var &amp;lt;- var - mom$$
     /// </remarks>
     member graph.SparseApplyRMSProp (var : TFOutput, ms : TFOutput, mom : TFOutput, lr : TFOutput, rho : TFOutput, momentum : TFOutput, epsilon : TFOutput, grad : TFOutput, indices : TFOutput, ?use_locking : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseApplyRMSProp", graph.MakeName ("SparseApplyRMSProp", name))
+        graph.CheckOutputs([|yield var; yield ms; yield mom; yield lr; yield rho; yield momentum; yield epsilon; yield grad; yield indices|])
+        let desc = new TFOperationDesc (graph, "SparseApplyRMSProp", graph.MakeName(name, "SparseApplyRMSProp"))
         desc.AddInput (var) |> ignore
         desc.AddInput (ms) |> ignore
         desc.AddInput (mom) |> ignore
@@ -33765,8 +33765,8 @@ type TFGraph with
     ///    [b c  ]        [       ]   [b c          ]
     /// </remarks>
     member graph.SparseConcat (indices : TFOutput[], values : TFOutput[], shapes : TFOutput[], concat_dim : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseConcat", graph.MakeName ("SparseConcat", name))
+        graph.CheckOutputs([|yield! indices; yield! values; yield! shapes|])
+        let desc = new TFOperationDesc (graph, "SparseConcat", graph.MakeName(name, "SparseConcat"))
         desc.AddInputs (indices) |> ignore
         desc.AddInputs (values) |> ignore
         desc.AddInputs (shapes) |> ignore
@@ -33818,8 +33818,8 @@ type TFGraph with
     ///    the accumulator.
     /// </remarks>
     member graph.SparseConditionalAccumulator (dtype : TFDataType, shape : TFShape, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseConditionalAccumulator", graph.MakeName ("SparseConditionalAccumulator", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "SparseConditionalAccumulator", graph.MakeName(name, "SparseConditionalAccumulator"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
         desc.SetAttr ("shape", shape) |> ignore
@@ -33913,8 +33913,8 @@ type TFGraph with
     ///    Fingerprint64("e"), Fingerprint64("c")))
     /// </remarks>
     member graph.SparseCross (indices : TFOutput[], values : TFOutput[], shapes : TFOutput[], dense_inputs : TFOutput[], hashed_output : bool, num_buckets : int64, hash_key : int64, out_type : TFDataType, internal_type : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseCross", graph.MakeName ("SparseCross", name))
+        graph.CheckOutputs([|yield! indices; yield! values; yield! shapes; yield! dense_inputs|])
+        let desc = new TFOperationDesc (graph, "SparseCross", graph.MakeName(name, "SparseCross"))
         desc.AddInputs (indices) |> ignore
         desc.AddInputs (values) |> ignore
         desc.AddInputs (shapes) |> ignore
@@ -33970,8 +33970,8 @@ type TFGraph with
     ///    this Op is the resultant non-zero values.
     /// </remarks>
     member graph.SparseDenseCwiseAdd (sp_indices : TFOutput, sp_values : TFOutput, sp_shape : TFOutput, dense : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseDenseCwiseAdd", graph.MakeName ("SparseDenseCwiseAdd", name))
+        graph.CheckOutputs([|yield sp_indices; yield sp_values; yield sp_shape; yield dense|])
+        let desc = new TFOperationDesc (graph, "SparseDenseCwiseAdd", graph.MakeName(name, "SparseDenseCwiseAdd"))
         desc.AddInput (sp_indices) |> ignore
         desc.AddInput (sp_values) |> ignore
         desc.AddInput (sp_shape) |> ignore
@@ -34012,8 +34012,8 @@ type TFGraph with
     ///    the other direction.
     /// </remarks>
     member graph.SparseDenseCwiseDiv (sp_indices : TFOutput, sp_values : TFOutput, sp_shape : TFOutput, dense : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseDenseCwiseDiv", graph.MakeName ("SparseDenseCwiseDiv", name))
+        graph.CheckOutputs([|yield sp_indices; yield sp_values; yield sp_shape; yield dense|])
+        let desc = new TFOperationDesc (graph, "SparseDenseCwiseDiv", graph.MakeName(name, "SparseDenseCwiseDiv"))
         desc.AddInput (sp_indices) |> ignore
         desc.AddInput (sp_values) |> ignore
         desc.AddInput (sp_shape) |> ignore
@@ -34058,8 +34058,8 @@ type TFGraph with
     ///    the other direction.
     /// </remarks>
     member graph.SparseDenseCwiseMul (sp_indices : TFOutput, sp_values : TFOutput, sp_shape : TFOutput, dense : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseDenseCwiseMul", graph.MakeName ("SparseDenseCwiseMul", name))
+        graph.CheckOutputs([|yield sp_indices; yield sp_values; yield sp_shape; yield dense|])
+        let desc = new TFOperationDesc (graph, "SparseDenseCwiseMul", graph.MakeName(name, "SparseDenseCwiseMul"))
         desc.AddInput (sp_indices) |> ignore
         desc.AddInput (sp_values) |> ignore
         desc.AddInput (sp_shape) |> ignore
@@ -34140,8 +34140,8 @@ type TFGraph with
     ///    reverse_index_map[j] = out_j s.t. indices[j, :] == output_indices[out_j, :]
     /// </remarks>
     member graph.SparseFillEmptyRows (indices : TFOutput, values : TFOutput, dense_shape : TFOutput, default_value : TFOutput,  ?name : string) : (TFOutput*TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseFillEmptyRows", graph.MakeName ("SparseFillEmptyRows", name))
+        graph.CheckOutputs([|yield indices; yield values; yield dense_shape; yield default_value|])
+        let desc = new TFOperationDesc (graph, "SparseFillEmptyRows", graph.MakeName(name, "SparseFillEmptyRows"))
         desc.AddInput (indices) |> ignore
         desc.AddInput (values) |> ignore
         desc.AddInput (dense_shape) |> ignore
@@ -34189,8 +34189,8 @@ type TFGraph with
     ///    grad_values[k] * 1{k not in reverse_index_map})
     /// </remarks>
     member graph.SparseFillEmptyRowsGrad (reverse_index_map : TFOutput, grad_values : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseFillEmptyRowsGrad", graph.MakeName ("SparseFillEmptyRowsGrad", name))
+        graph.CheckOutputs([|yield reverse_index_map; yield grad_values|])
+        let desc = new TFOperationDesc (graph, "SparseFillEmptyRowsGrad", graph.MakeName(name, "SparseFillEmptyRowsGrad"))
         desc.AddInput (reverse_index_map) |> ignore
         desc.AddInput (grad_values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -34240,8 +34240,8 @@ type TFGraph with
     ///    in the input gradient when that gradient comes from a Relu.
     /// </remarks>
     member graph.SparseMatMul (a : TFOutput, b : TFOutput, ?transpose_a : bool, ?transpose_b : bool, ?a_is_sparse : bool, ?b_is_sparse : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseMatMul", graph.MakeName ("SparseMatMul", name))
+        graph.CheckOutputs([|yield a; yield b|])
+        let desc = new TFOperationDesc (graph, "SparseMatMul", graph.MakeName(name, "SparseMatMul"))
         desc.AddInput (a) |> ignore
         desc.AddInput (b) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -34298,8 +34298,8 @@ type TFGraph with
     ///    which are interpreted according to the indexing rules in Python.
     /// </remarks>
     member graph.SparseReduceMax (input_indices : TFOutput, input_values : TFOutput, input_shape : TFOutput, reduction_axes : TFOutput, ?keep_dims : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseReduceMax", graph.MakeName ("SparseReduceMax", name))
+        graph.CheckOutputs([|yield input_indices; yield input_values; yield input_shape; yield reduction_axes|])
+        let desc = new TFOperationDesc (graph, "SparseReduceMax", graph.MakeName(name, "SparseReduceMax"))
         desc.AddInput (input_indices) |> ignore
         desc.AddInput (input_values) |> ignore
         desc.AddInput (input_shape) |> ignore
@@ -34358,8 +34358,8 @@ type TFGraph with
     ///    which are interpreted according to the indexing rules in Python.
     /// </remarks>
     member graph.SparseReduceMaxSparse (input_indices : TFOutput, input_values : TFOutput, input_shape : TFOutput, reduction_axes : TFOutput, ?keep_dims : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseReduceMaxSparse", graph.MakeName ("SparseReduceMaxSparse", name))
+        graph.CheckOutputs([|yield input_indices; yield input_values; yield input_shape; yield reduction_axes|])
+        let desc = new TFOperationDesc (graph, "SparseReduceMaxSparse", graph.MakeName(name, "SparseReduceMaxSparse"))
         desc.AddInput (input_indices) |> ignore
         desc.AddInput (input_values) |> ignore
         desc.AddInput (input_shape) |> ignore
@@ -34419,8 +34419,8 @@ type TFGraph with
     ///    which are interpreted according to the indexing rules in Python.
     /// </remarks>
     member graph.SparseReduceSum (input_indices : TFOutput, input_values : TFOutput, input_shape : TFOutput, reduction_axes : TFOutput, ?keep_dims : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseReduceSum", graph.MakeName ("SparseReduceSum", name))
+        graph.CheckOutputs([|yield input_indices; yield input_values; yield input_shape; yield reduction_axes|])
+        let desc = new TFOperationDesc (graph, "SparseReduceSum", graph.MakeName(name, "SparseReduceSum"))
         desc.AddInput (input_indices) |> ignore
         desc.AddInput (input_values) |> ignore
         desc.AddInput (input_shape) |> ignore
@@ -34479,8 +34479,8 @@ type TFGraph with
     ///    which are interpreted according to the indexing rules in Python.
     /// </remarks>
     member graph.SparseReduceSumSparse (input_indices : TFOutput, input_values : TFOutput, input_shape : TFOutput, reduction_axes : TFOutput, ?keep_dims : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseReduceSumSparse", graph.MakeName ("SparseReduceSumSparse", name))
+        graph.CheckOutputs([|yield input_indices; yield input_values; yield input_shape; yield reduction_axes|])
+        let desc = new TFOperationDesc (graph, "SparseReduceSumSparse", graph.MakeName(name, "SparseReduceSumSparse"))
         desc.AddInput (input_indices) |> ignore
         desc.AddInput (input_values) |> ignore
         desc.AddInput (input_shape) |> ignore
@@ -34532,8 +34532,8 @@ type TFGraph with
     ///    shape <c>[N, R]<c>, input_values has length <c>N<c>, and input_shape has length <c>R<c>.
     /// </remarks>
     member graph.SparseReorder (input_indices : TFOutput, input_values : TFOutput, input_shape : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseReorder", graph.MakeName ("SparseReorder", name))
+        graph.CheckOutputs([|yield input_indices; yield input_values; yield input_shape|])
+        let desc = new TFOperationDesc (graph, "SparseReorder", graph.MakeName(name, "SparseReorder"))
         desc.AddInput (input_indices) |> ignore
         desc.AddInput (input_values) |> ignore
         desc.AddInput (input_shape) |> ignore
@@ -34590,8 +34590,8 @@ type TFGraph with
     ///    <c>output_shape<c> has length <c>R_out<c>.
     /// </remarks>
     member graph.SparseReshape (input_indices : TFOutput, input_shape : TFOutput, new_shape : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseReshape", graph.MakeName ("SparseReshape", name))
+        graph.CheckOutputs([|yield input_indices; yield input_shape; yield new_shape|])
+        let desc = new TFOperationDesc (graph, "SparseReshape", graph.MakeName(name, "SparseReshape"))
         desc.AddInput (input_indices) |> ignore
         desc.AddInput (input_shape) |> ignore
         desc.AddInput (new_shape) |> ignore
@@ -34633,8 +34633,8 @@ type TFGraph with
     ///    dimension, selecting a subset of dimension 0, specified by <c>indices<c>.
     /// </remarks>
     member graph.SparseSegmentMean (data : TFOutput, indices : TFOutput, segment_ids : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSegmentMean", graph.MakeName ("SparseSegmentMean", name))
+        graph.CheckOutputs([|yield data; yield indices; yield segment_ids|])
+        let desc = new TFOperationDesc (graph, "SparseSegmentMean", graph.MakeName(name, "SparseSegmentMean"))
         desc.AddInput (data) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (segment_ids) |> ignore
@@ -34672,8 +34672,8 @@ type TFGraph with
     ///    value is output_dim0.
     /// </remarks>
     member graph.SparseSegmentMeanGrad (grad : TFOutput, indices : TFOutput, segment_ids : TFOutput, output_dim0 : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSegmentMeanGrad", graph.MakeName ("SparseSegmentMeanGrad", name))
+        graph.CheckOutputs([|yield grad; yield indices; yield segment_ids; yield output_dim0|])
+        let desc = new TFOperationDesc (graph, "SparseSegmentMeanGrad", graph.MakeName(name, "SparseSegmentMeanGrad"))
         desc.AddInput (grad) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (segment_ids) |> ignore
@@ -34717,8 +34717,8 @@ type TFGraph with
     ///    for an explanation of segments.
     /// </remarks>
     member graph.SparseSegmentMeanWithNumSegments (data : TFOutput, indices : TFOutput, segment_ids : TFOutput, num_segments : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSegmentMeanWithNumSegments", graph.MakeName ("SparseSegmentMeanWithNumSegments", name))
+        graph.CheckOutputs([|yield data; yield indices; yield segment_ids; yield num_segments|])
+        let desc = new TFOperationDesc (graph, "SparseSegmentMeanWithNumSegments", graph.MakeName(name, "SparseSegmentMeanWithNumSegments"))
         desc.AddInput (data) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (segment_ids) |> ignore
@@ -34758,8 +34758,8 @@ type TFGraph with
     ///    for an explanation of segments.
     /// </remarks>
     member graph.SparseSegmentSqrtN (data : TFOutput, indices : TFOutput, segment_ids : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSegmentSqrtN", graph.MakeName ("SparseSegmentSqrtN", name))
+        graph.CheckOutputs([|yield data; yield indices; yield segment_ids|])
+        let desc = new TFOperationDesc (graph, "SparseSegmentSqrtN", graph.MakeName(name, "SparseSegmentSqrtN"))
         desc.AddInput (data) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (segment_ids) |> ignore
@@ -34797,8 +34797,8 @@ type TFGraph with
     ///    value is output_dim0.
     /// </remarks>
     member graph.SparseSegmentSqrtNGrad (grad : TFOutput, indices : TFOutput, segment_ids : TFOutput, output_dim0 : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSegmentSqrtNGrad", graph.MakeName ("SparseSegmentSqrtNGrad", name))
+        graph.CheckOutputs([|yield grad; yield indices; yield segment_ids; yield output_dim0|])
+        let desc = new TFOperationDesc (graph, "SparseSegmentSqrtNGrad", graph.MakeName(name, "SparseSegmentSqrtNGrad"))
         desc.AddInput (grad) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (segment_ids) |> ignore
@@ -34844,8 +34844,8 @@ type TFGraph with
     ///    for an explanation of segments.
     /// </remarks>
     member graph.SparseSegmentSqrtNWithNumSegments (data : TFOutput, indices : TFOutput, segment_ids : TFOutput, num_segments : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSegmentSqrtNWithNumSegments", graph.MakeName ("SparseSegmentSqrtNWithNumSegments", name))
+        graph.CheckOutputs([|yield data; yield indices; yield segment_ids; yield num_segments|])
+        let desc = new TFOperationDesc (graph, "SparseSegmentSqrtNWithNumSegments", graph.MakeName(name, "SparseSegmentSqrtNWithNumSegments"))
         desc.AddInput (data) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (segment_ids) |> ignore
@@ -34909,8 +34909,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.SparseSegmentSum (data : TFOutput, indices : TFOutput, segment_ids : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSegmentSum", graph.MakeName ("SparseSegmentSum", name))
+        graph.CheckOutputs([|yield data; yield indices; yield segment_ids|])
+        let desc = new TFOperationDesc (graph, "SparseSegmentSum", graph.MakeName(name, "SparseSegmentSum"))
         desc.AddInput (data) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (segment_ids) |> ignore
@@ -34974,8 +34974,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.SparseSegmentSumWithNumSegments (data : TFOutput, indices : TFOutput, segment_ids : TFOutput, num_segments : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSegmentSumWithNumSegments", graph.MakeName ("SparseSegmentSumWithNumSegments", name))
+        graph.CheckOutputs([|yield data; yield indices; yield segment_ids; yield num_segments|])
+        let desc = new TFOperationDesc (graph, "SparseSegmentSumWithNumSegments", graph.MakeName(name, "SparseSegmentSumWithNumSegments"))
         desc.AddInput (data) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (segment_ids) |> ignore
@@ -35038,8 +35038,8 @@ type TFGraph with
     ///    [      ]
     /// </remarks>
     member graph.SparseSlice (indices : TFOutput, values : TFOutput, shape : TFOutput, start : TFOutput, size : TFOutput,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSlice", graph.MakeName ("SparseSlice", name))
+        graph.CheckOutputs([|yield indices; yield values; yield shape; yield start; yield size|])
+        let desc = new TFOperationDesc (graph, "SparseSlice", graph.MakeName(name, "SparseSlice"))
         desc.AddInput (indices) |> ignore
         desc.AddInput (values) |> ignore
         desc.AddInput (shape) |> ignore
@@ -35086,8 +35086,8 @@ type TFGraph with
     ///    the non-empty values of input <c>SparseTensor<c>.
     /// </remarks>
     member graph.SparseSliceGrad (backprop_val_grad : TFOutput, input_indices : TFOutput, input_start : TFOutput, output_indices : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSliceGrad", graph.MakeName ("SparseSliceGrad", name))
+        graph.CheckOutputs([|yield backprop_val_grad; yield input_indices; yield input_start; yield output_indices|])
+        let desc = new TFOperationDesc (graph, "SparseSliceGrad", graph.MakeName(name, "SparseSliceGrad"))
         desc.AddInput (backprop_val_grad) |> ignore
         desc.AddInput (input_indices) |> ignore
         desc.AddInput (input_start) |> ignore
@@ -35138,8 +35138,8 @@ type TFGraph with
     ///    shape.
     /// </remarks>
     member graph.SparseSoftmax (sp_indices : TFOutput, sp_values : TFOutput, sp_shape : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSoftmax", graph.MakeName ("SparseSoftmax", name))
+        graph.CheckOutputs([|yield sp_indices; yield sp_values; yield sp_shape|])
+        let desc = new TFOperationDesc (graph, "SparseSoftmax", graph.MakeName(name, "SparseSoftmax"))
         desc.AddInput (sp_indices) |> ignore
         desc.AddInput (sp_values) |> ignore
         desc.AddInput (sp_shape) |> ignore
@@ -35179,8 +35179,8 @@ type TFGraph with
     ///    Inputs are the logits, not probabilities.
     /// </remarks>
     member graph.SparseSoftmaxCrossEntropyWithLogits (features : TFOutput, labels : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSoftmaxCrossEntropyWithLogits", graph.MakeName ("SparseSoftmaxCrossEntropyWithLogits", name))
+        graph.CheckOutputs([|yield features; yield labels|])
+        let desc = new TFOperationDesc (graph, "SparseSoftmaxCrossEntropyWithLogits", graph.MakeName(name, "SparseSoftmaxCrossEntropyWithLogits"))
         desc.AddInput (features) |> ignore
         desc.AddInput (labels) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -35228,8 +35228,8 @@ type TFGraph with
     ///    Assumes the two SparseTensors have the same shape, i.e., no broadcasting.
     /// </remarks>
     member graph.SparseSparseMaximum (a_indices : TFOutput, a_values : TFOutput, a_shape : TFOutput, b_indices : TFOutput, b_values : TFOutput, b_shape : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSparseMaximum", graph.MakeName ("SparseSparseMaximum", name))
+        graph.CheckOutputs([|yield a_indices; yield a_values; yield a_shape; yield b_indices; yield b_values; yield b_shape|])
+        let desc = new TFOperationDesc (graph, "SparseSparseMaximum", graph.MakeName(name, "SparseSparseMaximum"))
         desc.AddInput (a_indices) |> ignore
         desc.AddInput (a_values) |> ignore
         desc.AddInput (a_shape) |> ignore
@@ -35281,8 +35281,8 @@ type TFGraph with
     ///    Assumes the two SparseTensors have the same shape, i.e., no broadcasting.
     /// </remarks>
     member graph.SparseSparseMinimum (a_indices : TFOutput, a_values : TFOutput, a_shape : TFOutput, b_indices : TFOutput, b_values : TFOutput, b_shape : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSparseMinimum", graph.MakeName ("SparseSparseMinimum", name))
+        graph.CheckOutputs([|yield a_indices; yield a_values; yield a_shape; yield b_indices; yield b_values; yield b_shape|])
+        let desc = new TFOperationDesc (graph, "SparseSparseMinimum", graph.MakeName(name, "SparseSparseMinimum"))
         desc.AddInput (a_indices) |> ignore
         desc.AddInput (a_values) |> ignore
         desc.AddInput (a_shape) |> ignore
@@ -35352,8 +35352,8 @@ type TFGraph with
     ///    [      ]
     /// </remarks>
     member graph.SparseSplit (split_dim : TFOutput, indices : TFOutput, values : TFOutput, shape : TFOutput, num_split : int64,  ?name : string) : (TFOutput[]*TFOutput[]*TFOutput[]) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseSplit", graph.MakeName ("SparseSplit", name))
+        graph.CheckOutputs([|yield split_dim; yield indices; yield values; yield shape|])
+        let desc = new TFOperationDesc (graph, "SparseSplit", graph.MakeName(name, "SparseSplit"))
         desc.AddInput (split_dim) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (values) |> ignore
@@ -35394,8 +35394,8 @@ type TFGraph with
     ///    This Op does not require <c>a_indices<c> be sorted in standard lexicographic order.
     /// </remarks>
     member graph.SparseTensorDenseAdd (a_indices : TFOutput, a_values : TFOutput, a_shape : TFOutput, b : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseTensorDenseAdd", graph.MakeName ("SparseTensorDenseAdd", name))
+        graph.CheckOutputs([|yield a_indices; yield a_values; yield a_shape; yield b|])
+        let desc = new TFOperationDesc (graph, "SparseTensorDenseAdd", graph.MakeName(name, "SparseTensorDenseAdd"))
         desc.AddInput (a_indices) |> ignore
         desc.AddInput (a_values) |> ignore
         desc.AddInput (a_shape) |> ignore
@@ -35451,8 +35451,8 @@ type TFGraph with
     ///    order instead of "row major" order).
     /// </remarks>
     member graph.SparseTensorDenseMatMul (a_indices : TFOutput, a_values : TFOutput, a_shape : TFOutput, b : TFOutput, ?adjoint_a : bool, ?adjoint_b : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseTensorDenseMatMul", graph.MakeName ("SparseTensorDenseMatMul", name))
+        graph.CheckOutputs([|yield a_indices; yield a_values; yield a_shape; yield b|])
+        let desc = new TFOperationDesc (graph, "SparseTensorDenseMatMul", graph.MakeName(name, "SparseTensorDenseMatMul"))
         desc.AddInput (a_indices) |> ignore
         desc.AddInput (a_values) |> ignore
         desc.AddInput (a_shape) |> ignore
@@ -35483,8 +35483,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SparseTensorSliceDataset (indices : TFOutput, values : TFOutput, dense_shape : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseTensorSliceDataset", graph.MakeName ("SparseTensorSliceDataset", name))
+        graph.CheckOutputs([|yield indices; yield values; yield dense_shape|])
+        let desc = new TFOperationDesc (graph, "SparseTensorSliceDataset", graph.MakeName(name, "SparseTensorSliceDataset"))
         desc.AddInput (indices) |> ignore
         desc.AddInput (values) |> ignore
         desc.AddInput (dense_shape) |> ignore
@@ -35548,8 +35548,8 @@ type TFGraph with
     ///    are checked during execution.
     /// </remarks>
     member graph.SparseToDense (sparse_indices : TFOutput, output_shape : TFOutput, sparse_values : TFOutput, default_value : TFOutput, ?validate_indices : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseToDense", graph.MakeName ("SparseToDense", name))
+        graph.CheckOutputs([|yield sparse_indices; yield output_shape; yield sparse_values; yield default_value|])
+        let desc = new TFOperationDesc (graph, "SparseToDense", graph.MakeName(name, "SparseToDense"))
         desc.AddInput (sparse_indices) |> ignore
         desc.AddInput (output_shape) |> ignore
         desc.AddInput (sparse_values) |> ignore
@@ -35635,8 +35635,8 @@ type TFGraph with
     ///    <c>[0...n-1]<c> dimension of <c>set<c>.
     /// </remarks>
     member graph.SparseToSparseSetOperation (set1_indices : TFOutput, set1_values : TFOutput, set1_shape : TFOutput, set2_indices : TFOutput, set2_values : TFOutput, set2_shape : TFOutput, set_operation : string, ?validate_indices : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SparseToSparseSetOperation", graph.MakeName ("SparseToSparseSetOperation", name))
+        graph.CheckOutputs([|yield set1_indices; yield set1_values; yield set1_shape; yield set2_indices; yield set2_values; yield set2_shape|])
+        let desc = new TFOperationDesc (graph, "SparseToSparseSetOperation", graph.MakeName(name, "SparseToSparseSetOperation"))
         desc.AddInput (set1_indices) |> ignore
         desc.AddInput (set1_values) |> ignore
         desc.AddInput (set1_shape) |> ignore
@@ -35681,8 +35681,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Split (split_dim : TFOutput, value : TFOutput, num_split : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Split", graph.MakeName ("Split", name))
+        graph.CheckOutputs([|yield split_dim; yield value|])
+        let desc = new TFOperationDesc (graph, "Split", graph.MakeName(name, "Split"))
         desc.AddInput (split_dim) |> ignore
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -35721,8 +35721,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SplitV (value : TFOutput, size_splits : TFOutput, split_dim : TFOutput, num_split : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SplitV", graph.MakeName ("SplitV", name))
+        graph.CheckOutputs([|yield value; yield size_splits; yield split_dim|])
+        let desc = new TFOperationDesc (graph, "SplitV", graph.MakeName(name, "SplitV"))
         desc.AddInput (value) |> ignore
         desc.AddInput (size_splits) |> ignore
         desc.AddInput (split_dim) |> ignore
@@ -35758,8 +35758,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.SqlDataset (driver_name : TFOutput, data_source_name : TFOutput, query : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SqlDataset", graph.MakeName ("SqlDataset", name))
+        graph.CheckOutputs([|yield driver_name; yield data_source_name; yield query|])
+        let desc = new TFOperationDesc (graph, "SqlDataset", graph.MakeName(name, "SqlDataset"))
         desc.AddInput (driver_name) |> ignore
         desc.AddInput (data_source_name) |> ignore
         desc.AddInput (query) |> ignore
@@ -35788,8 +35788,8 @@ type TFGraph with
     ///    I.e., \\(y = \sqrt{x} = x^{1/2}\\).
     /// </remarks>
     member graph.Sqrt (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Sqrt", graph.MakeName ("Sqrt", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Sqrt", graph.MakeName(name, "Sqrt"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -35817,8 +35817,8 @@ type TFGraph with
     ///    is the corresponding input gradient.
     /// </remarks>
     member graph.SqrtGrad (y : TFOutput, dy : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SqrtGrad", graph.MakeName ("SqrtGrad", name))
+        graph.CheckOutputs([|yield y; yield dy|])
+        let desc = new TFOperationDesc (graph, "SqrtGrad", graph.MakeName(name, "SqrtGrad"))
         desc.AddInput (y) |> ignore
         desc.AddInput (dy) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -35844,8 +35844,8 @@ type TFGraph with
     ///    I.e., \\(y = x * x = x^2\\).
     /// </remarks>
     member graph.Square (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Square", graph.MakeName ("Square", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Square", graph.MakeName(name, "Square"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -35873,8 +35873,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.SquaredDifference (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "SquaredDifference", graph.MakeName ("SquaredDifference", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "SquaredDifference", graph.MakeName(name, "SquaredDifference"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -35926,8 +35926,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Squeeze (input : TFOutput, ?squeeze_dims : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Squeeze", graph.MakeName ("Squeeze", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Squeeze", graph.MakeName(name, "Squeeze"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         squeeze_dims |> Option.iter (fun squeeze_dims -> desc.SetAttr ("squeeze_dims", squeeze_dims) |> ignore)
@@ -35953,8 +35953,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Stack (elem_type : TFDataType, ?stack_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Stack", graph.MakeName ("Stack", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "Stack", graph.MakeName(name, "Stack"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("elem_type", elem_type) |> ignore
         stack_name |> Option.iter (fun stack_name -> desc.SetAttr ("stack_name", stack_name) |> ignore)
@@ -35977,8 +35977,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.StackClose (handle : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StackClose", graph.MakeName ("StackClose", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "StackClose", graph.MakeName(name, "StackClose"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -35998,8 +35998,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.StackCloseV2 (handle : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StackCloseV2", graph.MakeName ("StackCloseV2", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "StackCloseV2", graph.MakeName(name, "StackCloseV2"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -36020,8 +36020,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.StackPop (handle : TFOutput, elem_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StackPop", graph.MakeName ("StackPop", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "StackPop", graph.MakeName(name, "StackPop"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("elem_type", elem_type) |> ignore
@@ -36049,8 +36049,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.StackPopV2 (handle : TFOutput, elem_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StackPopV2", graph.MakeName ("StackPopV2", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "StackPopV2", graph.MakeName(name, "StackPopV2"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("elem_type", elem_type) |> ignore
@@ -36078,8 +36078,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.StackPush (handle : TFOutput, elem : TFOutput, ?swap_memory : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StackPush", graph.MakeName ("StackPush", name))
+        graph.CheckOutputs([|yield handle; yield elem|])
+        let desc = new TFOperationDesc (graph, "StackPush", graph.MakeName(name, "StackPush"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (elem) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -36112,8 +36112,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.StackPushV2 (handle : TFOutput, elem : TFOutput, ?swap_memory : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StackPushV2", graph.MakeName ("StackPushV2", name))
+        graph.CheckOutputs([|yield handle; yield elem|])
+        let desc = new TFOperationDesc (graph, "StackPushV2", graph.MakeName(name, "StackPushV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (elem) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -36148,8 +36148,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.StackV2 (max_size : TFOutput, elem_type : TFDataType, ?stack_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StackV2", graph.MakeName ("StackV2", name))
+        graph.CheckOutputs([|yield max_size|])
+        let desc = new TFOperationDesc (graph, "StackV2", graph.MakeName(name, "StackV2"))
         desc.AddInput (max_size) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("elem_type", elem_type) |> ignore
@@ -36198,8 +36198,8 @@ type TFGraph with
     ///    fewer capabilities and options.  This Op is optimized for performance.
     /// </remarks>
     member graph.Stage (values : TFOutput[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Stage", graph.MakeName ("Stage", name))
+        graph.CheckOutputs([|yield! values|])
+        let desc = new TFOperationDesc (graph, "Stage", graph.MakeName(name, "Stage"))
         desc.AddInputs (values) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         capacity |> Option.iter (fun capacity -> desc.SetAttr ("capacity", capacity) |> ignore)
@@ -36234,8 +36234,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.StageClear (dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StageClear", graph.MakeName ("StageClear", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "StageClear", graph.MakeName(name, "StageClear"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
         capacity |> Option.iter (fun capacity -> desc.SetAttr ("capacity", capacity) |> ignore)
@@ -36277,8 +36277,8 @@ type TFGraph with
     ///    performance.
     /// </remarks>
     member graph.StagePeek (index : TFOutput, dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StagePeek", graph.MakeName ("StagePeek", name))
+        graph.CheckOutputs([|yield index|])
+        let desc = new TFOperationDesc (graph, "StagePeek", graph.MakeName(name, "StagePeek"))
         desc.AddInput (index) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
@@ -36317,8 +36317,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.StageSize (dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StageSize", graph.MakeName ("StageSize", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "StageSize", graph.MakeName(name, "StageSize"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
         capacity |> Option.iter (fun capacity -> desc.SetAttr ("capacity", capacity) |> ignore)
@@ -36357,8 +36357,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.StatelessMultinomial (logits : TFOutput, num_samples : TFOutput, seed : TFOutput, ?output_dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StatelessMultinomial", graph.MakeName ("StatelessMultinomial", name))
+        graph.CheckOutputs([|yield logits; yield num_samples; yield seed|])
+        let desc = new TFOperationDesc (graph, "StatelessMultinomial", graph.MakeName(name, "StatelessMultinomial"))
         desc.AddInput (logits) |> ignore
         desc.AddInput (num_samples) |> ignore
         desc.AddInput (seed) |> ignore
@@ -36397,8 +36397,8 @@ type TFGraph with
     ///    The outputs are a deterministic function of <c>shape<c> and <c>seed<c>.
     /// </remarks>
     member graph.StatelessRandomNormal (shape : TFOutput, seed : TFOutput, ?dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StatelessRandomNormal", graph.MakeName ("StatelessRandomNormal", name))
+        graph.CheckOutputs([|yield shape; yield seed|])
+        let desc = new TFOperationDesc (graph, "StatelessRandomNormal", graph.MakeName(name, "StatelessRandomNormal"))
         desc.AddInput (shape) |> ignore
         desc.AddInput (seed) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -36437,8 +36437,8 @@ type TFGraph with
     ///    The outputs are a deterministic function of <c>shape<c> and <c>seed<c>.
     /// </remarks>
     member graph.StatelessRandomUniform (shape : TFOutput, seed : TFOutput, ?dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StatelessRandomUniform", graph.MakeName ("StatelessRandomUniform", name))
+        graph.CheckOutputs([|yield shape; yield seed|])
+        let desc = new TFOperationDesc (graph, "StatelessRandomUniform", graph.MakeName(name, "StatelessRandomUniform"))
         desc.AddInput (shape) |> ignore
         desc.AddInput (seed) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -36478,8 +36478,8 @@ type TFGraph with
     ///    The outputs are a deterministic function of <c>shape<c> and <c>seed<c>.
     /// </remarks>
     member graph.StatelessTruncatedNormal (shape : TFOutput, seed : TFOutput, ?dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StatelessTruncatedNormal", graph.MakeName ("StatelessTruncatedNormal", name))
+        graph.CheckOutputs([|yield shape; yield seed|])
+        let desc = new TFOperationDesc (graph, "StatelessTruncatedNormal", graph.MakeName(name, "StatelessTruncatedNormal"))
         desc.AddInput (shape) |> ignore
         desc.AddInput (seed) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -36519,8 +36519,8 @@ type TFGraph with
     ///    It follows the re2 syntax (https://github.com/google/re2/wiki/Syntax)
     /// </remarks>
     member graph.StaticRegexReplace (input : TFOutput, pattern : string, rewrite : string, ?replace_global : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StaticRegexReplace", graph.MakeName ("StaticRegexReplace", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "StaticRegexReplace", graph.MakeName(name, "StaticRegexReplace"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("pattern", pattern) |> ignore
@@ -36549,8 +36549,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.StatsAggregatorHandle (?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StatsAggregatorHandle", graph.MakeName ("StatsAggregatorHandle", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "StatsAggregatorHandle", graph.MakeName(name, "StatsAggregatorHandle"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
         shared_name |> Option.iter (fun shared_name -> desc.SetAttr ("shared_name", shared_name) |> ignore)
@@ -36573,8 +36573,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.StatsAggregatorSummary (iterator : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StatsAggregatorSummary", graph.MakeName ("StatsAggregatorSummary", name))
+        graph.CheckOutputs([|yield iterator|])
+        let desc = new TFOperationDesc (graph, "StatsAggregatorSummary", graph.MakeName(name, "StatsAggregatorSummary"))
         desc.AddInput (iterator) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -36617,8 +36617,8 @@ type TFGraph with
     ///    example generation process.
     /// </remarks>
     member graph.StopGradient (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StopGradient", graph.MakeName ("StopGradient", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "StopGradient", graph.MakeName(name, "StopGradient"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -36784,8 +36784,8 @@ type TFGraph with
     ///    <c>ellipsis_mask must be a power of two (only one ellipsis)<c>
     /// </remarks>
     member graph.StridedSlice (input : TFOutput, _begin : TFOutput, _end : TFOutput, strides : TFOutput, ?begin_mask : int64, ?end_mask : int64, ?ellipsis_mask : int64, ?new_axis_mask : int64, ?shrink_axis_mask : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StridedSlice", graph.MakeName ("StridedSlice", name))
+        graph.CheckOutputs([|yield input; yield _begin; yield _end; yield strides|])
+        let desc = new TFOperationDesc (graph, "StridedSlice", graph.MakeName(name, "StridedSlice"))
         desc.AddInput (input) |> ignore
         desc.AddInput (_begin) |> ignore
         desc.AddInput (_end) |> ignore
@@ -36846,8 +36846,8 @@ type TFGraph with
     ///    shape must be exactly the shape produced by the slice of <c>ref<c>.
     /// </remarks>
     member graph.StridedSliceAssign (reference : TFOutput, _begin : TFOutput, _end : TFOutput, strides : TFOutput, value : TFOutput, ?begin_mask : int64, ?end_mask : int64, ?ellipsis_mask : int64, ?new_axis_mask : int64, ?shrink_axis_mask : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StridedSliceAssign", graph.MakeName ("StridedSliceAssign", name))
+        graph.CheckOutputs([|yield reference; yield _begin; yield _end; yield strides; yield value|])
+        let desc = new TFOperationDesc (graph, "StridedSliceAssign", graph.MakeName(name, "StridedSliceAssign"))
         desc.AddInput (reference) |> ignore
         desc.AddInput (_begin) |> ignore
         desc.AddInput (_end) |> ignore
@@ -36911,8 +36911,8 @@ type TFGraph with
     ///    shape of <c>StridedSlice<c>'s <c>input<c>.
     /// </remarks>
     member graph.StridedSliceGrad (shape : TFOutput, _begin : TFOutput, _end : TFOutput, strides : TFOutput, dy : TFOutput, ?begin_mask : int64, ?end_mask : int64, ?ellipsis_mask : int64, ?new_axis_mask : int64, ?shrink_axis_mask : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StridedSliceGrad", graph.MakeName ("StridedSliceGrad", name))
+        graph.CheckOutputs([|yield shape; yield _begin; yield _end; yield strides; yield dy|])
+        let desc = new TFOperationDesc (graph, "StridedSliceGrad", graph.MakeName(name, "StridedSliceGrad"))
         desc.AddInput (shape) |> ignore
         desc.AddInput (_begin) |> ignore
         desc.AddInput (_end) |> ignore
@@ -36953,8 +36953,8 @@ type TFGraph with
     ///    with the given separator (default is an empty separator).
     /// </remarks>
     member graph.StringJoin (inputs : TFOutput[], ?separator : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StringJoin", graph.MakeName ("StringJoin", name))
+        graph.CheckOutputs([|yield! inputs|])
+        let desc = new TFOperationDesc (graph, "StringJoin", graph.MakeName(name, "StringJoin"))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         separator |> Option.iter (fun separator -> desc.SetAttr ("separator", separator) |> ignore)
@@ -37013,8 +37013,8 @@ type TFGraph with
     ///    values = ['hello', 'world', 'a', 'b', 'c']
     /// </remarks>
     member graph.StringSplit (input : TFOutput, delimiter : TFOutput, ?skip_empty : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StringSplit", graph.MakeName ("StringSplit", name))
+        graph.CheckOutputs([|yield input; yield delimiter|])
+        let desc = new TFOperationDesc (graph, "StringSplit", graph.MakeName(name, "StringSplit"))
         desc.AddInput (input) |> ignore
         desc.AddInput (delimiter) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -37080,8 +37080,8 @@ type TFGraph with
     ///    Note that the above mentioned behavior matches python's str.split.
     /// </remarks>
     member graph.StringSplitV2 (input : TFOutput, sep : TFOutput, ?maxsplit : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StringSplitV2", graph.MakeName ("StringSplitV2", name))
+        graph.CheckOutputs([|yield input; yield sep|])
+        let desc = new TFOperationDesc (graph, "StringSplitV2", graph.MakeName(name, "StringSplitV2"))
         desc.AddInput (input) |> ignore
         desc.AddInput (sep) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -37111,8 +37111,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.StringStrip (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StringStrip", graph.MakeName ("StringStrip", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "StringStrip", graph.MakeName(name, "StringStrip"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -37146,8 +37146,8 @@ type TFGraph with
     ///    <c>tf.string_to_hash_bucket_fast()<c> or <c>tf.string_to_hash_bucket_strong()<c>.
     /// </remarks>
     member graph.StringToHashBucket (string_tensor : TFOutput, num_buckets : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StringToHashBucket", graph.MakeName ("StringToHashBucket", name))
+        graph.CheckOutputs([|yield string_tensor|])
+        let desc = new TFOperationDesc (graph, "StringToHashBucket", graph.MakeName(name, "StringToHashBucket"))
         desc.AddInput (string_tensor) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_buckets", num_buckets) |> ignore
@@ -37183,8 +37183,8 @@ type TFGraph with
     ///    <c>tf.string_to_hash_bucket_strong<c>.
     /// </remarks>
     member graph.StringToHashBucketFast (input : TFOutput, num_buckets : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StringToHashBucketFast", graph.MakeName ("StringToHashBucketFast", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "StringToHashBucketFast", graph.MakeName(name, "StringToHashBucketFast"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_buckets", num_buckets) |> ignore
@@ -37228,8 +37228,8 @@ type TFGraph with
     ///    time than <c>tf.string_to_hash_bucket_fast<c>.
     /// </remarks>
     member graph.StringToHashBucketStrong (input : TFOutput, num_buckets : int64, key : int64[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StringToHashBucketStrong", graph.MakeName ("StringToHashBucketStrong", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "StringToHashBucketStrong", graph.MakeName(name, "StringToHashBucketStrong"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_buckets", num_buckets) |> ignore
@@ -37262,8 +37262,8 @@ type TFGraph with
     ///    results in a rounded value.)
     /// </remarks>
     member graph.StringToNumber (string_tensor : TFOutput, ?out_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "StringToNumber", graph.MakeName ("StringToNumber", name))
+        graph.CheckOutputs([|yield string_tensor|])
+        let desc = new TFOperationDesc (graph, "StringToNumber", graph.MakeName(name, "StringToNumber"))
         desc.AddInput (string_tensor) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         out_type |> Option.iter (fun out_type -> desc.SetAttr ("out_type", out_type) |> ignore)
@@ -37292,8 +37292,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.Sub (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Sub", graph.MakeName ("Sub", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "Sub", graph.MakeName(name, "Sub"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -37401,8 +37401,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Substr (input : TFOutput, pos : TFOutput, len : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Substr", graph.MakeName ("Substr", name))
+        graph.CheckOutputs([|yield input; yield pos; yield len|])
+        let desc = new TFOperationDesc (graph, "Substr", graph.MakeName(name, "Substr"))
         desc.AddInput (input) |> ignore
         desc.AddInput (pos) |> ignore
         desc.AddInput (len) |> ignore
@@ -37442,8 +37442,8 @@ type TFGraph with
     ///    retained with length 1.
     /// </remarks>
     member graph.Sum (input : TFOutput, reduction_indices : TFOutput, ?keep_dims : bool,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Sum", graph.MakeName ("Sum", name))
+        graph.CheckOutputs([|yield input; yield reduction_indices|])
+        let desc = new TFOperationDesc (graph, "Sum", graph.MakeName(name, "Sum"))
         desc.AddInput (input) |> ignore
         desc.AddInput (reduction_indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -37502,8 +37502,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Svd (input : TFOutput, ?compute_uv : bool, ?full_matrices : bool,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Svd", graph.MakeName ("Svd", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Svd", graph.MakeName(name, "Svd"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         compute_uv |> Option.iter (fun compute_uv -> desc.SetAttr ("compute_uv", compute_uv) |> ignore)
@@ -37544,8 +37544,8 @@ type TFGraph with
     ///    See also <c>RefSwitch<c> and <c>Merge<c>.
     /// </remarks>
     member graph.Switch (data : TFOutput, pred : TFOutput,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Switch", graph.MakeName ("Switch", name))
+        graph.CheckOutputs([|yield data; yield pred|])
+        let desc = new TFOperationDesc (graph, "Switch", graph.MakeName(name, "Switch"))
         desc.AddInput (data) |> ignore
         desc.AddInput (pred) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -37580,8 +37580,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TFRecordDataset (filenames : TFOutput, compression_type : TFOutput, buffer_size : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TFRecordDataset", graph.MakeName ("TFRecordDataset", name))
+        graph.CheckOutputs([|yield filenames; yield compression_type; yield buffer_size|])
+        let desc = new TFOperationDesc (graph, "TFRecordDataset", graph.MakeName(name, "TFRecordDataset"))
         desc.AddInput (filenames) |> ignore
         desc.AddInput (compression_type) |> ignore
         desc.AddInput (buffer_size) |> ignore
@@ -37617,8 +37617,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TFRecordReader (?container : string, ?shared_name : string, ?compression_type : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TFRecordReader", graph.MakeName ("TFRecordReader", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "TFRecordReader", graph.MakeName(name, "TFRecordReader"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
         shared_name |> Option.iter (fun shared_name -> desc.SetAttr ("shared_name", shared_name) |> ignore)
@@ -37654,8 +37654,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TFRecordReaderV2 (?container : string, ?shared_name : string, ?compression_type : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TFRecordReaderV2", graph.MakeName ("TFRecordReaderV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "TFRecordReaderV2", graph.MakeName(name, "TFRecordReaderV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
         shared_name |> Option.iter (fun shared_name -> desc.SetAttr ("shared_name", shared_name) |> ignore)
@@ -37698,8 +37698,8 @@ type TFGraph with
     ///    libraries.
     /// </remarks>
     member graph.TPUEmbeddingActivations (embedding_variable : TFOutput, sliced_activations : TFOutput, table_id : int64, lookup_id : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TPUEmbeddingActivations", graph.MakeName ("TPUEmbeddingActivations", name))
+        graph.CheckOutputs([|yield embedding_variable; yield sliced_activations|])
+        let desc = new TFOperationDesc (graph, "TPUEmbeddingActivations", graph.MakeName(name, "TPUEmbeddingActivations"))
         desc.AddInput (embedding_variable) |> ignore
         desc.AddInput (sliced_activations) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -37757,8 +37757,8 @@ type TFGraph with
     ///    training step per TPU shard.
     /// </remarks>
     member graph.TPUEmbeddingEnqueueSparseBatch (sample_indices : TFOutput[], embedding_indices : TFOutput[], aggregation_weights : TFOutput[], ?device_ordinal : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TPUEmbeddingEnqueueSparseBatch", graph.MakeName ("TPUEmbeddingEnqueueSparseBatch", name))
+        graph.CheckOutputs([|yield! sample_indices; yield! embedding_indices; yield! aggregation_weights|])
+        let desc = new TFOperationDesc (graph, "TPUEmbeddingEnqueueSparseBatch", graph.MakeName(name, "TPUEmbeddingEnqueueSparseBatch"))
         desc.AddInputs (sample_indices) |> ignore
         desc.AddInputs (embedding_indices) |> ignore
         desc.AddInputs (aggregation_weights) |> ignore
@@ -37803,8 +37803,8 @@ type TFGraph with
     ///    functionality equivalent to AdagradOptimizer.
     /// </remarks>
     member graph.TPUEmbeddingLoadAdagradParameters (parameters : TFOutput, accumulators : TFOutput, tpu_embedding_config : string, table_id : int64, num_hosts : int64, host_id : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TPUEmbeddingLoadAdagradParameters", graph.MakeName ("TPUEmbeddingLoadAdagradParameters", name))
+        graph.CheckOutputs([|yield parameters; yield accumulators|])
+        let desc = new TFOperationDesc (graph, "TPUEmbeddingLoadAdagradParameters", graph.MakeName(name, "TPUEmbeddingLoadAdagradParameters"))
         desc.AddInput (parameters) |> ignore
         desc.AddInput (accumulators) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -37847,8 +37847,8 @@ type TFGraph with
     ///    functionality equivalent to GradientDescentOptimizer.
     /// </remarks>
     member graph.TPUEmbeddingLoadGradientDescentParameters (parameters : TFOutput, tpu_embedding_config : string, table_id : int64, num_hosts : int64, host_id : int64,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TPUEmbeddingLoadGradientDescentParameters", graph.MakeName ("TPUEmbeddingLoadGradientDescentParameters", name))
+        graph.CheckOutputs([|yield parameters|])
+        let desc = new TFOperationDesc (graph, "TPUEmbeddingLoadGradientDescentParameters", graph.MakeName(name, "TPUEmbeddingLoadGradientDescentParameters"))
         desc.AddInput (parameters) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("tpu_embedding_config", tpu_embedding_config) |> ignore
@@ -37886,8 +37886,8 @@ type TFGraph with
     ///    one ReceieveActivations op in the TPU graph.
     /// </remarks>
     member graph.TPUEmbeddingReceiveActivations (num_tables : int64, tpu_embedding_config : string,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TPUEmbeddingReceiveActivations", graph.MakeName ("TPUEmbeddingReceiveActivations", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "TPUEmbeddingReceiveActivations", graph.MakeName(name, "TPUEmbeddingReceiveActivations"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_tables", num_tables) |> ignore
         desc.SetAttr ("tpu_embedding_config", tpu_embedding_config) |> ignore
@@ -37928,8 +37928,8 @@ type TFGraph with
     ///    functionality equivalent to AdagradOptimizer.
     /// </remarks>
     member graph.TPUEmbeddingRetrieveAdagradParameters (tpu_embedding_config : string, table_id : int64, num_hosts : int64, host_id : int64,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TPUEmbeddingRetrieveAdagradParameters", graph.MakeName ("TPUEmbeddingRetrieveAdagradParameters", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "TPUEmbeddingRetrieveAdagradParameters", graph.MakeName(name, "TPUEmbeddingRetrieveAdagradParameters"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("tpu_embedding_config", tpu_embedding_config) |> ignore
         desc.SetAttr ("table_id", table_id) |> ignore
@@ -37971,8 +37971,8 @@ type TFGraph with
     ///    functionality equivalent to GradientDescentOptimizer.
     /// </remarks>
     member graph.TPUEmbeddingRetrieveGradientDescentParameters (tpu_embedding_config : string, table_id : int64, num_hosts : int64, host_id : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TPUEmbeddingRetrieveGradientDescentParameters", graph.MakeName ("TPUEmbeddingRetrieveGradientDescentParameters", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "TPUEmbeddingRetrieveGradientDescentParameters", graph.MakeName(name, "TPUEmbeddingRetrieveGradientDescentParameters"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("tpu_embedding_config", tpu_embedding_config) |> ignore
         desc.SetAttr ("table_id", table_id) |> ignore
@@ -38008,8 +38008,8 @@ type TFGraph with
     ///    to tpu.initialize_system.
     /// </remarks>
     member graph.TPUEmbeddingSendGradients (gradients : TFOutput[], tpu_embedding_config : string,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TPUEmbeddingSendGradients", graph.MakeName ("TPUEmbeddingSendGradients", name))
+        graph.CheckOutputs([|yield! gradients|])
+        let desc = new TFOperationDesc (graph, "TPUEmbeddingSendGradients", graph.MakeName(name, "TPUEmbeddingSendGradients"))
         desc.AddInputs (gradients) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("tpu_embedding_config", tpu_embedding_config) |> ignore
@@ -38029,8 +38029,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TPUReplicatedInput (inputs : TFOutput[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TPUReplicatedInput", graph.MakeName ("TPUReplicatedInput", name))
+        graph.CheckOutputs([|yield! inputs|])
+        let desc = new TFOperationDesc (graph, "TPUReplicatedInput", graph.MakeName(name, "TPUReplicatedInput"))
         desc.AddInputs (inputs) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -38054,8 +38054,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TPUReplicatedOutput (input : TFOutput, num_replicas : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TPUReplicatedOutput", graph.MakeName ("TPUReplicatedOutput", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "TPUReplicatedOutput", graph.MakeName(name, "TPUReplicatedOutput"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_replicas", num_replicas) |> ignore
@@ -38087,8 +38087,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TakeDataset (input_dataset : TFOutput, count : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TakeDataset", graph.MakeName ("TakeDataset", name))
+        graph.CheckOutputs([|yield input_dataset; yield count|])
+        let desc = new TFOperationDesc (graph, "TakeDataset", graph.MakeName(name, "TakeDataset"))
         desc.AddInput (input_dataset) |> ignore
         desc.AddInput (count) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -38183,8 +38183,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.TakeManySparseFromTensorsMap (sparse_handles : TFOutput, dtype : TFDataType, ?container : string, ?shared_name : string,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TakeManySparseFromTensorsMap", graph.MakeName ("TakeManySparseFromTensorsMap", name))
+        graph.CheckOutputs([|yield sparse_handles|])
+        let desc = new TFOperationDesc (graph, "TakeManySparseFromTensorsMap", graph.MakeName(name, "TakeManySparseFromTensorsMap"))
         desc.AddInput (sparse_handles) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -38213,8 +38213,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Tan (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Tan", graph.MakeName ("Tan", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Tan", graph.MakeName(name, "Tan"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -38236,8 +38236,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Tanh (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Tanh", graph.MakeName ("Tanh", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Tanh", graph.MakeName(name, "Tanh"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -38265,8 +38265,8 @@ type TFGraph with
     ///    is the corresponding input gradient.
     /// </remarks>
     member graph.TanhGrad (y : TFOutput, dy : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TanhGrad", graph.MakeName ("TanhGrad", name))
+        graph.CheckOutputs([|yield y; yield dy|])
+        let desc = new TFOperationDesc (graph, "TanhGrad", graph.MakeName(name, "TanhGrad"))
         desc.AddInput (y) |> ignore
         desc.AddInput (dy) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -38315,8 +38315,8 @@ type TFGraph with
     ///    final = state_ops._destroy_temporary_variable(var, var_name=var_name)
     /// </remarks>
     member graph.TemporaryVariable (shape : TFShape, dtype : TFDataType, ?var_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TemporaryVariable", graph.MakeName ("TemporaryVariable", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "TemporaryVariable", graph.MakeName(name, "TemporaryVariable"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shape", shape) |> ignore
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -38340,8 +38340,8 @@ type TFGraph with
     ///    Returns the description of the operation
     /// </returns>
     member graph.TensorArrayCloseV2 (handle : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayCloseV2", graph.MakeName ("TensorArrayCloseV2", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "TensorArrayCloseV2", graph.MakeName(name, "TensorArrayCloseV2"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -38365,8 +38365,8 @@ type TFGraph with
     ///    of a step/run.
     /// </remarks>
     member graph.TensorArrayCloseV3 (handle : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayCloseV3", graph.MakeName ("TensorArrayCloseV3", name))
+        graph.CheckOutputs([|yield handle|])
+        let desc = new TFOperationDesc (graph, "TensorArrayCloseV3", graph.MakeName(name, "TensorArrayCloseV3"))
         desc.AddInput (handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -38395,8 +38395,8 @@ type TFGraph with
     ///    The Operation can be fetched from any of the Outputs returned in the tuple values, by fetching the Operation property.
     /// </returns>
     member graph.TensorArrayConcatV2 (handle : TFOutput, flow_in : TFOutput, dtype : TFDataType, ?element_shape_except0 : TFShape,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayConcatV2", graph.MakeName ("TensorArrayConcatV2", name))
+        graph.CheckOutputs([|yield handle; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayConcatV2", graph.MakeName(name, "TensorArrayConcatV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (flow_in) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -38458,8 +38458,8 @@ type TFGraph with
     ///    All elements must have the same shape (excepting the first dimension).
     /// </remarks>
     member graph.TensorArrayConcatV3 (handle : TFOutput, flow_in : TFOutput, dtype : TFDataType, ?element_shape_except0 : TFShape,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayConcatV3", graph.MakeName ("TensorArrayConcatV3", name))
+        graph.CheckOutputs([|yield handle; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayConcatV3", graph.MakeName(name, "TensorArrayConcatV3"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (flow_in) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -38495,8 +38495,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorArrayGatherV2 (handle : TFOutput, indices : TFOutput, flow_in : TFOutput, dtype : TFDataType, ?element_shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayGatherV2", graph.MakeName ("TensorArrayGatherV2", name))
+        graph.CheckOutputs([|yield handle; yield indices; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayGatherV2", graph.MakeName(name, "TensorArrayGatherV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (flow_in) |> ignore
@@ -38543,8 +38543,8 @@ type TFGraph with
     ///    All elements selected by <c>indices<c> must have the same shape.
     /// </remarks>
     member graph.TensorArrayGatherV3 (handle : TFOutput, indices : TFOutput, flow_in : TFOutput, dtype : TFDataType, ?element_shape : TFShape,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayGatherV3", graph.MakeName ("TensorArrayGatherV3", name))
+        graph.CheckOutputs([|yield handle; yield indices; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayGatherV3", graph.MakeName(name, "TensorArrayGatherV3"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (flow_in) |> ignore
@@ -38574,8 +38574,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorArrayGradV2 (handle : TFOutput, flow_in : TFOutput, source : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayGradV2", graph.MakeName ("TensorArrayGradV2", name))
+        graph.CheckOutputs([|yield handle; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayGradV2", graph.MakeName(name, "TensorArrayGradV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (flow_in) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -38648,8 +38648,8 @@ type TFGraph with
     ///    calculation gets its own TensorArray accumulator.
     /// </remarks>
     member graph.TensorArrayGradV3 (handle : TFOutput, flow_in : TFOutput, source : string,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayGradV3", graph.MakeName ("TensorArrayGradV3", name))
+        graph.CheckOutputs([|yield handle; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayGradV3", graph.MakeName(name, "TensorArrayGradV3"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (flow_in) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -38697,8 +38697,8 @@ type TFGraph with
     ///    calculated using the same accumulator.
     /// </remarks>
     member graph.TensorArrayGradWithShape (handle : TFOutput, flow_in : TFOutput, shape_to_prepend : TFOutput, source : string,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayGradWithShape", graph.MakeName ("TensorArrayGradWithShape", name))
+        graph.CheckOutputs([|yield handle; yield flow_in; yield shape_to_prepend|])
+        let desc = new TFOperationDesc (graph, "TensorArrayGradWithShape", graph.MakeName(name, "TensorArrayGradWithShape"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (flow_in) |> ignore
         desc.AddInput (shape_to_prepend) |> ignore
@@ -38731,8 +38731,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorArrayReadV2 (handle : TFOutput, index : TFOutput, flow_in : TFOutput, dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayReadV2", graph.MakeName ("TensorArrayReadV2", name))
+        graph.CheckOutputs([|yield handle; yield index; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayReadV2", graph.MakeName(name, "TensorArrayReadV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (index) |> ignore
         desc.AddInput (flow_in) |> ignore
@@ -38767,8 +38767,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorArrayReadV3 (handle : TFOutput, index : TFOutput, flow_in : TFOutput, dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayReadV3", graph.MakeName ("TensorArrayReadV3", name))
+        graph.CheckOutputs([|yield handle; yield index; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayReadV3", graph.MakeName(name, "TensorArrayReadV3"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (index) |> ignore
         desc.AddInput (flow_in) |> ignore
@@ -38799,8 +38799,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorArrayScatterV2 (handle : TFOutput, indices : TFOutput, value : TFOutput, flow_in : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayScatterV2", graph.MakeName ("TensorArrayScatterV2", name))
+        graph.CheckOutputs([|yield handle; yield indices; yield value; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayScatterV2", graph.MakeName(name, "TensorArrayScatterV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (value) |> ignore
@@ -38839,8 +38839,8 @@ type TFGraph with
     ///    <c>indices<c> must be a vector, its length must match the first dim of <c>value<c>.
     /// </remarks>
     member graph.TensorArrayScatterV3 (handle : TFOutput, indices : TFOutput, value : TFOutput, flow_in : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayScatterV3", graph.MakeName ("TensorArrayScatterV3", name))
+        graph.CheckOutputs([|yield handle; yield indices; yield value; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayScatterV3", graph.MakeName(name, "TensorArrayScatterV3"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (value) |> ignore
@@ -38867,8 +38867,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorArraySizeV2 (handle : TFOutput, flow_in : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArraySizeV2", graph.MakeName ("TensorArraySizeV2", name))
+        graph.CheckOutputs([|yield handle; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArraySizeV2", graph.MakeName(name, "TensorArraySizeV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (flow_in) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -38896,8 +38896,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorArraySizeV3 (handle : TFOutput, flow_in : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArraySizeV3", graph.MakeName ("TensorArraySizeV3", name))
+        graph.CheckOutputs([|yield handle; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArraySizeV3", graph.MakeName(name, "TensorArraySizeV3"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (flow_in) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -38926,8 +38926,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorArraySplitV2 (handle : TFOutput, value : TFOutput, lengths : TFOutput, flow_in : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArraySplitV2", graph.MakeName ("TensorArraySplitV2", name))
+        graph.CheckOutputs([|yield handle; yield value; yield lengths; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArraySplitV2", graph.MakeName(name, "TensorArraySplitV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (value) |> ignore
         desc.AddInput (lengths) |> ignore
@@ -38990,8 +38990,8 @@ type TFGraph with
     ///    <code>
     /// </remarks>
     member graph.TensorArraySplitV3 (handle : TFOutput, value : TFOutput, lengths : TFOutput, flow_in : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArraySplitV3", graph.MakeName ("TensorArraySplitV3", name))
+        graph.CheckOutputs([|yield handle; yield value; yield lengths; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArraySplitV3", graph.MakeName(name, "TensorArraySplitV3"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (value) |> ignore
         desc.AddInput (lengths) |> ignore
@@ -39030,8 +39030,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorArrayV2 (size : TFOutput, dtype : TFDataType, ?element_shape : TFShape, ?dynamic_size : bool, ?clear_after_read : bool, ?tensor_array_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayV2", graph.MakeName ("TensorArrayV2", name))
+        graph.CheckOutputs([|yield size|])
+        let desc = new TFOperationDesc (graph, "TensorArrayV2", graph.MakeName(name, "TensorArrayV2"))
         desc.AddInput (size) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -39100,8 +39100,8 @@ type TFGraph with
     ///    Write data via Write and read via Read or Pack.
     /// </remarks>
     member graph.TensorArrayV3 (size : TFOutput, dtype : TFDataType, ?element_shape : TFShape, ?dynamic_size : bool, ?clear_after_read : bool, ?identical_element_shapes : bool, ?tensor_array_name : string,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayV3", graph.MakeName ("TensorArrayV3", name))
+        graph.CheckOutputs([|yield size|])
+        let desc = new TFOperationDesc (graph, "TensorArrayV3", graph.MakeName(name, "TensorArrayV3"))
         desc.AddInput (size) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -39137,8 +39137,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorArrayWriteV2 (handle : TFOutput, index : TFOutput, value : TFOutput, flow_in : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayWriteV2", graph.MakeName ("TensorArrayWriteV2", name))
+        graph.CheckOutputs([|yield handle; yield index; yield value; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayWriteV2", graph.MakeName(name, "TensorArrayWriteV2"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (index) |> ignore
         desc.AddInput (value) |> ignore
@@ -39174,8 +39174,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorArrayWriteV3 (handle : TFOutput, index : TFOutput, value : TFOutput, flow_in : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorArrayWriteV3", graph.MakeName ("TensorArrayWriteV3", name))
+        graph.CheckOutputs([|yield handle; yield index; yield value; yield flow_in|])
+        let desc = new TFOperationDesc (graph, "TensorArrayWriteV3", graph.MakeName(name, "TensorArrayWriteV3"))
         desc.AddInput (handle) |> ignore
         desc.AddInput (index) |> ignore
         desc.AddInput (value) |> ignore
@@ -39202,8 +39202,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorDataset (components : TFOutput[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorDataset", graph.MakeName ("TensorDataset", name))
+        graph.CheckOutputs([|yield! components|])
+        let desc = new TFOperationDesc (graph, "TensorDataset", graph.MakeName(name, "TensorDataset"))
         desc.AddInputs (components) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("output_shapes", output_shapes) |> ignore
@@ -39232,8 +39232,8 @@ type TFGraph with
     ///    element_shape: the shape of elements of the list
     /// </remarks>
     member graph.TensorListElementShape (input_handle : TFOutput, shape_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorListElementShape", graph.MakeName ("TensorListElementShape", name))
+        graph.CheckOutputs([|yield input_handle|])
+        let desc = new TFOperationDesc (graph, "TensorListElementShape", graph.MakeName(name, "TensorListElementShape"))
         desc.AddInput (input_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shape_type", shape_type) |> ignore
@@ -39264,8 +39264,8 @@ type TFGraph with
     ///    output_handle: The list.
     /// </remarks>
     member graph.TensorListFromTensor (tensor : TFOutput, element_shape : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorListFromTensor", graph.MakeName ("TensorListFromTensor", name))
+        graph.CheckOutputs([|yield tensor; yield element_shape|])
+        let desc = new TFOperationDesc (graph, "TensorListFromTensor", graph.MakeName(name, "TensorListFromTensor"))
         desc.AddInput (tensor) |> ignore
         desc.AddInput (element_shape) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -39300,8 +39300,8 @@ type TFGraph with
     ///    values: The tensor.
     /// </remarks>
     member graph.TensorListGather (input_handle : TFOutput, indices : TFOutput, element_dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorListGather", graph.MakeName ("TensorListGather", name))
+        graph.CheckOutputs([|yield input_handle; yield indices|])
+        let desc = new TFOperationDesc (graph, "TensorListGather", graph.MakeName(name, "TensorListGather"))
         desc.AddInput (input_handle) |> ignore
         desc.AddInput (indices) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -39336,8 +39336,8 @@ type TFGraph with
     ///    
     /// </remarks>
     member graph.TensorListGetItem (input_handle : TFOutput, index : TFOutput, element_dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorListGetItem", graph.MakeName ("TensorListGetItem", name))
+        graph.CheckOutputs([|yield input_handle; yield index|])
+        let desc = new TFOperationDesc (graph, "TensorListGetItem", graph.MakeName(name, "TensorListGetItem"))
         desc.AddInput (input_handle) |> ignore
         desc.AddInput (index) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -39365,8 +39365,8 @@ type TFGraph with
     ///    length: the number of tensors in the list
     /// </remarks>
     member graph.TensorListLength (input_handle : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorListLength", graph.MakeName ("TensorListLength", name))
+        graph.CheckOutputs([|yield input_handle|])
+        let desc = new TFOperationDesc (graph, "TensorListLength", graph.MakeName(name, "TensorListLength"))
         desc.AddInput (input_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -39401,8 +39401,8 @@ type TFGraph with
     ///    element_shape: the shape of the output tensor
     /// </remarks>
     member graph.TensorListPopBack (input_handle : TFOutput, element_dtype : TFDataType,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorListPopBack", graph.MakeName ("TensorListPopBack", name))
+        graph.CheckOutputs([|yield input_handle|])
+        let desc = new TFOperationDesc (graph, "TensorListPopBack", graph.MakeName(name, "TensorListPopBack"))
         desc.AddInput (input_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("element_dtype", element_dtype) |> ignore
@@ -39436,8 +39436,8 @@ type TFGraph with
     ///    element_shape: a shape compatible with that of elements in the list.
     /// </remarks>
     member graph.TensorListPushBack (input_handle : TFOutput, tensor : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorListPushBack", graph.MakeName ("TensorListPushBack", name))
+        graph.CheckOutputs([|yield input_handle; yield tensor|])
+        let desc = new TFOperationDesc (graph, "TensorListPushBack", graph.MakeName(name, "TensorListPushBack"))
         desc.AddInput (input_handle) |> ignore
         desc.AddInput (tensor) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -39470,8 +39470,8 @@ type TFGraph with
     ///    element_dtype: the desired type of elements in the list.
     /// </remarks>
     member graph.TensorListReserve (element_shape : TFOutput, num_elements : TFOutput, element_dtype : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorListReserve", graph.MakeName ("TensorListReserve", name))
+        graph.CheckOutputs([|yield element_shape; yield num_elements|])
+        let desc = new TFOperationDesc (graph, "TensorListReserve", graph.MakeName(name, "TensorListReserve"))
         desc.AddInput (element_shape) |> ignore
         desc.AddInput (num_elements) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -39509,8 +39509,8 @@ type TFGraph with
     ///    output_handle: The TensorList.
     /// </remarks>
     member graph.TensorListScatter (tensor : TFOutput, indices : TFOutput, element_shape : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorListScatter", graph.MakeName ("TensorListScatter", name))
+        graph.CheckOutputs([|yield tensor; yield indices; yield element_shape|])
+        let desc = new TFOperationDesc (graph, "TensorListScatter", graph.MakeName(name, "TensorListScatter"))
         desc.AddInput (tensor) |> ignore
         desc.AddInput (indices) |> ignore
         desc.AddInput (element_shape) |> ignore
@@ -39545,8 +39545,8 @@ type TFGraph with
     ///    
     /// </remarks>
     member graph.TensorListSetItem (input_handle : TFOutput, index : TFOutput, item : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorListSetItem", graph.MakeName ("TensorListSetItem", name))
+        graph.CheckOutputs([|yield input_handle; yield index; yield item|])
+        let desc = new TFOperationDesc (graph, "TensorListSetItem", graph.MakeName(name, "TensorListSetItem"))
         desc.AddInput (input_handle) |> ignore
         desc.AddInput (index) |> ignore
         desc.AddInput (item) |> ignore
@@ -39583,8 +39583,8 @@ type TFGraph with
     ///    
     /// </remarks>
     member graph.TensorListStack (input_handle : TFOutput, element_dtype : TFDataType, ?num_elements : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorListStack", graph.MakeName ("TensorListStack", name))
+        graph.CheckOutputs([|yield input_handle|])
+        let desc = new TFOperationDesc (graph, "TensorListStack", graph.MakeName(name, "TensorListStack"))
         desc.AddInput (input_handle) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("element_dtype", element_dtype) |> ignore
@@ -39610,8 +39610,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorSliceDataset (components : TFOutput[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorSliceDataset", graph.MakeName ("TensorSliceDataset", name))
+        graph.CheckOutputs([|yield! components|])
+        let desc = new TFOperationDesc (graph, "TensorSliceDataset", graph.MakeName(name, "TensorSliceDataset"))
         desc.AddInputs (components) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("output_shapes", output_shapes) |> ignore
@@ -39652,8 +39652,8 @@ type TFGraph with
     ///    plugin-specific data. We will keep this op to maintain backwards compatibility.
     /// </remarks>
     member graph.TensorSummary (tensor : TFOutput, ?description : string, ?labels : string[], ?display_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorSummary", graph.MakeName ("TensorSummary", name))
+        graph.CheckOutputs([|yield tensor|])
+        let desc = new TFOperationDesc (graph, "TensorSummary", graph.MakeName(name, "TensorSummary"))
         desc.AddInput (tensor) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         description |> Option.iter (fun description -> desc.SetAttr ("description", description) |> ignore)
@@ -39686,8 +39686,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TensorSummaryV2 (tag : TFOutput, tensor : TFOutput, serialized_summary_metadata : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TensorSummaryV2", graph.MakeName ("TensorSummaryV2", name))
+        graph.CheckOutputs([|yield tag; yield tensor; yield serialized_summary_metadata|])
+        let desc = new TFOperationDesc (graph, "TensorSummaryV2", graph.MakeName(name, "TensorSummaryV2"))
         desc.AddInput (tag) |> ignore
         desc.AddInput (tensor) |> ignore
         desc.AddInput (serialized_summary_metadata) |> ignore
@@ -39720,8 +39720,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TextLineDataset (filenames : TFOutput, compression_type : TFOutput, buffer_size : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TextLineDataset", graph.MakeName ("TextLineDataset", name))
+        graph.CheckOutputs([|yield filenames; yield compression_type; yield buffer_size|])
+        let desc = new TFOperationDesc (graph, "TextLineDataset", graph.MakeName(name, "TextLineDataset"))
         desc.AddInput (filenames) |> ignore
         desc.AddInput (compression_type) |> ignore
         desc.AddInput (buffer_size) |> ignore
@@ -39758,8 +39758,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TextLineReader (?skip_header_lines : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TextLineReader", graph.MakeName ("TextLineReader", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "TextLineReader", graph.MakeName(name, "TextLineReader"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         skip_header_lines |> Option.iter (fun skip_header_lines -> desc.SetAttr ("skip_header_lines", skip_header_lines) |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
@@ -39796,8 +39796,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.TextLineReaderV2 (?skip_header_lines : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TextLineReaderV2", graph.MakeName ("TextLineReaderV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "TextLineReaderV2", graph.MakeName(name, "TextLineReaderV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         skip_header_lines |> Option.iter (fun skip_header_lines -> desc.SetAttr ("skip_header_lines", skip_header_lines) |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
@@ -39868,8 +39868,8 @@ type TFGraph with
     ///    true labels.
     /// </remarks>
     member graph.ThreadUnsafeUnigramCandidateSampler (true_classes : TFOutput, num_true : int64, num_sampled : int64, unique : bool, range_max : int64, ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ThreadUnsafeUnigramCandidateSampler", graph.MakeName ("ThreadUnsafeUnigramCandidateSampler", name))
+        graph.CheckOutputs([|yield true_classes|])
+        let desc = new TFOperationDesc (graph, "ThreadUnsafeUnigramCandidateSampler", graph.MakeName(name, "ThreadUnsafeUnigramCandidateSampler"))
         desc.AddInput (true_classes) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_true", num_true) |> ignore
@@ -39912,8 +39912,8 @@ type TFGraph with
     ///    <c>[a b c d a b c d]<c>.
     /// </remarks>
     member graph.Tile (input : TFOutput, multiples : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Tile", graph.MakeName ("Tile", name))
+        graph.CheckOutputs([|yield input; yield multiples|])
+        let desc = new TFOperationDesc (graph, "Tile", graph.MakeName(name, "Tile"))
         desc.AddInput (input) |> ignore
         desc.AddInput (multiples) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -39943,8 +39943,8 @@ type TFGraph with
     ///    each repeated tile of <c>input<c> into <c>output<c>.
     /// </remarks>
     member graph.TileGrad (input : TFOutput, multiples : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TileGrad", graph.MakeName ("TileGrad", name))
+        graph.CheckOutputs([|yield input; yield multiples|])
+        let desc = new TFOperationDesc (graph, "TileGrad", graph.MakeName(name, "TileGrad"))
         desc.AddInput (input) |> ignore
         desc.AddInput (multiples) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -39971,8 +39971,8 @@ type TFGraph with
     ///    to the graph.
     /// </remarks>
     member graph.Timestamp ( ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Timestamp", graph.MakeName ("Timestamp", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "Timestamp", graph.MakeName(name, "Timestamp"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
         let mutable _idx = 0
@@ -40020,8 +40020,8 @@ type TFGraph with
     ///    If <c>k<c> varies dynamically, use <c>TopKV2<c> below.
     /// </remarks>
     member graph.TopK (input : TFOutput, k : int64, ?sorted : bool,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TopK", graph.MakeName ("TopK", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "TopK", graph.MakeName(name, "TopK"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("k", k) |> ignore
@@ -40072,8 +40072,8 @@ type TFGraph with
     ///    If two elements are equal, the lower-index element appears first.
     /// </remarks>
     member graph.TopKV2 (input : TFOutput, k : TFOutput, ?sorted : bool,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TopKV2", graph.MakeName ("TopKV2", name))
+        graph.CheckOutputs([|yield input; yield k|])
+        let desc = new TFOperationDesc (graph, "TopKV2", graph.MakeName(name, "TopKV2"))
         desc.AddInput (input) |> ignore
         desc.AddInput (k) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -40105,8 +40105,8 @@ type TFGraph with
     ///    <c>y.shape[i] == x.shape[perm[i]] for i in [0, 1, ..., rank(x) - 1]<c>
     /// </remarks>
     member graph.Transpose (x : TFOutput, perm : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Transpose", graph.MakeName ("Transpose", name))
+        graph.CheckOutputs([|yield x; yield perm|])
+        let desc = new TFOperationDesc (graph, "Transpose", graph.MakeName(name, "Transpose"))
         desc.AddInput (x) |> ignore
         desc.AddInput (perm) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -40140,8 +40140,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.TruncateDiv (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TruncateDiv", graph.MakeName ("TruncateDiv", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "TruncateDiv", graph.MakeName(name, "TruncateDiv"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -40173,8 +40173,8 @@ type TFGraph with
     ///    [here](http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html)
     /// </remarks>
     member graph.TruncateMod (x : TFOutput, y : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TruncateMod", graph.MakeName ("TruncateMod", name))
+        graph.CheckOutputs([|yield x; yield y|])
+        let desc = new TFOperationDesc (graph, "TruncateMod", graph.MakeName(name, "TruncateMod"))
         desc.AddInput (x) |> ignore
         desc.AddInput (y) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -40218,8 +40218,8 @@ type TFGraph with
     ///    deviations from the mean are dropped and re-picked.
     /// </remarks>
     member graph.TruncatedNormal (shape : TFOutput, dtype : TFDataType, ?seed : int64, ?seed2 : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TruncatedNormal", graph.MakeName ("TruncatedNormal", name))
+        graph.CheckOutputs([|yield shape|])
+        let desc = new TFOperationDesc (graph, "TruncatedNormal", graph.MakeName(name, "TruncatedNormal"))
         desc.AddInput (shape) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -40330,8 +40330,8 @@ type TFGraph with
     ///    not fail; the rest of the entries will have empty strings.
     /// </remarks>
     member graph.TryRpc (address : TFOutput, method : TFOutput, request : TFOutput, ?protocol : string, ?fail_fast : bool, ?timeout_in_ms : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "TryRpc", graph.MakeName ("TryRpc", name))
+        graph.CheckOutputs([|yield address; yield method; yield request|])
+        let desc = new TFOperationDesc (graph, "TryRpc", graph.MakeName(name, "TryRpc"))
         desc.AddInput (address) |> ignore
         desc.AddInput (method) |> ignore
         desc.AddInput (request) |> ignore
@@ -40394,8 +40394,8 @@ type TFGraph with
     ///    be used as the shared name.
     /// </remarks>
     member graph.Unbatch (batched_tensor : TFOutput, batch_index : TFOutput, id : TFOutput, timeout_micros : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Unbatch", graph.MakeName ("Unbatch", name))
+        graph.CheckOutputs([|yield batched_tensor; yield batch_index; yield id|])
+        let desc = new TFOperationDesc (graph, "Unbatch", graph.MakeName(name, "Unbatch"))
         desc.AddInput (batched_tensor) |> ignore
         desc.AddInput (batch_index) |> ignore
         desc.AddInput (id) |> ignore
@@ -40426,8 +40426,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.UnbatchDataset (input_dataset : TFOutput, output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "UnbatchDataset", graph.MakeName ("UnbatchDataset", name))
+        graph.CheckOutputs([|yield input_dataset|])
+        let desc = new TFOperationDesc (graph, "UnbatchDataset", graph.MakeName(name, "UnbatchDataset"))
         desc.AddInput (input_dataset) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("output_types", output_types) |> ignore
@@ -40479,8 +40479,8 @@ type TFGraph with
     ///    will be used as the shared name.
     /// </remarks>
     member graph.UnbatchGrad (original_input : TFOutput, batch_index : TFOutput, grad : TFOutput, id : TFOutput, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "UnbatchGrad", graph.MakeName ("UnbatchGrad", name))
+        graph.CheckOutputs([|yield original_input; yield batch_index; yield grad; yield id|])
+        let desc = new TFOperationDesc (graph, "UnbatchGrad", graph.MakeName(name, "UnbatchGrad"))
         desc.AddInput (original_input) |> ignore
         desc.AddInput (batch_index) |> ignore
         desc.AddInput (grad) |> ignore
@@ -40554,8 +40554,8 @@ type TFGraph with
     ///    true labels.
     /// </remarks>
     member graph.UniformCandidateSampler (true_classes : TFOutput, num_true : int64, num_sampled : int64, unique : bool, range_max : int64, ?seed : int64, ?seed2 : int64,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "UniformCandidateSampler", graph.MakeName ("UniformCandidateSampler", name))
+        graph.CheckOutputs([|yield true_classes|])
+        let desc = new TFOperationDesc (graph, "UniformCandidateSampler", graph.MakeName(name, "UniformCandidateSampler"))
         desc.AddInput (true_classes) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num_true", num_true) |> ignore
@@ -40611,8 +40611,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Unique (x : TFOutput, ?out_idx : TFDataType,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Unique", graph.MakeName ("Unique", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "Unique", graph.MakeName(name, "Unique"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         out_idx |> Option.iter (fun out_idx -> desc.SetAttr ("out_idx", out_idx) |> ignore)
@@ -40694,8 +40694,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.UniqueV2 (x : TFOutput, axis : TFOutput, ?out_idx : TFDataType,  ?name : string) : (TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "UniqueV2", graph.MakeName ("UniqueV2", name))
+        graph.CheckOutputs([|yield x; yield axis|])
+        let desc = new TFOperationDesc (graph, "UniqueV2", graph.MakeName(name, "UniqueV2"))
         desc.AddInput (x) |> ignore
         desc.AddInput (axis) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -40748,8 +40748,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.UniqueWithCounts (x : TFOutput, ?out_idx : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "UniqueWithCounts", graph.MakeName ("UniqueWithCounts", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "UniqueWithCounts", graph.MakeName(name, "UniqueWithCounts"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         out_idx |> Option.iter (fun out_idx -> desc.SetAttr ("out_idx", out_idx) |> ignore)
@@ -40838,8 +40838,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.UniqueWithCountsV2 (x : TFOutput, axis : TFOutput, ?out_idx : TFDataType,  ?name : string) : (TFOutput*TFOutput*TFOutput) =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "UniqueWithCountsV2", graph.MakeName ("UniqueWithCountsV2", name))
+        graph.CheckOutputs([|yield x; yield axis|])
+        let desc = new TFOperationDesc (graph, "UniqueWithCountsV2", graph.MakeName(name, "UniqueWithCountsV2"))
         desc.AddInput (x) |> ignore
         desc.AddInput (axis) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -40890,8 +40890,8 @@ type TFGraph with
     ///    This is the opposite of <c>pack<c>.
     /// </remarks>
     member graph.Unpack (value : TFOutput, num : int64, ?axis : int64,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Unpack", graph.MakeName ("Unpack", name))
+        graph.CheckOutputs([|yield value|])
+        let desc = new TFOperationDesc (graph, "Unpack", graph.MakeName(name, "Unpack"))
         desc.AddInput (value) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("num", num) |> ignore
@@ -40930,8 +40930,8 @@ type TFGraph with
     ///    @end_compatibility
     /// </remarks>
     member graph.UnravelIndex (indices : TFOutput, dims : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "UnravelIndex", graph.MakeName ("UnravelIndex", name))
+        graph.CheckOutputs([|yield indices; yield dims|])
+        let desc = new TFOperationDesc (graph, "UnravelIndex", graph.MakeName(name, "UnravelIndex"))
         desc.AddInput (indices) |> ignore
         desc.AddInput (dims) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -40989,8 +40989,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.UnsortedSegmentMax (data : TFOutput, segment_ids : TFOutput, num_segments : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "UnsortedSegmentMax", graph.MakeName ("UnsortedSegmentMax", name))
+        graph.CheckOutputs([|yield data; yield segment_ids; yield num_segments|])
+        let desc = new TFOperationDesc (graph, "UnsortedSegmentMax", graph.MakeName(name, "UnsortedSegmentMax"))
         desc.AddInput (data) |> ignore
         desc.AddInput (segment_ids) |> ignore
         desc.AddInput (num_segments) |> ignore
@@ -41041,8 +41041,8 @@ type TFGraph with
     ///    dropped, and will not be included in the result.
     /// </remarks>
     member graph.UnsortedSegmentMin (data : TFOutput, segment_ids : TFOutput, num_segments : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "UnsortedSegmentMin", graph.MakeName ("UnsortedSegmentMin", name))
+        graph.CheckOutputs([|yield data; yield segment_ids; yield num_segments|])
+        let desc = new TFOperationDesc (graph, "UnsortedSegmentMin", graph.MakeName(name, "UnsortedSegmentMin"))
         desc.AddInput (data) |> ignore
         desc.AddInput (segment_ids) |> ignore
         desc.AddInput (num_segments) |> ignore
@@ -41092,8 +41092,8 @@ type TFGraph with
     ///    dropped, and will not be included in the result.
     /// </remarks>
     member graph.UnsortedSegmentProd (data : TFOutput, segment_ids : TFOutput, num_segments : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "UnsortedSegmentProd", graph.MakeName ("UnsortedSegmentProd", name))
+        graph.CheckOutputs([|yield data; yield segment_ids; yield num_segments|])
+        let desc = new TFOperationDesc (graph, "UnsortedSegmentProd", graph.MakeName(name, "UnsortedSegmentProd"))
         desc.AddInput (data) |> ignore
         desc.AddInput (segment_ids) |> ignore
         desc.AddInput (num_segments) |> ignore
@@ -41146,8 +41146,8 @@ type TFGraph with
     ///    &amp;lt;/div&amp;gt;
     /// </remarks>
     member graph.UnsortedSegmentSum (data : TFOutput, segment_ids : TFOutput, num_segments : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "UnsortedSegmentSum", graph.MakeName ("UnsortedSegmentSum", name))
+        graph.CheckOutputs([|yield data; yield segment_ids; yield num_segments|])
+        let desc = new TFOperationDesc (graph, "UnsortedSegmentSum", graph.MakeName(name, "UnsortedSegmentSum"))
         desc.AddInput (data) |> ignore
         desc.AddInput (segment_ids) |> ignore
         desc.AddInput (num_segments) |> ignore
@@ -41187,8 +41187,8 @@ type TFGraph with
     ///    capabilities and options.  This Op is optimized for performance.
     /// </remarks>
     member graph.Unstage (dtypes : TFDataType[], ?capacity : int64, ?memory_limit : int64, ?container : string, ?shared_name : string,  ?name : string) : TFOutput[] =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Unstage", graph.MakeName ("Unstage", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "Unstage", graph.MakeName(name, "Unstage"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtypes", dtypes) |> ignore
         capacity |> Option.iter (fun capacity -> desc.SetAttr ("capacity", capacity) |> ignore)
@@ -41227,8 +41227,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.VarHandleOp (dtype : TFDataType, shape : TFShape, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "VarHandleOp", graph.MakeName ("VarHandleOp", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "VarHandleOp", graph.MakeName(name, "VarHandleOp"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("dtype", dtype) |> ignore
         desc.SetAttr ("shape", shape) |> ignore
@@ -41256,8 +41256,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.VarIsInitializedOp (resource : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "VarIsInitializedOp", graph.MakeName ("VarIsInitializedOp", name))
+        graph.CheckOutputs([|yield resource|])
+        let desc = new TFOperationDesc (graph, "VarIsInitializedOp", graph.MakeName(name, "VarIsInitializedOp"))
         desc.AddInput (resource) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -41287,8 +41287,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.Variable (shape : TFShape, dtype : TFDataType, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Variable", graph.MakeName ("Variable", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "Variable", graph.MakeName(name, "Variable"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shape", shape) |> ignore
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -41326,8 +41326,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.VariableShape (input : TFOutput, ?out_type : TFDataType,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "VariableShape", graph.MakeName ("VariableShape", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "VariableShape", graph.MakeName(name, "VariableShape"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         out_type |> Option.iter (fun out_type -> desc.SetAttr ("out_type", out_type) |> ignore)
@@ -41370,8 +41370,8 @@ type TFGraph with
     ///    about sharing states in tensorflow.
     /// </remarks>
     member graph.VariableV2 (shape : TFShape, dtype : TFDataType, ?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "VariableV2", graph.MakeName ("VariableV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "VariableV2", graph.MakeName(name, "VariableV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("shape", shape) |> ignore
         desc.SetAttr ("dtype", dtype) |> ignore
@@ -41457,8 +41457,8 @@ type TFGraph with
     ///   </code>
     /// </remarks>
     member graph.Where (input : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Where", graph.MakeName ("Where", name))
+        graph.CheckOutputs([|yield input|])
+        let desc = new TFOperationDesc (graph, "Where", graph.MakeName(name, "Where"))
         desc.AddInput (input) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -41493,8 +41493,8 @@ type TFGraph with
     ///    be a filename (key) and the contents of that file (value).
     /// </remarks>
     member graph.WholeFileReader (?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "WholeFileReader", graph.MakeName ("WholeFileReader", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "WholeFileReader", graph.MakeName(name, "WholeFileReader"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
         shared_name |> Option.iter (fun shared_name -> desc.SetAttr ("shared_name", shared_name) |> ignore)
@@ -41530,8 +41530,8 @@ type TFGraph with
     ///    be a filename (key) and the contents of that file (value).
     /// </remarks>
     member graph.WholeFileReaderV2 (?container : string, ?shared_name : string,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "WholeFileReaderV2", graph.MakeName ("WholeFileReaderV2", name))
+        graph.CheckOutputs([||])
+        let desc = new TFOperationDesc (graph, "WholeFileReaderV2", graph.MakeName(name, "WholeFileReaderV2"))
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         container |> Option.iter (fun container -> desc.SetAttr ("container", container) |> ignore)
         shared_name |> Option.iter (fun shared_name -> desc.SetAttr ("shared_name", shared_name) |> ignore)
@@ -41560,8 +41560,8 @@ type TFGraph with
     ///    to retrieve the current worker status and to expedite shutdown when necessary.
     /// </remarks>
     member graph.WorkerHeartbeat (request : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "WorkerHeartbeat", graph.MakeName ("WorkerHeartbeat", name))
+        graph.CheckOutputs([|yield request|])
+        let desc = new TFOperationDesc (graph, "WorkerHeartbeat", graph.MakeName(name, "WorkerHeartbeat"))
         desc.AddInput (request) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -41590,8 +41590,8 @@ type TFGraph with
     ///    creates directory if not existing.
     /// </remarks>
     member graph.WriteFile (filename : TFOutput, contents : TFOutput,  ?name : string) : TFOperation =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "WriteFile", graph.MakeName ("WriteFile", name))
+        graph.CheckOutputs([|yield filename; yield contents|])
+        let desc = new TFOperationDesc (graph, "WriteFile", graph.MakeName(name, "WriteFile"))
         desc.AddInput (filename) |> ignore
         desc.AddInput (contents) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -41613,8 +41613,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ZerosLike (x : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ZerosLike", graph.MakeName ("ZerosLike", name))
+        graph.CheckOutputs([|yield x|])
+        let desc = new TFOperationDesc (graph, "ZerosLike", graph.MakeName(name, "ZerosLike"))
         desc.AddInput (x) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         let op = desc.FinishOperation ()
@@ -41644,8 +41644,8 @@ type TFGraph with
     ///    \\(\zeta(x, q) = \sum_{n=0}^{\infty} (q + n)^{-x}\\)
     /// </remarks>
     member graph.Zeta (x : TFOutput, q : TFOutput,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Zeta", graph.MakeName ("Zeta", name))
+        graph.CheckOutputs([|yield x; yield q|])
+        let desc = new TFOperationDesc (graph, "Zeta", graph.MakeName(name, "Zeta"))
         desc.AddInput (x) |> ignore
         desc.AddInput (q) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
@@ -41672,8 +41672,8 @@ type TFGraph with
     ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
     /// </returns>
     member graph.ZipDataset (input_datasets : TFOutput[], output_types : TFDataType[], output_shapes : TFShape[],  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "ZipDataset", graph.MakeName ("ZipDataset", name))
+        graph.CheckOutputs([|yield! input_datasets|])
+        let desc = new TFOperationDesc (graph, "ZipDataset", graph.MakeName(name, "ZipDataset"))
         desc.AddInputs (input_datasets) |> ignore
         graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
         desc.SetAttr ("output_types", output_types) |> ignore
