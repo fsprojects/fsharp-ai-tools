@@ -150,6 +150,12 @@ DiffSharp may be used once Tensors are available in that library.
 
 # Building
 
+First time only:
+
+    fsiAnyCpu setup\setup.fsx
+
+Then:
+
     dotnet restore
     dotnet build
     dotnet test
