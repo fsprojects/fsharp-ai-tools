@@ -2,16 +2,29 @@ namespace TensorFlow.FSharp.DSL
 
 open System
 open System.Collections.Generic
-#if !LIVECHECKING
 open TensorFlow.FSharp
-#endif
+
+[<AutoOpen>]
+module LiveChecking = 
+    let livecheck = 
+        try 
+            match System.Environment.GetEnvironmentVariable("LIVECHECKING") with null | "0" -> false | _ -> true 
+        with _ -> false
 
 /// Represents an inferred dimension
 type Dim =
+    /// One dimension is a multiple of another
     | DimMulInt of Dim * int
+
+    /// One dimension is a divisor of another
     | DimDivInt of Dim * int
+
+    /// The dimension is a variable, possibly solved
     | DimVar of Dim option ref
+
+    /// The dimension is known
     | Dim of int
+
     override dim.ToString() = 
         match dim.TryValue() with 
         | Some v -> string v
@@ -121,11 +134,9 @@ type Shape =
             | None -> "shape ?" 
             | Some sln -> sln.ToString()
 
-#if !LIVECHECKING
     member shape.AsTFShape() = TFShape(shape.Dimensions |> Array.map (fun dim -> int64 dim.Value))
 
     member shape.AsTFTensor() = shape.AsTFShape().AsTensor()
-#endif
 
     static member Inferred = ShapeVar (ref None)
     static member D with get() = (Shape [| Dim 1 |])
@@ -164,9 +175,6 @@ module ShapeHelpers =
             res
 
 /// Represents a context for turning differentiable tensors into a TensorFlow graph
-#if LIVECHECKING
-type DT internal (shape: Shape) = 
-#else
 type internal Ctxt = 
     { Graph: TFGraph 
       Nodes: Dictionary<DT, TFOutput> // ensure unique nodes from unique DT values
@@ -180,8 +188,6 @@ and DT internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
     member internal dt.Apply(ctxt: Ctxt) = 
         memoize ctxt.Nodes dt (fun () -> eval ctxt)
 
-#endif
-
     /// Get the inferred shape of the differentiable tensor 
     member __.Shape = shape
 
@@ -193,23 +199,13 @@ type internal WithScopeDisposable(name:string) =
 
 
 /// Represents a differentiable tensor value
-#if LIVECHECKING
-type DT<'T> internal (shape: Shape) =
-    inherit DT(shape)
-#else
 type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
     inherit DT(shape, eval)
-
-#endif
 
     static member AddN (vs: DT<'T>[]) : DT<'T> = 
         let outputShape = vs.[0].Shape 
         for v in vs do Shape.Unify "AddN" outputShape v.Shape
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
         DT<_> (outputShape, fun ctxt -> ctxt.Graph.AddN(vs |> Array.map (fun v -> v.Apply ctxt)))
-#endif
 
     // TODO: accept axis argument for stacking, take this into account in inferred shape
     // TODO: this gives wrong shape when all inputs have size 1. Ugh
@@ -217,53 +213,38 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
         let inputShape = vs.[0].Shape
         for v in vs do Shape.Unify "Stack" inputShape v.Shape
         let outputShape = Shape [| yield Dim vs.Length; yield! inputShape.Dimensions |]
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
         DT<_> (outputShape, fun ctxt -> ctxt.Graph.Stack(vs |> Array.map (fun v -> v.Apply ctxt)))
-#endif
 
     static member (+) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
         let outputShape = Shape.EquivShapes "(+)" v1.Shape v2.Shape
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
         DT<_> (outputShape, fun ctxt -> ctxt.Graph.Add(v1.Apply ctxt, v2.Apply ctxt))
-#endif
 
     static member (-) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
         let outputShape = Shape.EquivShapes "(-)" v1.Shape v2.Shape
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
         DT<_> (outputShape, fun ctxt -> ctxt.Graph.Sub(v1.Apply ctxt, v2.Apply ctxt))
-#endif
 
-    static member ( *. ) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
-        let outputShape = Shape.EquivShapes "(*.)" v1.Shape v2.Shape
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
+    /// Pointwise multiplication
+    static member ( * ) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
+        let outputShape = Shape.EquivShapes "(*)" v1.Shape v2.Shape
         DT<_> (outputShape, fun ctxt -> ctxt.Graph.Mul(v1.Apply ctxt, v2.Apply ctxt))
-#endif
 
-    //static member ( * ) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
-    //    let outputShape = Shape.EquivShapes v1.Shape v2.Shape
-    //    DT<_> (outputShape, fun ctxt -> ctxt.Graph.MatMul(v1.Apply ctxt, v2.Apply ctxt))
+    /// Pointwise multiplication
+    static member ( ~- ) (v1: DT<'T>) : DT<'T> = 
+        let outputShape = v1.Shape 
+        DT<_> (outputShape, fun ctxt -> ctxt.Graph.Neg (v1.Apply ctxt))
+
+    static member ( *! ) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
+        let n1,m,n2 = Dim.Inferred, Dim.Inferred, Dim.Inferred 
+        Shape.Unify "MatMul matrix 1"  v1.Shape (Shape [| n1; m |])
+        Shape.Unify "MatMul matrix 2" v2.Shape (Shape [| m; n2 |])
+        let outputShape = Shape [| n1; n2 |]
+        DT<'T> (outputShape, fun ctxt -> ctxt.Graph.MatMul(v1.Apply ctxt, v2.Apply ctxt))
 
     static member (/) (v1: DT<'T>, v2: DT<'T>) : DT<'T> = 
         let outputShape = Shape.EquivShapes "(/)"v1.Shape v2.Shape
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
         DT<_> (outputShape, fun ctxt -> ctxt.Graph.Div(v1.Apply ctxt, v2.Apply ctxt))
-#endif
 
-#if LIVECHECKING
-    static member internal ReduceOp keep_dims (axis: int[] option) (v: DT<'T>) : DT<'T> = 
-#else
     static member internal ReduceOp keep_dims (axis: int[] option) (v: DT<'T>) f : DT<'T> = 
-#endif
         let outputShape = 
             match keep_dims, axis with
             | Some true, _ -> v.Shape 
@@ -273,82 +254,56 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
                 let outputDims = inputDims |> Array.indexed |> Array.filter (fun (idx, _) -> not (Array.contains idx axis)) |> Array.map snd
                 if outputDims.Length = 0 then Shape.D else Shape outputDims
 
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
         DT<_> (outputShape, fun ctxt -> 
             let axis = axis |> Option.map (fun axis -> ctxt.Graph.Const(new TFTensor(axis)))
             f ctxt axis (v.Apply ctxt))
-#endif
 
     static member Sum (v: DT<'T>, ?axis: int[], ?keep_dims: bool) : DT<'T> = 
         DT.ReduceOp keep_dims axis v 
-#if !LIVECHECKING
             (fun ctxt axis vnode -> ctxt.Graph.ReduceSum(vnode, ?axis=axis, ?keep_dims=keep_dims))
-#endif
 
     static member Mean (v: DT<'T>, ?axis: int[], ?keep_dims: bool) : DT<'T> = 
         DT.ReduceOp keep_dims axis v
-#if !LIVECHECKING
             (fun ctxt axis vnode -> ctxt.Graph.ReduceMean(vnode, ?axis=axis, ?keep_dims=keep_dims))
-#endif
 
     static member Prod (v: DT<'T>, ?axis: int[], ?keep_dims: bool) : DT<'T> = 
         DT.ReduceOp keep_dims axis v 
-#if !LIVECHECKING
             (fun ctxt axis vnode -> ctxt.Graph.ReduceProd(vnode, ?axis=axis, ?keep_dims=keep_dims))
-#endif
 
     static member Min (v: DT<'T>, ?keep_dims: bool) : DT<'T> = 
         let outputShape = if keep_dims = Some true then v.Shape else Shape.D
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
         DT<_> (outputShape, fun ctxt -> 
            let vnode = v.Apply ctxt
            ctxt.Graph.Min(vnode, ctxt.Graph.ReduceDims(vnode), ?keep_dims=keep_dims))
-#endif
 
     static member Max (v: DT<'T>, ?keep_dims: bool) : DT<'T> = 
         let outputShape = if keep_dims = Some true then v.Shape else Shape.D
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
         DT<_> (outputShape, fun ctxt -> 
            let vnode = v.Apply ctxt
            ctxt.Graph.Max(vnode, ctxt.Graph.ReduceDims(vnode), ?keep_dims=keep_dims))
-#endif
 
     static member Norm (v: DT<'T>, ?axis, ?keep_dims: bool) : DT<'T> = 
-        DT.Sqrt(DT.Sum(v *. v, ?axis=axis, ?keep_dims= keep_dims))
+        DT.Sqrt(DT.Sum(v * v, ?axis=axis, ?keep_dims= keep_dims))
 
     // TODO : generalize beyond vectors
     member v.Item 
         with get (n: int) : DT<'T> = 
             Shape.Unify "Item (index notaion)" v.Shape Shape.DV
             let outputShape = Shape.D
-#if LIVECHECKING
-            DT<'T> (outputShape)
-#else
             DT<'T>(outputShape, fun ctxt -> 
                let vnode = v.Apply ctxt
                let graph = ctxt.Graph
                graph.Squeeze(graph.Slice(vnode, graph.Const(new TFTensor( [| n |])),graph.Const(new TFTensor( [| 1 |]))), [| 0L |])) // y = xv1
-#endif
 
     // TODO : generalize beyond vectors
     member v.Item 
         with get (n1: int, n2: int) : DT<'T> = 
             Shape.Unify "Item (index notation)" v.Shape Shape.DV
             let outputShape = Shape.D
-#if LIVECHECKING
-            DT<'T> (outputShape)
-#else
             DT<'T>(outputShape, fun ctxt -> 
                let vnode = v.Apply ctxt
                let graph = ctxt.Graph
                graph.Squeeze(graph.Slice(vnode, graph.Const(new TFTensor( [| n1; n2 |])),graph.Const(new TFTensor( [| 1; 1 |]))), [| 0L; 1L |])) // y = xv1
-#endif
 
     // TODO : generalize beyond vectors
     member v.GetSlice(startIndex: int option, endIndex: int option) =
@@ -358,46 +313,26 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
         if endIndex.IsNone then failwith "end index must be specified"
         let len = endIndex.Value - startIndex + 1
         let outputShape = Shape [| Dim len |]
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> 
             let vnode = v.Apply ctxt
             let graph = ctxt.Graph
             graph.Slice(vnode, graph.Const(new TFTensor( [| startIndex |])),graph.Const(new TFTensor( [| len |])))) // y = xv1
-#endif
 
     static member Sqrt (v: DT<'T>) : DT<'T> = 
         let outputShape = v.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Sqrt(v.Apply ctxt))
-#endif
 
     static member Square (v: DT<'T>) : DT<'T> = 
         let outputShape = v.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Square(v.Apply ctxt))
-#endif
 
     static member Exp (v: DT<'T>) : DT<'T> = 
         let outputShape = v.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Exp(v.Apply ctxt))
-#endif
 
     static member ReverseV2 (v: DT<'T>) : DT<'T> = 
         let outputShape = v.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.ReverseV2(v.Apply ctxt, ctxt.Graph.Const (new TFTensor( [| 0 |]))))
-#endif
 
     static member DiagPart (v: DT<'T>) : DT<'T> = 
         let dims = v.Shape.Dimensions
@@ -407,61 +342,40 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
             Dim.Unify "DiagPart" dims.[i] dims.[n/2 + i]
         let outputShape = Shape (dims.[0 .. n/2 - 1 ])
         let outputShape = v.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.DiagPart(v.Apply ctxt))
-#endif
 
     static member Trace v = DT.Sum (DT.DiagPart v)
 
+    static member Concat (vs: seq<DT<'T>>) : DT<'T> = 
+        let vs = Seq.toArray vs
+        if vs.Length = 0 then failwith "Vec: zero elements in vector"
+        let shape1 = vs.[0].Shape
+        let outputShape = Shape [| yield! shape1.Dimensions; yield Dim (vs.Length) |]
+        DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Concat(v.Apply ctxt))
+
     static member Sinh (v: DT<'T>) : DT<'T> = 
         let outputShape = v.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Sinh(v.Apply ctxt))
-#endif
 
     static member Sin (v: DT<'T>) : DT<'T> =  
         let outputShape = v.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Sin(v.Apply ctxt))
-#endif
 
     static member Cosh (v: DT<'T>) : DT<'T> = 
         let outputShape = v.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Cosh(v.Apply ctxt))
-#endif
 
     static member Cos (v: DT<'T>) : DT<'T> =  
         let outputShape = v.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Cos(v.Apply ctxt))
-#endif
 
     static member Tanh (v: DT<'T>) : DT<'T> = 
         let outputShape = v.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Tanh(v.Apply ctxt))
-#endif
 
     static member Tan (v: DT<'T>) : DT<'T> =  
         let outputShape = v.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Tan(v.Apply ctxt))
-#endif
 
     override dt.ToString() = dt.Shape.ToString()
 
@@ -471,9 +385,6 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
         let key = (y,xs,dy)
         xs |> Array.mapi (fun i x -> 
             let outputShape = x.Shape
-#if LIVECHECKING
-            outputShape
-#else
             (outputShape, (fun (ctxt: Ctxt) -> 
                 let dynodes = 
                     memoize ctxt.AddGradientNodes key (fun () -> 
@@ -483,37 +394,21 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
                         let dynodes = ctxt.Graph.AddGradients([| ynode |], xnodes, ?dy=dynodesIn)
                         dynodes)
                 dynodes.[i]))
-#endif
              )
 
     static member Const (value: double, ?shape: Shape) : DT<'T> = 
         let shape = shape |> Option.defaultWith (fun () -> Shape.Inferred)
-#if LIVECHECKING
-        DT<'T> (shape)
-#else
         DT<'T>(shape, fun ctxt -> ctxt.Graph.Reshape(ctxt.Graph.Const(new TFTensor(value)), ctxt.Graph.Const(shape.AsTFTensor())))
-#endif
 
     static member ConstArray (value: 'T[], ?shape: Shape) : DT<'T> = 
         let shape = shape |> Option.defaultWith (fun () -> Shape.Inferred)
-#if LIVECHECKING
-        DT<'T> (shape)
-#else
         DT<'T>(shape, fun ctxt -> ctxt.Graph.Reshape(ctxt.Graph.Const(new TFTensor(value)), ctxt.Graph.Const(shape.AsTFTensor())))
-#endif
 
     static member TruncatedNormal (shape: Shape) : DT<double> = 
-#if LIVECHECKING
-        DT<double> (shape)
-#else
         DT<double> (shape, fun ctxt -> ctxt.Graph.TruncatedNormal(ctxt.Graph.Const(shape.AsTFTensor()), TFDataType.Float64 ))
-#endif
 
     static member Variable (value: DT<'T>, ?name: string) : DT<'T> = 
         let outputShape = value.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> 
                      let name2 = defaultArg name ""
                      match ctxt.Values.TryFind name2 with 
@@ -528,7 +423,6 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
                          printfn "incorrect type in values, got '%A' expected '%A', assuming variable node is constant" (t.GetType()) (typeof<DT<'T>>)
                          value.Apply ctxt
                          )
-#endif
 
     static member Conv2D (input: DT<'T>, filters: DT<'T>, ?stride: int, ?padding: string) : DT<'T> = 
     //input: V[N,H,W,C], filters: V[F1;F2;C;COut]) -> output:V[N,H,W,COut] 
@@ -536,14 +430,10 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
         let padding = defaultArg padding "SAME"
         let filtersShape = filters.Shape
         let N, H, W, C = input.Shape.AsRank4()
-        let F1, F2, C2, COut = filtersShape.AsRank4()
+        let _F1, _F2, C2, COut = filtersShape.AsRank4()
         Dim.Unify "Conv2D" C C2
         let outputShape = Shape [| N; H/stride; W/stride; COut |]
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Conv2D(input.Apply ctxt, filters.Apply ctxt,strides = [|1L;int64 stride;int64 stride;1L|], padding=padding))
-#endif
 
     // filter: 4-D with shape [filter_height, filter_width, in_channels, out_channels].
     // out_backprop: 4-D with shape [batch, out_height, out_width, out_channels]. Gradients w.r.t. the output of the convolution.
@@ -557,30 +447,18 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
         let _filter_height, _filter_width, in_channels, out_channels2 = filters.Shape.AsRank4()
         Dim.Unify "Conv2DBackpropInput" out_channels out_channels2
         let input_shape = Shape [| N; out_height*stride; out_width*stride; in_channels |]
-#if LIVECHECKING
-        DT<'T> (input_shape)
-#else
         DT<'T>(input_shape, fun ctxt -> 
            let input_sizes = ctxt.Graph.Const(input_shape.AsTFTensor())
            ctxt.Graph.Conv2DBackpropInput(input_sizes, filters.Apply ctxt, out_backprop.Apply ctxt, strides = [|1L;int64 stride;int64 stride;1L|], padding=padding))
-#endif
 
     /// Clips tensor values to a specified min and max.
     static member ClipByValue (input: DT<'T>, low: DT<'T>, high: DT<'T>) : DT<'T> = 
         let outputShape = Shape.EquivShapes "ClipByValue" (Shape.EquivShapes "ClipByValue" input.Shape low.Shape) high.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.ClipByValue(input.Apply ctxt, low.Apply ctxt, high.Apply ctxt))
-#endif
 
     static member Moments(input: DT<'T>, ?axes: seq<int>) : DT<'T> * DT<'T> = 
         // Note: keep_dims = true
         let outputShape = input.Shape
-#if LIVECHECKING
-        DT<'T>(outputShape),
-        DT<'T>(outputShape)
-#else
         let compute (ctxt: Ctxt) = 
             memoize ctxt.MomentNodes (upcast input) (fun () -> 
                 let axes = match axes with None -> None | Some v -> Some (ctxt.Graph.Const((shape v).AsTFTensor()))
@@ -588,32 +466,19 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
 
         DT<'T>(outputShape, fun ctxt -> fst (compute ctxt)),
         DT<'T>(outputShape, fun ctxt -> snd (compute ctxt))
-#endif
 
     static member Relu(input: DT<'T>) : DT<'T> = 
         let outputShape = input.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.Relu(input.Apply ctxt))
-#endif
 
     static member DecodeJpeg(contents:DT<string>, ?channels: int) : DT<int> = // V[int,H,W,C]
         let channels = defaultArg channels 3 // CHECK ME
         let outputShape = Shape [| Dim.Inferred; Dim.Inferred; Dim channels |]
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
         DT<_> (outputShape, fun ctxt -> ctxt.Graph.DecodeJpeg(contents=contents.Apply ctxt, channels=3L))
-#endif
 
     static member Cast<'T, 'T2>(input: DT<'T>) : DT<'T2> = 
         let outputShape = input.Shape
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
         DT<_> (outputShape, fun ctxt -> ctxt.Graph.Cast(input.Apply ctxt, TFDataType.FromType(typeof<'T2>)))
-#endif
 
     static member WithScope(name: string) : IDisposable = 
         new WithScopeDisposable(name) :> _
@@ -621,32 +486,19 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
     static member UsingWithScope (name: string) (f: unit -> DT<'T>) : DT<'T> = 
         let dt = f()
         let outputShape = dt.Shape
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> use _scope = ctxt.Graph.NameScope(name) in dt.Apply ctxt)
-#endif
 
     static member CreateString(value: byte[]) : DT<string> = 
         let outputShape = shape [ 1 ]
-#if LIVECHECKING
-        DT<_> (outputShape)
-#else
         DT<_> (outputShape, fun ctxt -> ctxt.Graph.Const(TFTensor.CreateString(value)))
-#endif
 
     /// Add a batch
     // TODO: handle expansion along arbitrary dimensions
     static member ExpandDims(value: DT<'T>) : DT<'T> = 
         let outputShape = Shape [| yield Dim.Inferred; yield! value.Shape.Dimensions |]
-#if LIVECHECKING
-        DT<'T> (outputShape)
-#else
         DT<'T>(outputShape, fun ctxt -> ctxt.Graph.ExpandDims(value.Apply ctxt, ctxt.Graph.Const(new TFTensor( [| 0 |] ))))
     //TF.ExpandDims[Dim](value: V[shape]) : V[Expanded(Dim,shape)]
-#endif
 
-#if !LIVECHECKING
     static member RunTFTensors(values: DT[], ?weights: seq<string * DT>) : TFTensor[] = 
         let sess = new TFSession()
         let graph = sess.Graph
@@ -661,59 +513,49 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
 
     static member RunTFTensor(value: DT<'T>, ?weights: seq<string * DT>) : TFTensor = 
         DT.RunTFTensors([| value |], ?weights=weights).[0]
-#endif
 
     static member RunScalar(value: DT<'T>, ?weights: seq<string * DT>) : 'T = 
-#if LIVECHECKING
-        Unchecked.defaultof<'T>
-#else
-        DT.Run(value, ?weights=weights) :?> 'T
-#endif
+        if livecheck then 
+            Unchecked.defaultof<'T>
+        else
+            DT.Run(value, ?weights=weights) :?> 'T
 
     static member RunScalarPair(value1: DT<'T1>, value2: DT<'T2>, ?weights: seq<string * DT>) : 'T1 * 'T2 = 
-#if LIVECHECKING
-        Unchecked.defaultof<'T1>, Unchecked.defaultof<'T2>
-#else
-        let results = DT.RunTFTensors([| (value1 :> DT); (value2 :> DT); |], ?weights=weights)
-        (results.[0].GetValue() :?> 'T1), (results.[1].GetValue() :?> 'T2)
-#endif
+        if livecheck then 
+            Unchecked.defaultof<'T1>, Unchecked.defaultof<'T2>
+        else
+            let results = DT.RunTFTensors([| (value1 :> DT); (value2 :> DT); |], ?weights=weights)
+            (results.[0].GetValue() :?> 'T1), (results.[1].GetValue() :?> 'T2)
 
     static member RunArray(value: DT<'T>, ?weights: seq<string * DT>) : 'T[] = 
-#if LIVECHECKING
-        [| Unchecked.defaultof<'T> |]
-#else
-        DT.Run(value, ?weights=weights) :?> 'T[]
-#endif
+        if livecheck then 
+            [| Unchecked.defaultof<'T> |]
+        else
+            DT.Run(value, ?weights=weights) :?> 'T[]
 
     static member RunArray2D(value: DT<'T>, ?weights: seq<string * DT>) : 'T[,] = 
-#if LIVECHECKING
-        array2D [| [| Unchecked.defaultof<'T> |] |]
-#else
-        DT.Run(value, ?weights=weights) :?> 'T[,]
-#endif
+        if livecheck then 
+            array2D [| [| Unchecked.defaultof<'T> |] |]
+        else
+            DT.Run(value, ?weights=weights) :?> 'T[,]
 
     static member RunArray3D(value: DT<'T>, ?weights: seq<string * DT>) : 'T[,,] = 
-#if LIVECHECKING
-        Array3D.init 1 1 1 (fun _ _ _ -> Unchecked.defaultof<'T>)
-#else
-        DT.Run(value, ?weights=weights) :?> 'T[,,]
-#endif
+        if livecheck then 
+            Array3D.init 1 1 1 (fun _ _ _ -> Unchecked.defaultof<'T>)
+        else  
+            DT.Run(value, ?weights=weights) :?> 'T[,,]
 
     static member RunArray4D(value: DT<'T>, ?weights: seq<string * DT>) : 'T[,,,] = 
-#if LIVECHECKING
-        Array4D.init 1 1 1 1 (fun _ _ _ _ -> Unchecked.defaultof<'T>)
-#else
-        DT.Run(value, ?weights=weights) :?> 'T[,,,]
-#endif
+        if livecheck then 
+            Array4D.init 1 1 1 1 (fun _ _ _ _ -> Unchecked.defaultof<'T>)
+        else
+            DT.Run(value, ?weights=weights) :?> 'T[,,,]
 
     static member Run(value: DT<'T>, ?weights: seq<string * DT>) : obj = 
-#if LIVECHECKING
-        obj()
-#else
-        DT.RunTFTensor(value, ?weights=weights).GetValue() 
-#endif
-
-
+        if livecheck then 
+            obj()
+        else
+            DT.RunTFTensor(value, ?weights=weights).GetValue() 
 
 /// Forward and reverse differentiation operations module (automatically opened)
 module DT =
@@ -730,11 +572,7 @@ module DT =
     /// Differential changes in scalar `y` with respect to differentials of `xs`. 
     let gradients (y: D<'T>) (xs: DT<'T>[]) = 
         DT.AddGradients (y, xs |> Array.map (fun x -> x :> DT)) 
-#if LIVECHECKING
-            |> Array.map (fun shape -> DT<'T>(shape))
-#else
             |> Array.map (fun (shape, f) -> DT<'T>(shape, f))
-#endif
 
     /// Differential change in scalar `y` with respect to differentials of `x`. 
     let gradient (y: D<'T>) (x: DT<'T>) = 
@@ -937,32 +775,20 @@ module TFHelpers =
 
     let scalar (d:double) : DT<double> = 
         let shape = Shape.Inferred 
-#if LIVECHECKING
-        DT<_> (shape)
-#else
         DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(d))))
-#endif
 
     let v d = scalar d
     let vec (d:seq<double>) : DT<double> = 
         let d = Array.ofSeq d
         let shape = shape [ d.Length ]
-#if LIVECHECKING
-        DT<_> (shape)
-#else
         DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(d))))
-#endif
 
     let batchScalar d = vec d
 
     let matrix (d: seq< #seq<'T>>) : DT<'T> = 
         let d = array2D d 
         let shape = shape [ d.GetLength(0); d.GetLength(1)  ]
-#if LIVECHECKING
-        DT<_> (shape)
-#else
         DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(d))))
-#endif
 
     let batchVec d = matrix d 
 
@@ -970,11 +796,7 @@ module TFHelpers =
         let d = d |> Array.ofSeq |> Array.map array2D
         let ds = Array3D.init d.Length (d.[0].GetLength(0)) (d.[0].GetLength(1)) (fun i j k -> d.[i].[j,k])
         let shape = shape [ d.Length; d.[0].GetLength(0); d.[0].GetLength(1)  ]
-#if LIVECHECKING
-        DT<_> (shape)
-#else
         DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(ds))))
-#endif
 
     let image d = matrix3 d
 
@@ -983,11 +805,7 @@ module TFHelpers =
         let r1,r2,r3,r4 = (d.GetLength(0), d.GetLength(1), d.[0,0].GetLength(0),d.[0,0].GetLength(1))
         let ds = Array4D.init r1 r2 r3 r4 (fun i j k m -> d.[i,j].[k,m])
         let shape = shape [ r1; r2; r3; r4 ]
-#if LIVECHECKING
-        DT<_> (shape)
-#else
         DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(ds))))
-#endif
 
     let batchImage d = matrix4 d 
     

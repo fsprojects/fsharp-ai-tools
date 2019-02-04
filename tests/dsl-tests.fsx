@@ -43,7 +43,7 @@ module PlayWithTF =
     tf { return DT.ReverseV2 (vec [1.0; 2.0]) }
     |> DT.RunArray
 
-    let f x = tf { return x *. x + v 4.0 *. x }
+    let f x = tf { return x * x + v 4.0 * x }
     let df x = DT.diff f x
 
     df (v 3.0)
@@ -56,7 +56,7 @@ module PlayWithTF =
     tf { return sum (vec [1.0; 2.0] + v 4.0) }
     |> DT.RunScalar
 
-    let f2 x = tf { return sum (vec [1.0; 2.0] *. x *. x) }
+    let f2 x = tf { return sum (vec [1.0; 2.0] * x * x) }
     let df2 x = DT.grad f2 x
 
     f2 (vec [1.0; 2.0])
@@ -69,7 +69,7 @@ module PlayWithTF =
     //(DT.Stack [| x.[1]; x.[0] |]).Shape
     //|> DT.RunArray
 
-    let f3 (x: DT<_>) = tf { return vec [1.0; 2.0] *. x *. DT.ReverseV2 x } //[ x1*x2; 2*x2*x1 ] 
+    let f3 (x: DT<_>) = tf { return vec [1.0; 2.0] * x * DT.ReverseV2 x } //[ x1*x2; 2*x2*x1 ] 
     let df3 x = DT.jacobian f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
     let expected (x1, x2) = array2D [| [| x2; x1 |]; [| 2.0*x2; 2.0*x1 |] |]  
 
@@ -101,7 +101,7 @@ module PlayWithTF =
     tf { return var (vec [ 1.0 ]) "x" + v 4.0 }
     |> fun dt -> DT.RunArray(dt, ["x", (vec [2.0] :> _)] )
 
-    tf { return var (vec [ 1.0 ]) "x" *. var (vec [ 1.0 ]) "x" + v 4.0 }
+    tf { return var (vec [ 1.0 ]) "x" * var (vec [ 1.0 ]) "x" + v 4.0 }
     |> DT.RunArray
 
     tf { return DT.Variable (vec [ 1.0 ], name="hey") + v 4.0 }
@@ -111,7 +111,7 @@ module PlayWithTF =
 module GradientAscentWithoutVariables =
     // Define a function which will be executed using TensorFlow
     let f (x: DT<double>, y: DT<double>) = 
-        tf { return sin (v 0.5 *. x *. x - v 0.25 *. y *. y + v 3.0) *. cos (v 2.0 *. x + v 1.0 - exp y) }
+        tf { return sin (v 0.5 * x * x - v 0.25 * y * y + v 3.0) * cos (v 2.0 * x + v 1.0 - exp y) }
 
     // Get the partial derivatives of the scalar function
     // computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
@@ -134,7 +134,7 @@ module GradientAscentWithoutVariables =
 module GradientDescentWithVariables =
     // Define a function which will be executed using TensorFlow
     let f (x: DT<double>, y: DT<double>) = 
-        tf { return sin (v 0.5 *. x *. x - v 0.25 *. y *. y + v 3.0) *. cos (v 2.0 *. x + v 1.0 - exp y) }
+        tf { return sin (v 0.5 * x * x - v 0.25 * y * y + v 3.0) * cos (v 2.0 * x + v 1.0 - exp y) }
 
     // Get the partial derivatives of the scalar function
     // computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
@@ -183,12 +183,12 @@ module ModelExample =
 
     /// Evaluate the model for input and coefficients
     let model (xs: DT<double>, coeffs: DT<double>) = 
-        tf { return DT.Sum (xs *. coeffs,axis= [| 1 |]) }
+        tf { return DT.Sum (xs * coeffs,axis= [| 1 |]) }
 
     /// Evaluate the loss function for the model w.r.t. a true output
     let loss (z: DT<double>) tgt = 
         tf { let dz = z - tgt
-             return DT.Sum (dz *. dz) / v (double modelSize) / v (double z.Shape.[0].Value) }
+             return DT.Sum (dz * dz) / v (double modelSize) / v (double z.Shape.[0].Value) }
 
     // Gradient of the loss function w.r.t. the coefficients
     let objective (xs, y) coeffs = 
@@ -212,7 +212,7 @@ module ModelExample =
     let rate = 2.0
     let step inputs (coeffs: double[]) = 
         let dz = dobjective_dcoeffs inputs coeffs 
-        let coeffs = (vec coeffs - v rate *. dz) |> DT.RunArray
+        let coeffs = (vec coeffs - v rate * dz) |> DT.RunArray
         printfn "coeffs = %A, dz = %A, validation = %A" coeffs dz (validation coeffs)
         coeffs
 
@@ -246,7 +246,7 @@ module NeuralTransferFragments =
              let scale = DT.Variable (v 1.0, name + "/scale")
              let epsilon = v 0.001
              let normalized = (input - mu) / sqrt (sigma_sq + epsilon)
-             return scale *. normalized + shift }
+             return scale * normalized + shift }
 
     let friendly4D (d : 'T[,,,]) =
         [| for i in 0..Array4D.length1 d - 1 -> [| for j in 0..Array4D.length2 d - 1 -> [| for k in 0..Array4D.length3 d - 1 -> [| for m in 0..Array4D.length4 d - 1 -> d.[i,j,k,m]  |]|]|]|]
@@ -263,7 +263,7 @@ module NeuralTransferFragments =
             else
                 Shape [| Dim filter_size; Dim filter_size; Dim.Inferred; Dim out_channels |]
         tf { let truncatedNormal = DT.TruncatedNormal(weights_shape)
-             return DT.Variable (truncatedNormal *. v 0.1, name + "/weights") }
+             return DT.Variable (truncatedNormal * v 0.1, name + "/weights") }
 
     let is_relu = 1
     let stride = 1
@@ -292,7 +292,7 @@ module NeuralTransferFragments =
            }
 
     let to_pixel_value (input: DT<double>) = 
-        tf { return tanh input *. v 150.0 + (v 255.0 / v 2.0) }
+        tf { return tanh input * v 150.0 + (v 255.0 / v 2.0) }
 
     // The style-transfer tf
 

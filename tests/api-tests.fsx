@@ -58,7 +58,29 @@ module PlayWithAddingAddN =
     let res1 = session.Run( [| |], [| |], [| y1 |])
     let v = res1.[0].GetValue() :?> double[] |> Array.item 0
     if v <> 9.0 then failwith "fail"
-    
+
+module PlayWithShapes2 = 
+    let xv = 3.0
+    let graph = new TFGraph()
+    let sample_0 = new TFTensor (1.0)
+    let sample_1 = new TFTensor ([| 1.0 |])
+    let sample_1_by_1 = new TFTensor (array2D [ [ 1.0 ] ])
+    let sample_2_by_1 = new TFTensor (array2D [ [ 1.0 ]; [2.0] ])
+    sample_0.Shape // [| |]
+    sample_1.Shape // [| 1 |]
+    sample_1_by_1.Shape // [| 1; 1 |]
+    sample_2_by_1.Shape // [| 2 rows, 1 column |]
+
+    //let x = graph.Concat (graph.Const(new TFTensor(0)), [| graph.Const sample_0; graph.Const sample_0 |])
+    let x = graph.Stack ([| graph.Const sample_0; graph.Const sample_0 |])
+    let session = new TFSession(graph)
+    let res1 = session.Run( [| |], [| |], [| x |])
+    let v = res1.[0].GetValue() :?> double[] |> Array.item 0
+    if v <> 9.0 then failwith "fail"
+
+    t.Shape    
+
+
 module PlayWithAddingConcat = 
     let xv = 3.0
     let t1 = new TFTensor( [| xv |])

@@ -70,11 +70,11 @@ module ModelExample =
 
     /// Evaluate the model for input and coefficients
     let model (xs: DT<double>, coeffs: DT<double>) = 
-        tf { return DT.Sum (xs *. coeffs,axis= [| 1 |]) }
+        tf { return DT.Sum (xs * coeffs,axis= [| 1 |]) }
 
     /// Evaluate the loss function for the model w.r.t. a true output
     let loss (z: DT<double>) tgt = 
-        tf { let dz = z - tgt in return DT.Sum (dz *. dz) }
+        tf { let dz = z - tgt in return DT.Sum (dz * dz) }
 
     // Gradient of the loss function w.r.t. the coefficients
     let dloss_dcoeffs (xs, y) coeffs = 
@@ -88,7 +88,7 @@ module ModelExample =
     let rate = 0.001
     let step inputs (coeffs: double[]) = 
         let dz = dloss_dcoeffs inputs coeffs 
-        let coeffs = (vec coeffs - v rate *. dz) |> DT.RunArray
+        let coeffs = (vec coeffs - v rate * dz) |> DT.RunArray
         printfn "coeffs = %A, dz = %A" coeffs dz
         coeffs
 
