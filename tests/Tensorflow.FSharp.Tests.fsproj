@@ -57,12 +57,12 @@
     <None Include="examples\example_3.jpeg" />
     <None Include="examples\example_4.jpeg" />
     <None Include="examples\example_5.jpeg" />
+    <Compile Include="FFStyleVGG.fs" />
+    <Compile Include="ResNet50.fs" />
     <Compile Include="Tests.fs" />
     <None Include="..\examples\shared\dsl.fsx" />
     <None Include="..\examples\ImageClassifier.fsx" />
     <None Include="..\examples\NeuralStyleTransfer.fsx" />
-    <None Include="..\examples\NugetDeployment.fsx" />
-    <None Include="Testing.fsx" />
   </ItemGroup>
 
 </Project>

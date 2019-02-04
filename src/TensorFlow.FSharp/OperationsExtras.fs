@@ -98,13 +98,13 @@ type TFGraph with
 
     // Helper method to create a variable and track it.
     member graph.MakeVariable (initialValue : TFOutput, trainable : bool, ?name : string) : TFVariable =
-        use newScope = graph.WithScope (graph.MakeName ("Variable", userName= defaultArg name ""))
+        use newScope = graph.NameScope(name, "Variable", initialValue)
         let dtype = initialValue.TFDataType
         let shape = graph.GetShape (initialValue)
         let variableHandle = graph.VarHandleOp (dtype, new TFShape (shape))
-        use aScope = graph.WithScope ("Assign")
+        use aScope = graph.NameScope("Assign")
         let assignOp = graph.AssignVariableOp (variableHandle, initialValue)
-        use rScope = graph.WithScope ("Read")
+        use rScope = graph.NameScope("Read")
         let readHandle = graph.ReadVariableOp (variableHandle, dtype)
         let nv = new TFVariable (variableHandle.Struct, readHandle.Struct, assignOp.Handle)
         if trainable then graph.AddTrainableVariable (nv)
@@ -165,7 +165,8 @@ type TFGraph with
     // Converts a shape to a tensor, to a Output
     //
     member graph.ShapeTensorOutput (shape : TFShape) =
-        graph.Const (new TFTensor(shape.ToArray ()), if shape.IsLongArray then TFDataType.Int64 else TFDataType.Int32)
+        graph.Const (new TFTensor(shape.ToArray ()), TFDataType.Int64)
+        //  if shape.IsLongArray then TFDataType.Int64 else TFDataType.Int32)
 
     /// <summary>
     /// Computes dropout. 
@@ -180,7 +181,7 @@ type TFGraph with
     /// otherwise outputs 0. The scaling is so that the expected sum is unchanged.
     /// </remarks>
     member graph.Dropout (x : TFOutput, keep_prob : TFOutput, ?noise_shape : TFShape, ?seed : int, ?name : string) =
-        use newScope = graph.WithScope (graph.MakeName ("dropout", userName = defaultArg name ""))
+        use newScope = graph.NameScope(name, "Dropout",x)
         let noiseShape = noise_shape |> Option.defaultWith (fun () -> new TFShape (graph.GetShape (x)))
         let shapeTensor = graph.ShapeTensorOutput (noiseShape)
         // uniform [keep_prob, 1.0 + keep_prob)
@@ -208,7 +209,7 @@ type TFGraph with
         if (keep_prob < 0.0 || keep_prob >= 1.0) then raise(ArgumentOutOfRangeException (sprintf "keep_prob must be a scalar tensor or a float in the range (0, 1], got %f"  keep_prob))
         if keep_prob = 1.0 then x
         else
-            use newScope = graph.WithScope (graph.MakeName ("dropout", userName = defaultArg name ""))
+            use newScope = graph.NameScope("Dropout", x)
             let tkeep_prob = graph.Const (new TFTensor(keep_prob))
             graph.Dropout (x, tkeep_prob, ?noise_shape=noise_shape, ?seed=seed, ?name=name)
 
@@ -228,7 +229,7 @@ type TFGraph with
     /// <returns>A clipped <see cref="Output">tensor</see>.</returns>
     member graph.ClipByValue2 (x : TFOutput, clip_value_min : TFOutput, clip_value_max : TFOutput, ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/clip_ops.py#L33
-        use newScope = graph.WithScope (graph.MakeName ("ClipByValue", userName = defaultArg name ""))
+        use newScope = graph.NameScope (name, "ClipByValue", x, clip_value_min, clip_value_max)
         // Go through list of tensors, for each value in each tensor clip
         let t_min = graph.Minimum (x, clip_value_max)
         let t_max = graph.Maximum (t_min, clip_value_min, ?name = name)
@@ -253,12 +254,11 @@ type TFGraph with
     /// <returns>A clipped <see cref="Output">tensor</see>.</returns>
     member graph.ClipByNorm (x : TFOutput, clip_norm :TFOutput, ?axes : TFOutput, ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/clip_ops.py#L73
-        let scopeName = graph.MakeName ("ClipByNorm", userName = defaultArg name "")
-        use newScope = graph.WithScope (scopeName)
+        use nameScope = graph.NameScope(name,"ClipByNorm", [|yield! [x;clip_norm]; yield! axes |> Option.toArray|])
         // Calculate L2-norm, clip elements by ratio of clip_norm to L2-norm
         let l2norm_inv = graph.Rsqrt (graph.ReduceSum (graph.Mul (x, x), ?axis = axes, keep_dims = true))
         let intermediate = graph.Mul (x, clip_norm)
-        let tclip = graph.Identity (graph.Mul (intermediate, graph.Minimum (l2norm_inv, graph.Div (graph.Const (new TFTensor (1.0)), clip_norm), ?name = name)))
+        let tclip = graph.Identity (graph.Mul (intermediate, graph.Minimum (l2norm_inv, graph.Div (graph.Const (new TFTensor (1.0)), clip_norm), name = string nameScope)))
         tclip
 
     /// <summary>
@@ -275,11 +275,10 @@ type TFGraph with
     /// <returns>A clipped <see cref="Output">tensor</see>.</returns>
     member graph.GlobalNorm (tensors : TFOutput [], ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/clip_ops.py#L122
-        use newScope = graph.WithScope (graph.MakeName ("GlobalNorm", userName = defaultArg name ""))
+        use nameScope = graph.NameScope(name, "GlobalNorm", tensors)
         let half_squared_norms = Array.init tensors.Length (fun i -> graph.L2Loss (tensors.[i]))
         let half_squared_norm = graph.ReduceSum (graph.Stack (half_squared_norms))
-        let norm = graph.Sqrt (graph.Mul (half_squared_norm, graph.Const (new TFTensor(2.0))), name = "global_norm")
-        norm
+        graph.Sqrt (graph.Mul (half_squared_norm, graph.Const (new TFTensor(2.0))), name = string nameScope)
 
     /// <summary>
     /// Clips tensor values to a maximum average L2-norm.
@@ -297,13 +296,12 @@ type TFGraph with
     /// <param name="name">Name of the oper.</param>
     member graph.ClipByAverageNorm (x : TFOutput, clip_norm :TFOutput , ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/clip_ops.py#L251
-        use newScope = graph.WithScope (graph.MakeName ("ClipByAverageNorm", userName = defaultArg name ""))
+        use nameScope = graph.NameScope(name, "ClipByAverageNorm", x, clip_norm)
         // Calculate L2-norm per element, clip elements by ratio of clip_norm to
         // L2-norm per element
         let n_element = graph.Cast (graph.Size (x), TFDataType.Float32)
         let l2norm_inv = graph.Rsqrt (graph.ReduceSum (graph.Mul (x, x), graph.Range (graph.Rank (x))))
-        let tclip = graph.Identity (graph.Mul (graph.Mul (x, clip_norm), graph.Minimum (graph.Mul (l2norm_inv, n_element), graph.Div (graph.Const (new TFTensor (1.0)), clip_norm)), ?name = name))
-        tclip
+        graph.Mul (graph.Mul (x, clip_norm), graph.Minimum (graph.Mul (l2norm_inv, n_element), graph.Div (graph.Const (new TFTensor (1.0)), clip_norm)), name = string nameScope) 
 
     /// <summary>
     ///   Computes sigmoid cross entropy given `logits`.
@@ -318,7 +316,7 @@ type TFGraph with
     /// 
     member graph.SigmoidCrossEntropyWithLogits (labels : TFOutput, logits : TFOutput, ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/r1.3/tensorflow/python/ops/nn_impl.py#L100
-        use newScope = graph.WithScope (graph.MakeName ("logistic_loss", userName = defaultArg name "" ))
+        use nameScope = graph.NameScope(name, "LogisticLoss", labels, logits)
         // Note: The following lines have not been ported from the original TF implementation since 
         // TensorFlowSharp API should guarantee that logits and labels are of type Output by design:
         //
@@ -345,7 +343,7 @@ type TFGraph with
         let cond = graph.GreaterEqual (logits, zeros)
         let relu_logits = graph.Where (cond, logits, zeros)
         let neg_abs_logits = graph.Where (cond, graph.Neg (logits), logits)
-        graph.Add ( graph.Sub (relu_logits, graph.Mul (logits, labels)), graph.Log1p (graph.Exp (neg_abs_logits)), ?name = name)
+        graph.Add ( graph.Sub (relu_logits, graph.Mul (logits, labels)), graph.Log1p (graph.Exp (neg_abs_logits)), name = string nameScope)
 
     /// <summary>
     ///   Shuffle dimensions of x according to a permutation.
@@ -376,7 +374,7 @@ type TFGraph with
     /// <param name="name">Optional name prefix for the returned tensors.</param>
     /// <returns>Output.</returns>
     member graph.Cond (pred : TFOutput, true_fn : unit -> TFOutput, false_fn : unit -> TFOutput, ?name : string) =
-        use newScope = graph.WithScope (graph.MakeName ("cond", userName = defaultArg name ""))
+        use newScope = graph.NameScope(name, "Cond")
         // Add the Switch to the graph.
         let (p_2, p_1) = graph.Switch (pred, pred);
         let pivot_t = graph.Identity (p_1, name = "switch_t");
@@ -392,7 +390,7 @@ type TFGraph with
             false_fn ()
 
         // Add the final merge to the graph.
-        let merges, idnex = graph.Merge ([|res_t; res_f|])
+        let merges, idnex = graph.Merge ([|res_t; res_f|], name= string newScope)
         merges
 
     /// <summary>
@@ -426,15 +424,15 @@ type TFGraph with
     /// </remarks>
     /// 
     member graph.Stack (values : TFOutput [], ?axis : int, ?name : string) =
+        use nameScope = graph.NameScope(name, "Stack", values)
         let axis = defaultArg axis 0
-        let name = defaultArg name "stack"
         // https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/ops/array_ops.py#L804
         let ndims = graph.GetTensorNumDims (values.[0])
         let expanded_num_dims = ndims + 1
         if axis < -expanded_num_dims || axis >= expanded_num_dims then
             raise (InvalidOperationException (sprintf "axis = %i not in [-%i, %i]" axis expanded_num_dims expanded_num_dims))
         else
-            graph.Pack (values, axis = int64 axis, name=name);
+            graph.Pack (values, axis = int64 axis, name=string nameScope);
 
     /// <summary>
     /// Creates a sequence of numbers.
@@ -451,13 +449,13 @@ type TFGraph with
     member graph.Range (start : TFOutput, ?limit : TFOutput, ?delta : TFOutput, ?dataType : TFDataType, ?name : string) =
         let name = defaultArg name "range"
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/math_ops.py#L1156
+        use newScope = graph.NameScope(name, "Range", [|yield start; yield! limit |> Option.toArray; yield! delta |> Option.toArray|]) 
         let start,limit =
             match limit with 
             | None -> graph.Cast (graph.Const (new TFTensor (0.0)), start.TFDataType), start // TODO: Maybe add dataType as convenience in Const?
             | Some(limit) -> start,limit
 
         let delta = delta |> Option.defaultWith (fun () -> graph.Cast ( graph.Const (new TFTensor (1.0)), start.TFDataType))
-        use newScope = graph.WithScope (graph.MakeName ("Range", name))
         // infer dtype if not explicitly provided
         let start, limit, delta =
             match dataType with 
@@ -480,37 +478,43 @@ type TFGraph with
         graph.Range(start, limit, delta, name)
 
     /// <summary>
-    ///    Concatenates tensors along one dimension.
+    /// Outputs random values from a normal distribution
     /// </summary>
-    /// <param name="concat_dim">
-    ///    0-D.  The dimension along which to concatenate.  Must be in the
-    ///    range [0, rank(values)).
-    /// </param>
-    /// <param name="values">
-    ///    The <c>N<c> Tensors to concatenate. Their ranks and types must match,
-    ///    and their sizes must match in all dimensions except <c>concat_dim<c>.
-    /// </param>
-    /// <param name="name">
-    /// If specified, the created operation in the graph will be this one, otherwise it will be named 'Concat'.
-    /// <param>
-    /// <param name="N">
-    ///    Optional argument
-    /// </param>
-    /// <returns>
-    ///    A <c>TFTensor<c> with the concatenation of values stacked along the
-    ///    <c>concat_dim<c> dimension.  This tensor's shape matches that of <c>values<c> except
-    ///    in <c>concat_dim<c> where it has the sum of the sizes.
-    ///    The Operation can be fetched from the resulting Output, by fetching the Operation property from the result.
-    /// </returns>
-    member graph.Concat (concat_dim : TFOutput, values : TFOutput[], ?N : int64,  ?name : string) : TFOutput =
-        let name = defaultArg name ""
-        let desc = new TFOperationDesc (graph, "Concat", graph.MakeName ("Concat", name))
-        desc.AddInput (concat_dim) |> ignore
-        desc.AddInputs (values) |> ignore
-        graph.CurrentDependencies |> Seq.iter (fun x -> desc.AddControlInput x |> ignore)
-        N |> Option.iter (fun x -> desc.SetAttr ("N", x) |> ignore)
-        let op = desc.FinishOperation ()
-        let mutable _idx = 0
-        let output = new TFOutput (op, _idx)
-        _idx <- _idx + 1
-        output
+    /// <returns>A tensor of the specified shape filled with random normal values.</returns>
+    /// <param name="shape">Shape of the output tensor.</param>
+    /// <param name="mean">The mean of the standard distribution.</param>
+    /// <param name="stddev">The standard deviation of the normal distribution.</param>
+    /// <param name="seed">Integer seed used for the random distribution, using the TensorFlow SetRandomSeed .</param>
+    /// <param name="operName">Operation name, optional.</param>
+    member graph.RandomNormal (shape : TFShape, ?mean : float32, ?stddev : float32, ?seed : int, ?name : string) =
+        let mean = defaultArg mean 0.f
+        let stddev = defaultArg stddev 1.f
+        use ns = graph.NameScope(name, "RandomNormal")
+        let shapeTensor = graph.ShapeTensorOutput (shape)
+        let tmean = graph.Const(new TFTensor(mean), "mean")
+        let tstddev = graph.Const(new TFTensor(stddev), "stddev")
+        let graphSeed, localSeed = graph.GetRandomSeeds(?operationSeed=seed)
+        let rnd = graph.RandomStandardNormal(shapeTensor, TFDataType.Float32, int64 graphSeed, int64 localSeed)
+        let mul = graph.Mul(rnd, tstddev)
+        graph.Add(mul, tmean,name= string ns)
+
+    /// <summary>
+    /// Randoms the uniform.
+    /// </summary>
+    /// <returns>The uniform.</returns>
+    /// <param name="shape">Shape.</param>
+    /// <param name="minval">Minval.</param>
+    /// <param name="maxval">Maxval.</param>
+    /// <param name="seed">Seed.</param>
+    /// <param name="operName">Oper name.</param>
+    member graph.RandomUniform (shape : TFShape, ?minval : float32, ?maxval : float32, ?seed : int, ?name : string) =
+        let minval = defaultArg minval 0.f
+        let maxval = defaultArg maxval 1.f
+        use ns = graph.NameScope(name, "RandomUniform")
+        let shapeTensor = graph.ShapeTensorOutput (shape)
+        let minvalTensor = graph.Const (new TFTensor(minval), "minval")
+        let maxvalTensor = graph.Const (new TFTensor(maxval), "maxval")
+        let graphSeed, localSeed = graph.GetRandomSeeds(?operationSeed=seed)
+        let rnd = graph.RandomUniform(shapeTensor, TFDataType.Float32, int64 graphSeed, int64 localSeed)
+        let mul = graph.Mul(rnd, graph.Sub(maxvalTensor, minvalTensor))
+        graph.Add(mul, minvalTensor, name = string ns)

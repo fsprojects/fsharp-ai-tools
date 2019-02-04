@@ -220,22 +220,21 @@ type TFTensor internal (handle: IntPtr) =
     /// </remarks>
     member this.Shape = [|for i = 0 to TF_NumDims (handle) - 1 do yield TF_Dim (handle, i)|]
 
-// This automatically is used for IntPtr as well which is not desired behavior
-//    static member internal FetchSimple (dt : TFDataType, data : obj) : obj =
-//        match dt with 
-//        | TFDataType.Float32 -> Convert.ToSingle (data) |> box
-//        | TFDataType.Float64 -> Convert.ToDouble (data) |> box
-//        | TFDataType.Int32   -> Convert.ToInt32 (data) |> box
-//        | TFDataType.UInt8   -> Convert.ToByte (data) |> box
-//        | TFDataType.Int16   -> Convert.ToInt16 (data) |> box
-//        | TFDataType.Int8    -> Convert.ToSByte (data) |> box 
-//        | TFDataType.String  -> raise(NotImplementedException())
-//        | TFDataType.Int64   -> Convert.ToInt64 (data) |> box
-//        | TFDataType.Bool    -> Convert.ToBoolean (data) |> box
-//        | TFDataType.UInt16  -> Convert.ToUInt16 (data) |> box
-//        | TFDataType.Complex128 -> data :?> Complex |> box
-//        | _ -> box null
-//
+    static member internal FetchSimpleObj (dt : TFDataType, data : obj) : obj =
+        match dt with 
+        | TFDataType.Float32 -> Convert.ToSingle (data) |> box
+        | TFDataType.Float64 -> Convert.ToDouble (data) |> box
+        | TFDataType.Int32   -> Convert.ToInt32 (data) |> box
+        | TFDataType.UInt8   -> Convert.ToByte (data) |> box
+        | TFDataType.Int16   -> Convert.ToInt16 (data) |> box
+        | TFDataType.Int8    -> Convert.ToSByte (data) |> box 
+        | TFDataType.String  -> raise(NotImplementedException())
+        | TFDataType.Int64   -> Convert.ToInt64 (data) |> box
+        | TFDataType.Bool    -> Convert.ToBoolean (data) |> box
+        | TFDataType.UInt16  -> Convert.ToUInt16 (data) |> box
+        | TFDataType.Complex128 -> data :?> Complex |> box
+        | _ -> box null
+
     static member FetchSimple (dt : TFDataType, data : IntPtr ) : obj =
         match dt with 
         | TFDataType.Float32 -> data |> NativePtr.nativeIntRead<float32> |> box

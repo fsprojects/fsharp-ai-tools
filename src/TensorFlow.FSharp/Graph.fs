@@ -7,6 +7,7 @@ open System.Collections.Generic
 open System.Text
 open FSharp.NativeInterop
 open TensorFlow.FSharp.Utils
+open System.Text.RegularExpressions
 
 #nowarn "9"
 
@@ -195,6 +196,14 @@ module GraphExternal =
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     extern void TF_GraphSetTensorShape (TF_Graph graph, TF_Output output, IntPtr dims, int num_dims, TF_Status status)
 
+/// NOTE: There are more functions to be put in here from framework/opy.py
+[<AutoOpen>]
+module ScopeUtils = 
+    let nameFromScopeName(name : string) = 
+        match name with
+        | "" -> ""
+        | _ when name.[name.Length - 1] = '/' -> name.[0..name.Length-2]
+        | _ -> name
 /// <summary>
 /// Signature of the method that will be invoked by the Graph.While method to construct a while loop
 /// </summary>
@@ -232,6 +241,36 @@ and GraphUnowned internal (handle:IntPtr) =
     // Nothing, we do not own the handle
     override this.NativeDispose (handle : TF_Status) = ()
 
+and NameScope(graph : TFGraph, ?name:string, ?defaultName:string, ?values:TFOutput[]) =
+    static let VALID_SCOPE_NAME_REGEX = new Regex("^[A-Za-z0-9_.\\-/]*$", RegexOptions.Compiled)
+    let values = defaultArg values [||]
+    do
+        if values.Length > 0 && name.IsNone && defaultName.IsNone then
+            raise (ValueError(sprintf "Either name or defaultName needs to be set if values are provided"))
+
+            
+
+    let name = name |> Option.orElse defaultName |> Option.defaultValue "" 
+    let oldStack = graph.CurrentNameScope
+    do
+        /// Root namespace must also validate against tf operation name
+        if oldStack = "" && not(TFOperation.IsNameValid(name)) ||
+           not(VALID_SCOPE_NAME_REGEX.IsMatch(name)) then
+            raise (ValueError(sprintf "%s is not a valid scope name"  name))
+
+    let newName = name |> nameFromScopeName |> graph.UniqueName
+    let scope = if oldStack = "" then newName else sprintf "%s/%s" oldStack newName
+    do
+        graph.CurrentNameScope <- scope
+
+    override this.ToString() = scope + "/"
+    member this.Scope = scope + "/"
+    member this.DefaultName = defaultArg defaultName ""
+    member this.Values = values
+    interface IDisposable with
+        member this.Dispose() = 
+            graph.CurrentNameScope <- oldStack
+
 /// <summary>
 /// Represents a computation graph.  Graphs may be shared between sessions and are thread safe.
 /// </summary>
@@ -260,29 +299,9 @@ and TFGraph internal (handle) =
     let assertNotFrozen() = Debug.Assert(not isFrozen,"This graph has already been frozen.")
     let mutable cleanupFunctions : (unit -> unit)[] = [||]
 
-    let values = new DictionaryCount<string> ()
+    let namesInUse = new DictionaryCount<string> ()
 
-    /// <summary>
-    /// Gets or sets the graph random seed, see remarks for details.
-    /// </summary>
-    /// <value>The seed.</value>
-    /// <remarks>
-    ///  Operations that rely on a random seed actually derive it from two seeds:
-    ///  the graph-level and operation-level seeds.This sets the graph-level seed.
-    ///
-    /// Its interactions with operation-level seeds is as follows:
-    /// 1. If neither the graph-level nor the operation seed is set:
-    ///    A random seed is used for this op.
-    /// 2. If the graph-level seed is set, but the operation seed is not:
-    ///    The system deterministically picks an operation seed in conjunction
-    ///    with the graph-level seed so that it gets a unique random sequence.
-    /// 3. If the graph-level seed is not set, but the operation seed is set:
-    ///    A default graph-level seed and the specified operation seed are used to
-    ///    determine the random sequence.
-    /// 4. If both the graph-level and the operation seed are set:
-    ///    Both seeds are used in conjunction to determine the random sequence.
-    /// </remarks>
-    let mutable seed = 87654321
+    let mutable seed = None
 
     let pending_init_variables : List<TFOperation> = List<TFOperation>()
     let trainable_variables : List<TFVariable> = List<TFVariable>()
@@ -386,6 +405,30 @@ and TFGraph internal (handle) =
     // Unfreezes this graph
     member this.UnFreeze() = isFrozen <- false
 
+
+
+    /// <summary>
+    /// Gets or sets the graph random seed, see remarks for details.
+    /// </summary>
+    /// <value>The seed.</value>
+    /// <remarks>
+    ///  Operations that rely on a random seed actually derive it from two seeds:
+    ///  the graph-level and operation-level seeds.This sets the graph-level seed.
+    ///
+    /// Its interactions with operation-level seeds is as follows:
+    /// 1. If neither the graph-level nor the operation seed is set:
+    ///    A random seed is used for this op.
+    /// 2. If the graph-level seed is set, but the operation seed is not:
+    ///    The system deterministically picks an operation seed in conjunction
+    ///    with the graph-level seed so that it gets a unique random sequence.
+    /// 3. If the graph-level seed is not set, but the operation seed is set:
+    ///    A default graph-level seed and the specified operation seed are used to
+    ///    determine the random sequence.
+    /// 4. If both the graph-level and the operation seed are set:
+    ///    Both seeds are used in conjunction to determine the random sequence.
+    /// </remarks>
+    member this.Seed with get() = seed and set(x) = seed <- x
+
     /// <summary>
     /// Returns the graph and local seeds based on an optionally set incoming seed value.
     /// </summary>
@@ -397,7 +440,11 @@ and TFGraph internal (handle) =
     /// Many random operations internally use the two seeds to allow user to change 
     /// the seed globally for a graph, or for only specific operations.
     /// </remarks>
-    member this.GetRandomSeeds (?operationSeed : int) = (seed, operationSeed |> Option.defaultValue lastId)
+    member this.GetRandomSeeds(?operationSeed : int) = 
+        match this.Seed with
+        | Some(seed) -> (seed, operationSeed |> Option.defaultValue lastId)
+        | None -> (87654321, operationSeed |> Option.defaultValue 0)
+            
 
     /// <summary>
     /// Sets the tensor shape of the tensor referenced by <paramref name="output"/> to the shape described by <paramref name="dims"/>.
@@ -531,19 +578,40 @@ and TFGraph internal (handle) =
     /// Gets the <see cref="T:TensorFlow.Graph"/> with the specified name, or None if the named operation does not exist in the graph.
     /// </summary>
     /// <param name="name">Name to lookup.</param>
-    member this.TryGet (name : string) = 
+    member this.TryGetOperationByName(name : string) = 
             if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
             let h = TF_GraphOperationByName (handle, name)
             if h = IntPtr.Zero then None
             else Some(new TFOperation (h))
 
+    member this.GetOperationByName(name : string) = this.TryGetOperationByName(name).Value
+
+
+    member this.TryGetTensorByName(name : string) = 
+        match name.Split(':') with
+        | [|op;Integer(idx)|] -> this.TryGetOperationByName(op) |> Option.bind (fun op -> op.TryGetOutput(idx))
+        | [|op|] -> this.TryGetOperationByName(op) |> Option.bind (fun op -> op.TryGetOutput(0))
+        | _ -> None
+
+    member this.GetTensorByName(name : string) = this.TryGetTensorByName(name).Value
+
     /// <summary>
     /// Gets the <see cref="T:TensorFlow.Graph"/> with the specified name, or null if the named operation does not exist in the graph.
     /// </summary>
     /// <param name="name">Name to lookup.</param>
-    member this.Item 
-        with get(name : string) : TFOperation = this.TryGet(name) |> Option.orNull
+    member this.Item with get(name : string) : TFOperation = this.GetOperationByName(name)
     
+
+
+    member graph.Contains(op : TFOperation) =
+        if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
+        let h = TF_GraphOperationByName (handle, op.Name)
+        h <> IntPtr.Zero && handle = op.Handle
+
+    member graph.Contains(x : TFOutput) = 
+        match graph.TryGetOperationByName(x.Op.Name) with
+        | None -> false
+        | Some(op) -> op.[x.Index] = x
 
     /// <summary>
     /// Returns the enumerator that returns all the Operations in a graph.
@@ -558,7 +626,7 @@ and TFGraph internal (handle) =
             | operll -> Some(TFOperation(operll),())) ()
 
     /// <summary>
-    ///  Returns the tensor shape for the specific output pparameters as an array of longs.
+    ///  Returns the tensor shape for the specific output parameters as an array of longs.
     /// </summary>
     /// <returns>null for single dimension, .</returns>
     /// <param name="output">The output operation to probe.</param>
@@ -582,6 +650,7 @@ and TFGraph internal (handle) =
     /// <value>The current name scope.</value>
     member this.CurrentNameScope 
         with get() = currentNameScope
+        // TODO we should probably add a check for validity here. For example prevent scopes with trailing '/'
         and internal set(x) = currentNameScope <- x
 
     /// <summary>
@@ -611,39 +680,13 @@ and TFGraph internal (handle) =
     /// }
     /// </code>
     /// </remarks>
-    member this.WithScope (nameScopeDesc : string) =
-        let prevScope = this.CurrentNameScope
-        this.CurrentNameScope <- 
-            match this.CurrentNameScope with
-            | "" -> nameScopeDesc
-            | _ -> currentNameScope + "/" + nameScopeDesc
-        {new IDisposable with member x.Dispose() = this.CurrentNameScope <- prevScope}
-
-    ///  A context manager for use when defining a FSharp op.
-    ///
-    ///  This context manager validates that the given `values` are from the
-    ///  same graph, makes that graph the default graph, and pushes a
-    ///  name scope in that graph. 
-    ///
-    ///  For example, to define a new FSharp op called `my_op`:
-    ///
-    ///  ```python
-    ///  member graph.MyOp(a, b, c, ?name) =
-    ///    use scope = graph.NameScope(?name=name, "MyOp", [|a; b; c|])
-    ///    let a = tf.convert_to_tensor(a, name="a")
-    ///    let b = tf.convert_to_tensor(b, name="b")
-    ///    let c = tf.convert_to_tensor(c, name="c")
-    ///     Define some computation that uses `a`, `b`, and `c`.
-    ///    foo_op(..., name=scope)
-    ///  ```
-//    member graph.NameScope(?name:string, ?defaultName:string, [<ParamArray>] operations: TFOutput[]) = 
-//        if operations.IsSome && name.IsNone && defaultName.IsNone then
-//            raise (ValueError(sprintf "At least one of the name and defaultName must be provided if operations have been specified."))
-//
-//        let name = name |> Option.orElse defaultName
-//        //let operations = operations |> Option.defaultValue [||]
-//
-//        {new IDisposable with member this.Dispose() = failwith "todo"}
+//    member this.WithScope (nameScopeDesc : string) =
+//        let prevScope = this.CurrentNameScope
+//        this.CurrentNameScope <- 
+//            match this.CurrentNameScope with
+//            | "" -> nameScopeDesc
+//            | _ -> currentNameScope + "/" + nameScopeDesc
+//        {new IDisposable with member x.Dispose() = this.CurrentNameScope <- prevScope}
 
     /// <summary>
     /// Returns the current variable dependencies in use. New tensors and operations will be created
@@ -663,16 +706,119 @@ and TFGraph internal (handle) =
         this.CurrentDependencies <- [|yield! prevDeps; yield! dependencies|] |> Array.distinct
         {new IDisposable with member x.Dispose() = this.CurrentDependencies <- prevDeps}
 
-    member this.MakeUnique (name : string, ?markAsUsed:bool) = 
-        name + (string  <| values.GetThenIncrement(name))
+    //member this.MakeUnique (name : string) = 
+    //    name + (string  <| namesInUse.GetThenIncrement(name.ToLower()))
+    
+    ///Return a unique operation name for `name`.
+    ///
+    ///Note: You rarely need to call `unique_name()` directly.  Most of
+    ///the time you just need to create `with g.name_scope()` blocks to
+    ///generate structured names.
+    ///
+    ///`unique_name` is used to generate structured names, separated by
+    ///`"/"`, to help identify operations when debugging a graph.
+    ///Operation names are displayed in error messages reported by the
+    ///TensorFlow runtime, and in various visualization tools such as
+    ///TensorBoard.
+    ///
+    ///If `mark_as_used` is set to `True`, which is the default, a new
+    ///unique name is created and marked as in use. If it's set to `False`,
+    ///the unique name is returned without actually being marked as used.
+    ///This is useful when the caller simply wants to know what the name
+    ///to be created will be.
+    ///
+    ///Args:
+    ///  name: The name for an operation.
+    ///  mark_as_used: Whether to mark this name as being used.
+    ///
+    ///Returns:
+    ///  A string to be passed to `create_op()` that will be used
+    ///  to name the operation being created.
+    /// TODO port above comment to F#
+    member this.UniqueName(name : string, ?markAsUsed : bool) : string =
+        let markAsUsed = defaultArg markAsUsed true
+        let fullName = match this.CurrentNameScope with | "" -> name | currentNameScope -> currentNameScope + "/" + name
+        // For the sake of checking for names in use, we treat names as case
+        // insensitive (e.g. foo = Foo)
+        let mutable nameKey = fullName.ToLower()
+        let mutable i = namesInUse.[nameKey]
+        // Increment the number for "nameKey"
+        if markAsUsed then namesInUse.Increment(nameKey)
+        if i > 0 then
+            let baseNameKey = nameKey
+            // Make sure the composed name key is not alread used
+            while namesInUse.ContainsKey(nameKey) do
+                nameKey <- sprintf "%s_%i" baseNameKey i
+                i <- i + 1
+            // Mark the composed name_key as used in case someone wants
+            // to call unique_name("name_1")
+            if markAsUsed then
+                namesInUse.[nameKey] <- 1
+            // Return the new name with the original capitalization of the given name.
+            sprintf "%s_%i" name (i - 1)
+        else name
+        
+    /// <summary>
+    /// A context manager for use when defining an op.
+    /// </summary>
+    /// <returns></returns>
+    /// <remarks>This context manager validates that the given `values` are from the
+    /// same graph, makes that graph the default graph, and pushes a
+    /// name scope in that graph (see
+    ///`tf.Graph.name_scope`
+    ///for more details on that).
+    ///
+    ///For example, to define a new Python op called `my_op`:
+    ///
+    ///<code>
+    ///def my_op(a, b, c, name=None):
+    ///with tf.name_scope(name, "MyOp", [a, b, c]) as scope:
+    ///  a = tf.convert_to_tensor(a, name="a")
+    ///  b = tf.convert_to_tensor(b, name="b")
+    ///  c = tf.convert_to_tensor(c, name="c")
+    ///  # Define some computation that uses `a`, `b`, and `c`.
+    ///  return foo_op(..., name=scope)
+    ///</code>
+    /// TODO update the above docs for F#
+    /// This is from the class name-scope
+    member graph.NameScope (name:string, defaultName:string, [<ParamArray>] values : TFOutput[]) = new NameScope(graph, name, defaultName = defaultName, values = values)
+    member graph.NameScope (name:string option, defaultName:string, [<ParamArray>] values : TFOutput[]) = new NameScope(graph, ?name = name, defaultName = defaultName, values = values)
+    member graph.NameScope (name:string, [<ParamArray>] values : TFOutput[]) = new NameScope(graph, name, values = values)
 
-    member this.MakeName (name : string, userName : string) = 
-        match userName with 
-        | "" -> 
-            if this.CurrentNameScope = "" then name else this.CurrentNameScope + "/" + name
-            |> this.MakeUnique
-        | _ -> 
-            if this.CurrentNameScope = "" then userName else this.CurrentNameScope + "/" + userName
+    /// This checks all of the following operations are contained in this graph
+    /// This thorws a ValueError if operations that are not part of this graph are found
+    member graph.CheckOperations([<ParamArray>] values : TFOperation[]) = 
+        match values |> Array.filter (graph.Contains >> not) with
+        | [||] -> ()
+        | xs -> raise (ValueError(sprintf "The following values are part of a different graph: %s" (xs |> Array.map (fun x -> x.Name) |> String.concat ", ")))
+
+    /// This checks all of the following operations are contained in this graph
+    /// This thorws a ValueError if operations that are not part of this graph are found
+    member graph.CheckOutputs([<ParamArray>] values : TFOutput[]) = 
+        match values |> Array.filter (graph.Contains >> not) with
+        | [||] -> ()
+        | xs -> raise (ValueError(sprintf "The following values are part of a different graph: %s" (xs |> Array.map (fun x -> x.Name) |> String.concat ", ")))
+
+    /// This takes care of the special case where a scope is given for the name as is required for doing a custom op
+    /// NOTE: an exception is made if a scope name is passed in and one of the same name already exists
+    /// This shouldn't happen if the scope name is derived from a graph.NewScope(...) because these are issued unique, but if the scope name is 
+    /// re-used or a previously used scope name is passed in then it will fail. This aligns with tensorflow and is expected behavior
+    member graph.MakeName(name:string option, defaultName : string, ?markAsUsed : bool) =
+        if graph.CurrentNameScope = "" then graph.UniqueName(defaultArg name defaultName,?markAsUsed = markAsUsed)
+        else
+            if name = Some(graph.CurrentNameScope + "/") then name.Value |> nameFromScopeName 
+            else sprintf "%s/%s" (graph.CurrentNameScope |> nameFromScopeName)  (graph.UniqueName(defaultArg name defaultName, ?markAsUsed = markAsUsed))
+
+    //member graph.NameScope (?name:string,  ?values : TFOutput[]) = 
+    //    new NameScope(graph, ?name = name, ?defaultName = None, ?values = values)
+
+//    member this.MakeName (name : string, userName : string) = 
+//        match userName with 
+//        | "" -> 
+//            if this.CurrentNameScope = "" then name else this.CurrentNameScope + "/" + name
+//            |> this.MakeUnique
+//        | _ -> 
+//            if this.CurrentNameScope = "" then userName else this.CurrentNameScope + "/" + userName
 
     member internal this.GetNextId () = 
         let x = lastId
@@ -740,7 +886,7 @@ and TFGraph internal (handle) =
                 let bodyGraph = new GraphUnowned (result.body_graph) :> TFGraph
                 constructor.Invoke(condGraph, TFGraph.CopyFrom (result.cond_inputs, n), result.cond_output, bodyGraph, TFGraph.CopyFrom (result.body_inputs, n), bodyOutputs, name)
 
-                let name = if box name = null || name = "" then this.MakeUnique ("while") else name
+                let name = if box name = null || name = "" then this.UniqueName ("while") else name
                 // On return, copy the condOutput and bodyOututs
                 let text = Encoding.UTF8.GetBytes (name)
                 result.charPtrName <- Marshal.AllocHGlobal (text.Length + 1)
@@ -1008,9 +1154,12 @@ and TFGraph internal (handle) =
             tensor <- box null :?> TFTensor
         ret
     
-    override this.ToString () =
+    member this.GraphDebugString() =
             let mutable len = IntPtr.Zero
             TF_GraphDebugString (this.Handle, &len)
+
+    // The previous behavior has been moved to GraphDebugString() as the text dump overloads FSI
+    override this.ToString () = sprintf "TFGraph %i" (int64 this.Handle)
 
 module OperationDescNative = 
     // extern void TF_SetAttrShape (TF_OperationDescription *desc, const char *attr_name, const int64_t *dims, int num_dims)
@@ -1137,9 +1286,9 @@ type TFOperationDesc private (graph : TFGraph, opType : string, name : string, h
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     static extern void TF_SetAttrFuncName (TF_OperationDescription desc, string attr_name, string value, IntPtr len)
 
-    new (graph : TFGraph, opType : string, name: string) =
-        let handle = TF_NewOperation (graph.Handle, opType, name)
-        new TFOperationDesc(graph, opType, name,handle)
+    new (graph : TFGraph, opType : string, fullName: string) =
+        let handle = TF_NewOperation (graph.Handle, opType, fullName)
+        new TFOperationDesc(graph, opType, fullName,handle)
 
     member this.OpType = opType
     override this.NativeDispose (handle : IntPtr) =
@@ -1167,13 +1316,14 @@ type TFOperationDesc private (graph : TFGraph, opType : string, name : string, h
         TF_AddInput (handle, input.Struct)
         this
 
-        /// <summary>
-        /// Adds a series of inputs to the operation.
-        /// </summary>
-        /// <param name="inputs">Inputs, this is a params array for your convenience.</param>
+    /// <summary>
+    /// Adds a series of inputs to the operation.
+    /// </summary>
+    /// <param name="inputs">Inputs, this is a params array for your convenience.</param>
     member this.AddInputs([<ParamArray>] inputs : TFOutput []) =
             if (handle = IntPtr.Zero) then raise (ObjectDisposedException ("handle"))
-            if not (box inputs = null || inputs.Length = 0) then
+            // NOTE: it is important to add lists even when they're empty
+            if not (box inputs = null) then
                 TF_AddInputList (handle, inputs |> Array.map (fun x -> x.Struct), inputs.Length)
             this
 
@@ -1390,3 +1540,5 @@ type TFOperationDesc private (graph : TFGraph, opType : string, name : string, h
         if box attrName = null then raise (ArgumentNullException ("attrName"))
         if box value = null then raise (ArgumentNullException ("value"))
         TF_SetAttrFuncName (handle, attrName, value, IntPtr(value.Length))
+
+

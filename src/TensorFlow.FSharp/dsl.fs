@@ -624,7 +624,7 @@ type DT<'T> internal (shape: Shape, eval: (Ctxt -> TFOutput)) =
 #if LIVECHECKING
         DT<'T> (outputShape)
 #else
-        DT<'T>(outputShape, fun ctxt -> use _scope = ctxt.Graph.WithScope(name) in dt.Apply ctxt)
+        DT<'T>(outputShape, fun ctxt -> use _scope = ctxt.Graph.NameScope(name) in dt.Apply ctxt)
 #endif
 
     static member CreateString(value: byte[]) : DT<string> = 

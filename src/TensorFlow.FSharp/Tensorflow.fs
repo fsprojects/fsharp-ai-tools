@@ -445,11 +445,12 @@ type TFAttributeMetadata =
 /// </remarks>
 type TFShape(dims:int64[] option) =
     new ([<ParamArray>] dims : int64[]) = TFShape(Some(dims))
+    new ([<ParamArray>] dims : int[]) = TFShape(Some(dims |> Array.map int64))
     /// <summary>
     /// Represents an unknown number of dimensions in the tensor.
     /// </summary>
     /// <value>The unknown.</value>
-    static member Unknown = new TFShape ([||])
+    static member Unknown = new TFShape (Array.empty<int64>)
 
     /// <summary>
     /// This shape is used to represent scalar values.
