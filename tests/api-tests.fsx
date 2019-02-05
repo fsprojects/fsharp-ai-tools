@@ -52,13 +52,43 @@ module PlayWithAddingAddN =
     let graph = new TFGraph()
     let x = graph.Const (t1)
 
-    let y1 = graph.AddN ([| x; x; x |], 3L) 
+    let y1 = graph.AddN ([| x; x; x |]) 
     
     let session = new TFSession(graph)
     let res1 = session.Run( [| |], [| |], [| y1 |])
     let v = res1.[0].GetValue() :?> double[] |> Array.item 0
     if v <> 9.0 then failwith "fail"
-    
+
+module PlayWithStack = 
+    let xv = 3.0
+    let graph = new TFGraph()
+    let sample_0 = new TFTensor (1.0)
+    let sample_1 = new TFTensor ([| 1.0 |])
+    let sample_1_by_1 = new TFTensor (array2D [ [ 1.0 ] ])
+    let sample_2_by_1 = new TFTensor (array2D [ [ 1.0 ]; [2.0] ])
+    let sample_2_by_3 = new TFTensor (array2D [ [ 1.0; 1.0; 1.0 ]; [2.0; 1.0; 1.0] ])
+    sample_0.Shape // [| |]
+    sample_1.Shape // [| 1 |]
+    sample_1_by_1.Shape // [| 1; 1 |]
+    sample_2_by_1.Shape // [| 2 rows, 1 column |]
+    sample_2_by_3.Shape // [| 2 rows, 1 column |]
+
+    //let x = graph.Concat (graph.Const(new TFTensor(0)), [| graph.Const sample_0; graph.Const sample_0 |])
+    let x1 = graph.Stack ([| for i in 1 .. 4 -> graph.Const sample_0 |]) // --> shape [ 2 ]
+    let x2 = graph.Stack ([| for i in 1 .. 4 -> graph.Const sample_1 |], axis=0)
+    let x3 = graph.Stack ([| for i in 1 .. 4 -> graph.Const sample_1 |], axis=1)
+    let x4 = graph.Stack ([| for i in 1 .. 4 -> graph.Const sample_2_by_1 |], axis=0)
+    let x5 = graph.Stack ([| for i in 1 .. 4 -> graph.Const sample_2_by_1 |], axis=1)
+    let x6 = graph.Stack ([| for i in 1 .. 4 -> graph.Const sample_2_by_1 |], axis=2)
+    let x7 = graph.Stack ([| for i in 1 .. 4 -> graph.Const sample_2_by_3 |], axis=0)
+    let x8 = graph.Stack ([| for i in 1 .. 4 -> graph.Const sample_2_by_3 |], axis=1)
+    let x9 = graph.Stack ([| for i in 1 .. 4 -> graph.Const sample_2_by_3 |], axis=2)
+    let session = new TFSession(graph)
+    let res1 = session.Run( [| |], [| |], [| x1; x2; x3; x4; x5; x6; x7; x8; x9 |])
+//  [|shape [4]; shape [4x1]; shape [1x4]; shape [4x2x1]; shape [2x4x1]; shape [2x1x4]; shape [4x2x3]; shape [2x4x3]; shape [2x3x4]|]  
+    let v = res1.[0].Shape
+
+
 module PlayWithAddingConcat = 
     let xv = 3.0
     let t1 = new TFTensor( [| xv |])

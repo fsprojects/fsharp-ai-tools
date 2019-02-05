@@ -106,8 +106,7 @@ type TFTensor internal (handle: IntPtr) =
     static let FreeTensorDataDelegate: Deallocator = Deallocator(TFTensor.FreeTensorData)
     static let FreeTensorHandleDelegate: Deallocator  = Deallocator(TFTensor.FreeTensorHandle)
 
-    static member CreateFromMultidimensionalArrays (array: Array) =
-        let t = array.GetType().GetElementType ()
+    static member SizeFromDimensionAndType (t: Type, dims: int64[]) =
         let tc = Type.GetTypeCode (t)
         let dt, size = 
             match tc with 
@@ -124,8 +123,13 @@ type TFTensor internal (handle: IntPtr) =
             | _ when t.IsAssignableFrom (typeof<Complex>) -> TFDataType.Complex128, 16
             | _ -> raise(ArgumentException(sprintf "The data type %O is not supported" tc))
 
-        let dims = [|for i = 0 to array.Rank - 1 do yield int64(array.GetLength (i)) |]
         let totalSize = dims |> Array.fold (*) (int64 size)
+        dt, totalSize
+
+    static member CreateFromMultidimensionalArrays (array: Array) =
+        let t = array.GetType().GetElementType ()
+        let dims = [|for i = 0 to array.Rank - 1 do yield int64(array.GetLength (i)) |]
+        let dt, totalSize = TFTensor.SizeFromDimensionAndType(t, dims)
         TFTensor.SetupMulti (dt, dims, array, totalSize)
 
     [<MonoPInvokeCallback (typeof<Deallocator>)>]
@@ -166,9 +170,9 @@ type TFTensor internal (handle: IntPtr) =
     /// It is the responsibility of the caller to ensure that the size is correct given the data type size
     /// and the tensor dimension specified in dims.
     /// </remarks>
-    new (dataType: TFDataType, dims: int64 [], size: int) =
+    new (dataType: TFDataType, dims: int64 [], size: int64) =
       if dims = null then raise (ArgumentNullException ("dims"))
-      let handle = TF_AllocateTensor (uint32 dataType, dims, dims.Length, UIntPtr(uint64 size))
+      let handle = TF_AllocateTensor (uint32 dataType, dims, dims.Length, unativeint size)
       new TFTensor (handle)
 
 
