@@ -78,8 +78,8 @@ module ModelExample =
 
     // Gradient of the loss function w.r.t. the coefficients
     let dloss_dcoeffs (xs, y) coeffs = 
-        let xnodes = batchVec xs
-        let ynode = batchScalar y
+        let xnodes = batchOfVecs xs
+        let ynode = batchOfScalars y
         let coeffnodes = vec coeffs
         let coffnodesBatch = batchExtend coeffnodes
         let z = loss (model (xnodes, coffnodesBatch)) ynode

@@ -239,8 +239,8 @@ module ModelExample =
 
     // Gradient of the loss function w.r.t. the coefficients
     let objective (xs, y) coeffs = 
-        let xnodes = batchVec xs
-        let ynode = batchScalar y
+        let xnodes = batchOfVecs xs
+        let ynode = batchOfScalars y
         let coeffnodes = vec coeffs
         let coffnodesBatch = batchExtend coeffnodes
         coeffnodes, loss (model (xnodes, coffnodesBatch)) ynode
@@ -306,9 +306,9 @@ module NeuralTransferFragments =
     let conv_init_vars (out_channels:int, filter_size:int, is_transpose: bool, name) =
         let weights_shape = 
             if is_transpose then
-                Shape.Known [| Dim.Known filter_size; Dim.Known filter_size; Dim.Known out_channels; Dim.Inferred |]
+                shape [ filter_size; filter_size; out_channels; -1 ]
             else
-                Shape.Known [| Dim.Known filter_size; Dim.Known filter_size; Dim.Inferred; Dim.Known out_channels |]
+                shape [ filter_size; filter_size; -1; out_channels ]
         tf { let truncatedNormal = DT.TruncatedNormal(weights_shape)
              return DT.Variable (truncatedNormal * v 0.1, name + "/weights") }
 

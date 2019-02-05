@@ -912,43 +912,68 @@ type TFBuilder() =
 module TFHelpers = 
     let tf = TFBuilder()
 
-    let shape (ints: int list) = Shape.Known (Array.map DimKnown (Array.ofSeq ints))
+    let shape (ints: int list) = 
+        ints 
+        |> Array.ofSeq 
+        |> Array.map (fun i -> if i = -1 then Dim.Inferred else DimKnown i)
+        |> Shape.Known 
 
+    /// Create a scalar node (with implicit broadcast)
     let scalar (d:double) : DT<double> = 
         let shape = Shape.Inferred 
         DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(d))))
 
+    /// Create a scalar node (with implicit broadcast)
     let v d = scalar d
+
+    /// Create a vector from raw data
     let vec (d:seq<double>) : DT<double> = 
         let d = Array.ofSeq d
         let shape = shape [ d.Length ]
         DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(d))))
 
-    let batchScalar d = vec d
+    /// Create a vector from existing differentiable tensors
+    let vecOfScalars (ds:seq<DT<'T>>) : DT<'T> = 
+        DT.Stack ds
 
+    /// Extend the scalar node, adding a batch dimension
+    let batchOfScalars d = vec d
+
+    /// Create a matrix from raw data
     let matrix (d: seq< #seq<'T>>) : DT<'T> = 
         let d = array2D d 
         let shape = shape [ d.GetLength(0); d.GetLength(1)  ]
         DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(d))))
 
-    let batchVec d = matrix d 
+    /// Create a matrix by stacking existing vectors of differentiable tensors
+    let matrixOfVecs (ds:seq<DT<'T>>) : DT<'T> = 
+        DT.Stack ds
 
-    let matrix3 (d: seq< #seq< #seq<'T>>>) : DT<'T> = 
+    /// Extend the vector node, adding a batch dimension
+    let batchOfVecs d = matrix d 
+
+    /// Create a rank-3 tensor from raw data
+    let tensor3 (d: seq< #seq< #seq<'T>>>) : DT<'T> = 
         let d = d |> Array.ofSeq |> Array.map array2D
         let ds = Array3D.init d.Length (d.[0].GetLength(0)) (d.[0].GetLength(1)) (fun i j k -> d.[i].[j,k])
         let shape = shape [ d.Length; d.[0].GetLength(0); d.[0].GetLength(1)  ]
         DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(ds))))
 
-    let image d = matrix3 d
+    let image d = tensor3 d
 
-    let matrix4 (d: seq< #seq< #seq< #seq<'T>>>>) : DT<'T> = 
+    /// Create a rank-4 tensor from raw data
+    let tensor4 (d: seq< #seq< #seq< #seq<'T>>>>) : DT<'T> = 
         let d = d |> array2D |> Array2D.map array2D
         let r1,r2,r3,r4 = (d.GetLength(0), d.GetLength(1), d.[0,0].GetLength(0),d.[0,0].GetLength(1))
         let ds = Array4D.init r1 r2 r3 r4 (fun i j k m -> d.[i,j].[k,m])
         let shape = shape [ r1; r2; r3; r4 ]
         DT<_> (shape, (fun ctxt -> ctxt.Graph.Const(new TFTensor(ds))))
 
-    let batchImage d = matrix4 d 
+    let batchOfImages d = tensor4 d 
+    
+    let video d = tensor4 d
+
+    //let batchOfVideos d = tensor5 d 
     
     let inline relu (x: ^T) : ^T = 
         (^T: (static member Relu : ^T -> ^T) (x))
