@@ -804,7 +804,8 @@ and TFGraph internal (handle) =
     /// This shouldn't happen if the scope name is derived from a graph.NewScope(...) because these are issued unique, but if the scope name is 
     /// re-used or a previously used scope name is passed in then it will fail. This aligns with tensorflow and is expected behavior
     member graph.MakeName(name:string option, defaultName : string, ?markAsUsed : bool) =
-        if graph.CurrentNameScope = "" then graph.UniqueName(defaultArg name defaultName,?markAsUsed = markAsUsed)
+        if graph.CurrentNameScope = "" then 
+            graph.UniqueName(defaultArg name defaultName,?markAsUsed = markAsUsed)
         else
             if name = Some(graph.CurrentNameScope + "/") then name.Value |> nameFromScopeName 
             else sprintf "%s/%s" (graph.CurrentNameScope |> nameFromScopeName)  (graph.UniqueName(defaultArg name defaultName, ?markAsUsed = markAsUsed))

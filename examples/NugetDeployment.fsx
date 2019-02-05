@@ -85,7 +85,7 @@ let mm = NuGet.ManifestMetadata(
             ProjectUrl = "https://github.com/fsprojects/TensorFlow.FSharp",
             Copyright = "Microsoft and contributors",
             Authors = "Microsoft",
-            Owners = "moloneymb, dsyme",
+            Owners = "fsprojects, dsyme",
             Tags = "fsharp tensorflow machine deep learning "
     )
 
@@ -111,7 +111,7 @@ System.Version(4,7))
 let files = ["FCell.ManagedXll.dll"; "FCell.Interop.dll";
 "Desaware.MachineLicense40.DLL"]
 
-sprintf @"C:\Users\moloneymb\AppData\Local\Statfactory\FCell\%s"
+sprintf @"C:\Users\fsprojects\AppData\Local\Statfactory\FCell\%s"
 
 
 // HDF.PInvoke
@@ -160,15 +160,15 @@ ms.ToArray()
 //                "id","Hive.TypeProvider"
 //                "version","1.0.0.1"
 //                "title","Hive.TypeProvider"
-//                "authors","moloneymb"
-//                "owners", "moloneymb"
+//                "authors","fsprojects"
+//                "owners", "fsprojects"
 //                //"licenseUrl", "https://lz4net.codeplex.com/license"
 //                //"projectUrl", "https://lz4net.codeplex.com/"
 //                "requireLicenseAcceptance", "false"
 //                "description", "Interactivly explore query your Hive database"
 //                "summary", "Interactivly explore query your Hive database"
 //                "releaseNotes", "Initial Upload"
-//                "copyright", "moloneymb"
+//                "copyright", "fsprojects"
 //                "tags", "fsharp typeprovider bigdata hive hadoop"
 //            |] |> Array.map (fun (name,value) -> XElement(nuget +
 //name, value))

@@ -1,0 +1,9 @@
+RESTRICTION: == netstandard2.0
+GITHUB
+  remote: fsprojects/FSharp.Compiler.PortaCode
+    src/CodeModel.fs (89e4bd348f1351992c669559321c33844ef1eb73)
+    src/FromCompilerService.fs (89e4bd348f1351992c669559321c33844ef1eb73)
+    src/Interpreter.fs (89e4bd348f1351992c669559321c33844ef1eb73)
+    src/ProcessCommandLine.fs (89e4bd348f1351992c669559321c33844ef1eb73)
+    src/ProjectCracker.fs (89e4bd348f1351992c669559321c33844ef1eb73)
+    tests/PortaCodeTests.fs (89e4bd348f1351992c669559321c33844ef1eb73)
