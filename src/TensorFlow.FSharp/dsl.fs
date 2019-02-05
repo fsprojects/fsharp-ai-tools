@@ -200,7 +200,7 @@ type Shape =
         Shape.PossibleFlex flex dims
 
     static member FromTFShape (shape: TFShape) = 
-        shape.Dims |> Shape.FromTFShapeArray
+        shape.ToLongArray() |> Shape.FromTFShapeArray
 
     static member D with get() = Shape.Known [| DimKnown 1 |]
     

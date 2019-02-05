@@ -9,7 +9,7 @@ open FSharp.NativeInterop
 
 #nowarn "9" "86"
 
-type Dim = TensorFlow.Proto.TensorShapeProto.Dim
+type Dim = TensorFlow.FSharp.Proto.TensorShapeProto.Dim
 
 /// <summary>
 /// TensorFlow Exception
@@ -678,7 +678,7 @@ type TFShape(dims:Dimension[] option) =
     static let scalar = TFShape(Array.empty<int64>)
     new ([<ParamArray>] dims : int64[]) = TFShape(Some(dims |> Array.map Dimension))
     new ([<ParamArray>] dims : int[]) = TFShape(Some(dims |> Array.map Dimension))
-    new (proto : TensorFlow.Proto.TensorShapeProto) =
+    new (proto : TensorFlow.FSharp.Proto.TensorShapeProto) =
         if proto.UnknownRank then TFShape(Option<Dimension[]>.None) 
         else new TFShape(Some([|for x in proto.Dims -> Dimension(x.Size)|]))
 
@@ -774,9 +774,9 @@ type TFShape(dims:Dimension[] option) =
     /// Returns this shape as a `TensorShapeProto`.
     member this.AsProto() =
         match this.TryDims with
-        | None -> TensorFlow.Proto.TensorShapeProto(UnknownRank=true)
+        | None -> TensorFlow.FSharp.Proto.TensorShapeProto(UnknownRank=true)
         | Some(dims) ->
-            let shapeProto = TensorFlow.Proto.TensorShapeProto()
+            let shapeProto = TensorFlow.FSharp.Proto.TensorShapeProto()
             shapeProto.Dims.AddRange((dims |> Array.map (fun x -> match x.Value with | None -> Dim(Size = -1L) | Some(y) -> Dim(Size = y))))
             shapeProto
 
