@@ -3,16 +3,10 @@
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
 
-#if LIVECHECKING
-#r "../src/TensorFlow.FSharp.LiveChecking/bin/Debug/netstandard2.0/TensorFlow.FSharp.LiveChecking.dll"
-#else
 #r "bin/Debug/net472/TensorFlow.FSharp.dll"
-#endif
-#nowarn "49"
 
 //open Argu
 open System
-open System.IO
 open TensorFlow.FSharp
 open TensorFlow.FSharp.DSL
 
@@ -25,22 +19,26 @@ module PlayWithTF =
     tf { return (vec [1.0; 2.0]) }
     |> DT.RunArray
 
-    tf { return (vec [1.0; 2.0] + matrix [ [1.0; 2.0] ]) }
+    tf { return (DT.Stack [v 1.0; v 2.0]) }
     |> DT.RunArray
 
+    // Gives a shape error of course
+    // tf { return (vec [1.0; 2.0] + matrix [ [1.0; 2.0] ]) }
+    // |> DT.RunArray
+
+    // Test indexer notation
     tf { return (vec [1.0]).[0] }
     |> DT.RunScalar
 
+    // Test indexer notation 
     tf { return (vec [1.0; 2.0]).[1] }
     |> DT.RunScalar
    
+    // Test slicing notation
     tf { return (vec [1.0; 2.0]).[0..0] }
     |> DT.RunArray
 
-    tf { return v 1.0 + v 4.0 }
-    |> DT.Run
-
-    tf { return DT.ReverseV2 (vec [1.0; 2.0]) }
+    tf { return DT.Reverse (vec [1.0; 2.0]) }
     |> DT.RunArray
 
     let f x = tf { return x * x + v 4.0 * x }
@@ -69,7 +67,7 @@ module PlayWithTF =
     //(DT.Stack [| x.[1]; x.[0] |]).Shape
     //|> DT.RunArray
 
-    let f3 (x: DT<_>) = tf { return vec [1.0; 2.0] * x * DT.ReverseV2 x } //[ x1*x2; 2*x2*x1 ] 
+    let f3 (x: DT<_>) = tf { return vec [1.0; 2.0] * x * DT.Reverse x } //[ x1*x2; 2*x2*x1 ] 
     let df3 x = DT.jacobian f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
     let expected (x1, x2) = array2D [| [| x2; x1 |]; [| 2.0*x2; 2.0*x1 |] |]  
 
@@ -108,27 +106,76 @@ module PlayWithTF =
     |> fun dt -> DT.RunArray(dt, ["hey", upcast (vec [2.0])])
        // Gives 6.0
 
-module GradientAscentWithoutVariables =
+
+
+
+
+module GradientAscentWithParameters =
+
+    type DParams = 
+        { xs: DT<double>
+          y: DT<double> } 
+
+    // "marked up" differentiability, eDSL (embedded DSL, value algebra DSL)
     // Define a function which will be executed using TensorFlow
-    let f (x: DT<double>, y: DT<double>) = 
-        tf { return sin (v 0.5 * x * x - v 0.25 * y * y + v 3.0) * cos (v 2.0 * x + v 1.0 - exp y) }
+    // ReqKnowledge: DT. But they get shape checking.
+    let f (ps: DParams) = 
+        tf { return sin (v 0.5 * ps.xs.[0] * ps.xs.[0] - v 0.25 * ps.y * ps.y + v 3.0) * cos (v 2.0 * ps.xs.[1] + v 1.0 - exp ps.y) }
 
     // Get the partial derivatives of the scalar function
     // computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
-    let df (x, y) = 
-        let dfs = DT.gradients (f (x,y))  [| x; y |] 
-        (dfs.[0], dfs.[1])
+    let df (ps: DParams) = 
+        // TODO: ideally this would be
+        //    DT.gradients (f ps) ps
+        // returning D<DParams>, a type derived structurally from DParams.
+        DT.gradients (f ps) [| ps.xs; ps.y |] 
 
     let rate = 0.1
 
-    // Gradient ascent
-    let step (x, y) = 
-        let nodes = df (v x, v y) 
-        let dzx, dzy = nodes |> DT.RunScalarPair 
-        printfn "size = %f" (sqrt (dzx*dzx + dzy*dzy))
-        (x + rate * dzx, y + rate * dzy)
+    type Params = 
+        { xs: double[]
+          y: double } 
 
-    (-0.3, 0.3) |> Seq.unfold (fun pos -> Some (pos, step pos)) |> Seq.truncate 200 |> Seq.toArray
+    // Gradient ascent
+    let step (ps: Params) =
+        
+        // DSL construction
+        let nodes = df { xs = vec ps.xs; y = v ps.y }
+
+        // DSL elimination 
+        let dzxs, dzy = nodes |> DT.RunArrayAndScalar
+        
+        printfn "size = %f" (sqrt (dzxs.[0]*dzxs.[0] + dzxs.[1]*dzxs.[1] + dzy*dzy))
+        { xs = [| ps.xs.[0] + rate * dzxs.[0]; ps.xs.[1] + rate * dzxs.[1] |]; y = rate * dzy }
+
+    let initialParams = { xs = [| -0.3;  -0.3 |]; y = 0.3 }
+    initialParams |> Seq.unfold (fun ps -> Some (ps, step ps)) |> Seq.truncate 200 |> Seq.toArray
+
+
+    
+    (*
+       // Implicit differentiability
+       type Params2 = 
+           { xs: double[]
+             y: double } 
+           
+       // Implicit differentiability, quotation-based DSL
+       // Define a function which will be executed using TensorFlow
+       //
+       // Pro: slightly more readable
+       // Con: no idea what we can use in the code (esp. library operators)
+       // ReqKnowledge: Array, Array2D, FsAlg.Vec, FsAlg.Matrix, ..... 10-20 
+       //   Why are they?....  well, some shape is done in regular F# through type distinctions
+
+       let f2 (ps: Params2) = 
+           // Oh no! I have no idea whether I was allowed Array.map or not!
+           let xs = ps.xs |> Array.map (fun x -> x + 1.0) 
+           // Oh no! people tell me to us SonOfFsAlg for math code, but the autodiff framework doesn't understand it! Disaster!
+           //let xs = ps.x |> MyMatrix.map (fun x -> x + 1.0) 
+           // Crap there is no extend function for Array --> Array2D
+           // Oh no, F# array + array2D programming is kind of half-complete w.r.t task
+           sin (0.5 * xs.[0] * xs.[1] - 0.25 * ps.y * ps.y + 3.0) * cos (2.0 * xs.[0] + 1.0 - exp ps.y) 
+           *)
 
 (*
 module GradientDescentWithVariables =
@@ -167,7 +214,7 @@ module ModelExample =
     let trueFunction (xs: double[]) = Array.sum [| for i in 0 .. modelSize - 1 -> trueCoeffs.[i] * xs.[i]  |] + noise 0.5
 
     let makeData size = 
-        [| for i in 1 .. trainSize -> 
+        [| for i in 1 .. size -> 
             let xs = [| for i in 0 .. modelSize - 1 -> rnd.NextDouble() |]
             xs, trueFunction xs |]
         |> Array.unzip
@@ -202,7 +249,7 @@ module ModelExample =
     let dobjective_dcoeffs (xs, y) coeffs = 
         let coeffnodes, z = objective (xs, y) coeffs
         DT.gradient z coeffnodes 
-
+ 
     let validation coeffs = 
         let _coeffnodes, z = objective (validationInputs, validationOutputs) coeffs 
         z |> DT.RunScalar
@@ -223,7 +270,7 @@ module ModelExample =
         initialCoeffs |> Seq.unfold (fun coeffs -> Some (coeffs, step inputs coeffs)) |> Seq.truncate nsteps |> Seq.last
 
     [<LiveCheck>]
-    let check1 = train checkData 1
+    let check1 = train checkData checkSize
 
     [<LiveTest>]
     let test1 = train trainData 10
@@ -259,9 +306,9 @@ module NeuralTransferFragments =
     let conv_init_vars (out_channels:int, filter_size:int, is_transpose: bool, name) =
         let weights_shape = 
             if is_transpose then
-                Shape [| Dim filter_size; Dim filter_size; Dim out_channels; Dim.Inferred |]
+                Shape.Known [| Dim.Known filter_size; Dim.Known filter_size; Dim.Known out_channels; Dim.Inferred |]
             else
-                Shape [| Dim filter_size; Dim filter_size; Dim.Inferred; Dim out_channels |]
+                Shape.Known [| Dim.Known filter_size; Dim.Known filter_size; Dim.Inferred; Dim.Known out_channels |]
         tf { let truncatedNormal = DT.TruncatedNormal(weights_shape)
              return DT.Variable (truncatedNormal * v 0.1, name + "/weights") }
 

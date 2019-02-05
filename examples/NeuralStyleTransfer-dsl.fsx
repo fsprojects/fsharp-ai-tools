@@ -49,7 +49,7 @@ module NeuralStyles =
              return variable (truncatedNormal * v 0.1) (name + "/weights") }
 
     let instance_norm (input: DT<double>, name) =
-        tf { use _ = TF.WithScope(name + "/instance_norm")
+        tf { use _ = DT.WithScope(name + "/instance_norm")
              let mu, sigma_sq = DT.Moments (input, axes=[1;2])
              let shift = variable (v 0.0) (name + "/shift")
              let scale = variable (v 1.0) (name + "/scale")
