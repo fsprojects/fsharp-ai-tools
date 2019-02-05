@@ -165,7 +165,7 @@ type TFGraph with
     // Converts a shape to a tensor, to a Output
     //
     member graph.ShapeTensorOutput (shape : TFShape) =
-        graph.Const (new TFTensor(shape.ToArray ()), TFDataType.Int64)
+        graph.Const (new TFTensor(shape.ToLongArray ()), TFDataType.Int64)
         //  if shape.IsLongArray then TFDataType.Int64 else TFDataType.Int32)
 
     /// <summary>
