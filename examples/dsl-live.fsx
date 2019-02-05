@@ -6,21 +6,13 @@
 
 #nowarn "49"
 
-//open Argu
 open System
 open TensorFlow.FSharp
 open TensorFlow.FSharp.DSL
 
 if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 
-//v  : 'T -> DT<'T>   scalar + broadcast
-// DT.diff  : (DT<'T> -> DT<double>) -> DT<'T> - DT<double>   // RN -> R function 
-
-// Zero: Thing<T>
-// Combiners: Thing<T> -> Thing<T> -> Thing<T>
-// Run: Thing<T> -> T  // does stuff
-//
-//DT<'T> = Shape * (TFTransCtxt -> TFNode)
+fsi.AddPrintTransformer(fun (v: DT) -> v.PrintTransform())
 
 module PlayWithTF = 
     
@@ -30,25 +22,27 @@ module PlayWithTF =
     // Get the derivative of the function. This computes "x*2 + 4.0"
     let df x = DT.diff f x  
 
-    // Run the derivative 
-    f (v 3.0) |> DT.RunScalar 
-    df (v 3.0) |> DT.RunScalar // returns 6.0 + 4.0 = 10.0
+    // Run the function
+    f (v 3.0) 
+
+    // Most operators need explicit evaluation even in interactive mode
+    df (v 3.0) 
+
+    // returns 6.0 + 4.0 = 10.0
+    df (v 3.0) |> DT.Eval
 
     v 2.0 + v 1.0 
-    |> DT.RunScalar 
 
+    // You can wrap in "tf { return ... }" if you like
     tf { return v 2.0 + v 1.0 }
-    |> DT.RunScalar 
           
+    // This can be handy for locals
     tf { let x = (vec [1.0; 2.0] + vec [1.0;2.0] ) 
          return x + x }   
-    |> DT.RunArray 
- 
- 
+  
     // Now show that adding vectors of the wrong sizes gives a static error
     // Adding a vector and a matrix gives an error
-    tf { return (vec [1.0; 2.0] + matrix [ [1.0; 2.0] ]) }
-       |> DT.RunArray 
+    vec [1.0; 2.0] + matrix [ [1.0; 2.0] ]
          
     // Math-multiplying matrices of the wrong sizes gives an error
     tf { let matrix1 = 
@@ -60,59 +54,53 @@ module PlayWithTF =
                       [1.0; 2.0]
                       [1.0; 2.0] ]
          return matrix1 *! matrix2 }
-       |> DT.RunArray     
     
     // What about functions?  
-    //let f (x:int) = 
-    //    let m = matrix [ [1.0; 2.0; 4.0]; [1.0; 2.0; 6.0] ]
-    //    m
+    let f3 (x:int) = 
+        let m = matrix [ [1.0; 2.0; 4.0]; [1.0; 2.0; 6.0] ]
+        m
 
-    //f 4
+    // Functions are only checked when there is a [<LiveCheck>] exercising the code path
+    
+    [<LiveCheck>]
+    let _ = f3 4
 
     //let f19 = 
     //    tf { return (vec [1.0; 2.0 ] + vec [ 1.0; 4.0 ]  )  }  
-    //     |> DT.RunArray   
     //      
     //[<LiveCheck>] 
-    //let y = f19 3   
+    // let _ = f19 3   
       
 
 module GradientAscentWithoutVariables =
 
+    let inline sqr x = x * x
+
     // Define a function which will be executed using TensorFlow
-    let f (x: DT<double>, y: DT<double>) = 
-        tf { return sin (v 0.5 * x * x - v 0.25 * y * y + v 3.0) * cos (v 2.0 * x + v 1.0 - exp y) }
+    let f (xs: DT<double>) = 
+        sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
          
-    // Get the partial derivatives of the scalar function
-    // computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
-    //
-    // TODO: the way the variables must be bundled into an array, and then the derivatives unbundled into
-    // a tuple again, then RunScalarPair is called, then the parameter tuple recreated, is unsatisfactory.
-    let df (x, y) =  
-        let dfs = DT.gradients (f (x,y))  [| x; y |] 
-        (dfs.[0], dfs.[1])
+    // Get the partial derivatives of the function
+    let df xs =  DT.diff f xs  
         
     let rate = 0.1
 
     // Gradient ascent
-    let step (x, y) =   
-        let nodes = df (v x, v y) 
-        let dzx, dzy = nodes |> DT.RunScalarPair 
-        printfn "size = %f" (sqrt (dzx*dzx + dzy*dzy))
-        (x + rate * dzx, y + rate * dzy)
+    let step xs =   
+        printfn "xs = %A" xs
+        let dzx = df xs 
+        // Evaluate to output values and prevent graph explosion 
+        xs + v rate * dzx |> DT.Eval
 
     let train steps = 
-        (-0.3, 0.3) |> Seq.unfold (fun pos -> Some (pos, step pos)) |> Seq.truncate steps |> Seq.toArray
+        vec [ -0.3; 0.3 ] |> Seq.unfold (fun pos -> Some (pos, step pos)) |> Seq.truncate steps |> Seq.toArray
 
     [<LiveCheck>] 
-    train 4 |> ignore 
-
-
-
-     
-
+    let _ = train 4 |> ignore 
+    
 #if !LIVECHECKING
-    train 200
+    train 100 |> ignore 
+
 #endif
 
 
@@ -143,76 +131,80 @@ module ModelExample =
         [| for i in 1 .. size -> 
             let xs = [| for i in 0 .. modelSize - 1 -> rnd.NextDouble() |]
             xs, trueFunction xs |]
-        |> Array.unzip
          
     /// Make the data used to symbolically check the model
-    let (checkInputs, checkOutputs) as checkData = makeData checkSize
+    let checkData = makeData checkSize
 
-    //let (checkInputs2, checkOutputs2) as checkData2 = makeData (checkSize + 1)
- 
 #if !LIVECHECKING 
     /// Make the training data
-    let trainInputs, trainOutputs = makeData trainSize
+    let trainData = makeData trainSize
 
     /// Make the validation data
-    let validationInputs, validationOutputs = makeData validationSize
+    let validationData = makeData validationSize
 #endif
  
-    /// Evaluate the model for input and coefficients
-    let model (xs: DT<double>, coeffs: DT<double>) = 
-        tf { return DT.Sum (xs * coeffs,axis= [| 1|]) }
-           
-    /// Evaluate the loss function for the model w.r.t. a true output
-    let loss (z: DT<double>) tgt = 
-        tf { let dz = z - tgt 
-             return DT.Sum (dz * dz) / v (double modelSize) / v (double z.Shape.[0].Value) }
-
-    // Gradient of the loss function w.r.t. the coefficients
-    let objective xs y coeffs = 
+    let prepare data = 
+        let xs, y = Array.unzip data
         let xs = batchOfVecs xs
         let y = batchOfScalars y
+        (xs, y)
+
+    /// Evaluate the model for input and coefficients
+    let model (xs: DT<double>, coeffs: DT<double>) = 
+        DT.Sum (xs * coeffs,axis= [| 1|])
+           
+    let meanSquareError (z: DT<double>) tgt = 
+        let dz = z - tgt 
+        DT.Sum (dz * dz) / v (double modelSize) / v (double z.Shape.[0].Value) 
+
+    /// The loss function for the model w.r.t. a true output
+    let loss (xs, y) coeffs = 
         let coeffsBatch = batchExtend coeffs
-        loss (model (xs, coeffsBatch)) y
+        let y2 = model (xs, coeffsBatch)
+        meanSquareError y y2
           
     // Gradient of the objective function w.r.t. the coefficients
-    let dobjective_dcoeffs xs y coeffs = 
-        let z = objective xs y coeffs
+    let dloss_dcoeffs inputs coeffs = 
+        let z = loss inputs coeffs
         DT.gradient z coeffs 
 
 #if !LIVECHECKING
     let validation coeffs = 
-        let z = objective validationInputs validationOutputs (vec coeffs)
-        z |> DT.RunScalar
+        let z = loss (prepare validationData) (vec coeffs)
+        z |> DT.Eval
 #endif
 
     // Note, the rate in this example is constant. Many practical optimizers use variable
     // update (rate) - often reducing - which makes them more robust to poor convergence.
     let rate = 2.0
+     
+    let step inputs (coeffs: DT<double>) = 
+        let dz = dloss_dcoeffs inputs coeffs 
 
-    let step xs y (coeffs: double[]) = 
-        let coeffs = vec coeffs
-        let dz = dobjective_dcoeffs xs y coeffs 
-        let coeffs = (coeffs - v rate * dz) |> DT.RunArray
-        printfn "coeffs = %A, dz = %A" coeffs dz //(validation coeffs)
+        // Note, force the evaluation at this step
+        let coeffs = (coeffs - v rate * dz) |> DT.Eval
+        printfn "coeffs = %A, dz = %A" coeffs (dz |> DT.Eval) //(validation coeffs)
         coeffs 
          
-    let initialCoeffs = [| for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize|]
+    let initialCoeffs = vec [ for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize ]
 
     // Train the inputs in one batch
-    let train xs y nsteps =
-        initialCoeffs |> Seq.unfold (fun coeffs -> Some (coeffs, step xs y coeffs)) |> Seq.truncate nsteps |> Seq.last
+    let train inputs nsteps =
+        let inputs = prepare inputs
+        initialCoeffs |> Seq.unfold (fun coeffs -> Some (coeffs, step inputs coeffs)) |> Seq.truncate nsteps |> Seq.last
           
     [<LiveCheck>]
-    let check1 = train checkInputs checkOutputs 1 
+    let check1 = train checkData 1 
 
+    // What happens if we LiveCheck twice?
     //[<LiveCheck>]
     //let check2 = train checkInputs2 checkOutputs2 1 
  
 #if !LIVECHECKING
     [<LiveTest>]
-    let test1 = train trainInputs trainOutputs 10
+    let test1 = train trainData 10
 
-    let learnedCoeffs = train trainInputs trainOutputs 200
+    let learnedCoeffs = train trainData 200 |> DT.toArray
      // [|1.017181246; 2.039034327; 2.968580146; 3.99544071; 4.935430581;
      //   5.988228378; 7.030374908; 8.013975714; 9.020138699; 9.98575733|]
 
