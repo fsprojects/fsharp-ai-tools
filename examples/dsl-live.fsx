@@ -12,7 +12,9 @@ open TensorFlow.FSharp.DSL
 
 if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 
-fsi.AddPrintTransformer(fun (v: DT) -> v.PrintTransform())
+#if !LIVECHECKING
+fsi.AddPrintTransformer(DT.PrintTransform)
+#endif
 
 module PlayWithTF = 
     
@@ -59,7 +61,7 @@ module PlayWithTF =
     let f3 (x:int) = 
         let m = matrix [ [1.0; 2.0; 4.0]; [1.0; 2.0; 6.0] ]
         m
-
+         
     // Functions are only checked when there is a [<LiveCheck>] exercising the code path
     
     [<LiveCheck>]
@@ -79,7 +81,7 @@ module GradientAscentWithoutVariables =
     // Define a function which will be executed using TensorFlow
     let f (xs: DT<double>) = 
         sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
-         
+           
     // Get the partial derivatives of the function
     let df xs =  DT.diff f xs  
         
@@ -187,12 +189,12 @@ module ModelExample =
         coeffs 
          
     let initialCoeffs = vec [ for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize ]
-
+     
     // Train the inputs in one batch
     let train inputs nsteps =
-        let inputs = prepare inputs
-        initialCoeffs |> Seq.unfold (fun coeffs -> Some (coeffs, step inputs coeffs)) |> Seq.truncate nsteps |> Seq.last
-          
+        let inputs2 = prepare inputs
+        initialCoeffs |> Seq.unfold (fun coeffs -> Some (coeffs, step inputs2 coeffs)) |> Seq.truncate nsteps |> Seq.last
+           
     [<LiveCheck>]
     let check1 = train checkData 1 
 

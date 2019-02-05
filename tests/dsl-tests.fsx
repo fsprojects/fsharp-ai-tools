@@ -12,9 +12,17 @@ open TensorFlow.FSharp.DSL
 
 if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 
-fsi.AddPrintTransformer(fun (v: DT) -> v.PrintTransform())
+fsi.AddPrintTransformer(DT.PrintTransform)
 
 module PlayWithTF = 
+    v 1.0f 
+
+    v 1 
+
+    v 1.0 
+
+    v 1.0 + v 3.0
+
     tf { return v 1.0 }
     |> DT.Eval
 
@@ -258,8 +266,8 @@ module ModelExample =
     /// Evaluate the loss function for the model w.r.t. a true output
     let meanSquareError (z: DT<double>) (tgt: DT<double>) = 
         let dz = z - tgt
-        DT.Sum (dz * dz) / v (double modelSize) / v (double z.Shape.[0].Value)
-
+        DT.Sum (dz * dz) / v (double modelSize) / v (double (z.GetLength(0)))
+          
     // Gradient of the loss function w.r.t. the coefficients
     let loss (xs, y) coeffs = 
         let coeffsBatch = batchExtend coeffs

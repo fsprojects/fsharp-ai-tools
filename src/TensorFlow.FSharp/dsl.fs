@@ -349,16 +349,16 @@ and DT internal (shape: Shape, cost: int, makeNode: (Ctxt -> TFOutput), asTFTens
             [| for res in results -> res.GetValue() |]
 
     /// A method to transform this object to a formattable object, used by F# interactive
-    member dt.PrintTransform() = 
+    static member PrintTransform(value: DT) = 
         // cost = 0 implies constant, e.g. result from Eval
-        match dt.TryAsConstTFTensor() with 
+        match value.TryAsConstTFTensor() with 
         | Some t -> t.GetValue()
         | None -> 
-            if dt.Cost < 10 then 
-                let v = DT.Run(dt)
+            if value.Cost < 10 then 
+                let v = DT.Run(value)
                 v
             else
-                box (sprintf "%A" dt.Shape + " (unevaluated)")
+                box (sprintf "%A" value.Shape + " (unevaluated)")
 
     /// Display constants as data and delayed nodes as shapes
     override dt.ToString() = 
@@ -609,8 +609,28 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
                 if flex then ctxt.Graph.Reshape(node, ctxt.Graph.Const(shape.AsTFTensor())) else node),
               asTFTensor = asTFTensor)
 
-    static member Const (value: double, ?flex: bool) : DT<'T> = 
-        DT.MakeConst ([| |], (fun () -> new TFTensor(value)), flex)
+    static member ConstInner (obj: obj, ?flex: bool) : DT<'T> = 
+        let shape = Shape.Inferred 
+        let cost = 0
+        match obj with 
+        | :? single
+        | :? double 
+        | :? int64
+        | :? int32 -> () 
+        | _ -> failwithf "invalid scalar type %A" (typeof<'T>)
+        DT<'T> (shape, cost, (fun ctxt -> 
+            let t = 
+                match obj with 
+                | :? single as d -> new TFTensor(d)
+                | :? double as d -> new TFTensor(d)
+                | :? int32 as d -> new  TFTensor(d)
+                | :? int64 as d -> new  TFTensor(d)
+                | _ -> failwith "unreachable"
+            ctxt.Graph.Const(t)))
+    
+    static member inline Const (value: 'T1, ?flex: bool) : DT<'T1> = 
+        (fun () -> double value) |> ignore // places constraints on 'T without execution
+        DT.ConstInner(box value, ?flex=flex)
 
     static member ConstArray (value: 'T[], ?flex: bool) : DT<'T> = 
         let dims = [| Dim.Known value.Length |]
@@ -755,6 +775,8 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
         let cost = input.Cost + 1
 
         DT<'T>(outputShape, cost, fun ctxt -> ctxt.Graph.ExpandDims(input.MakeNode ctxt, ctxt.Graph.Const(new TFTensor( [| dim |] ))))
+
+    member value.GetLength(dim: int) = value.Shape.[dim].Value
 
     // TODO: improve this
     member value.ToScalar () : 'T = 
@@ -1062,13 +1084,10 @@ module TFHelpers =
         |> Shape.Known 
 
     /// Create a scalar node (with implicit broadcast)
-    let scalar (d:double) : DT<double> = 
-        let shape = Shape.Inferred 
-        let cost = 0
-        DT<double> (shape, cost, (fun ctxt -> ctxt.Graph.Const(new TFTensor(d))))
+    let inline scalar (value:'T) : DT<'T> = DT.Const value 
 
     /// Create a scalar node (with implicit broadcast)
-    let v x = scalar x
+    let inline v x = scalar x
 
     /// Create a vector from raw data
     let vec (data:seq<double>) : DT<double> = 
