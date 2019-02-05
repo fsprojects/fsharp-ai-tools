@@ -133,4 +133,6 @@ type IntPtr with
 
     member this.Add(x:int64) = IntPtr(int64 this + x)
 
-
+/// This interface enables FSI specific printing
+type IFSIPrint =
+    abstract member ToFSIString : unit -> string

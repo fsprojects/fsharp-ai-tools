@@ -17,7 +17,7 @@
 
 
   <ItemGroup>
-    <Reference Include="..\lib\TensorFlow.Proto.dll">
+    <Reference Include="..\lib\TensorFlow.FSharp.Proto.dll">
       <Private>true</Private>
     </Reference>
     <PackageReference Include="Argu" Version="5.1.0" />
@@ -58,7 +58,8 @@
     <Compile Include="ImageWriter.fs" /> 
     <Compile Include="Datasets.fs" /> 
     <Compile Include="Operations.ArrayOps.fs" /> 
-    <Compile Include="Operations.RandomOps.fs" />
+    <Compile Include="Operations.RandomOps.fs" /> 
+    <Compile Include="FSIPrettyPrinting.fs" />
     <Compile Include="dsl.fs" />
   </ItemGroup>
 

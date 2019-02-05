@@ -1440,7 +1440,7 @@ type TFOperationDesc private (graph : TFGraph, opType : string, name : string, h
         if (box shape = null || box shape.Dims = null) then
             TF_SetAttrShape (handle, attrName, box null :?> IntPtr, -1)
         else
-            OperationDescNative.TF_SetAttrShape (handle, attrName, shape.Dims, shape.Dims.Length)
+            OperationDescNative.TF_SetAttrShape (handle, attrName, shape.ToLongArray(), shape.Dims.Length)
         this
 
     member this.SetAttr (attrName : string, shapeList : TFShape []) =
@@ -1452,7 +1452,7 @@ type TFOperationDesc private (graph : TFGraph, opType : string, name : string, h
         let dims = Array.init num_shapes (fun i -> 
             num_dims.[i] <- shapeList.[i].NumDimensions
             let array = Marshal.AllocHGlobal(sizeof<int64> * shapeList.[i].Dims.Length)
-            Marshal.Copy(shapeList.[i].Dims, 0, array, shapeList.[i].Dims.Length)
+            Marshal.Copy(shapeList.[i].ToLongArray(), 0, array, shapeList.[i].ToLongArray().Length)
             array)
         TF_SetAttrShapeList (handle, attrName, dims, num_dims, num_shapes)
         this

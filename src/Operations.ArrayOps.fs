@@ -47,13 +47,13 @@ type TFGraph with
             let dtype = defaultArg dtype TFDataType.Float32
             //convert the .net type to relevant tensorflow type
             let dtvalue = TFTensor.FetchSimpleObj(dtype, value);
-            let shape = tfshape.ToArray ();
+            let shape = tfshape.ToLongArray ();
             let idx = Array.zeroCreate shape.Length
             for i = 0 to shape.Length - 1 do
-                if shape.[i] > int64 Int32.MaxValue then 
+                if int64 shape.[i] > int64 Int32.MaxValue then 
                     raise(new ArgumentOutOfRangeException ("Shape can not be longer than 32 bits"))
             let data = 
-                if tfshape.IsLongArray then Array.CreateInstance (dtvalue.GetType (), tfshape.ToArray ())
+                if tfshape.IsLongArray then Array.CreateInstance (dtvalue.GetType (), tfshape.ToLongArray ())
                 else Array.CreateInstance (dtvalue.GetType (), tfshape.ToIntArray ())
             TFTensor.Set (data, dtype, shape, idx, 0, value)
             let tensor_value = new TFTensor (data)

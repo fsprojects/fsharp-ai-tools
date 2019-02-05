@@ -22,7 +22,7 @@ type TFGraph with
         | None ->
             // Fast path: avoid creating Rank and Range ops if ndims is known.
             let shape = graph.GetTensorShape (input)
-            if shape.IsFullySpecified then
+            if shape.IsFullyDefined then
                 // NOTE: The python code distinguishes between tensor and sparsetensor
                 graph.Const (new TFTensor([|0 .. shape.NumDimensions - 1|]), TFDataType.Int32)
             else

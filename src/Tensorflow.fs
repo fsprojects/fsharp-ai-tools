@@ -1,11 +1,15 @@
 namespace TensorFlow.FSharp
 
 open System
+open System.Collections
+open System.Collections.Generic
 open System.Runtime.InteropServices
 open TensorFlow.FSharp.Utils
 open FSharp.NativeInterop
 
-#nowarn "9"
+#nowarn "9" "86"
+
+type Dim = TensorFlow.Proto.TensorShapeProto.Dim
 
 /// <summary>
 /// TensorFlow Exception
@@ -401,6 +405,231 @@ type TFAttributeMetadata =
     override this.ToString() =
          sprintf "[TFAttributeMetadata IsList=%O ListSize=%i Type=%A TotalSize=%i]" this.isList this.ListSize this.Type this.TotalSize
 
+/// Represents the value of one dimension in a TFShape
+type Dimension(value : int64 option) = 
+    do value |> Option.iter (fun x -> if x < 0L then raise (ValueError(sprintf "Dimension %i must be >= 0" x)))
+    static let unknownDimension = Dimension(Option<int64>.None)
+
+    static let mapBoth (self:Dimension) (other:Dimension) (f:int64 -> int64->int64) = 
+        match self.Value, other.Value with
+        | Some(x),Some(y) -> Dimension(f x y)
+        | _ -> Dimension.Unknown
+
+    static let mapBothBool (self:Dimension) (other:Dimension) (f:int64 -> int64-> bool) = 
+        match self.Value, other.Value with
+        | Some(x),Some(y) -> f x y
+        | _ -> false
+
+    new (value : int option) = Dimension(value |> Option.map int64)
+    new (value : int64 ) = Dimension(Some(value))
+    new (value : int ) = Dimension(Some(value))
+
+    override this.ToString() = match value with | None -> "?" | Some(x) -> string x
+
+    member this.Value = value
+    
+    static member op_Implicit (dimension: Dimension) : int = 
+        match dimension.Value with 
+        | Some(x) -> int x 
+        | None -> raise(ValueError("Unknown dimension"))
+
+    static member Unknown = unknownDimension
+
+    interface IFSIPrint with
+        member this.ToFSIString() = sprintf "Dimension(%A)" value
+
+    /// Returns true of `other` has the same known value as this Dimension.
+    static member (=) (self : Dimension, other : Dimension) = 
+        match self.Value, other.Value with
+        | Some(x), Some(y) -> x = y 
+        | _ -> false
+
+    /// Returns true if `other` has a different known value from `self`.
+    static member (<>) (self : Dimension, other : Dimension) = 
+        match self.Value, other.Value with
+        | Some(x), Some(y) -> x <> y 
+        | _ -> false
+        
+    /// <summary>
+    /// Returns true if `other` is compatible with this Dimension.
+    ///
+    /// Two known Dimensions are compatible if they have the same value.
+    /// An unknown Dimension is compatible with all other Dimensions.
+    /// </summary>
+    /// <returns>True if this Dimension and `other` are compatible.</returns>
+    /// <param name="other> Another Dimension. </param>
+    member this.IsCompatibleWith(other : Dimension) = 
+        match this.Value,other.Value with 
+        | Some(x),Some(y) when x <> y -> false 
+        | _ -> true
+
+    /// <summary>Raises an exception if `other` is not compatible with this Dimension.
+    /// <param name="other">Another Dimension.</param>
+    /// <exception cref="TensorFlow.FSharp.ValueError">If `this` and `other` are not compatible (see IsCompatibleWith) </exception>
+    /// </summary>
+    member this.AssertIsCompatibleWith(other : Dimension) = 
+        if not(this.IsCompatibleWith(other)) then
+            raise(ValueError(sprintf "Dimensions %O and %O are not compatible" this other))
+
+    /// <summary>Returns a Dimension that combines the information in `this` and `other`.
+    ///
+    /// Dimensions are combined as follows:
+    ///
+    /// <c>
+    /// Dimension(n)   .MergeWith(Dimension(n))    = Dimension(n)
+    /// Dimension(n)   .MergeWith(Dimension(None)) = Dimension(n)
+    /// Dimension(None).MergeWith(Dimension(n))    = Dimension(n)
+    /// Dimension(None).MergeWith(Dimension(None)) = Dimension(None)
+    /// Dimension(n)   .MergeWith(Dimension(m))  # raises ValueError for n != m
+    /// </c>
+    /// <param name="other">Another Dimension.</param>
+    ///
+    /// <returns> A Dimension containing the combined information of `this` and `other`. </returns>
+    /// <exception cref="TensorFlow.FSharp.ValueError">If `this` and `other` are not compatible (see IsCompatibleWith) </exception>
+    /// </summary>
+    member this.MergeWith(other : Dimension) = 
+        this.AssertIsCompatibleWith(other)
+        Dimension(this.Value |> Option.orElse other.Value)
+
+    /// <summary>Returns the sum of `self` and `other`.
+    ///
+    /// Dimensions are summed as follows:
+    ///
+    /// <code>
+    /// Dimension(m)    + Dimension(n)    = Dimension(m + n)
+    /// Dimension(m)    + Dimension(None) = Dimension(None)
+    /// Dimension(None) + Dimension(n)    = Dimension(None)
+    /// Dimension(None) + Dimension(None) = Dimension(None)
+    /// </code>
+    /// <param name="other>Another Dimension.</param>
+    /// <returns> Dimension whose value is the sum of `self` and `other`.</returns>
+    /// </summary>
+    static member (+) (self : Dimension, other : Dimension) = mapBoth self other (+)
+
+    /// <summary>Returns the subtraction of `other` from `self`.
+    ///
+    /// Dimensions are subtracted as follows:
+    /// <code>
+    /// Dimension(m)    - Dimension(n)    = Dimension(m - n)
+    /// Dimension(m)    - Dimension(None) = Dimension(None)
+    /// Dimension(None) - Dimension(n)    = Dimension(None)
+    /// Dimension(None) - Dimension(None) = Dimension(None)
+    /// </code>
+    /// <param name="other">Another Dimension.</param>
+    /// <returns>A Dimension whose value is the subtraction of `other` from `self`.  </returns>
+    /// </summary>
+    static member (-) (self : Dimension, other : Dimension) = mapBoth self other (-)
+
+    /// <summary>Returns the product of `self` and `other`.
+    ///
+    /// Dimensions are summed as follows:
+    ///
+    /// <code>
+    /// Dimension(m)    * Dimension(n)    = Dimension(m * n)
+    /// Dimension(m)    * Dimension(None) = Dimension(None)
+    /// Dimension(None) * Dimension(n)    = Dimension(None)
+    /// Dimension(None) * Dimension(None) = Dimension(None)
+    /// </code>
+    /// <param name="other">Another Dimension.</param>
+    /// <returns>A Dimension whose value is the product of `self` and `other`.</returns>
+    /// </summary>
+    static member (*) (self : Dimension, other : Dimension) = mapBoth self other (*)
+    // Not sure if I should sepcify these... keeping this here for now as a reference, I may come back to this
+    static member (*) (self : int, other : Dimension) = mapBoth (Dimension(self)) other (*)
+    static member (*) (self : Dimension, other : int) = mapBoth self (Dimension(other)) (*)
+
+    /// <summary>Returns the modulo of `self` and `other`.
+    ///
+    /// Dimensions are summed as follows:
+    ///
+    /// <code>
+    /// Dimension(m)    % Dimension(n)    = Dimension(m % n)
+    /// Dimension(m)    % Dimension(None) = Dimension(None)
+    /// Dimension(None) % Dimension(n)    = Dimension(None)
+    /// Dimension(None) % Dimension(None) = Dimension(None)
+    /// </code>
+    /// </summary>
+    /// <param name="other">Another Dimension.</param>
+    /// <returns>A Dimension whose value is the modulo of `self` and `other`.</returns>
+    static member (%) (self : Dimension, other : Dimension) = mapBoth self other (%)
+
+    /// <summary>Returns the quotient of `self` and `other` rounded down.
+    /// Dimensions are divided as follows:
+    /// <code>
+    /// Dimension(m)    / Dimension(n)    = Dimension(m / n)
+    /// Dimension(m)    / Dimension(None) = Dimension(None)
+    /// Dimension(None) / Dimension(n)    = Dimension(None)
+    /// Dimension(None) / Dimension(None) = Dimension(None)
+    /// </code>
+    /// <param name="other">Another Dimension.</param>
+    /// <returns>A `Dimension` whose value is the integer quotient of `self` and `other`.</returns>
+    /// </summary>
+    static member (/) (self : Dimension, other : Dimension) = mapBoth self other (/)
+
+    /// <summary>Returns True if `self` is known to be less than `other`.
+    /// Dimensions are compared as follows:
+    /// <code>
+    /// (Dimension(m)    < Dimension(n))    = (m < n)
+    /// (Dimension(m)    < Dimension(None)) = None
+    /// (Dimension(None) < Dimension(n))    = None
+    /// (Dimension(None) < Dimension(None)) = None
+    /// </code>
+    /// <param name="other">Another Dimension.</param>
+    /// <returns>The value of `self.value < other.value` if both are known, otherwise None</returns>
+    /// </summary>
+    static member (<) (self : Dimension, other : Dimension) = mapBothBool self other (<)
+
+    /// <summary>Returns True if `self` is known to be less than or equal to `other`.
+    /// Dimensions are compared as follows:
+    /// <code>
+    /// (Dimension(m)    <= Dimension(n))    = (m <= n)
+    /// (Dimension(m)    <= Dimension(None)) = None
+    /// (Dimension(None) <= Dimension(n))    = None
+    /// (Dimension(None) <= Dimension(None)) = None
+    /// </code>
+    /// <param name="other">Another Dimension.</param>
+    /// <returns>The value of `self.value <= other.value` if both are known, otherwise None</returns>
+    /// </summary>
+    static member (<=) (self : Dimension, other : Dimension) = mapBothBool self other (<=)
+
+    /// <summary>Returns True if `self` is known to be greater than `other`.
+    /// Dimensions are compared as follows:
+    /// <code>
+    /// (Dimension(m)    > Dimension(n))    = (m > n)
+    /// (Dimension(m)    > Dimension(None)) = None
+    /// (Dimension(None) > Dimension(n))    = None
+    /// (Dimension(None) > Dimension(None)) = None
+    /// </code>
+    /// <param name="other">Another Dimension.</param>
+    /// <returns>The value of `self.value > other.value` if both are known, otherwise None</returns>
+    /// </summary>
+    static member (>) (self : Dimension, other : Dimension) = mapBothBool self other (>)
+
+    /// <summary>Returns True if `self` is known to be greater than or equal to `other`.
+    /// Dimensions are compared as follows:
+    /// <code>
+    /// (Dimension(m)    >= Dimension(n))    = (m >= n)
+    /// (Dimension(m)    >= Dimension(None)) = None
+    /// (Dimension(None) >= Dimension(n))    = None
+    /// (Dimension(None) >= Dimension(None)) = None
+    /// </code>
+    /// <param name="other">Another Dimension.</param>
+    /// <returns>The value of `self.value >= other.value` if both are known, otherwise None</returns>
+    /// </summary>
+    static member (>=) (self : Dimension, other : Dimension) = mapBothBool self other (>=) 
+
+
+    /// TODO consider using implicits in the operators
+    static member op_Implicit (d : int) : Dimension = Dimension(Some(d))
+    static member op_Implicit (d : int option) : Dimension = match d with | None -> Dimension.Unknown | _ -> Dimension(d)
+    static member op_Implicit (d : int64) : Dimension = Dimension(Some(d))
+    static member op_Implicit (d : int64 option) : Dimension = match d with | None -> Dimension.Unknown | _ -> Dimension(d)
+
+    static member op_Explicit (d : Dimension) : int64 = match d.Value with | None -> -1L | Some(x) -> x
+
+    // NOTE This does not seem to work??
+    //static member op_Explicit (d : Dimension) : int32 = match d.Value with | None -> -1 | Some(x) -> int32 x
+
 /// <summary>
 /// Represents the shape of a tensor, it describes how many dimensions the tensor has in a given axis
 /// </summary>
@@ -443,27 +672,47 @@ type TFAttributeMetadata =
 /// <remarks>
 /// 
 /// </remarks>
-type TFShape(dims:int64[] option) =
-    new ([<ParamArray>] dims : int64[]) = TFShape(Some(dims))
-    new ([<ParamArray>] dims : int[]) = TFShape(Some(dims |> Array.map int64))
+type TFShape(dims:Dimension[] option) =
+
+    static let unknown = TFShape(Option<Dimension[]>.None)
+    static let scalar = TFShape(Array.empty<int64>)
+    new ([<ParamArray>] dims : int64[]) = TFShape(Some(dims |> Array.map Dimension))
+    new ([<ParamArray>] dims : int[]) = TFShape(Some(dims |> Array.map Dimension))
+    new (proto : TensorFlow.Proto.TensorShapeProto) =
+        if proto.UnknownRank then TFShape(Option<Dimension[]>.None) 
+        else new TFShape(Some([|for x in proto.Dims -> Dimension(x.Size)|]))
+
     /// <summary>
     /// Represents an unknown number of dimensions in the tensor.
     /// </summary>
     /// <value>The unknown.</value>
-    static member Unknown = new TFShape (Array.empty<int64>)
+    static member Unknown = unknown
 
-    /// <summary>
-    /// This shape is used to represent scalar values.
-    /// </summary>
-    /// <value>The scalar.</value>
-    static member Scalar = new TFShape ([|0L|])
 
     /// <summary>
     /// Gets the length of the specified dimension in the tensor
     /// </summary>
     /// <returns>The length, -1 for shapes that have an unknown dimension.</returns>
     /// <param name="dimension">Dimension.</param>
-    member __.GetLength (dimension : int) = match dims with | None -> -1L | Some(dims) -> dims.[dimension]
+    member __.GetLength (dimension : int) = match dims with | None -> Dimension.Unknown | Some(dims) -> dims.[dimension]
+
+    /// Returns the rank of this shape, or raises ValueError if unspecified
+    member this.Length 
+        with get() = 
+            match dims with 
+            | None -> raise (ValueError("Cannot take the length of Shape with unknown rank."))
+            | Some(xs) -> xs.Length
+
+    /// Returns `self.Dims` if the rank is known, otherwise raises ValueError.
+    interface IEnumerable<Dimension> with
+        member this.GetEnumerator() = 
+            match dims with
+            | None -> raise (ValueError("Cannot iterate over a shape with unknown rank."))
+            | Some(dims) -> (dims |> Seq.ofArray).GetEnumerator()
+
+    /// Returns `self.Dims` if the rank is known, otherwise raises ValueError.
+    interface IEnumerable with
+        member this.GetEnumerator() = (this :> IEnumerable<Dimension>).GetEnumerator() :> IEnumerator
 
     /// <summary>
     /// Number of dimensions represented by this shape.
@@ -471,12 +720,27 @@ type TFShape(dims:int64[] option) =
     /// <value>The number dimensions, -1 if the number of dimensions is unknown, 0 if the shape represent a scalar, 1 for a vector, 2 for a matrix and so on..</value>
     member __.NumDimensions = match dims with | None -> -1 | Some(dims) -> dims.Length
 
+    member this.TryFullyDefined
+        with get() = 
+            match dims with
+            | Some(dims) ->
+                match dims |> Array.choose (fun x -> x.Value) with 
+                | xs when xs.Length = dims.Length -> Some(xs)
+                | _ -> None
+            | None -> None
+
     /// <summary>
     /// Gets a value indicating whether all the dimensions in the <see cref="T:TensorFlow.TFShape"/> are fully specified.
     /// </summary>
     /// <value><c>true</c> if is fully specified; otherwise, <c>false</c>.</value>
-    member __.IsFullySpecified  
-        with get() = match dims with | Some(dims) when dims |> Array.exists ((=) -1L) |> not -> true | _ -> false
+    member this.IsFullyDefined
+        with get() = this.TryFullyDefined.IsSome
+
+    /// <summary>Raises an exception if `this` is not fully defined in every dimension</summary>
+    /// <exception>If `this` does not have a known value for every dimension</exception>
+    member this.AssertIsFullyDefined() =
+        if not(this.IsFullyDefined) then
+            raise (ValueError(sprintf "Shape %O is not fully defined" this))
 
     /// <summary>
     /// Returns the shape as an array
@@ -487,19 +751,40 @@ type TFShape(dims:int64[] option) =
         | Some dims -> dims
         | None -> null
     
-    member __.Dims = dims |> Option.defaultValue [||]
+
+    member __.Dims = dims |> Option.defaultValue [||] //|> Array.map (fun x -> match x.Value with | None -> -1L | Some(y) -> y)
+
+    //TODO: perhaps use Value?? I'm not attached to the name
+    member __.TryDims = dims
 
     /// <summary>
     /// Returns the shape as an array
     /// </summary>
     /// <returns>null if the shape represents an unknown shape, otherwise an array with N elements, one per dimension, and each element can be either -1 (if the dimension size is unspecified) or the size of the dimension.</returns>
-    member __.ToIntArray () = dims |> Option.map (Array.map int) |> Option.defaultValue null
+    member __.ToIntArray () = dims |> Option.map (fun xs -> xs |> Array.map (fun x -> int32 x)) |> Option.defaultValue null
+
+    member __.ToLongArray() = dims |> Option.map (fun xs -> xs |> Array.map int64) |> Option.defaultValue null
+
+    /// TODO: I'm not attached to the name, this name is derived from the Python equivalent
+    member this.AsList() = 
+        match this.TryDims with
+        | None -> raise (ValueError("AsList() is not defined on an unknown TFShape")) // NOTE: this make less sense in F# than in Python
+        | Some(dims) -> dims |> Array.map (fun x -> x.Value)
+
+    /// Returns this shape as a `TensorShapeProto`.
+    member this.AsProto() =
+        match this.TryDims with
+        | None -> TensorFlow.Proto.TensorShapeProto(UnknownRank=true)
+        | Some(dims) ->
+            let shapeProto = TensorFlow.Proto.TensorShapeProto()
+            shapeProto.Dims.AddRange((dims |> Array.map (fun x -> match x.Value with | None -> Dim(Size = -1L) | Some(y) -> Dim(Size = y))))
+            shapeProto
 
     /// <summary>
     /// Gets a value indicating whether one of the dimensions <see cref="T:TensorFlow.TFShape"/> in the shape is larger than Int32.MaxValue.
     /// </summary>
     /// <value><c>true</c> if is long array; otherwise, <c>false</c>.</value>
-    member __.IsLongArray with get() = dims |> Option.map (Array.exists (fun x -> x > int64 Int32.MaxValue)) |> Option.defaultValue false
+    member __.IsLongArray with get() = dims |> Option.map (Array.exists (fun x -> int64 x > int64 Int32.MaxValue)) |> Option.defaultValue false
 
     /// <summary>
     /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.TFShape"/>.
@@ -507,14 +792,255 @@ type TFShape(dims:int64[] option) =
     /// <returns>A <see cref="T:System.String"/> that represents the current <see cref="T:TensorFlow.TFShape"/>.</returns>
     override __.ToString () =
         match dims with 
-        | Some dims -> dims |> Array.map (function | -1L -> "?" | x -> string x) |> String.concat "," |> sprintf "[%s]"
-        | None -> "unknown"
+        | Some [|x|] -> sprintf "(%O,)" x 
+        | Some dims -> dims |> Array.map string |> String.concat "," |> sprintf "(%s)"
+        | None -> "<unknown>"
+
 
     /// <summary>
-    /// Gets the dimensions for the specified index.
+    ///  Returns the value of a dimension
     /// </summary>
-    /// <param name="idx">Index.</param>
-    member __.Index (idx:int) = dims.Value.[idx]
+    /// <param name="key"></param>
+    /// <returns>A dimension</returns>
+    /// <exception cref="System.ArguementException">If key is outside the range of the dimensions</exception>
+    member this.Item (key:int) = 
+        match dims with
+        | Some(dims) -> dims.[key]
+        | None -> Dimension.Unknown
+    
+//    """Returns the value of a dimension or a shape, depending on the key.
+//
+//    Args:
+//      key: If `key` is an integer, returns the dimension at that index;
+//        otherwise if `key` is a slice, returns a TensorShape whose
+//        dimensions are those selected by the slice from `self`.
+//
+//    Returns:
+//      A dimension if `key` is an integer, or a `TensorShape` if `key` is a
+//      slice.
+//
+//    Raises:
+//      ValueError: If `key` is a slice, and any of its elements are negative, or
+//        if `self` is completely unknown and the step is set.
+    /// <summary>
+    ///  Returns the value of a dimension
+    /// </summary>
+    /// <param name="slice">Slice for dimensions</param>
+    /// <returns>A dimension</returns>
+    /// <exception cref="System.ArguementException">If key is outside the range of the dimensions</exception>
+    /// TODO fix up above summary
+    member this.GetSlice(start: int option, finish : int option) = 
+        let start = start |> Option.defaultValue 0
+        match finish with
+        | None ->
+            // NOTE(mrry) This would imply that TensorShape(None) is compatible with
+            // TensorShape(None)[1:], which is obivously not true. It would be
+            // possible to track the nubmer of dimensions symbolically,
+            // and perhaps we should do that.
+            TFShape.Unknown
+        | Some(finish) -> 
+            if (start < 0 || finish < 0) || start >= finish then TFShape.Unknown
+            else TFShape.UnknownShape(ndims = finish - start)
+
+    /// Returns the total number of elemetns, or none for incomplete shapes.
+    member this.NumElements // TODO: should this e TryNumElements?
+        with get() = 
+            if this.IsFullyDefined  
+            then Some(this.Dims |> Array.choose (fun x -> x.Value) |> Array.fold (*) 1L)
+            else None
+
+    ///<summary>Returns a `TensorShape` combining the information in `self` and `other`.
+    ///
+    ///The dimensions in `self` and `other` are merged elementwise,
+    ///according to the rules defined for `Dimension.MergeWith()`.
+    ///
+    /// <param name="other">Another `TensorShape`.</param>
+    /// <returns>A `TensorShape` containing the combined information of `this` and `other`.</returns>
+    /// <exception cref="TensorFlow.FSharp.ValueError">If `this` and `other` are not compatible.</exception>
+    /// </summary>
+    member this.MergeWith(other : TFShape) = 
+        match dims with 
+        | None -> other
+        | Some(dims) ->
+            try
+                TFShape(Some(dims |> Array.mapi (fun i dim -> dim.MergeWith(other.[i]))))
+            with 
+            | :? ValueError as e ->
+                raise (ValueError(sprintf "Shapes %O and %O are not compatible" this other))
+                
+
+    /// <summary>Returns the concatenation of the dimension in `self` and `other`.
+    ///
+    ///*N.B.* If either `self` or `other` is completely unknown,
+    ///concatenation will discard information about the other shape. In
+    ///future, we might support concatenation that preserves this
+    ///information for use with slicing.
+    /// </summary>
+    /// <param name="other"> Another TFShape</param>
+    /// <returns> A `TensorShape` whose dimensions are the concatenation of the dimensions in `this` and `other`. </returns>
+    member this.Concatentate(other : TFShape) = 
+        // TODO(mrry): Handle the case where we concatenate a known shape with a 
+        // completely unknow shape, so that we can use partial information
+        match this.TryDims, other.TryDims with
+        | None,_ | _ ,None -> TFShape.Unknown
+        | Some(xs), Some(ys) -> TFShape(Some([|yield! xs; yield! ys|]))
+
+
+    /// <summary> /// Raises and excpetion if `this` is not compatible with the given `rank`.
+    /// </summary>
+    /// <param name="rank">An integer</param>
+    /// <excpetion cref="TensorFlow.FShapr.ValueError">If `this` does not represent a shape with the given `rank`</exception>
+    member this.AssertHasRank(rank : int) = 
+        // TODO: There is probably a cleaner way to do this...
+        if this.TryDims |> Option.map (fun xs -> xs.Length) <> Some(rank) then
+            raise (ValueError(sprintf "Shape %O must have rank %i" this rank))
+
+    /// <summary>Returns a shape based on `self` with the given rank.
+    ///
+    /// This method promotes a completely unknown shape to one with a
+    /// known rank.
+    /// </summary>
+    /// <param name="rank">An integer. </param>
+    /// <returns>A shape that is at least as specific as `self` with the given rank. </returns
+    /// <excpetion cref="TensorFlow.FShapr.ValueError">If `this` does not represent a shape with the given `rank`</exception>
+    member this.WithRank(rank : int) = 
+        try 
+            this.MergeWith(TFShape.UnknownShape(ndims=rank))
+        with
+        | :? ValueError  -> raise (ValueError(sprintf "Shape %O must have rank %i" this rank))
+
+
+    /// <summary>
+    /// Returns a shape based on `this` with at least the given rank.
+    /// </summary>
+    /// <param name="rank">An integer</param>
+    /// <returns>A shape that is at least as specific as `this` with at least the given rank.</returns>
+    /// <excpetion cref="TensorFlow.FShapr.ValueError">If `this` does not represent a shape with at least the given `rank`</exception>
+    member this.WithRankAtLeast(rank : int) : TFShape =
+        match this.TryDims with
+        | Some(xs) when xs.Length < rank ->
+            raise (ValueError(sprintf "Shape %O must have rank at least %i" this rank))
+        | _ -> ()
+        this
+
+    /// <summary>
+    /// Returns a shape based on `this` with at most the given rank.
+    /// </summary>
+    /// <param name="rank">An integer</param>
+    /// <returns>A shape that is at least as specific as `this` with at most the given rank.</returns>
+    /// <excpetion cref="TensorFlow.FShapr.ValueError">If `this` does not represent a shape with at most the given `rank`</exception>
+    member this.WithRankAtMost(rank : int) : TFShape =
+        match this.TryDims with
+        | Some(xs) when xs.Length > rank ->
+            raise (ValueError(sprintf "Shape %O must have rank at most %i" this rank))
+        | _ -> ()
+        this
+
+    /// <summary>Returns True iff `self` is compatible with `other`.
+    ///
+    /// Two possibly-partially-defined shapes are compatible if there
+    /// exists a fully-defined shape that both shapes can represent. Thus,
+    /// compatibility allows the shape inference code to reason about
+    /// partially-defined shapes. For example:
+    ///
+    /// * TFShape(None) is compatible with all shapes.
+    ///
+    /// * TFShape([None, None]) is compatible with all two-dimensional
+    ///   shapes, such as TFShape([32, 784]), and also TFShape(None). It is
+    ///   not compatible with, for example, TFShape([None]) or
+    ///   TFShape([None, None, None]).
+    ///
+    /// * TFShape([32, None]) is compatible with all two-dimensional shapes
+    ///   with size 32 in the 0th dimension, and also TFShape([None, None])
+    ///   and TFShape(None). It is not compatible with, for example,
+    ///   TFShape([32]), TFShape([32, None, 1]) or TFShape([64, None]).
+    ///
+    /// * TFShape([32, 784]) is compatible with itself, and also
+    ///   TFShape([32, None]), TFShape([None, 784]), TFShape([None,
+    ///   None]) and TFShape(None). It is not compatible with, for example,
+    ///   TFShape([32, 1, 784]) or TFShape([None]).
+    ///
+    /// The compatibility relation is reflexive and symmetric, but not
+    /// transitive. For example, TFShape([32, 784]) is compatible with
+    /// TFShape(None), and TFShape(None) is compatible with
+    /// TFShape([4, 4]), but TFShape([32, 784]) is not compatible with
+    /// TFShape([4, 4]).
+    /// </summary>
+    /// <param name="other"> Another TFShape.</param>
+    /// <returns>True iff `this` is compatible with `other`.</returns>
+    member this.IsCompatibleWith(other : TFShape) = 
+        match this.TryDims, other.TryDims with
+        | Some(xs),Some(ys) -> 
+           if xs.Length <> ys.Length then false
+           else (xs,ys) ||> Array.zip |> Array.map (fun (x,y) -> not(x.IsCompatibleWith(y))) |> Array.exists id
+        | _ -> true
+
+    /// <summary> Raises exception if `self` and `other` do not represent the same shape.
+    ///
+    /// This method can be used to assert that there exists a shape that both
+    /// `self` and `other` represent.
+    /// </summary>
+    /// <param name="other">Another TFShape</param>
+    /// <excpetion cref="TensorFlow.FShapr.ValueError">If `this` and `other` do not represent the same shape.</exception>
+    member this.AssertIsCompatibleWith(other : TFShape) = 
+        if not(this.IsCompatibleWith(other)) then
+            raise (ValueError(sprintf "Shapes %O and %O are incompatible" this other))
+        
+    /// <summary>Returns the most specific TensorShape compatible with `self` and `other`.
+    ///
+    /// * TensorShape([None, 1]) is the most specific TensorShape compatible with
+    ///   both TensorShape([2, 1]) and TensorShape([5, 1]). Note that
+    ///   TensorShape(None) is also compatible with above mentioned TensorShapes.
+    ///
+    /// * TensorShape([1, 2, 3]) is the most specific TensorShape compatible with
+    ///   both TensorShape([1, 2, 3]) and TensorShape([1, 2, 3]). There are more
+    ///   less specific TensorShapes compatible with above mentioned TensorShapes,
+    ///   e.g. TensorShape([1, 2, None]), TensorShape(None).
+    /// </summary>
+    /// <param name="other"> Another `TFShape`</param>
+    /// <returns> A `TensorShape` which is the most specific compatible shape of `this` and `other`</returns>
+    member this.MostSpecificCompatibleShape(other : TFShape) =
+        match this.TryDims, other.TryDims with
+        | Some(xs), Some(ys) when xs.Length = ys.Length -> 
+            TFShape(Some([| for i in [0 .. this.NumDimensions - 1] -> if xs.[i] = ys.[i] then xs.[i] else Dimension.Unknown |]))
+        | _ -> TFShape.Unknown
+
+    /// <summary>Returns an unknown tensorShape, optionally with a known rank.</summary>
+    /// <param name="ndims"> (Optional) If specified, the number of dimensions in the shape.</param>
+    /// <returns>An unknown TensorShape.</returns>
+    static member UnknownShape(?ndims : int) = 
+        match ndims with
+        | None -> TFShape.Unknown
+        | Some(ndims) -> TFShape(Some(Array.init ndims (fun _ -> Dimension(Option<int64>.None))))
+
+
+
+    /// <summary>
+    /// Returns a shape representing a scalar
+    /// </summary>
+    static member Scalar = scalar 
+
+    /// <summary>Returns a shape representing a vector</summary>
+    /// <param name="length">The length of the vector, which mayu be None if unknown.</param>
+    /// <returns>A TFShape representign a vector of the given length.</returns>
+    static member Vector(?length : int64) =
+        TFShape(Some([|Dimension(length)|]))
+
+    /// <summary>Returns  a shape representing a matrix. </summary>
+    /// <param name="rows">The number of rows in the matrix, which may be None if unknown.</param>
+    /// <param name="cols">The number of columns in the matrix, which may be None if unknown.</param>
+    static member Matrix(?rows : int64, ?cols : int64) =
+        TFShape(Some([|Dimension(rows); Dimension(cols)|]))
+
+    /// Returns True if `self` is equivalent to `other`.
+    static member (=) (self : TFShape, other : TFShape) = self.TryDims = other.TryDims
+
+    /// Returns True if `self` is knwon to be different form `other`.
+    static member (<>) (self : TFShape, other : TFShape) = 
+        match self.TryDims, other.TryDims with
+        | None,_ | _,None ->  raise (ValueError("The inequality of unknown TFShapes is undefiend."))
+        | _ -> self.TryDims <> other.TryDims
+         
 
     /// <summary>
     /// Adds a <see cref="TensorFlow.FSharp.TFShape"/> to a <see cref="TensorFlow.FSharp.TFShape"/>, yielding a shape made up of the concatenation of the first and the second shapes.
@@ -522,8 +1048,7 @@ type TFShape(dims:int64[] option) =
     /// <param name="left">The first <see cref="TensorFlow.FSharp.TFShape"/> to add.</param>
     /// <param name="right">The second <see cref="TensorFlow.FSharp.TFShape"/> to add.</param>
     /// <returns>The <see cref="T:TensorFlow.TFShape"/> that is the sum of the values of <c>left</c> and <c>right</c>.</returns>
-    static member (+) (left:TFShape,right:TFShape) =
-        new TFShape ([|yield! left.Dims; yield! right.Dims|])
+    static member (+) (left:TFShape,right:TFShape) = left.Concatentate(right)
 
     /// <summary>
     /// Returns the shape as a 1-dimensional tensor with each element corresponding to the specified shape dimension.
@@ -537,6 +1062,7 @@ type TFShape(dims:int64[] option) =
      /// <param name="shape">The shape.</param>
      /// <returns>The result of the conversion.</returns>
      static member op_Implicit (shape : TFShape) : TFTensor = shape.AsTensor ()
+
 
 // Use for single dimension arrays 
 
@@ -553,8 +1079,10 @@ module TensorExtension =
     type TFTensor with
 
         static member SetupTensor (dt : TFDataType, shape : TFShape, data : Array, start : int, count : int, size : int) : IntPtr =
-         if box shape = null then raise (ArgumentNullException "shape")
-         TFTensor.SetupTensor (dt, shape.Dims, data, start, count, size)
+            if box shape = null then raise (ArgumentNullException "shape")
+            match shape.TryFullyDefined with
+            | Some(dims) -> TFTensor.SetupTensor (dt, dims, data, start, count, size)
+            | None -> failwith "Shape %s is not fully specified"
 
         // Convenience, should I add T[,] and T[,,] as more convenience ones?
         /// <summary>
