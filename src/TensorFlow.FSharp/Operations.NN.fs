@@ -26,30 +26,27 @@ type TFGraph with
     member graph.Conv2DTranspose(value:TFOutput, filter:TFOutput, outputShape:TFOutput, strides:int64[], ?padding:string, ?data_format:string,?name:string) = 
         let paddingV     = defaultArg padding "SAME"
         let data_formatV = defaultArg data_format "NHWC"
-        //use name_scope = graph.NameScope("conv2d_transpose",value,filter,outputShape)
+        use name_scope = graph.NameScope("conv2d_transpose",value,filter,outputShape)
         if not (data_formatV = "NCHW" || data_formatV = "NHWC") then 
             failwith "dataformat has to be either NCHW or NHWC."
         let axis = if data_formatV = "NHWC" then 3 else 1
-        // We'll do it live!
-        // TODO: Re-introduce the checks
-        // This will mean pulling in the shape behavior from https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/framework/tensor_shape.py
-
-//        let value_shape = graph.GetShape(value)
-//        let filter_shape = graph.GetShape(filter)
-//        let output_shape = graph.GetShape(outputShape)
-//        // TODO it's possible that the following will not work if these parts of the shapes are undefined at graph definition time
-//        if output_shape <> [|4L|] then
-//            failwithf "output_shape must have shape (4,) got %A" output_shape
-//        if value_shape.[axis] <> filter_shape.[3] then
-//            failwithf "input channels does not match filter's input channels, \n %i != %i" 
-//                value_shape.[axis]
-//                filter_shape.[3]
-//        if output_shape.[3] <> filter_shape.[2] then
-//            failwithf "output_shape does does not match filter's output channels, \n %i != %i" 
-//                value_shape.[axis]
-//                filter_shape.[3]
-//        if paddingV <> "VALID" && paddingV <> "SAME" then
-//            failwithf "padding must be either VALID or SAME: %s" paddingV
+        let value_shape = graph.GetShape(value)
+        let filter_shape = graph.GetShape(filter)
+        let output_shape = graph.GetShape(outputShape)
+        if not (value_shape.[axis].IsCompatibleWith(filter_shape.[3])) then
+            sprintf "input channels does not match filter's input channels, \n %i != %i" 
+                (int64 value_shape.[axis]) (int64 filter_shape.[3])
+            |> ValueError |> raise
+        if not (output_shape.IsCompatibleWith(TFShape.Vector(4L))) then
+            sprintf "output shape must have shape (4,), got %O" output_shape
+            |> ValueError |> raise
+        if not (filter_shape.[2].IsCompatibleWith(output_shape.[axis])) then
+            sprintf "output shape does not match filter's output channels, %O != %O" 
+                output_shape.[axis] filter_shape.[2]
+            |> ValueError |> raise
+            
+        if paddingV <> "VALID" && paddingV <> "SAME" then
+            failwithf "padding must be either VALID or SAME: %s" paddingV
 
         graph.Conv2DBackpropInput(
             input_sizes = outputShape,
@@ -57,6 +54,6 @@ type TFGraph with
             out_backprop = value,
             strides = strides,
             padding = paddingV,
-            data_format = data_formatV//,
-            //name = name_scope.Scope
+            data_format = data_formatV,
+            name = name_scope.Scope
         )

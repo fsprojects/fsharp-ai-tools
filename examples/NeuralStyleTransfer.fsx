@@ -2,6 +2,7 @@
 #r "netstandard"
 #I "../tests/bin/Debug/net472/"
 #r "TensorFlow.FSharp.dll"
+#r "TensorFlow.FSharp.Proto.dll"
 #r "Argu.dll"
 #r "TensorFlow.FSharp.Tests.dll"
 
@@ -72,23 +73,5 @@ let img_tf = TFTensor.CreateString(File.ReadAllBytes(Path.Combine(example_dir,"c
 
 let img_styled = sess.Run([|input_string|],[|img_tf|],[|output_img|]).[0]
 
-/// NOTE: Assumed NHWC dataformat
-/// TODO: Generalize this, enable the ability work on batches
-let tensorToPNG(batchIndex:int) (imgs:TFTensor) =
-    if imgs.TFDataType <> TFDataType.Float32 then failwith "type unsupported"
-    match imgs.Shape |> Array.map int with
-    | [|_N;H;W;_C|] ->
-        let pixels = 
-            [|
-                let res_arr = imgs.GetValue() :?> Array
-                for h in 0..H-1 do
-                    for w in 0..W-1 do
-                        let getV(c) = byte <| Math.Min(255.f, Math.Max(0.f, (res_arr.GetValue(int64 batchIndex, int64 h, int64 w, int64 c) :?> float32)))
-                        yield BitConverter.ToInt32([|getV(0); getV(1); getV(2); 255uy|], 0) // NOTE: Channels are commonly in RGB format
-            |]
-        TensorFlow.FSharp.ImageWriter.RGBAToBitmap(H,W,pixels)
-        //TensorFlow.FSharp.ImageWriter.RGBAToPNG(H,W,pixels)
-    | _ -> failwithf "shape %A is unsupported" imgs.Shape
 
-
-File.WriteAllBytes(Path.Combine(__SOURCE_DIRECTORY__, sprintf "chicago_in_%s_style.bmp" style), tensorToPNG 0 img_styled)
+//File.WriteAllBytes(Path.Combine(__SOURCE_DIRECTORY__, sprintf "chicago_in_%s_style.bmp" style), tensorToPNG 0 img_styled)
