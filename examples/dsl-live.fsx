@@ -1,4 +1,4 @@
-﻿// Build the Debug 'TensorFlow.FSharp.Tests' before using this
+﻿  // Build the Debug 'TensorFlow.FSharp.Tests' before using this
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
@@ -42,10 +42,11 @@ module PlayWithTF =
     tf { let x = (vec [1.0; 2.0] + vec [1.0;2.0] ) 
          return x + x }   
   
+
     // Now show that adding vectors of the wrong sizes gives a static error
     // Adding a vector and a matrix gives an error
     vec [1.0; 2.0] + matrix [ [1.0; 2.0] ]
-         
+     
     // Math-multiplying matrices of the wrong sizes gives an error
     tf { let matrix1 = 
              matrix [ [1.0; 2.0]
@@ -53,9 +54,9 @@ module PlayWithTF =
                       [1.0; 2.0] ]
          let matrix2 =  
              matrix [ [1.0; 2.0]
-                      [1.0; 2.0]
-                      [1.0; 2.0] ]
-         return matrix1 *! matrix2 }
+                      [1.0; 2.0] ] 
+         return matrix1 *! matrix2 
+         }
     
     // What about functions?  
     let f3 (x:int) = 
@@ -153,7 +154,7 @@ module ModelExample =
 
     /// Evaluate the model for input and coefficients
     let model (xs: DT<double>, coeffs: DT<double>) = 
-        DT.Sum (xs * coeffs,axis= [| 1|])
+        DT.Sum (xs * coeffs,axis= [| 1 |])
            
     let meanSquareError (z: DT<double>) tgt = 
         let dz = z - tgt 
@@ -166,8 +167,8 @@ module ModelExample =
         meanSquareError y y2
           
     // Gradient of the objective function w.r.t. the coefficients
-    let dloss_dcoeffs inputs coeffs = 
-        let z = loss inputs coeffs
+    let dloss_dcoeffs (xs, y) coeffs = 
+        let z = loss (xs, y) coeffs
         DT.gradient z coeffs 
 
 #if !LIVECHECKING
@@ -180,8 +181,8 @@ module ModelExample =
     // update (rate) - often reducing - which makes them more robust to poor convergence.
     let rate = 2.0
      
-    let step inputs (coeffs: DT<double>) = 
-        let dz = dloss_dcoeffs inputs coeffs 
+    let step (xs, y) (coeffs: DT<double>) = 
+        let dz = dloss_dcoeffs (xs, y) coeffs 
 
         // Note, force the evaluation at this step
         let coeffs = (coeffs - v rate * dz) |> DT.Eval
