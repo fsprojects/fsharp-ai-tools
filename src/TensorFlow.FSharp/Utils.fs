@@ -1,8 +1,9 @@
 [<AutoOpen>]
 module TensorFlow.FSharp.Utils
 open System
-open System.Collections.Generic
 open System.Collections
+open System.Collections.Generic
+open System.Collections.Concurrent
 open FSharp.NativeInterop
 open System.Runtime.InteropServices
 
@@ -66,6 +67,17 @@ module Array =
 
     // Not sure what to do with the warning here...
     let cast<'b> (xs:IEnumerable) = [|for x in xs -> x :?> 'b |]
+
+    /// Segments a sequence according to a provided sequence of segment lengths
+    let segment (ns:int[]) (xs:'a[]) =  
+        failwith "untested"
+        [|for (start,length) in (ns.[..ns.Length-2] |> Array.scan (+) 0,ns) ||> Array.zip -> xs.[start..start+length]|]
+
+    let removeByIndex (i:int) (xs:'T[]) = [|for (j,x) in xs |> Array.indexed do if j <> i then yield x |]
+
+    // NOTE: could probably do this by mutation, uncomment if needed
+    //let updateByIndex (i:int) (f : 'T -> 'T) (xs:'T[]) = [|for (j,x) in xs |> Array.indexed -> if j <> i then x else f(x)|]
+
 
 module NativePtr =
 
@@ -136,3 +148,16 @@ type IntPtr with
 /// This interface enables FSI specific printing
 type IFSIPrint =
     abstract member ToFSIString : unit -> string
+
+type ConcurrentDictionary<'a,'b> with
+    member this.TryGet(x) =
+        match this.TryGetValue(x) with
+        | (true,value) -> Some(value)
+        | (false,_) -> None
+
+    member this.Update(index:'a, update:'b->'b) = 
+        let b' = update this.[index]
+        this.[index] <- b'
+        b'
+
+

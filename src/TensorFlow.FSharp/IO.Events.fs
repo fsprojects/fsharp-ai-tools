@@ -1,4 +1,8 @@
-﻿module TensorFlow.FSharp.IO.SummaryFileWriter
+﻿namespace TensorFlow.FSharp.IO.Events
+open TensorFlow.FSharp.API.Utilities
+open TensorFlow.FSharp.Proto
+open System
+open System.IO
 
 // From
 //https://github.com/eaplatanios/tensorflow_scala/tree/master/modules/api/src/main/scala/org/platanios/tensorflow/api/io/events
@@ -58,10 +62,18 @@ type HistogramValue =
         bucketLimits : double[]
         }
 
+type ScalarEventRecord = EventRecord<float32>
+type ImageEventRecord = EventRecord<ImageValue>
+type AudioEventRecord = EventRecord<AudioValue>
+type HistogramEventRecord = EventRecord<HistogramValue>
+type CompressedHistogramEventRecord = EventRecord<HistogramValue[]>
+type TensorEventRecord = EventRecord<TensorFlow.FSharp.Proto.TensorProto>
+
+[<RequireQualifiedAccess>]
 type Event =
 | ScalarEventRecord of EventRecord<float32>
 | ImageEventRecord of EventRecord<ImageValue>
-| AudoeEventRecord of EventRecord<AudioValue>
+| AudioEventRecord of EventRecord<AudioValue>
 | HistogramEventRecord of EventRecord<HistogramValue>
 | CompressedHistogramEventRecord of EventRecord<HistogramValue[]>
 | TensorEventRecord of EventRecord<TensorFlow.FSharp.Proto.TensorProto>
@@ -99,22 +111,33 @@ module EventPluginUtilities =
             failwithf "Asset path '%s' not found" assetPath
 
             
-/// Event file reader.
+/// <summary>Event file reader.
 ///
 /// An event file reader is used to create iterators over the events stored in the file at the provided path (i.e.,
 /// `filePath`).
 ///
 /// Note that this reader ignores any corrupted records at the end of the file. That is to allow for "live tracking" of
 /// summary files while they're being written to.
-///
-/// @param  filePath        Path to the file being read.
-/// @param  compressionType Compression type used for the file.
-/// TODO pick up from here
-//type EventFileReader internal (
-//    filePath : string
-//    ?compressionType : CompressionType
-//
-//    ) inherit TFDisposable(x : Handle)
+/// </summary>
+/// <param name="filePath">Path to the file being read.</param>
+/// <param  name="compressionType">Compression type used for the file.</param>
+type EventFileReader internal ( filePath : string, ?compressionType : CompressionType) 
+    // TODO inherit TFDisposable(x : Handle) = 
+    // extends Clodable with Loader[Event]
+
+    member this.Load() : Seq<Event> = 
+        // Catches the enxt event stored in the file
+        seq {
+            try
+
+            with
+            // TODO narrow to OutOfRangeException and DataLossException or the equivilent 
+            | :? Exception
+        
+        }
+       NativeReader.RecordReaderWrapperReadnext()
+        //Event.parseFrom
+    let x =1 0
 
 /// Accumulates event values collected from the provided path.
 ///
@@ -146,10 +169,12 @@ module EventPluginUtilities =
 ///
 type EventAccumulator(
                       path : string, 
-                      ?sizeGuidance : EventType -> int,
+                      ?sizeGuidance : Map<EventType,int>,
                       ?histogramCompressionBps : int[],
-                      ?purgeOrphanedData : bool) = 
+                      ?purgeOrphanedData : bool) as this = 
 
+    // TODO maybe something other than seq here
+    let eventLoader : unit -> seq<Event> = EventAccumulator.EventLoaderFromPath(path)
     static let defaultSizeGuidance (e:EventType) = 
         match e with
         | ScalarEventType -> 110000
@@ -168,9 +193,50 @@ type EventAccumulator(
     static let defaultHistogramCompressionBps = 
         [|0; 668; 1587; 3085; 5000; 6915; 8413; 9332; 10000|]
 
-    let sizeGuidance = defaultArg sizeGuidance defaultSizeGuidance
+    let sizeGuidance = defaultArg sizeGuidance Map.empty
     let histogramComrpessionBps = defaultArg histogramCompressionBps defaultHistogramCompressionBps
     let purgeOrphanedData = defaultArg purgeOrphanedData 
 
-    let eventLoader : unit -> seq<Event> = EventAccumulator.eventLoaderFromPth(path)
+    let actualSizeGuidance (e : EventType) = sizeGuidance.TryFind(e) |> Option.defaultWith (fun _ -> defaultSizeGuidance(e))
+        
+    let scalarReservoir = Reservoir<string,ScalarEventRecord>(actualSizeGuidance(ScalarEventType))
+    let imageReservoir = Reservoir<string,ImageEventRecord>(actualSizeGuidance(ImageEventType))
+    let audioReservoir = Reservoir<string,AudioEventRecord>(actualSizeGuidance(AudioEventType))
+    let histogramReservoir = Reservoir<string,HistogramEventRecord>(actualSizeGuidance(HistogramEventType))
+    let compressedHistogramReservoir = Reservoir<string,CompressedHistogramEventRecord>(actualSizeGuidance(CompressedHistogramEventType))
+    let tensorReservoir = Reservoir<string,TensorEventRecord>(actualSizeGuidance(TensorEventType))
 
+    let mutable graphDef : ByteString option = None
+    let mutable graphFromMetaGraph : bool = false
+    let mutable metaGraphDef : ByteString option = None
+    let mutable taggedRunMetadata : Map<string,ByteString> = Map.empty
+    let mutable summaryMetadata : Map<string,SummaryMetadata> = Map.empty
+
+    /// Keep a mapping from plugin name to a map from tag to plugin data content obtained from the summary metadata for
+    /// that plugin (this is not the entire summary metadata proto - only the content for that plugin). The summary writer
+    /// only keeps the content on the first event encountered per tag, and so we must store that first instance of content
+    /// for each tag.
+    let mutable pluginTagContent = Map.empty<string,Map<string,string>>
+
+    /// Loads all events added since the last call to `reload()` and returns this event accumulator. If `reload()` was
+    /// never called before, then it loads all events in the path.
+    let reload() = 
+        lock this (fun _ ->
+            //eventLoader().foreach(processEvent)
+            failwith "todo"
+        )
+    //private[this] val _pluginTagContent: mutable.Map[String, mutable.Map[String, String]] = mutable.Map.empty
+
+    member this.FirstEventTimeStampe 
+        with get() : float =
+            lock this (fun _ ->
+                failwith "todo"
+            )
+
+    static member EventLoaderFromPath(path : string) : unit -> seq<Event> = 
+        if File.Exists(path) && Path.GetFileName.Contains("tfevents") then
+            fun () -> EventFileReader(path).Load()
+        else 
+            fun () -> failwith "todo" //TODO    DirectoryLoader(path, EventFileReader(_), fun p -> Path.GetFileName(p).Contains("tfevents")).Load()
+//    //let eventLoader : unit -> seq<Event> = EventAccumulator.eventLoaderFromPth(path)
+//
