@@ -11,7 +11,7 @@ open TensorFlow.FSharp
 open TensorFlow.FSharp.DSL
 open Microsoft.FSharp.Compiler.Interactive.Settings
 
-let y = if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
+if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 
 fsi.AddPrintTransformer(DT.PrintTransform)
 
