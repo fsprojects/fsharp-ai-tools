@@ -148,6 +148,33 @@ yet run, this is wet paint):
 The design is intended to allow alternative execution with Torch or DiffSharp.
 DiffSharp may be used once Tensors are available in that library.
 
+# Live Checking Tooling
+
+There is some tooling to do "live trajectory execution" of models and training on limited training sets,
+reporting tensor sizes and performing tensor size checking.
+
+1. Build the VS tooling with the extensibility "hack" to allow 3rd party tools to add checking and tooltips
+
+    git clone http://github.com/Microsoft/visualfsharp
+	cd visualfsharp
+	git fetch https://github.com/dsyme/visualfsharp livecheck
+	git checkout livecheck
+	.\build.cmd vs
+	cd ..
+
+2. Compile the extra tool
+	
+	git clone http://github.com/fsprojects/FSharp.Compiler.PortaCode
+	dotnet build FSharp.Compiler.PortaCode
+
+3. Start the tool and edit
+
+	cd TensorFlow.FSharp\examples
+	..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe dsl-live.fsx --eval --writeinfo --watch --vshack --livechecksonly
+
+	devenv.exe /rootsuffix RoslynDev
+	(open dsl-live.fsx)
+
 # Building
 
 First time only:

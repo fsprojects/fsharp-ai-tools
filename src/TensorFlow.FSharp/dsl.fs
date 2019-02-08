@@ -167,15 +167,6 @@ type Shape =
 
     member shape.Dimensions = shape.DimensionsEliminatingFlex
 
-    override shape.ToString() = 
-        let dims, flexvar = shape.DimensionsWithFlexVar
-        if dims.Length = 0 then 
-            "scalar" 
-            + (if flexvar.IsSome then " (can expand)" else "")
-        else
-            sprintf "shape %s" (String.concat " x " [ for i in dims -> i.ToString() ]) 
-            + (if flexvar.IsSome then "x.." else "")
-
     member shape.AsTFShape() = TFShape(shape.DimensionsEliminatingFlex |> Array.map (fun dim -> int64 dim.Value))
 
     member shape.AsTFTensor() = shape.AsTFShape().AsTensor()
@@ -275,6 +266,21 @@ type Shape =
         Shape.Unify op actual expected
         actual
 
+    override shape.ToString() = 
+        let dims, flexvar = shape.DimensionsWithFlexVar
+        if dims.Length = 0 then 
+            "scalar" 
+            + (if flexvar.IsSome then " (can expand)" else "")
+        elif dims.Length = 1 then 
+            "vector " + dims.[0].ToString()
+            + (if flexvar.IsSome then " (can expand)" else "")
+        elif dims.Length = 2 then 
+            "matrix " + dims.[0].ToString() + " x " + dims.[1].ToString()
+            + (if flexvar.IsSome then " (can expand)" else "")
+        else
+            sprintf "shape %s" (String.concat " x " [ for i in dims -> i.ToString() ]) 
+            + (if flexvar.IsSome then "x.." else "")
+
 [<AutoOpen>]
 module ShapeHelpers = 
 
@@ -314,9 +320,16 @@ and DT internal (shape: Shape, cost: int, makeNode: (Ctxt -> TFOutput), asTFTens
 
     /// A quick check to see if this is a constant tensor, so we don't have to create a graph to
     /// view or analyze it.
-    member internal __.TryAsConstTFTensor() = match asTFTensor with None -> None | Some f -> Some (f())
+    member internal __.TryAsConstTFTensor() = 
+        if livecheck then 
+            failwith "can't evaluate tensor during LiveCheck"
+        match asTFTensor with 
+        | None -> None 
+        | Some f -> Some (f())
 
     static member RunTFTensors(values: DT[], ?weights: seq<string * DT>) : TFTensor[] = 
+        if livecheck then 
+            failwith "can't evaluate tensor during LiveCheck"
         let sess = new TFSession()
         let graph = sess.Graph
         let ctxt = 
@@ -362,16 +375,18 @@ and DT internal (shape: Shape, cost: int, makeNode: (Ctxt -> TFOutput), asTFTens
 
     /// Display constants as data and delayed nodes as shapes
     override dt.ToString() = 
-        // cost = 0 implies constant, e.g. result from Eval
-        match dt.TryAsConstTFTensor() with 
-        | Some t -> sprintf "%A" (t.GetValue())
-        | None -> sprintf "%A" dt.Shape + " (unevaluated)"
-
+        if livecheck then 
+            dt.Shape.ToString()
+        else
+            // cost = 0 implies constant, e.g. result from Eval
+            match dt.TryAsConstTFTensor() with 
+            | Some t -> sprintf "%A" (t.GetValue())
+            | None -> sprintf "%A" dt.Shape + " (unevaluated)"
 
 /// Represents a differentiable tensor value
 type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTensor: (unit -> TFTensor)) =
 
-    inherit DT(shape, cost, eval, asTFTensor = asTFTensor)
+    inherit DT(shape, cost, eval, asTFTensor)
 
     static member AddN (vs: DT<'T>[]) : DT<'T> = 
         let outputShape = vs.[0].Shape 
@@ -808,17 +823,12 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
             let tensors = DT.RunTFTensors(values, ?weights=weights)
             DT.ConstTensor(tensors.[0], value1.Shape), DT.ConstTensor(tensors.[1], value2.Shape), DT.ConstTensor(tensors.[2], value3.Shape)
 
-(*
-    static member RunScalars(values: DT<'T>[], ?weights: seq<string * DT>) : 'T[] = 
-        if livecheck then 
-            [| for v in values -> Unchecked.defaultof<'T> |]
-        else
-            let results = DT.RunTFTensors([| for v in values -> (v :> DT) |], ?weights=weights)
-            [| for r in results -> r.GetValue() :?> 'T |]
-*)
-
     member value.GetValue() : obj = 
-        DT.Run(value) 
+        if livecheck then 
+            // TODO: give a better dummy value back here
+            obj()
+        else
+            DT.Run(value) 
 
     member value.ToArray() : 'T[] = 
         if livecheck then 
