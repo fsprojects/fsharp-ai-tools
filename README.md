@@ -15,11 +15,6 @@ TF graphs using a thin DSL whose intended semantics are clear and relatively ind
 of TF, while still achieving cohabitation and win-win with the TF ecosystem. Further value-add
 tooling can give added correctness guarantess interactively.
 
-# The TensorFlow API for F# 
-
-See `TensorFlow.FSharp`.  This API is designed in a similar way to `TensorFlowSharp`, but is implemented directly in F# and
-contains some additional functionality.
-
 # FM: The F#-for-Models DSL
 
 The aim of FM is to support the authoring of numeric functions and AI models - including
@@ -236,6 +231,11 @@ DiffSharp may be used once Tensors are available in that library.
   allows you to check the shapes of your differentiable code indepentently of TensorFlow's shape computations.
   A shape inference system is used which allows for many shapes to be inferred and is akin to F# type inference.
   Not all TensorFlow automatic shape transformations are applied during shape inference.
+
+# The TensorFlow API for F# 
+
+See `TensorFlow.FSharp`.  This API is designed in a similar way to `TensorFlowSharp`, but is implemented directly in F# and
+contains some additional functionality.
 
 # Live Checking Tooling
 
