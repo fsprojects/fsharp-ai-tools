@@ -243,11 +243,16 @@ reporting tensor sizes and performing tensor size checking.
 
 LiveCheck for a vector addition:
 
-<img align="center" src="https://user-images.githubusercontent.com/7204669/52524060-90eee980-2c90-11e9-9b0e-2752480dbe7d.gif" width="512"  title="LiveCheck example for vectors">
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/7204669/52524060-90eee980-2c90-11e9-9b0e-2752480dbe7d.gif" width="512"  title="LiveCheck example for vectors">
+</p>
+
 
 LiveCheck for a DNN:
 
-<img align="center" src="https://user-images.githubusercontent.com/7204669/52525657-ecc36d80-2ca4-11e9-9a37-3bd2d1841618.gif" width="512"  title="LiveCheck example for DNN">
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/7204669/52525657-ecc36d80-2ca4-11e9-9a37-3bd2d1841618.gif" width="512"  title="LiveCheck example for vectors">
+</p>
 
 
 1. Build the VS tooling with the extensibility "hack" to allow 3rd party tools to add checking and tooltips
