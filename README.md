@@ -247,7 +247,7 @@ LiveCheck for a vector addition:
 
 LiveCheck for a DNN:
 
-<img src="https://user-images.githubusercontent.com/7204669/52524293-5470bd00-2c93-11e9-9823-e3f06b9f5a05.gif" width="512"  title="LiveCheck example for DNN">
+<img src="https://user-images.githubusercontent.com/7204669/52525657-ecc36d80-2ca4-11e9-9a37-3bd2d1841618.gif" width="512"  title="LiveCheck example for DNN">
 
 
 1. Build the VS tooling with the extensibility "hack" to allow 3rd party tools to add checking and tooltips
