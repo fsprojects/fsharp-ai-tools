@@ -1,4 +1,4 @@
-# FM: F# for Models, executing using TensorFlow
+# FM: F# for AI Models  (currently executing using TensorFlow)
 
 The repo contains:
 
