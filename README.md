@@ -1,4 +1,4 @@
-# FM: F# for Models, executing using TensorFlow
+# FM: F# for AI Models  (currently executing using TensorFlow)
 
 The repo contains:
 
@@ -10,15 +10,9 @@ The repo contains:
 
 3.  Experimental tooling for interactive tensor shape-checking, inference, tooltips and other nice things. 
 
-This is a POC that it is possible to build real, full-speed
-TF graphs using a thin DSL whose intended semantics are clear and relatively independent
-of TF, while still achieving cohabitation and win-win with the TF ecosystem. Further value-add
-tooling can give added correctness guarantess interactively.
-
-# The TensorFlow API for F# 
-
-See `TensorFlow.FSharp`.  This API is designed in a similar way to `TensorFlowSharp`, but is implemented directly in F# and
-contains some additional functionality.
+This is a POC that it is possible to configure F# to be suitable for authoring AI models. We
+execute them as real, full-speed TensorFlow graphs, achieving cohabitation and win-win with the TF ecosystem.
+Live trajextory execution tooling can give added correctness guarantess interactively.
 
 # FM: The F#-for-Models DSL
 
@@ -237,10 +231,24 @@ DiffSharp may be used once Tensors are available in that library.
   A shape inference system is used which allows for many shapes to be inferred and is akin to F# type inference.
   Not all TensorFlow automatic shape transformations are applied during shape inference.
 
+# The TensorFlow API for F# 
+
+See `TensorFlow.FSharp`.  This API is designed in a similar way to `TensorFlowSharp`, but is implemented directly in F# and
+contains some additional functionality.
+
 # Live Checking Tooling
 
 There is some tooling to do "live trajectory execution" of models and training on limited training sets,
 reporting tensor sizes and performing tensor size checking.
+
+LiveCheck for a vector addition:
+
+<img src="https://user-images.githubusercontent.com/7204669/52524060-90eee980-2c90-11e9-9b0e-2752480dbe7d.gif" width="512"  title="LiveCheck example for vectors">
+
+LiveCheck for a DNN:
+
+<img src="https://user-images.githubusercontent.com/7204669/52524293-5470bd00-2c93-11e9-9823-e3f06b9f5a05.gif" width="512"  title="LiveCheck example for DNN">
+
 
 1. Build the VS tooling with the extensibility "hack" to allow 3rd party tools to add checking and tooltips
 
