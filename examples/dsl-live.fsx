@@ -3,6 +3,7 @@
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
 #r "../tests/bin/Debug/net472/TensorFlow.FSharp.dll"
+#r "../tests/bin/Debug/net472/TensorFlow.FSharp.Proto.dll"
 #r "FSharp.Compiler.Interactive.Settings.dll"
 #nowarn "49"
 
@@ -36,11 +37,25 @@ module PlayWithTF =
 
     // You can wrap in "tf { return ... }" if you like
     tf { return v 2.0 + v 1.0 }
-          
-    // Now show that adding vectors of the wrong sizes gives a static error
-    // Adding a vector and a matrix gives an error
-    let test1() = vec [1.0; 2.0] + matrix [ [1.0; 2.0] ]
      
+     
+
+
+
+
+
+    let test1() = 
+        vec [1.0; 2.0] + vec [1.0; 2.0]
+    
+    
+
+
+
+
+
+
+
+
     // Math-multiplying matrices of the wrong sizes gives an error
     let test2() = 
         let matrix1 = 
@@ -49,7 +64,6 @@ module PlayWithTF =
                      [1.0; 2.0] ]
         let matrix2 =  
             matrix [ [1.0; 2.0]
-                     [1.0; 2.0]
                      [1.0; 2.0] ] 
         matrix1 *! matrix2 
     
@@ -183,11 +197,8 @@ module ODEs =
     //sol |> Chart.Lines 
 
 
-
-
-(*
 module NeuralTransferFragments =
-    let input = matrix4 [ for i in 0 .. 9 -> [ for j in 1 .. 40 -> [ for k in 1 .. 40 -> [ for m in 0 .. 2 -> double (i+j+k+m) ]]]]
+    let input = tensor4 [ for i in 0 .. 9 -> [ for j in 1 .. 5 -> [ for k in 1 .. 4 -> [ for m in 0 .. 2 -> double (i+j+k+m) ]]]]
     let name = "a"
     let instance_norm (input, name) =
         tf { use _ = DT.WithScope(name + "/instance_norm")
@@ -202,16 +213,16 @@ module NeuralTransferFragments =
         [| for i in 0..Array4D.length1 d - 1 -> [| for j in 0..Array4D.length2 d - 1 -> [| for k in 0..Array4D.length3 d - 1 -> [| for m in 0..Array4D.length4 d - 1 -> d.[i,j,k,m]  |]|]|]|]
         |> array2D |> Array2D.map array2D
 
-    instance_norm (input, name) |> DT.RunArray4D |> friendly4D
+    instance_norm (input, name) |> DT.Eval |> DT.toArray4D |> friendly4D
 
     let out_channels = 128
     let filter_size = 7
     let conv_init_vars (out_channels:int, filter_size:int, is_transpose: bool, name) =
         let weights_shape = 
             if is_transpose then
-                Shape [| Dim filter_size; Dim filter_size; Dim out_channels; Dim.Inferred |]
+                Shape.Known [| Dim.Known filter_size; Dim.Known filter_size; Dim.Known out_channels; Dim.Inferred |]
             else
-                Shape [| Dim filter_size; Dim filter_size; Dim.Inferred; Dim out_channels |]
+                Shape.Known [| Dim.Known filter_size; Dim.Known filter_size; Dim.Inferred; Dim.Known out_channels |]
         tf { let truncatedNormal = DT.TruncatedNormal(weights_shape)
              return DT.Variable (truncatedNormal * v 0.1, name + "/weights") }
 
@@ -226,8 +237,8 @@ module NeuralTransferFragments =
              else 
                  return x }
 
-    conv_layer (input, out_channels, filter_size, 1, true, "layer")  |> DT.RunArray4D |> friendly4D
-    //(fun input -> conv_layer (input, out_channels, filter_size, 1, true, "layer")) |> DT.gradient |> apply input |> DT.RunArray4D |> friendly4D
+    conv_layer (input, out_channels, filter_size, 1, true, "layer")  |> DT.Eval |> DT.toArray4D |> friendly4D
+    //(fun input -> conv_layer (input, out_channels, filter_size, 1, true, "layer")) |> DT.gradient |> apply input |> DT.Eval |> DT.toArray4D |> friendly4D
 
     let residual_block (input, filter_size, name) = 
         tf { let tmp = conv_layer(input, 128, filter_size, 1, true, name + "_c1")
@@ -238,49 +249,10 @@ module NeuralTransferFragments =
   
     let conv_transpose_layer (input: DT<double>, num_filters, filter_size, stride, name) =
         tf { let filters = conv_init_vars (num_filters, filter_size, true, name)
-             return DT.Relu (instance_norm (conv2D_transpose (input, filters, stride), name))
-           }
+             return DT.Relu (instance_norm (conv2D_transpose (input, filters, stride), name))}
 
-    let to_pixel_value (input: DT<double>) = 
-        tf { return tanh input * v 150.0 + (v 255.0 / v 2.0) }
-
-    // The style-transfer tf
-
-    tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-         return x }
-    |> DT.RunArray4D |> friendly4D
-
-    tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-         let x = conv_layer (x, 64, 3, 2, true, "conv2")
-         return x }
-    |> DT.RunArray4D |> friendly4D
-
-    tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-         let x = conv_layer (x, 64, 3, 2, true, "conv2")
-         let x = conv_layer (x, 128, 3, 2, true, "conv3")
-         return x }
-    |> DT.RunArray4D |> friendly4D
-
-    tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-         let x = conv_layer (x, 64, 3, 2, true, "conv2")
-         let x = conv_layer (x, 128, 3, 2, true, "conv3")
-         let x = residual_block (x, 3, "resid1")
-         return x }
-    |> DT.RunArray4D |> friendly4D
-
-    tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-         let x = conv_layer (x, 64, 3, 2, true, "conv2")
-         let x = conv_layer (x, 128, 3, 2, true, "conv3")
-         let x = residual_block (x, 3, "resid1")
-         let x = residual_block (x, 3, "resid2")
-         let x = residual_block (x, 3, "resid3")
-         let x = residual_block (x, 3, "resid4")
-         let x = residual_block (x, 3, "resid5")
-         return x }
-    |> DT.RunArray4D |> friendly4D
-
-
-    let t1 = 
+    // The style-transfer neural network
+    let style_transfer() = 
         tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
              let x = conv_layer (x, 64, 3, 2, true, "conv2")
              let x = conv_layer (x, 128, 3, 2, true, "conv3")
@@ -289,12 +261,57 @@ module NeuralTransferFragments =
              let x = residual_block (x, 3, "resid3")
              let x = residual_block (x, 3, "resid4")
              let x = residual_block (x, 3, "resid5")
+             let x = conv_transpose_layer (x, 64, 3, 2, "conv_t1") 
              return x }
+        |> DT.Eval 
 
-    let t2 = 
-        tf { return conv_transpose_layer (t1, 64, 3, 2, "conv_t1") }
-        |> DT.RunArray4D |> friendly4D
+    [<LiveCheck>]
+    let test = style_transfer()
 
+
+
+
+
+(*
+
+let to_pixel_value (input: DT<double>) = 
+    tf { return tanh input * v 150.0 + (v 255.0 / v 2.0) }
+
+tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
+     return x }
+|> DT.Eval |> DT.toArray4D |> friendly4D
+
+tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
+     let x = conv_layer (x, 64, 3, 2, true, "conv2")
+     return x }
+|> DT.Eval |> DT.toArray4D |> friendly4D
+
+tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
+     let x = conv_layer (x, 64, 3, 2, true, "conv2")
+     let x = conv_layer (x, 128, 3, 2, true, "conv3")
+     return x }
+|> DT.Eval |> DT.toArray4D |> friendly4D
+
+tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
+     let x = conv_layer (x, 64, 3, 2, true, "conv2")
+     let x = conv_layer (x, 128, 3, 2, true, "conv3")
+     let x = residual_block (x, 3, "resid1")
+     return x }
+|> DT.Eval |> DT.toArray4D |> friendly4D
+
+tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
+     let x = conv_layer (x, 64, 3, 2, true, "conv2")
+     let x = conv_layer (x, 128, 3, 2, true, "conv3")
+     let x = residual_block (x, 3, "resid1")
+     let x = residual_block (x, 3, "resid2")
+     let x = residual_block (x, 3, "resid3")
+     let x = residual_block (x, 3, "resid4")
+     let x = residual_block (x, 3, "resid5")
+     return x }
+|> DT.Eval |> DT.toArray4D |> friendly4D
+
+
+let t1 = 
     tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
          let x = conv_layer (x, 64, 3, 2, true, "conv2")
          let x = conv_layer (x, 128, 3, 2, true, "conv3")
@@ -303,11 +320,14 @@ module NeuralTransferFragments =
          let x = residual_block (x, 3, "resid3")
          let x = residual_block (x, 3, "resid4")
          let x = residual_block (x, 3, "resid5")
-         let x = conv_transpose_layer (x, 64, 3, 2, "conv_t1") // TODO: check fails
          return x }
-    |> DT.RunArray4D |> friendly4D
 
-(*
+let t2 = 
+    tf { return conv_transpose_layer (t1, 64, 3, 2, "conv_t1") }
+    |> DT.Eval |> DT.toArray4D |> friendly4D
+
+
+
 module SimpleCases = 
     tf { return (vec [1.0; 2.0]) }
     |> DT.RunArray
@@ -509,4 +529,4 @@ let x = conv_layer (x, 3, 9, 1, false, "conv_t3")
     //TFOutput
     //graph.Inpu
 
-    *)
+    
