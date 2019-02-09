@@ -86,7 +86,7 @@ module GradientDescent =
         initial |> Seq.unfold (fun pos -> Some (pos, step f pos)) |> Seq.truncate steps 
 ```
 
-Here the crucial call is `FM.diff` - FM allows optimizers to derive the gradients of FM
+Here the crucial call is `DT.diff` - FM allows optimizers to derive the gradients of FM
 functions and models in a way inspired by the design of `DiffSharp`. For example:
 
 ```fsharp
