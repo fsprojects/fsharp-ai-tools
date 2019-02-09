@@ -81,8 +81,6 @@ module GradientDescent =
 
 module GradientDescentExample =
 
-    let sqr x = x * x
-
     // A numeric function of two parameters, returning a scalar, see
     // https://en.wikipedia.org/wiki/Gradient_descent
     let f (xs: DT<double>) = 

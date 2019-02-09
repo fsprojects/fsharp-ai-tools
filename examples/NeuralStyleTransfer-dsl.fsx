@@ -4,13 +4,10 @@
 #r "netstandard"
 
 #r "../tests/bin/Debug/net472/TensorFlow.FSharp.dll"
-#nowarn "49"
-
+#r "../tests/bin/Debug/net472/TensorFlow.FSharp.Proto.dll"
 #load "shared/NPYReaderWriter.fsx"
 #load "shared/ImageWriter.fsx"
-#nowarn "49"
 
-//open Argu
 open NPYReaderWriter
 open System
 open System.IO
@@ -19,21 +16,9 @@ open TensorFlow.FSharp.DSL
 
 if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 
-(*
-type Argument =
-    | [<AltCommandLine([|"-s"|])>] Style of string
-    interface IArgParserTemplate with
-        member this.Usage =
-            match this with
-            |  Style _ -> "Specify a style of painting to use."
-
-let style = ArgumentParser<Argument>().Parse(fsi.CommandLineArgs.[1..]).GetResult(<@ Argument.Style @>, defaultValue = "rain")
-*)
 let style = "rain"
 
-fsi.AddPrinter(fun (x:TFGraph) -> sprintf "TFGraph %i" (int64 x.Handle))
-fsi.AddPrinter(fun (x:DT) -> sprintf "%A" x.Shape)
-
+fsi.AddPrintTransformer(DT.PrintTransform)
 
 [<TensorFlow>]
 module NeuralStyles = 
@@ -45,8 +30,8 @@ module NeuralStyles =
             else
                 shape [ filter_size; filter_size; -1; out_channels ]
 
-        tf { let truncatedNormal = DT.TruncatedNormal(weights_shape)
-             return variable (truncatedNormal * v 0.1) (name + "/weights") }
+        let truncatedNormal = DT.TruncatedNormal(weights_shape)
+        variable (truncatedNormal * v 0.1) (name + "/weights") 
 
     let instance_norm (input: DT<double>, name) =
         tf { use _ = DT.WithScope(name + "/instance_norm")
@@ -112,11 +97,9 @@ module NeuralStyles =
             k.Substring(0, k.Length-4), graph.Reshape(graph.Const(new TFTensor(arr)), graph.Const(TFShape(metadata.shape |> Array.map int64).AsTensor()))) 
         |> Map.ofArray
 
-
     // The average pixel in the decoding
     let mean_pixel () = 
         tf { return DT.ConstArray [| 123.68; 116.778; 103.939 |] }
-
 
     // Tensor to read the input
     let input_string = 

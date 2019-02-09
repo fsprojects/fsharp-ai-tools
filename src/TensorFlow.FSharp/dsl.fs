@@ -1100,7 +1100,7 @@ module TFHelpers =
     let inline v x = scalar x
 
     /// Create a vector from raw data
-    let vec (data:seq<double>) : DT<double> = 
+    let vec (data:seq<'T>) : DT<'T> = 
         let d = Seq.toArray data
         DT.ConstArray(d, flex=false)
 
@@ -1153,17 +1153,25 @@ module TFHelpers =
     let inline relu (x: ^T) : ^T = 
         (^T: (static member Relu : ^T -> ^T) (x))
 
-    let sum (x: DT<'T>) : DT<'T> = DT.Sum(x)
+    let inline sum (x: ^T) : ^T = 
+        (^T: (static member Sum : ^T -> ^T) (x))
 
-    let prod (x: DT<'T>) : DT<'T> = DT.Prod(x)
+    let inline prod (x: ^T) : ^T = 
+        (^T: (static member Prod : ^T -> ^T) (x))
 
-    let mean (x: DT<'T>) : DT<'T> = DT.Mean(x)
+    let inline mean (x: ^T) : ^T = 
+        (^T: (static member Mean : ^T -> ^T) (x))
 
-    let max (x: DT<'T>) : DT<'T> = DT.Max(x)
+    let inline max (x: ^T) : ^T = 
+        (^T: (static member Max : ^T -> ^T) (x))
 
-    let min (x: DT<'T>) : DT<'T> = DT.Min(x)
+    let inline min (x: ^T) : ^T = 
+        (^T: (static member Min : ^T -> ^T) (x))
 
-    let norm (x: DT<'T>) : DT<'T> = DT.Norm(x)
+    let inline norm (x: ^T) : ^T = 
+        (^T: (static member Norm : ^T -> ^T) (x))
+
+    let inline sqr x = x * x
 
     /// Extend the value in the batch dimension
     let batchExtend (v: DT<'T>) = DT.ExpandDims v

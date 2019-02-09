@@ -2,13 +2,13 @@
 
 The repo contains:
 
-1.	TensorFlow API for the F# Programming Language
+1.	TensorFlow.FSharp: An F# API for TensorFlow 
 
-2.	The FM DSL for writing numeric models in F#. Models can be passed to 
+2.	FM: An F# DSL for writing numeric models. Models written in FM can be passed to 
     optimization and training algorithms utilising automatic differentiation without
-	any change to modelling code.
+	any change to modelling code, and can be executed on GPUs and TPUs using TensorFlow.
 
-3.  Tooling for interactive tensor shape-checking, inference, tooltips and other nice things. 
+3.  Experimental tooling for interactive tensor shape-checking, inference, tooltips and other nice things. 
 
 This is a POC that it is possible to build real, full-speed
 TF graphs using a thin DSL whose intended semantics are clear and relatively independent
@@ -22,16 +22,18 @@ contains some additional functionality.
 
 # FM: The F#-for-Models DSL
 
-The aim of FM is to support the authoring of numeric functions and models. For example:
-``fsharp
-let sqr x = x * x
+The aim of FM is to support the authoring of numeric functions and AI models - including
+neural networks - in F# code. For example:
 
+```fsharp
 /// A numeric function of two parameters, returning a scalar, see
 /// https://en.wikipedia.org/wiki/Gradient_descent
 let f (xs: DT<double>) = 
     sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * -cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
 ```
+
 These functions and models can then be passed to optimization algorithms that utilise gradients, e.g.
+
 ```fsharp
 // Pass this Define a numeric function of two parameters, returning a scalar
 let train numSteps = GradientDescent.train f (vec [ -0.3; 0.3 ]) numSteps
@@ -48,6 +50,8 @@ described further below.
 [<LiveCheck>] 
 let check1 = train 4 |> Seq.last 
 ```
+When using live-checks, underlying tensors are not actually populated with data - instead only their
+shapes are analyzed.  Arrays and raw numerics values are computed as normal.
 
 Typically each model is equipped with one `LiveCheck` that instantiates the model on training data.
 
@@ -84,40 +88,32 @@ module GradientDescent =
 
 ### Gradients under-the-hood
 
-FM allows optimizers code to compute the gradients of FM functions and models as follows:
+FM allows optimizers to derive the gradients of FM functions and models. For example:
 
 ```fsharp
-    // Define a function which will be executed using TensorFlow
-    let f x = x * x + v 4.0 * x 
+// Define a function which will be executed using TensorFlow
+let f x = x * x + v 4.0 * x 
 
-    // Get the derivative of the function. This computes "x*2 + 4.0"
-    let df x = DT.diff f x  
+// Get the derivative of the function. This computes "x*2 + 4.0"
+let df x = DT.diff f x  
 
-    // Run the derivative 
-    df (v 3.0) |> DT.RunScalar // returns 6.0 + 4.0 = 10.0
-```
-
-For clarity code in the DSL which is executed via a TensorFlow graph can be delineated with `tf { ... }`. This
-is a convention, e.g.:
-
-```fsharp
-    // Define a function which will be executed using TensorFlow
-    let f x = tf { return x * x + v 4.0 * x }
+// Run the derivative 
+df (v 3.0) |> DT.RunScalar // returns 6.0 + 4.0 = 10.0
 ```
 
 To differentiate a scalar function with multiple input variables:
 
 ```fsharp
-    // Define a function which will be executed using TensorFlow
-    // computes [ x1*x1*x3 + x2*x2*x2 + x3*x3*x1 + x1*x1 ]
-    let f (xs: DT<'T>) = tf { return DT.Sum (xs * xs * DT.ReverseV2 xs) } 
+// Define a function which will be executed using TensorFlow
+// computes [ x1*x1*x3 + x2*x2*x2 + x3*x3*x1 + x1*x1 ]
+let f (xs: DT<'T>) = sum (xs * xs * DT.Reverse xs)
 
-    // Get the partial derivatives of the scalar function
-    // computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
-    let df xs = DT.diff f xs   
+// Get the partial derivatives of the scalar function
+// computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
+let df xs = DT.diff f xs   
 
-    // Run the derivative 
-    df (vec [ 3.0; 4.0; 5.0 ]) |> DT.RunArray // returns [ 55.0; 48.0; 39.0 ]
+// Run the derivative 
+df (vec [ 3.0; 4.0; 5.0 ]) |> DT.RunArray // returns [ 55.0; 48.0; 39.0 ]
 ```
 
 ### A Larger Example
@@ -246,25 +242,25 @@ reporting tensor sizes and performing tensor size checking.
 
 1. Build the VS tooling with the extensibility "hack" to allow 3rd party tools to add checking and tooltips
 
-    git clone http://github.com/Microsoft/visualfsharp
-	cd visualfsharp
-	git fetch https://github.com/dsyme/visualfsharp livecheck
-	git checkout livecheck
-	.\build.cmd vs
-	cd ..
+       git clone http://github.com/Microsoft/visualfsharp
+       cd visualfsharp
+       git fetch https://github.com/dsyme/visualfsharp livecheck
+       git checkout livecheck
+       .\build.cmd vs
+       cd ..
 
 2. Compile the extra tool
 	
-	git clone http://github.com/fsprojects/FSharp.Compiler.PortaCode
-	dotnet build FSharp.Compiler.PortaCode
+       git clone http://github.com/fsprojects/FSharp.Compiler.PortaCode
+       dotnet build FSharp.Compiler.PortaCode
 
 3. Start the tool and edit using experimental VS instance
 
-	cd TensorFlow.FSharp\examples
-	..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe dsl-live.fsx --eval --writeinfo --watch --vshack --livechecksonly
+       cd TensorFlow.FSharp\examples
+       ..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe dsl-live.fsx --eval --writeinfo --watch --vshack --livechecksonly
 
-	devenv.exe /rootsuffix RoslynDev
-	(open dsl-live.fsx)
+       devenv.exe /rootsuffix RoslynDev
+       (open dsl-live.fsx)
 
 # Building
 
@@ -303,7 +299,7 @@ Then:
 
 * Add docs
 
-* Add examples of how to do static graph building and analysis based on FCS, quotations and/or interpretation, e.g. for visualization
+* Add examples of how to do static graph building and analysis based on FCS and quotations, e.g. for visualization
 
 * Performance testing
 
