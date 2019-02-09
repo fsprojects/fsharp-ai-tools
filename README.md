@@ -236,18 +236,18 @@ DiffSharp may be used once Tensors are available in that library.
 See `TensorFlow.FSharp`.  This API is designed in a similar way to `TensorFlowSharp`, but is implemented directly in F# and
 contains some additional functionality.
 
-# Live Checking Tooling
+# Live Checking Tooling for AI models
 
 There is some tooling to do "live trajectory execution" of models and training on limited training sets,
 reporting tensor sizes and performing tensor size checking.
 
 LiveCheck for a vector addition:
 
-<img src="https://user-images.githubusercontent.com/7204669/52524060-90eee980-2c90-11e9-9b0e-2752480dbe7d.gif" width="512"  title="LiveCheck example for vectors">
+<img align="center" src="https://user-images.githubusercontent.com/7204669/52524060-90eee980-2c90-11e9-9b0e-2752480dbe7d.gif" width="512"  title="LiveCheck example for vectors">
 
 LiveCheck for a DNN:
 
-<img src="https://user-images.githubusercontent.com/7204669/52525657-ecc36d80-2ca4-11e9-9a37-3bd2d1841618.gif" width="512"  title="LiveCheck example for DNN">
+<img align="center" src="https://user-images.githubusercontent.com/7204669/52525657-ecc36d80-2ca4-11e9-9a37-3bd2d1841618.gif" width="512"  title="LiveCheck example for DNN">
 
 
 1. Build the VS tooling with the extensibility "hack" to allow 3rd party tools to add checking and tooltips
