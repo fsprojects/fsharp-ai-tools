@@ -10,10 +10,9 @@ The repo contains:
 
 3.  Experimental tooling for interactive tensor shape-checking, inference, tooltips and other nice things. 
 
-This is a POC that it is possible to build real, full-speed
-TF graphs using a thin DSL whose intended semantics are clear and relatively independent
-of TF, while still achieving cohabitation and win-win with the TF ecosystem. Further value-add
-tooling can give added correctness guarantess interactively.
+This is a POC that it is possible to configure F# to be suitable for authoring AI models. We
+execute them as real, full-speed TensorFlow graphs, achieving cohabitation and win-win with the TF ecosystem.
+Live trajextory execution tooling can give added correctness guarantess interactively.
 
 # FM: The F#-for-Models DSL
 
