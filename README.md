@@ -1,24 +1,90 @@
-# Differentiable F#, executing using TensorFlow
+# FM: F# for Models, executing using TensorFlow
 
 The repo contains:
 
 1.	TensorFlow API for the F# Programming Language
 
-2.	A DSL implementation for `tf { ... }` that supports first-pass shape-checking/inference and other nice things
+2.	The FM DSL for writing numeric models in F#. Models can be passed to 
+    optimization and training algorithms utilising automatic differentiation without
+	any change to modelling code.
+
+3.  Tooling for interactive tensor shape-checking, inference, tooltips and other nice things. 
 
 This is a POC that it is possible to build real, full-speed
-TF graphs using a thin differentiable-DSL whose intended semantics are clear and relatively independent
-of TF, while still achieving cohabitation and win-win with the TF ecosystem.
-
+TF graphs using a thin DSL whose intended semantics are clear and relatively independent
+of TF, while still achieving cohabitation and win-win with the TF ecosystem. Further value-add
+tooling can give added correctness guarantess interactively.
 
 # The TensorFlow API for F# 
 
 See `TensorFlow.FSharp`.  This API is designed in a similar way to `TensorFlowSharp`, but is implemented directly in F# and
 contains some additional functionality.
 
-# The Differentiable F# DSL
+# FM: The F#-for-Models DSL
 
-See `TensorFlow.FSharp.DSL`.  This DSL allows differentiation of F# code as follows:
+The aim of FM is to support the authoring of numeric functions and models. For example:
+``fsharp
+let sqr x = x * x
+
+/// A numeric function of two parameters, returning a scalar, see
+/// https://en.wikipedia.org/wiki/Gradient_descent
+let f (xs: DT<double>) = 
+    sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * -cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
+```
+These functions and models can then be passed to optimization algorithms that utilise gradients, e.g.
+```fsharp
+// Pass this Define a numeric function of two parameters, returning a scalar
+let train numSteps = GradientDescent.train f (vec [ -0.3; 0.3 ]) numSteps
+
+let results = train 200 |> Seq.last
+```
+
+FM supports the live "trajectory" checking of key correctness properties of your numeric code,
+including vector, matrix and tensor size checking, and tooling to interactively report the sizes.  To active
+this tooling you need to specify a `LiveCheck` that is interactively executed by the experimental tooling
+described further below.
+
+```fsharp
+[<LiveCheck>] 
+let check1 = train 4 |> Seq.last 
+```
+
+Typically each model is equipped with one `LiveCheck` that instantiates the model on training data.
+
+
+### Optimization algorithms utilising gradients
+
+The aim of FM is to allow the clean description of numeric code and yet still allow this code to be
+either executed using TensorFlow and - in the future - other tensor fabrics such as Torch (TorchSharp)
+and DiffSharp.  These fabrics automatically compute the gradients of your models and functions with respect to
+model parameters and/or function inputs.  Gradients are usually computed inside an optimization
+algorithm.
+
+For example, a naive version of Gradient Descent is shown below:
+
+```fsharp
+module GradientDescent =
+
+    // Note, the rate in this example is constant. Many practical optimizers use variable
+    // update (rate) - often reducing.
+    let rate = 0.005
+
+    // Gradient descent
+    let step f xs =   
+        // Get the partial derivatives of the function
+        let df xs =  DT.diff f xs  
+        printfn "xs = %A" xs
+        let dzx = df xs 
+        // Evaluate to output values 
+        xs - v rate * dzx |> DT.Eval
+
+    let train f initial steps = 
+        initial |> Seq.unfold (fun pos -> Some (pos, step f pos)) |> Seq.truncate steps 
+```
+
+### Gradients under-the-hood
+
+FM allows optimizers code to compute the gradients of FM functions and models as follows:
 
 ```fsharp
     // Define a function which will be executed using TensorFlow
@@ -30,13 +96,17 @@ See `TensorFlow.FSharp.DSL`.  This DSL allows differentiation of F# code as foll
     // Run the derivative 
     df (v 3.0) |> DT.RunScalar // returns 6.0 + 4.0 = 10.0
 ```
-For clarity code in the DSL which is executed via a TensorFlow graph is usually delineated with `tf { ... }`. This
+
+For clarity code in the DSL which is executed via a TensorFlow graph can be delineated with `tf { ... }`. This
 is a convention, e.g.:
+
 ```fsharp
     // Define a function which will be executed using TensorFlow
     let f x = tf { return x * x + v 4.0 * x }
 ```
-To differentiation a scalar function with multiple input variables:
+
+To differentiate a scalar function with multiple input variables:
+
 ```fsharp
     // Define a function which will be executed using TensorFlow
     // computes [ x1*x1*x3 + x2*x2*x2 + x3*x3*x1 + x1*x1 ]
@@ -49,64 +119,99 @@ To differentiation a scalar function with multiple input variables:
     // Run the derivative 
     df (vec [ 3.0; 4.0; 5.0 ]) |> DT.RunArray // returns [ 55.0; 48.0; 39.0 ]
 ```
+
+### A Larger Example
 Below we show fitting a linear model to training data, by differentiating a loss function w.r.t. coefficients, and optimizing
 using gradient descent (200 data points generated by linear  function, 10 parameters, linear model).
 ```fsharp
 module ModelExample =
+
     let modelSize = 10
-    let trainSize = 200
+
+    let checkSize = 5
+
+    let trainSize = 500
+
+    let validationSize = 100
+
     let rnd = Random()
 
-    /// The true function we use to generate the training data (also a linear model)
-    let trueCoeffs = [| for i in 0 .. modelSize - 1 -> double i |]
-    let trueFunction (xs: double[]) = Array.sum [| for i in 0 .. modelSize - 1 -> trueCoeffs.[i] * xs.[i] |]
+    let noise eps = (rnd.NextDouble() - 0.5) * eps 
 
-    /// Make the training data
-    let trainingInputs, trainingOutputs = 
-        [| for i in 1 .. trainSize -> 
+    /// The true function we use to generate the training data (also a linear model plus some noise)
+    let trueCoeffs = [| for i in 1 .. modelSize -> double i |]
+
+    let trueFunction (xs: double[]) = 
+        Array.sum [| for i in 0 .. modelSize - 1 -> trueCoeffs.[i] * xs.[i]  |] + noise 0.5
+
+    let makeData size = 
+        [| for i in 1 .. size -> 
             let xs = [| for i in 0 .. modelSize - 1 -> rnd.NextDouble() |]
             xs, trueFunction xs |]
-        |> Array.unzip
+         
+    /// Make the data used to symbolically check the model
+    let checkData = makeData checkSize
+
+    /// Make the training data
+    let trainData = makeData trainSize
+
+    /// Make the validation data
+    let validationData = makeData validationSize
+ 
+    let prepare data = 
+        let xs, y = Array.unzip data
+        let xs = batchOfVecs xs
+        let y = batchOfScalars y
+        (xs, y)
 
     /// Evaluate the model for input and coefficients
     let model (xs: DT<double>, coeffs: DT<double>) = 
-        tf { return DT.Sum (xs * coeffs,axis= [| 1 |]) }
+        DT.Sum (xs * coeffs,axis= [| 1 |])
+           
+    let meanSquareError (z: DT<double>) tgt = 
+        let dz = z - tgt 
+        DT.Sum (dz * dz) / v (double modelSize) / v (double z.Shape.[0].Value) 
 
-    /// Evaluate the loss function for the model w.r.t. a true output
-    let loss (z: DT<double>) tgt = 
-        tf { let dz = z - tgt in return DT.Sum (dz * dz) }
+    /// The loss function for the model w.r.t. a true output
+    let loss (xs, y) coeffs = 
+        let y2 = model (xs, batchExtend coeffs)
+        meanSquareError y y2
+          
+    let validation coeffs = 
+        let z = loss (prepare validationData) (vec coeffs)
+        z |> DT.Eval
 
-    // Gradient of the loss function w.r.t. the coefficients
-    let dloss_dcoeffs (xs, y) coeffs = 
-        let xnodes = batchOfVecs xs
-        let ynode = batchOfScalars y
-        let coeffnodes = vec coeffs
-        let coffnodesBatch = batchExtend coeffnodes
-        let z = loss (model (xnodes, coffnodesBatch)) ynode
-        DT.gradient z coeffnodes 
+    let train inputs steps =
+        let initialCoeffs = vec [ for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize ]
+        let inputs = prepare inputs
+        GradientDescent.train (loss inputs) initialCoeffs steps
+           
+    [<LiveCheck>]
+    let check1 = train checkData 1  |> Seq.last
 
-    let rate = 0.001
-    let step inputs (coeffs: double[]) = 
-        let dz = dloss_dcoeffs inputs coeffs 
-        let coeffs = (vec coeffs - v rate * dz) |> DT.RunArray
-        printfn "coeffs = %A, dz = %A" coeffs dz
-        coeffs
+    let learnedCoeffs = train trainData 200 |> Seq.last |> DT.toArray
+         // [|1.017181246; 2.039034327; 2.968580146; 3.99544071; 4.935430581;
+         //   5.988228378; 7.030374908; 8.013975714; 9.020138699; 9.98575733|]
 
-    let initialCoeffs = [| for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize|]
+    validation trueCoeffs
 
-    // Train the inputs in one batch, up to 200 iterations
-    let train inputs =
-        initialCoeffs |> Seq.unfold (fun coeffs -> Some (coeffs, step inputs coeffs)) |> Seq.truncate 200 |> Seq.last
-
-    train (trainingInputs, trainingOutputs)
-    // Model parameters, close to the true parameters:
-	//   [|0.007351991009; 1.004220712; 2.002591797; 3.018333918; 3.996983572; 4.981999364; 5.986054734; 
-	//     7.005387338; 8.005461854; 8.991150034|]
+    validation learnedCoeffs
 ```
-More examples/tests are in [dsl-tests.fsx](https://github.com/fsprojects/TensorFlow.FSharp/blob/master/tests/dsl-tests.fsx).
+More examples/tests are in [dsl-live.fsx](https://github.com/fsprojects/TensorFlow.FSharp/blob/master/examples/dsl-live.fsx).
 
-* `tf { ... }` indicates a block of code expressed using the DSL and intended to be executed as a TensorFlow graph.  The
-  use of `tf { ... }` is actually optional but recommended for clarity for all significant chunks of differentiable code.
+The approach scales to the complete expression of deep neural networks 
+and full computation graphs. The links below show the implementation of a common DNN sample (the samples may not
+yet run, this is wet paint):
+
+* [NeuralStyleTransfer using F# TensorFlow API](https://github.com/fsprojects/TensorFlow.FSharp/blob/master/examples/NeuralStyleTransfer.fsx)
+
+* [NeuralStyleTransfer in DSL form](https://github.com/fsprojects/TensorFlow.FSharp/blob/master/examples/NeuralStyleTransfer-dsl.fsx)
+
+The design is intended to allow alternative execution with Torch or DiffSharp.
+DiffSharp may be used once Tensors are available in that library.
+
+
+### Technical notes:
 
 * `DT` stands for `differentiable tensor` and the one type of `DT<_>` values are used to represent differentiable scalars, vectors, matrices and tensors.
   If you are familiar with the design of `DiffSharp` there are similarities here: DiffSharp defines `D` (differentiable scalar), `DV` (differentiable
@@ -134,20 +239,6 @@ More examples/tests are in [dsl-tests.fsx](https://github.com/fsprojects/TensorF
   A shape inference system is used which allows for many shapes to be inferred and is akin to F# type inference.
   Not all TensorFlow automatic shape transformations are applied during shape inference.
 
-  It is possible that at some future point this shape inference may be performed statically for F# code, or via a
-  secondary tool.
-
-While the above are toy examples, the approach scales (at least in principle) to the complete expression of deep neural networks
-and full TensorFlow computation graphs. The links below show the implementation of a common DNN sample (the samples may not
-yet run, this is wet paint):
-
-* [NeuralStyleTransfer using F# TensorFlow API](https://github.com/fsprojects/TensorFlow.FSharp/blob/master/examples/NeuralStyleTransfer.fsx)
-
-* [NeuralStyleTransfer in DSL form](https://github.com/fsprojects/TensorFlow.FSharp/blob/master/examples/NeuralStyleTransfer-dsl.fsx)
-
-The design is intended to allow alternative execution with Torch or DiffSharp.
-DiffSharp may be used once Tensors are available in that library.
-
 # Live Checking Tooling
 
 There is some tooling to do "live trajectory execution" of models and training on limited training sets,
@@ -167,7 +258,7 @@ reporting tensor sizes and performing tensor size checking.
 	git clone http://github.com/fsprojects/FSharp.Compiler.PortaCode
 	dotnet build FSharp.Compiler.PortaCode
 
-3. Start the tool and edit
+3. Start the tool and edit using experimental VS instance
 
 	cd TensorFlow.FSharp\examples
 	..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe dsl-live.fsx --eval --writeinfo --watch --vshack --livechecksonly
@@ -204,7 +295,7 @@ Then:
 
 * Switch to using ported gradient code when it is available in core API
 
-* Hand-code or generate larger TF surface area in `tf { ... }` DSL
+* Hand-code or generate larger TF surface area in FM DSL
 
 * Add proper testing for DSL 
 

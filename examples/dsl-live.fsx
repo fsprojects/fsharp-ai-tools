@@ -79,18 +79,20 @@ module GradientDescent =
     let train f initial steps = 
         initial |> Seq.unfold (fun pos -> Some (pos, step f pos)) |> Seq.truncate steps 
 
-module GradientDescentWithoutVariables =
+module GradientDescentExample =
 
-    let inline sqr x = x * x
+    let sqr x = x * x
 
-    // Define a function which will be executed using TensorFlow
+    // A numeric function of two parameters, returning a scalar, see
+    // https://en.wikipedia.org/wiki/Gradient_descent
     let f (xs: DT<double>) = 
         sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * -cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
 
-    let train steps = GradientDescent.train f (vec [ -0.3; 0.3 ]) steps
+    // Pass this Define a numeric function of two parameters, returning a scalar
+    let train numSteps = GradientDescent.train f (vec [ -0.3; 0.3 ]) numSteps
 
     [<LiveCheck>] 
-    let check1 = train 4 |> ignore 
+    let check1 = train 4 |> Seq.last 
     
     let results = train 200 |> Seq.last
 
