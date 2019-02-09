@@ -242,7 +242,14 @@ DiffSharp may be used once Tensors are available in that library.
 There is some tooling to do "live trajectory execution" of models and training on limited training sets,
 reporting tensor sizes and performing tensor size checking.
 
-<img src="https://user-images.githubusercontent.com/7204669/52524060-90eee980-2c90-11e9-9b0e-2752480dbe7d.gif" width="512"  title="LiveCheck example">
+LiveCheck for a vector addition:
+
+<img src="https://user-images.githubusercontent.com/7204669/52524060-90eee980-2c90-11e9-9b0e-2752480dbe7d.gif" width="512"  title="LiveCheck example for vectors">
+
+LiveCheck for a DNN:
+
+<img src="https://user-images.githubusercontent.com/7204669/52524293-5470bd00-2c93-11e9-9823-e3f06b9f5a05.gif" width="512"  title="LiveCheck example for DNN">
+
 
 1. Build the VS tooling with the extensibility "hack" to allow 3rd party tools to add checking and tooltips
 
