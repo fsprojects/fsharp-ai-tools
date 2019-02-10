@@ -5,7 +5,8 @@ module ImageWriter
 
 #r "netstandard"
 #I __SOURCE_DIRECTORY__
-#r "../../tests/bin/Debug/net472/Ionic.Zlib.Core.dll"
+#r "../../tests/bin/Debug/net461/Ionic.Zlib.Core.dll"
+#r "../../tests/bin/Debug/net461/System.IO.Compression.dll"
 #nowarn "9"
 
 open System
@@ -73,6 +74,7 @@ let RGBAToBitmap(height:int, width:int, pixels:int[]) =
 // Inspriation from https://gist.github.com/mmalex/908299/0b61f8a64842e413f030a3d8d46e253aa5808267
 // NOTE: ZLib buffers generally starts with byte 120uy, the built in DeflateStream is a streaming version of zlib which is different
 
+(*
 [<AutoOpen>]
 module (*private*) PNG =
     open System.IO.Compression
@@ -176,3 +178,4 @@ let RGBAToPNG(height:int, width:int, pixels:int[]) : byte[] =
     buf
 
 
+    *)

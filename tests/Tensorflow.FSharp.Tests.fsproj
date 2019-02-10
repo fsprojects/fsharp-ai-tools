@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net472</TargetFrameworks>
+    <TargetFrameworks>net461</TargetFrameworks>
     <RootNamespace>TensorFlow.FSharp.Tests</RootNamespace>
     <AssemblyName>TensorFlow.FSharp.Tests</AssemblyName>
     <IsPackable>false</IsPackable>

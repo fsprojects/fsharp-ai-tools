@@ -624,6 +624,13 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
                 if flex then ctxt.Graph.Reshape(node, ctxt.Graph.Const(shape.AsTFTensor())) else node),
               asTFTensor = asTFTensor)
 
+    static member Reshape (input: DT<'T>, shape: Shape) : DT<'T> = 
+        let cost = input.Cost + 1
+        DT<'T>(shape, cost, 
+              (fun ctxt -> 
+                let node = input.MakeNode(ctxt)
+                ctxt.Graph.Reshape(node, ctxt.Graph.Const(shape.AsTFTensor()))))
+
     static member ConstInner (obj: obj, ?flex: bool) : DT<'T> = 
         let shape = Shape.Inferred 
         let cost = 0
@@ -857,6 +864,10 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
             Array4D.zeroCreate dim1.Value dim2.Value dim3.Value dim4.Value
         else
             DT.Run(value) :?> 'T[,,,]
+
+    static member Zero : DT<'T> = 
+        DT.ConstInner(box (Unchecked.defaultof<'T>), flex=true)
+
 
 /// Forward and reverse differentiation operations module (automatically opened)
 module DT =
@@ -1150,28 +1161,39 @@ module TFHelpers =
 
     //let batchOfVideos d = tensor5 d 
     
-    let inline relu (x: ^T) : ^T = 
-        (^T: (static member Relu : ^T -> ^T) (x))
+    let relu (x: DT<'T>) : DT<'T> = 
+        DT.Relu(x)
+        //(DT<'T>: (static member Relu : DT<'T> -> DT<'T>) (x))
 
-    let inline sum (x: ^T) : ^T = 
-        (^T: (static member Sum : ^T -> ^T) (x))
+    let sum (x: DT<'T>) : DT<'T> = 
+        DT.Sum(x)
+        //(DT<'T>: (static member Sum : DT<'T> -> DT<'T>) (x))
 
-    let inline prod (x: ^T) : ^T = 
-        (^T: (static member Prod : ^T -> ^T) (x))
+    let prod (x: DT<'T>) : DT<'T> = 
+        DT.Prod(x)
+        //(DT<'T>: (static member Prod : DT<'T> -> DT<'T>) (x))
 
-    let inline mean (x: ^T) : ^T = 
-        (^T: (static member Mean : ^T -> ^T) (x))
+    let mean (x: DT<'T>) : DT<'T> = 
+        DT.Mean(x)
+        //(DT<'T>: (static member Mean : DT<'T> -> DT<'T>) (x))
 
-    let inline max (x: ^T) : ^T = 
-        (^T: (static member Max : ^T -> ^T) (x))
+    let maxValue (x: DT<'T>) : DT<'T> = 
+        DT.Max(x)
+        //(DT<'T>: (static member Max : DT<'T> -> DT<'T>) (x))
 
-    let inline min (x: ^T) : ^T = 
-        (^T: (static member Min : ^T -> ^T) (x))
+    let minValue (x: DT<'T>) : DT<'T> = 
+        DT.Min(x)
+        //(DT<'T>: (static member Min : DT<'T> -> DT<'T>) (x))
 
-    let inline norm (x: ^T) : ^T = 
-        (^T: (static member Norm : ^T -> ^T) (x))
+    let norm (x: DT<'T>) : DT<'T> = 
+        DT.Norm(x)
+        //(DT<'T>: (static member Norm : DT<'T> -> DT<'T>) (x))
 
     let inline sqr x = x * x
+
+    let friendly4D (d : 'T[,,,]) =
+        [| for i in 0..Array4D.length1 d - 1 -> [| for j in 0..Array4D.length2 d - 1 -> [| for k in 0..Array4D.length3 d - 1 -> [| for m in 0..Array4D.length4 d - 1 -> d.[i,j,k,m]  |]|]|]|]
+        |> array2D |> Array2D.map array2D
 
     /// Extend the value in the batch dimension
     let batchExtend (v: DT<'T>) = DT.ExpandDims v

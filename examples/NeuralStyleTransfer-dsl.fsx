@@ -3,10 +3,9 @@
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
 
-#r "../tests/bin/Debug/net472/TensorFlow.FSharp.dll"
-#r "../tests/bin/Debug/net472/TensorFlow.FSharp.Proto.dll"
+#r "../tests/bin/Debug/net461/TensorFlow.FSharp.dll"
+#r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
 #load "shared/NPYReaderWriter.fsx"
-#load "shared/ImageWriter.fsx"
 
 open NPYReaderWriter
 open System
@@ -83,18 +82,24 @@ module NeuralStyles =
              let x = DT.ClipByValue (x, v 0.0, v 255.0)
              return x }
 
+    let dummyImages() = DT.Stack [ for i in 1 .. 10 -> DT.Reshape(DT.Zero, shape [474;  712; 3]) ]
+
+    [<LiveCheck>]
+    let test = PretrainedFFStyleVGG (dummyImages())
+
     // Compute the weights path
     let pretrained_dir = Path.Combine(__SOURCE_DIRECTORY__,"../tests/pretrained")
 
     let example_dir = Path.Combine(__SOURCE_DIRECTORY__,"../tests/examples")
 
     let weights_path = Path.Combine(pretrained_dir, sprintf "fast_style_weights_%s.npz" style)
-
+    new TFShape([| 0L |])
+    typeof<TFShape>.GetConstructors()
     // Read the weights map
     let readWeights (graph: TFGraph) = 
         readFromNPZ(File.ReadAllBytes(weights_path))
         |> Array.map (fun (k,(metadata, arr)) -> 
-            k.Substring(0, k.Length-4), graph.Reshape(graph.Const(new TFTensor(arr)), graph.Const(TFShape(metadata.shape |> Array.map int64).AsTensor()))) 
+            k.Substring(0, k.Length-4), graph.Reshape(graph.Const(new TFTensor(arr)), graph.Const((new TFShape(metadata.shape |> Array.map int64)).AsTensor()))) 
         |> Map.ofArray
 
     // The average pixel in the decoding
