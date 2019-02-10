@@ -5,6 +5,7 @@
 
 #r "../tests/bin/Debug/net461/TensorFlow.FSharp.dll"
 #r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
+#r "../tests/bin/Debug/net461/LinuxNativeWorkaround.dll"
 #load "shared/NPYReaderWriter.fsx"
 
 open NPYReaderWriter

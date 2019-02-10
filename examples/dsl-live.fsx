@@ -4,6 +4,7 @@
 #r "netstandard"
 #r "../tests/bin/Debug/net461/TensorFlow.FSharp.dll"
 #r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
+#r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
 #r "FSharp.Compiler.Interactive.Settings.dll"
 #nowarn "49"
 
