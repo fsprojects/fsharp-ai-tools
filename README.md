@@ -1,20 +1,20 @@
-# FM: F# for AI Models  (currently executing using TensorFlow)
+# FM: F# for AI Models  (WIP, currently executing using TensorFlow.FSharp)
 
 The repo contains:
 
-1.	TensorFlow.FSharp: An F# API for TensorFlow 
+1. TensorFlow.FSharp: An F# API for TensorFlow 
 
-2.	FM: An F# DSL for writing numeric models. Models written in FM can be passed to 
-    optimization and training algorithms utilising automatic differentiation without
-	any change to modelling code, and can be executed on GPUs and TPUs using TensorFlow.
+2. FM: An F# DSL for writing numeric models. Models written in FM can be passed to 
+   optimization and training algorithms utilising automatic differentiation without
+   any change to modelling code, and can be executed on GPUs and TPUs using TensorFlow.
 
-3.  Experimental tooling for interactive tensor shape-checking, inference, tooltips and other nice things. 
+3. Experimental tooling for interactive tensor shape-checking, inference, tooltips and other nice things. 
 
 This is a POC that it is possible to configure F# to be suitable for authoring AI models. We
 execute them as real, full-speed TensorFlow graphs, achieving cohabitation and win-win with the TF ecosystem.
 Live trajextory execution tooling can give added correctness guarantess interactively.
 
-# FM: The F#-for-Models DSL
+# FM: F# for AI Models
 
 The aim of FM is to support the authoring of numeric functions and AI models - including
 neural networks - in F# code. For example:
