@@ -8,7 +8,6 @@
 #nowarn "9"
 
 open System
-open System.IO
 open Ionic.Zlib
 
 module Endian =
@@ -74,7 +73,6 @@ let RGBAToBitmap(height:int, width:int, pixels:int[]) =
 
 [<AutoOpen>]
 module (*private*) PNG =
-    open System.IO.Compression
 
     let crcTable : Lazy<uint32[]> =
         lazy 
@@ -130,8 +128,6 @@ module (*private*) PNG =
     let decompress = ZlibStream.UncompressBuffer
     let compress   = ZlibStream.CompressBuffer
 
-open FSharp.NativeInterop
-
 /// This only supports TruecolorAlpha
 let RGBAToPNG(height:int, width:int, pixels:int[]) : byte[] =
     let writeInt = Endian.Big.writeInt
@@ -173,4 +169,19 @@ let RGBAToPNG(height:int, width:int, pixels:int[]) : byte[] =
     writeInt(buf,pixelBytes.Length + 45,ChunkType.IEND)
     writeInt(buf,pixelBytes.Length + 49,-1371381630) // CRC of IEND
     buf
+
+// TODO: give this a nicer API
+// NOTE: Assumed NHWC dataformat
+let arrayToPNG_HWC (img:single[,,]) =
+    let H = Array3D.length1 img
+    let W = Array3D.length2 img
+    let pixels = 
+        [|
+            for h in 0.. Array3D.length1 img - 1 do
+                for w in 0.. Array3D.length2 img - 1 do
+                    let getV c = min 255.f (max 0.f img.[h,w,c]) |> byte
+                    yield BitConverter.ToInt32([|getV 0; getV 1; getV 2; 255uy|], 0) 
+        |]
+    RGBAToPNG(H,W,pixels)
+
 

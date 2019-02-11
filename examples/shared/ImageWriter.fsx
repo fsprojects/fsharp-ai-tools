@@ -5,7 +5,8 @@ module ImageWriter
 
 #r "netstandard"
 #I __SOURCE_DIRECTORY__
-#r "../../tests/bin/Debug/net472/Ionic.Zlib.Core.dll"
+#r "../../tests/bin/Debug/net461/Ionic.Zlib.Core.dll"
+#r "../../tests/bin/Debug/net461/System.IO.Compression.dll"
 #nowarn "9"
 
 open System
@@ -73,22 +74,24 @@ let RGBAToBitmap(height:int, width:int, pixels:int[]) =
 // Inspriation from https://gist.github.com/mmalex/908299/0b61f8a64842e413f030a3d8d46e253aa5808267
 // NOTE: ZLib buffers generally starts with byte 120uy, the built in DeflateStream is a streaming version of zlib which is different
 
+
+
 [<AutoOpen>]
 module (*private*) PNG =
     open System.IO.Compression
 
     let crcTable : Lazy<uint32[]> =
-        lazy 
+        Lazy(fun () -> 
             [|
                 for n in 0..255 do
                     let mutable c = uint32 n
                     for k in 0..7 do
                         if ((c &&& 1u) <> 0u) then c <- uint32 (0xedb88320L ^^^ ((int64 c) >>> 1)) else c  <- c >>> 1
                     yield c
-           |]         
+           |]         )
 
     let getCrc(buf:byte[],start:int,finish:int) =
-        let crcTable = crcTable.Force()
+        let crcTable = crcTable.Value
         let mutable c = 0xffffffffu 
         for n in start..finish-1 do 
             c <- crcTable.[int(c ^^^ uint32 buf.[n] &&& 0xffu)] ^^^ (c >>> 8)
@@ -130,6 +133,7 @@ module (*private*) PNG =
     /// It is unfortunate that this is not built into .Net
     let decompress = ZlibStream.UncompressBuffer
     let compress   = ZlibStream.CompressBuffer
+
 
 open FSharp.NativeInterop
 
@@ -174,5 +178,6 @@ let RGBAToPNG(height:int, width:int, pixels:int[]) : byte[] =
     writeInt(buf,pixelBytes.Length + 45,ChunkType.IEND)
     writeInt(buf,pixelBytes.Length + 49,-1371381630) // CRC of IEND
     buf
+
 
 

@@ -2,8 +2,10 @@
 #r "netstandard"
 #I "../tests/bin/Debug/net472/"
 #r "TensorFlow.FSharp.dll"
+#r "TensorFlow.FSharp.Proto.dll"
 #r "Argu.dll"
 #r "TensorFlow.FSharp.Tests.dll"
+
 
 open System
 open System.IO
