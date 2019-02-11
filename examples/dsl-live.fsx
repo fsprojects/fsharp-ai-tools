@@ -272,10 +272,10 @@ module NeuralTransferFragments =
 
 
 
-    let dummyImages() = DT.Stack [ for i in 1 .. 10 -> DT.Zero |> DT.AssertShape(shape [474;  712; 3]) ]
+    let dummyImages() = DT.Stack [ for i in 1 .. 10 -> DT.Dummy [474;  712; 3] ]
 
     [<LiveCheck>]
-    let test = style_transfer (dummyImages())
+    let test() = style_transfer (dummyImages())
 
 
 
