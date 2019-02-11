@@ -195,8 +195,6 @@ The approach scales to the complete expression of deep neural networks
 and full computation graphs. The links below show the implementation of a common DNN sample (the samples may not
 yet run, this is wet paint):
 
-* [NeuralStyleTransfer using F# TensorFlow API](https://github.com/fsprojects/TensorFlow.FSharp/blob/master/examples/NeuralStyleTransfer.fsx)
-
 * [NeuralStyleTransfer in DSL form](https://github.com/fsprojects/TensorFlow.FSharp/blob/master/examples/NeuralStyleTransfer-dsl.fsx)
 
 The design is intended to allow alternative execution with Torch or DiffSharp.
@@ -272,7 +270,7 @@ LiveCheck for a DNN:
 3. Start the tool and edit using experimental VS instance
 
        cd TensorFlow.FSharp\examples
-       ..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe dsl-live.fsx --eval --writeinfo --watch --vshack --livechecksonly
+       ..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe --eval --writeinfo --watch --vshack --livechecksonly  dsl-live.fsx
 
        devenv.exe /rootsuffix RoslynDev
        (open dsl-live.fsx)

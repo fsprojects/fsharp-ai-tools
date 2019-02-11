@@ -20,6 +20,18 @@
       <HintPath>..\lib\LinuxNativeWorkaround.dll</HintPath>
       <Private>true</Private>
     </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>..\lib\protobuf-net.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="protobuf-net.Reflection">
+      <HintPath>..\lib\protobuf-net.Reflection.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Google.Protobuf">
+      <HintPath>..\lib\Google.Protobuf.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
     <!--    <PackageReference Include="TensorFlowSharp" Version="1.11.0" /> -->
     <PackageReference Include="Argu" Version="5.1.0" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />

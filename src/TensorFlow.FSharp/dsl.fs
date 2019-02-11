@@ -28,7 +28,7 @@ type Dim =
     /// One dimension is a multiple of another
     | DimMulInt of Dim * int
 
-    /// One dimension is a divisor of another
+    /// One dimension is a divisor of another, striding semantics
     | DimDivInt of Dim * int
 
     /// The dimension is a variable, possibly solved
@@ -50,23 +50,25 @@ type Dim =
             | Unsolved -> "?" 
             | Solved v -> v.ToString()
 
-    member internal dim.StripFlex() = 
+    member internal dim.StripSolutions() = 
         match dim with 
         | DimVar v -> 
             match v.Solution with 
             | Unsolved -> dim
-            | Solved v -> v.StripFlex()
+            | Solved v -> v.StripSolutions()
         | _ -> dim
 
     member dim.TryValue() = 
         match dim with 
         | DimMulInt (expected,n) -> match expected.TryValue() with None -> None | Some dimv -> Some (dimv*n) 
-        | DimDivInt (expected,n) -> match expected.TryValue() with None -> None | Some dimv -> Some (dimv/n) 
+        | DimDivInt (expected,n) -> match expected.TryValue() with None -> None | Some dimv -> Some (dimv/n + (if dimv % n > 0 then 1 else 0)) 
         | DimKnown n -> Some n 
         | DimVar v -> 
             match v.Solution with 
             | Unsolved -> None 
             | Solved v -> v.TryValue()
+
+    member internal dim.IsSolved = dim.TryValue().IsSome
 
     member dim.Value = 
         match dim.TryValue() with 
@@ -90,7 +92,7 @@ type Dim =
         match actual.TryValue(), expected.TryValue() with 
         | Some v1, Some v2 -> if v1 <> v2 then Error "unequal values" else Ok()
         | _ -> 
-        match actual.StripFlex(), expected.StripFlex() with 
+        match actual.StripSolutions(), expected.StripSolutions() with 
         // check for identical variables
         | DimVar v1, DimVar v2 when Object.ReferenceEquals(v1,v2) -> Ok ()
         // solve
@@ -128,6 +130,13 @@ type Shape =
     /// Represents a shape with possible flexibile variable + possible solution
     | ShapeImpl of Dim[] * InferenceVar<Shape> option
 
+    // TODO: this inference is correct for 
+    //   scalar --> tensor 
+    //   scalar --> vec
+    //   scalar --> metrix
+    // expansion, but not correct for partial expansion 
+    //   vec ---> tensor
+    // because the expansion is happening at the wrong end.
     member shape.Item 
         with get idx = 
             match shape with 
@@ -485,7 +494,7 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
                let graph = ctxt.Graph
                graph.Squeeze(graph.Slice(vnode, graph.Const(new TFTensor( [| n |])),graph.Const(new TFTensor( [| 1 |]))), [| 0L |])) // y = xv1
 
-    // TODO : generalize beyond vectors
+    /// xs.[n1,n2]
     member v.Item 
         with get (n1: int, n2: int) : DT<'T> = 
             Shape.Unify "Item (index notation)" v.Shape Shape.DV
@@ -495,19 +504,105 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
                let graph = ctxt.Graph
                graph.Squeeze(graph.Slice(vnode, graph.Const(new TFTensor( [| n1; n2 |])),graph.Const(new TFTensor( [| 1; 1 |]))), [| 0L; 1L |])) // y = xv1
 
-    // TODO : generalize beyond vectors
+    /// xs.[n1,n2,n3]
+    member v.Item 
+        with get (n1: int, n2: int,n3: int) : DT<'T> = 
+            Shape.Unify "Item (index notation)" v.Shape Shape.DV
+            let outputShape = Shape.D
+            DT<'T>(outputShape, cost, fun ctxt -> 
+               let vnode = v.MakeNode ctxt
+               let graph = ctxt.Graph
+               graph.Squeeze(graph.Slice(vnode, graph.Const(new TFTensor( [| n1; n2; n3 |])),graph.Const(new TFTensor( [| 1; 1; 1 |]))), [| 0L; 1L; 2L |])) // y = xv1
+
+    /// xs.[n1,n2,n3,n4]
+    member v.Item 
+        with get (n1: int, n2: int, n3: int, n4: int) : DT<'T> = 
+            Shape.Unify "Item (index notation)" v.Shape Shape.DV
+            let outputShape = Shape.D
+            DT<'T>(outputShape, cost, fun ctxt -> 
+               let vnode = v.MakeNode ctxt
+               let graph = ctxt.Graph
+               graph.Squeeze(graph.Slice(vnode, graph.Const(new TFTensor( [| n1; n2; n3; n4 |])),graph.Const(new TFTensor( [| 1; 1; 1; 1 |]))), [| 0L; 1L; 2L; 3L |])) // y = xv1
+
+    /// xs.[n1..n2] and xs.[n1..] and xs.[..n2]
     member input.GetSlice(startIndex: int option, endIndex: int option) =
-        Shape.Unify "GetSlice" input.Shape Shape.DV
-        // TODO attach a constraint to the dimension that the endIndex is in-bounds
+        let inputShape = Shape.Known [| Dim.Inferred |]
+        Shape.Unify "GetSlice" input.Shape inputShape
         let startIndex = defaultArg startIndex 0
-        if endIndex.IsNone then failwith "end index must be specified"
-        let len = endIndex.Value - startIndex + 1
-        let outputShape = Shape.Known [| DimKnown len |]
+        let endIndex = defaultArg endIndex -1
+        // TODO: this -1 loses information in the case where the input size is unknown
+        let len = if endIndex = -1 then (match inputShape.[0].TryValue() with None ->  -1 | Some n -> n) else endIndex - startIndex + 1
+        // TODO: this Dim.Inferred is wrong in the case where the input size is unknown
+        let dim = if len = -1 then Dim.Inferred else Dim.Known len
         let cost = input.Cost + 1
+        let outputShape = Shape.Known [| dim |]
         DT<'T>(outputShape, cost, fun ctxt -> 
             let vnode = input.MakeNode ctxt
             let graph = ctxt.Graph
             graph.Slice(vnode, graph.Const(new TFTensor( [| startIndex |])),graph.Const(new TFTensor( [| len |])))) // y = xv1
+
+    /// xs.[n,*,*,*] and xs.[n,n1..n2,m1..m2,p1..p2]
+    member input.GetSlice(idx1: int, startIndex2: int option, endIndex2: int option, startIndex3: int option, endIndex3: int option, startIndex4: int option, endIndex4: int option) =
+        let inputShape = Shape.Known [| Dim.Inferred; Dim.Inferred; Dim.Inferred; Dim.Inferred |]
+        Shape.Unify "GetSlice" input.Shape inputShape
+        let startIndex2 = defaultArg startIndex2 0
+        let endIndex2 = defaultArg endIndex2 -1
+        let startIndex3 = defaultArg startIndex3 0
+        let endIndex3 = defaultArg endIndex3 -1
+        let startIndex4 = defaultArg startIndex4 0
+        let endIndex4 = defaultArg endIndex4 -1
+        let len2 = if endIndex2 = -1 then (match inputShape.[1].TryValue() with None ->  -1 | Some n -> n)  else endIndex2 - startIndex2 + 1 
+        let len3 = if endIndex3 = -1 then (match inputShape.[2].TryValue() with None ->  -1 | Some n -> n)  else endIndex3 - startIndex3 + 1 
+        let len4 = if endIndex4 = -1 then (match inputShape.[3].TryValue() with None ->  -1 | Some n -> n)  else endIndex4 - startIndex4 + 1 
+        // TODO: these Dim.Inferred are wrong in the case where the input size is unknown
+        let dim2 = if len2 = -1 then Dim.Inferred else Dim.Known len2
+        let dim3 = if len3 = -1 then Dim.Inferred else Dim.Known len3
+        let dim4 = if len4 = -1 then Dim.Inferred else Dim.Known len4
+        let outputShape = Shape.Known [| dim2; dim3; dim4 |]
+        let cost = input.Cost + 1
+        DT<'T>(outputShape, cost, fun ctxt -> 
+            let vnode = input.MakeNode ctxt
+            let graph = ctxt.Graph
+            graph.Squeeze(graph.Slice(vnode, graph.Const(new TFTensor( [| idx1; startIndex2; startIndex3; startIndex4 |])),
+                               graph.Const(new TFTensor( [| 1; len2; len3; len4 |]))), [| 0L |])) // y = xv1
+
+    /// xs.[n,*,*] and xs.[n,n1..n2,m1..m2]
+    member input.GetSlice(idx1: int, startIndex2: int option, endIndex2: int option, startIndex3: int option, endIndex3: int option) =
+        let inputShape = Shape.Known [| Dim.Inferred; Dim.Inferred; Dim.Inferred |]
+        Shape.Unify "GetSlice" input.Shape inputShape
+        let startIndex2 = defaultArg startIndex2 0
+        let endIndex2 = defaultArg endIndex2 -1
+        let startIndex3 = defaultArg startIndex3 0
+        let endIndex3 = defaultArg endIndex3 -1
+        let len2 = if endIndex2 = -1 then (match inputShape.[1].TryValue() with None ->  -1 | Some n -> n)  else endIndex2 - startIndex2 + 1 
+        let len3 = if endIndex3 = -1 then (match inputShape.[2].TryValue() with None ->  -1 | Some n -> n)  else endIndex3 - startIndex3 + 1 
+        // TODO: these Dim.Inferred are wrong in the case where the input size is unknown
+        let dim2 = if len2 = -1 then Dim.Inferred else Dim.Known len2
+        let dim3 = if len3 = -1 then Dim.Inferred else Dim.Known len3
+        let outputShape = Shape.Known [| dim2; dim3|]
+        let cost = input.Cost + 1
+        DT<'T>(outputShape, cost, fun ctxt -> 
+            let vnode = input.MakeNode ctxt
+            let graph = ctxt.Graph
+            graph.Squeeze(graph.Slice(vnode, graph.Const(new TFTensor( [| idx1; startIndex2; startIndex3 |])),
+                               graph.Const(new TFTensor( [| 1; len2; len3 |]))), [| 0L |])) // y = xv1
+
+    /// xs.[n,*] and xs.[n,n1..n2]
+    member input.GetSlice(idx1: int, startIndex2: int option, endIndex2: int option) =
+        let inputShape = Shape.Known [| Dim.Inferred; Dim.Inferred |]
+        Shape.Unify "GetSlice" input.Shape inputShape
+        let startIndex2 = defaultArg startIndex2 0
+        let endIndex2 = defaultArg endIndex2 -1
+        let len2 = if endIndex2 = -1 then (match inputShape.[1].TryValue() with None ->  -1 | Some n -> n)  else endIndex2 - startIndex2 + 1 
+        // TODO: these Dim.Inferred are wrong in the case where the input size is unknown
+        let dim2 = if len2 = -1 then Dim.Inferred else Dim.Known len2
+        let outputShape = Shape.Known [| dim2 |]
+        let cost = input.Cost + 1
+        DT<'T>(outputShape, cost, fun ctxt -> 
+            let vnode = input.MakeNode ctxt
+            let graph = ctxt.Graph
+            graph.Squeeze(graph.Slice(vnode, graph.Const(new TFTensor( [| idx1; startIndex2 |])),
+                               graph.Const(new TFTensor( [| 1; len2 |]))), [| 0L |])) // y = xv1
 
     static member Sqrt (input: DT<'T>) : DT<'T> = 
         let outputShape = input.Shape
@@ -621,40 +716,51 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
         DT<'T>(shape, cost, 
               (fun ctxt -> 
                 let node = ctxt.Graph.Const(asTFTensor())
-                if flex then ctxt.Graph.Reshape(node, ctxt.Graph.Const(shape.AsTFTensor())) else node),
+                if flex then ctxt.Graph.BroadcastTo(node, ctxt.Graph.Const(shape.AsTFTensor())) else node),
               asTFTensor = asTFTensor)
 
-    static member Reshape (input: DT<'T>, shape: Shape) : DT<'T> = 
+    static member Reshape (input: DT<'T>, shape) : DT<'T> = 
         let cost = input.Cost + 1
         DT<'T>(shape, cost, 
               (fun ctxt -> 
                 let node = input.MakeNode(ctxt)
                 ctxt.Graph.Reshape(node, ctxt.Graph.Const(shape.AsTFTensor()))))
 
+    static member BroadcastTo (input: DT<'T>, shape) : DT<'T> = 
+        let cost = input.Cost + 1
+        DT<'T>(shape, cost, 
+              (fun ctxt -> 
+                let node = input.MakeNode(ctxt)
+                ctxt.Graph.BroadcastTo(node, ctxt.Graph.Const(shape.AsTFTensor()))))
+
+    static member AssertShape (shape: Shape) (input: DT<'T>) : DT<'T> = 
+        Shape.Unify "AssertShape" input.Shape shape 
+        input
+
     static member ConstInner (obj: obj, ?flex: bool) : DT<'T> = 
-        let shape = Shape.Inferred 
-        let cost = 0
         match obj with 
         | :? single
         | :? double 
         | :? int64
         | :? int32 -> () 
         | _ -> failwithf "invalid scalar type %A" (typeof<'T>)
-        DT<'T> (shape, cost, (fun ctxt -> 
-            let t = 
-                match obj with 
-                | :? single as d -> new TFTensor(d)
-                | :? double as d -> new TFTensor(d)
-                | :? int32 as d -> new  TFTensor(d)
-                | :? int64 as d -> new  TFTensor(d)
-                | _ -> failwith "unreachable"
-            ctxt.Graph.Const(t)))
+        let asTFTensor () = 
+            match obj with 
+            | :? single as d -> new TFTensor(d)
+            | :? double as d -> new TFTensor(d)
+            | :? int32 as d -> new  TFTensor(d)
+            | :? int64 as d -> new  TFTensor(d)
+            | _ -> failwith "unreachable"
+        DT.MakeConst([| |], asTFTensor, flex)
     
-    static member inline Const (value: 'T1, ?flex: bool) : DT<'T1> = 
-        (fun () -> double value) |> ignore // places constraints on 'T without execution
+    static member Const (value: 'T1, ?flex: bool) : DT<'T1> = 
         DT.ConstInner(box value, ?flex=flex)
 
-    static member ConstArray (value: 'T[], ?flex: bool) : DT<'T> = 
+    static member ConstArray (value: System.Array, ?flex: bool) : DT<'T> = 
+        let dims = [| for i in 1 .. value.Rank -> Dim.Known (value.GetLength(i-1)) |]
+        DT.MakeConst (dims, (fun () -> new TFTensor(value)), flex)
+
+    static member ConstArray1D (value: 'T[], ?flex: bool) : DT<'T> = 
         let dims = [| Dim.Known value.Length |]
         DT.MakeConst (dims, (fun () -> new TFTensor(value)), flex)
 
@@ -675,7 +781,7 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
         DT<'T>(shape, cost, 
               (fun ctxt -> 
                 let node = ctxt.Graph.Const(tensor)
-                ctxt.Graph.Reshape(node, ctxt.Graph.Const(shape.AsTFTensor()))),
+                ctxt.Graph.BroadcastTo(node, ctxt.Graph.Const(shape.AsTFTensor()))),
               asTFTensor = (fun () -> tensor))
 
     static member TruncatedNormal (?shape: Shape) : DT<double> = 
@@ -721,11 +827,14 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
         let stride = defaultArg stride 1
         let padding = defaultArg padding "SAME"
         let N, out_height, out_width, out_channels = out_backprop.Shape.AsRank4()
+        //printfn "out_backprop.Shape = %A" out_backprop.Shape
         let _filter_height, _filter_width, in_channels, out_channels2 = filters.Shape.AsRank4()
         Dim.Unify "Conv2DBackpropInput" out_channels out_channels2
         let input_shape = Shape.Known [| N; out_height*stride; out_width*stride; in_channels |]
         let cost = out_backprop.Cost + 100
         DT<'T>(input_shape, cost, fun ctxt -> 
+           //printfn "input_shape = %A" input_shape
+           //printfn "out_backprop.Shape = %A" out_backprop.Shape
            let input_sizes = ctxt.Graph.Const(input_shape.AsTFTensor())
            ctxt.Graph.Conv2DBackpropInput(input_sizes, filters.MakeNode ctxt, out_backprop.MakeNode ctxt, strides = [|1L;int64 stride;int64 stride;1L|], padding=padding))
 
@@ -758,7 +867,7 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
         let cost = 1
         DT<_> (outputShape, cost, fun ctxt -> ctxt.Graph.DecodeJpeg(contents=contents.MakeNode ctxt, channels=3L))
 
-    static member Cast<'T, 'T2>(input: DT<'T>) : DT<'T2> = 
+    static member Cast<'T2>(input: DT<'T>) : DT<'T2> = 
         let outputShape = input.Shape
         let cost = input.Cost + 1
         DT<_> (outputShape, cost, fun ctxt -> ctxt.Graph.Cast(input.MakeNode ctxt, TFDataType.FromType(typeof<'T2>)))
@@ -792,7 +901,7 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
         // Although the docs say "insert a dimension of 1" in practice the consumer expands/broadcasts to
         // arbitrary 'n'
         //
-        // TODO check that this broadcasting always happens, perhaps Reshape is needed
+        // TODO check that this broadcasting always happens, perhaps BroadcastTo is needed
         let outputShape = Shape.Known [| yield! inputDims.[0 .. dim-1]; yield Dim.Inferred; yield! inputDims.[dim..] |]
         let cost = input.Cost + 1
 
@@ -867,6 +976,8 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
 
     static member Zero : DT<'T> = 
         DT.ConstInner(box (Unchecked.defaultof<'T>), flex=true)
+
+    static member Dummy(dims) : DT<'T> = DT.Zero |> DT.AssertShape (Shape.UserSpecified dims)
 
 
 /// Forward and reverse differentiation operations module (automatically opened)
@@ -1098,22 +1209,18 @@ type TFBuilder() =
 module TFHelpers = 
     let tf = TFBuilder()
 
-    let shape (ints: int list) = 
-        ints 
-        |> Array.ofSeq 
-        |> Array.map (fun i -> if i = -1 then Dim.Inferred else DimKnown i)
-        |> Shape.Known 
+    let shape (ints: int list) = Shape.UserSpecified ints
 
     /// Create a scalar node (with implicit broadcast)
-    let inline scalar (value:'T) : DT<'T> = DT.Const value 
+    let scalar (value:'T) : DT<'T> = DT.Const (value, flex=true)
 
     /// Create a scalar node (with implicit broadcast)
-    let inline v x = scalar x
+    let v x = scalar x
 
     /// Create a vector from raw data
     let vec (data:seq<'T>) : DT<'T> = 
         let d = Seq.toArray data
-        DT.ConstArray(d, flex=false)
+        DT.ConstArray1D(d, flex=false)
 
     /// Create a vector from existing differentiable tensors
     let vecOfScalars (xs:seq<DT<'T>>) : DT<'T> = 
@@ -1146,6 +1253,9 @@ module TFHelpers =
     /// Create a rank-3 tensor from raw data
     let tensor3 (data: seq< #seq< #seq<'T>>>) : DT<'T> = 
         DT.ConstArray3D(array3D data, flex=false)
+
+    let pixel data = 
+        DT.ConstArray1D(data, flex=true)
 
     let image data = 
         DT.ConstArray3D(array3D data, flex=true)
@@ -1197,6 +1307,7 @@ module TFHelpers =
 
     /// Extend the value in the batch dimension
     let batchExtend (v: DT<'T>) = DT.ExpandDims v
+    let batch  (vs: seq<DT<'T>>) = DT.Stack vs
 
     let variable value name = DT.Variable (value, name)
 

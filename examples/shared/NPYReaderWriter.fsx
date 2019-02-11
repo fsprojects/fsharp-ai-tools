@@ -7,8 +7,6 @@ open System
 open System.IO
 open System.IO.Compression
 
-let f (ms) = new ZipArchive(ms, ZipArchiveMode.Read)
-
 // WARN: This does not support nested record arrays and object arrays. For now this is by design.
 // TODO: Support Strings
 module Result =

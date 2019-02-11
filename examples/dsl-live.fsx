@@ -2,9 +2,8 @@
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
+#r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
 #r "../tests/bin/Debug/net461/TensorFlow.FSharp.dll"
-#r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
-#r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
 #r "FSharp.Compiler.Interactive.Settings.dll"
 #nowarn "49"
 
@@ -273,7 +272,7 @@ module NeuralTransferFragments =
 
 
 
-    let dummyImages() = DT.Stack [ for i in 1 .. 10 -> DT.Reshape(DT.Zero, shape [474;  712; 3]) ]
+    let dummyImages() = DT.Stack [ for i in 1 .. 10 -> DT.Zero |> DT.AssertShape(shape [474;  712; 3]) ]
 
     [<LiveCheck>]
     let test = style_transfer (dummyImages())
