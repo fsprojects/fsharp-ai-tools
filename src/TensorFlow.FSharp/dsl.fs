@@ -921,7 +921,11 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
             value
         else
             let tensor = DT.RunTFTensor(value, ?weights=weights)
-            DT.ConstTensor(tensor, value.Shape)
+            // We prefer the output shape to the input shape since it may contain more information (less flexibility)
+            // TODO: add checks that the resulting shape matches the expected shape
+            let shape = Shape.FromTFShape(TFShape(tensor.Shape))
+            printfn "shape = %A" shape
+            DT.ConstTensor(tensor, shape)
 
     static member Eval2 (value1: DT<'T1>, value2: DT<'T2>, ?weights: seq<string * DT>) : DT<'T1> * DT<'T2> = 
         if livecheck then 
@@ -929,7 +933,11 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
         else
             let values = [| (value1 :> DT); (value2 :> DT) |]
             let tensors = DT.RunTFTensors(values, ?weights=weights)
-            DT.ConstTensor(tensors.[0], value1.Shape), DT.ConstTensor(tensors.[1], value2.Shape)
+            let tensor1 = tensors.[0]
+            let tensor2 = tensors.[1]
+            let shape1 = Shape.FromTFShape(TFShape(tensor1.Shape))
+            let shape2 = Shape.FromTFShape(TFShape(tensor2.Shape))
+            DT.ConstTensor(tensor1, shape1), DT.ConstTensor(tensor2, shape2)
 
     static member Eval3 (value1: DT<'T1>, value2: DT<'T2>, value3: DT<'T3>,  ?weights: seq<string * DT>) : DT<'T1> * DT<'T2> * DT<'T3> = 
         if livecheck then 
@@ -937,7 +945,13 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (Ctxt -> TFOutput), ?asTFTe
         else
             let values = [| (value1 :> DT); (value2 :> DT); (value3 :> DT) |]
             let tensors = DT.RunTFTensors(values, ?weights=weights)
-            DT.ConstTensor(tensors.[0], value1.Shape), DT.ConstTensor(tensors.[1], value2.Shape), DT.ConstTensor(tensors.[2], value3.Shape)
+            let tensor1 = tensors.[0]
+            let tensor2 = tensors.[1]
+            let tensor3 = tensors.[2]
+            let shape1 = Shape.FromTFShape(TFShape(tensor1.Shape))
+            let shape2 = Shape.FromTFShape(TFShape(tensor2.Shape))
+            let shape3 = Shape.FromTFShape(TFShape(tensor3.Shape))
+            DT.ConstTensor(tensor1, shape1), DT.ConstTensor(tensor2, shape2), DT.ConstTensor(tensor3, shape3)
 
     member value.GetValue() : obj = 
         if livecheck then 

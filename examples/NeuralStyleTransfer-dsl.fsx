@@ -76,7 +76,8 @@ module NeuralStyles =
     let to_pixel_value (input: DT<double>) = 
         tanh input * v 150.0 + (v 255.0 / v 2.0)
 
-    // The style-transfer network
+    // The style-transfer network.
+    // TODO: this is recomputing the graph for each application of images.
     let PretrainedFFStyleVGG images = 
         let x = conv_layer (images, 32, 9, 1, true, "conv1")
         let x = conv_layer (x, 64, 3, 2, true, "conv2")
@@ -93,19 +94,8 @@ module NeuralStyles =
         let x = DT.ClipByValue (x, v 0.0, v 255.0)
         x
 
-    // The average pixel in the decoding
-    let mean_pixel  = pixel [| 123.68; 116.778; 103.939 |] 
-
-    /// Read an image from the path as a tensor value
-    let readImage imgPath = 
-        let imgName = File.ReadAllBytes(imgPath) |> DT.CreateString
-        // read the image
-        let jpg = DT.DecodeJpeg(imgName) |> DT.Cast<double> |> DT.AssertShape(shape [474;  712; 3])
-        // subtract the mean
-        // TODO: these calls to DT.ExpandDims shouldn't be needed, the broadcast should happen implicitly
-        jpg - (mean_pixel |> DT.ExpandDims|> DT.ExpandDims)
-
-    /// Transform batches of images
+    /// Transform batches of images. This is the final model.  The `Eval` call is also an indicator of
+    /// that.
     let transformImages weights images = 
         let result = PretrainedFFStyleVGG images |> DT.Cast<single> 
         DT.Eval(result, weights)
@@ -121,20 +111,35 @@ module NeuralStyles =
         let dummyImages = DT.Stack [ for i in 1 .. 10 -> DT.Dummy [474;  712; 3] ]
         transformImages [| |] dummyImages 
 
-    // Read the weights map
-    let readWeights weightsFile = 
-        let npz = readFromNPZ (File.ReadAllBytes weightsFile)
-        [| for (k,(metadata, arr)) in npz do
-              let shape = Shape.UserSpecified metadata.shape 
-              let name = k.[0..k.Length-5]
-              let value = DT.Reshape(DT.ConstArray arr, shape) |> DT.Cast<double> |> DT.Eval  :> DT
-              yield (name, value) |]
+//------------------------------------------------------------
+//
 
-    /// For convenience we add an entry point for one image
-    let transformImage style imageName = 
-        let image = readImage imageName
-        let images = transformImages style (batch [ image ]) 
-        images.[0,*,*,*] |> DT.toArray3D
+// The average pixel in the decoding
+let mean_pixel  = pixel [| 123.68; 116.778; 103.939 |] 
+
+// Read the weights map
+let readWeights weightsFile = 
+    let npz = readFromNPZ (File.ReadAllBytes weightsFile)
+    [| for (k,(metadata, arr)) in npz do
+            let shape = Shape.UserSpecified metadata.shape 
+            let name = k.[0..k.Length-5]
+            let value = DT.Reshape(DT.ConstArray arr, shape) |> DT.Cast<double> |> DT.Eval  :> DT
+            yield (name, value) |]
+
+/// Read an image from the path as a tensor value
+let readImage imgPath = 
+    let imgName = File.ReadAllBytes(imgPath) |> DT.CreateString
+    // read the image
+    let jpg = DT.DecodeJpeg(imgName) |> DT.Cast<double> |> DT.Eval //AssertShape(Shape.Known [| Dim.Inferred;  Dim.Inferred; Dim.Known 3 |])
+    // subtract the mean
+    // TODO: these calls to DT.ExpandDims shouldn't be needed, the broadcast should happen implicitly
+    jpg - (mean_pixel |> DT.ExpandDims|> DT.ExpandDims)
+
+/// For convenience we add an entry point for one image
+let transformImage style imageName = 
+    let image = readImage imageName
+    let images = NeuralStyles.transformImages style (batch [ image ]) 
+    images.[0,*,*,*] |> DT.toArray3D
  
 // OK, now use the model on some sample data and pre-trained weights
 
@@ -145,13 +150,14 @@ let weightsFile style = Path.Combine(__SOURCE_DIRECTORY__,"../tests/pretrained",
 
 let processImage style imageName = 
     printfn "processing image %s in style %s" imageName style
-    let weights = NeuralStyles.readWeights (weightsFile style)
-    let image = NeuralStyles.transformImage weights (imageFile imageName) 
+    let weights = readWeights (weightsFile style)
+    let image = transformImage weights (imageFile imageName) 
     let png = image  |> ImageWriter.arrayToPNG_HWC 
     let outfile = Path.Combine(__SOURCE_DIRECTORY__, sprintf "%s_in_%s_style2.png" imageName style)
     File.WriteAllBytes(outfile, png)
 
-processImage "rain" "chicago.jpg" 
-processImage "starry_night" "chicago.jpg" 
-processImage "wave" "chicago.jpg" 
+//processImage "rain" "chicago.jpg" 
+//processImage "starry_night" "chicago.jpg" 
+//processImage "wave" "chicago.jpg" 
+processImage "wave" "example_1.jpeg" 
 
