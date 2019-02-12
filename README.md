@@ -12,7 +12,7 @@ The repo contains:
 
 This is a POC that it is possible to configure F# to be suitable for authoring AI models. We
 execute them as real, full-speed TensorFlow graphs, achieving cohabitation and win-win with the TF ecosystem.
-Live trajextory execution tooling can give added correctness guarantess interactively.
+Live trajectory execution tooling can give added correctness guarantess interactively.
 
 # FM: F# for AI Models
 
