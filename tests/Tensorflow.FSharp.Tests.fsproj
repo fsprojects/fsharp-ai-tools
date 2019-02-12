@@ -76,9 +76,10 @@
     <Compile Include="FFStyleVGG.fs" />
     <Compile Include="ResNet50.fs" />
     <Compile Include="Tests.fs" />
-    <None Include="..\examples\shared\dsl.fsx" />
     <None Include="..\examples\ImageClassifier.fsx" />
     <None Include="..\examples\NeuralStyleTransfer.fsx" />
+    <None Include="..\examples\NeuralStyleTransfer-dsl.fsx" />
+    <None Include="..\examples\dsl-live.fsx" />
     <None Include="Scratch.fsx" />
   </ItemGroup>
 
