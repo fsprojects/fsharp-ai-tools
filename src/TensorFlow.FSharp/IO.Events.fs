@@ -129,11 +129,10 @@ type EventFileReader internal ( filePath : string, ?compressionType : Compressio
         // Catches the enxt event stored in the file
         seq {
             try
-
+                ProtoBuf.Serializer.Serialize<Event>()
             with
             // TODO narrow to OutOfRangeException and DataLossException or the equivilent 
-            | :? Exception
-        
+            | :? Exception -> ()
         }
        NativeReader.RecordReaderWrapperReadnext()
         //Event.parseFrom
