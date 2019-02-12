@@ -1,6 +1,6 @@
 ﻿#I __SOURCE_DIRECTORY__
 #r "netstandard"
-#I "../tests/bin/Debug/net472/"
+#I "../tests/bin/Debug/net461/"
 #r "TensorFlow.FSharp.dll"
 #r "TensorFlow.FSharp.Proto.dll"
 #r "Argu.dll"
