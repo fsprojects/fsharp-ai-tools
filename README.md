@@ -316,6 +316,8 @@ Then:
 
 * Performance testing
 
-# Roadmap - F# language
+# Roadmap - F# language things to consider
 
 * Make use of `return` optional
+
+* Consider adding `0.5T` constants (for scalars that broadcast to tensors)
