@@ -32,7 +32,7 @@ type Dim =
     | DimDivInt of Dim * int
 
     /// The dimension is a variable, possibly solved
-    | DimVar of InferenceVar<Dim>
+    | DimVar of string * InferenceVar<Dim>
 
     /// The dimension is known
     | DimKnown of int
@@ -45,14 +45,14 @@ type Dim =
         | DimMulInt (expected, n) -> expected.ToString() + "*" + string n 
         | DimDivInt (expected, n) -> expected.ToString() + "/" + string n 
         | DimKnown n -> string n 
-        | DimVar v -> 
-            match v.Solution with 
-            | Unsolved -> "?" 
-            | Solved v -> v.ToString()
+        | DimVar (name, var) -> 
+            match var.Solution with 
+            | Unsolved -> name 
+            | Solved sln -> if name = "?" then sln.ToString() else name + "( = " + sln.ToString() + ")"
 
     member internal dim.StripSolutions() = 
         match dim with 
-        | DimVar v -> 
+        | DimVar (_name, v) -> 
             match v.Solution with 
             | Unsolved -> dim
             | Solved v -> v.StripSolutions()
@@ -63,7 +63,7 @@ type Dim =
         | DimMulInt (expected,n) -> match expected.TryValue() with None -> None | Some dimv -> Some (dimv*n) 
         | DimDivInt (expected,n) -> match expected.TryValue() with None -> None | Some dimv -> Some (dimv/n + (if dimv % n > 0 then 1 else 0)) 
         | DimKnown n -> Some n 
-        | DimVar v -> 
+        | DimVar (_name, v) -> 
             match v.Solution with 
             | Unsolved -> None 
             | Solved v -> v.TryValue()
@@ -81,7 +81,9 @@ type Dim =
 
     static member Known n = DimKnown n
 
-    static member Inferred = DimVar (InferenceVar())
+    static member Inferred = DimVar ("?", InferenceVar())
+
+    static member Var nm = DimVar (nm, InferenceVar())
 
     static member Unify op (actual: Dim) (expected: Dim) = 
         match Dim.UnifyInner op actual expected with
@@ -94,11 +96,15 @@ type Dim =
         | _ -> 
         match actual.StripSolutions(), expected.StripSolutions() with 
         // check for identical variables
-        | DimVar v1, DimVar v2 when Object.ReferenceEquals(v1,v2) -> Ok ()
+        | DimVar (_, var1), DimVar (_, var2) when Object.ReferenceEquals(var1,var2) -> Ok ()
         // solve
-        | DimVar v1, _ -> v1.Solve expected; Ok()
-        | _, DimVar v2 -> v2.Solve actual; Ok()
-        | DimKnown d1, DimKnown d2 -> failwith "unreachable - each dimension had value"
+        | DimVar (nm1, var1), _ -> 
+            if nm1 <> "?" then printfn "dimension '%s' was constrained to '%s'" nm1 (expected.ToString())
+            var1.Solve expected; Ok()
+        | _, DimVar (nm2, var2) -> 
+            if nm2 <> "?" then printfn "dimension '%s' was constrained to '%s'" nm2 (expected.ToString())
+            var2.Solve actual; Ok()
+        | DimKnown _d1, DimKnown _d2 -> failwith "unreachable - each dimension had value"
         | DimMulInt (d1, n1), DimKnown d2 -> 
             if d2 % n1 <> 0 then 
                 Error "not divisible"
@@ -125,31 +131,32 @@ type Dim =
             | _ -> Ok () // equal, see above
 
 /// Represents an inferred shape
-type Shape =
-    internal
-    /// Represents a shape with possible flexibile variable + possible solution
-    | ShapeImpl of Dim[] * InferenceVar<Shape> option
+type Shape internal (flex: InferenceVar<Shape> option, dims: Dim[]) =
 
-    // TODO: this inference is correct for 
-    //   scalar --> tensor 
-    //   scalar --> vec
-    //   scalar --> metrix
-    // expansion, but not correct for partial expansion 
-    //   vec ---> tensor
-    // because the expansion is happening at the wrong end.
+    static let empty = Shape (None, [| |])
+
+    member internal shape.DimensionsWithFlexVar = 
+        match flex with 
+        | None -> None, dims
+        | Some v -> 
+            match v.Solution with 
+            | Unsolved -> Some v, dims
+            | Solved sln -> let flex, dims2 = sln.DimensionsWithFlexVar in flex, Array.append dims2 dims
+
+    member internal shape.DimensionsEliminatingFlex = 
+        let flexvar, dims = shape.DimensionsWithFlexVar
+        match flexvar with 
+        | None -> ()
+        | Some var -> var.Solve empty
+        dims 
+
     member shape.Item 
         with get idx = 
-            match shape with 
-            | ShapeImpl (dims, flexopt) -> 
-                if idx < dims.Length then 
-                    dims.[idx]
-                else
-                    match flexopt with 
-                    | None -> failwithf "index %d out of bounds" idx
-                    | Some v ->
-                    match v.Solution with 
-                    | Unsolved -> Dim.Inferred
-                    | Solved sln -> sln.[idx - dims.Length ]
+            let dims = shape.DimensionsEliminatingFlex 
+            if idx < dims.Length then 
+                dims.[idx]
+            else
+                failwithf "index %d out of bounds" idx
 
     member shape.AsRank1() = shape.[0]
 
@@ -159,30 +166,15 @@ type Shape =
 
     member shape.AsRank4() = shape.[0], shape.[1], shape.[2], shape.[3] 
 
-    member internal shape.DimensionsWithFlexVar = 
-        match shape with 
-        | ShapeImpl (dims, None) -> dims, None
-        | ShapeImpl (dims, Some v) -> 
-            match v.Solution with 
-            | Unsolved -> dims, Some v
-            | Solved sln -> let dims2, flex = sln.DimensionsWithFlexVar in Array.append dims dims2, flex
-
-    member internal shape.DimensionsEliminatingFlex = 
-        let dims, flexvar = shape.DimensionsWithFlexVar
-        match flexvar with 
-        | None -> ()
-        | Some v -> v.Solve (ShapeImpl ([| |], None))
-        dims 
-
     member shape.Dimensions = shape.DimensionsEliminatingFlex
 
     member shape.AsTFShape() = TFShape(shape.DimensionsEliminatingFlex |> Array.map (fun dim -> int64 dim.Value))
 
     member shape.AsTFTensor() = shape.AsTFShape().AsTensor()
 
-    static member NoFlex dims = ShapeImpl(dims, None)
+    static member NoFlex dims = Shape(None, dims)
 
-    static member Flex dims = ShapeImpl(dims, Some (InferenceVar()))
+    static member Flex dims = Shape(Some (InferenceVar()), dims)
 
     static member internal PossibleFlex (flex: bool) dims = if flex then Shape.Flex dims else Shape.NoFlex dims
 
@@ -202,7 +194,7 @@ type Shape =
     static member FromTFShape (shape: TFShape) = 
         shape.ToLongArray() |> Shape.FromTFShapeArray
 
-    static member D with get() = Shape.NoFlex [| DimKnown 1 |]
+    static member D with get() = Shape.NoFlex [| |]
     
     static member DV with get() = Shape.NoFlex [| Dim.Inferred |]
     
@@ -212,20 +204,20 @@ type Shape =
     static member internal FlexN n = Shape.Flex [| for i in 1 .. n -> Dim.Inferred |]
 
     static member internal MinDimensions op (shape: Shape) dim = 
-        let dims, flexvar = shape.DimensionsWithFlexVar
+        let flexvar, dims = shape.DimensionsWithFlexVar
         if dim > dims.Length then 
             match flexvar with 
             | None -> 
                 failwithf "shape %A must have at least %d dimensions for operator %s" shape dim op
             | Some v -> 
-                v.Solve (Shape.FlexN dim)
+                v.Solve (Shape.FlexN (dim - dims.Length))
 
     static member internal  Unify op (actual: Shape) (expected: Shape) = 
 
         let rec loop (s1: Shape) (s2: Shape) =
 
-            let dims1, flexvar1 = s1.DimensionsWithFlexVar
-            let dims2, flexvar2 = s2.DimensionsWithFlexVar
+            let flexvar1, dims1 = s1.DimensionsWithFlexVar
+            let flexvar2, dims2 = s2.DimensionsWithFlexVar
 
             // Unify those in common - note relies on Seq.iter2 only iterating up to equal length
             (dims1, dims2) ||> Seq.iter2 (fun dim1 dim2 ->
@@ -237,7 +229,7 @@ type Shape =
             let n = min dims1.Length dims2.Length
             if n > 0 then
                 // Drop front dimensions - shapes smaller
-                loop (ShapeImpl(dims1.[n..], flexvar1)) (ShapeImpl(dims2.[n..], flexvar2))
+                loop (Shape(flexvar1, dims1.[n..])) (Shape(flexvar2, dims2.[n..]))
 
             elif dims1.Length > 0 then
                 assert (dims2.Length = 0)
@@ -263,8 +255,8 @@ type Shape =
 
                 match flexvar1, flexvar2 with 
                 | Some v1, Some v2 when Object.ReferenceEquals(v1,v2) -> Ok ()
-                | Some v1, _ -> v1.Solve (ShapeImpl([| |], flexvar2)); Ok()
-                | _, Some v2 -> v2.Solve (ShapeImpl([| |], flexvar1)); Ok()
+                | Some v1, _ -> v1.Solve (Shape(flexvar2, [| |])); Ok()
+                | _, Some v2 -> v2.Solve (Shape(flexvar1, [| |])); Ok()
                 | None, None -> Ok()
 
         match loop actual expected with 
@@ -276,16 +268,16 @@ type Shape =
         actual
 
     override shape.ToString() = 
-        let dims, flexvar = shape.DimensionsWithFlexVar
+        let flexvar, dims = shape.DimensionsWithFlexVar
         if dims.Length = 0 then 
             "scalar" 
-            + (if flexvar.IsSome then " (can expand)" else "")
+            + (if flexvar.IsSome then " (can broadcast)" else "")
         elif dims.Length = 1 then 
             "vector " + dims.[0].ToString()
-            + (if flexvar.IsSome then " (can expand)" else "")
+            + (if flexvar.IsSome then " (can broadcast)" else "")
         elif dims.Length = 2 then 
             "matrix " + dims.[0].ToString() + " x " + dims.[1].ToString()
-            + (if flexvar.IsSome then " (can expand)" else "")
+            + (if flexvar.IsSome then " (can broadcast)" else "")
         else
             sprintf "shape %s" (String.concat " x " [ for i in dims -> i.ToString() ]) 
             + (if flexvar.IsSome then "x.." else "")
@@ -831,6 +823,8 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (TFCtxt -> TFOutput), ?asTF
         let stride = defaultArg stride 1
         let padding = defaultArg padding "SAME"
         let filtersShape = filters.Shape
+        Shape.Unify "Conv2D (input)" input.Shape (Shape.NoFlex [| Dim.Inferred; Dim.Inferred; Dim.Inferred; Dim.Inferred |])
+        Shape.Unify "Conv2D (filters)" filtersShape (Shape.NoFlex [| Dim.Inferred; Dim.Inferred; Dim.Inferred; Dim.Inferred |])
         let N, H, W, C = input.Shape.AsRank4()
         let _F1, _F2, C2, COut = filtersShape.AsRank4()
         Dim.Unify "Conv2D" C C2
@@ -846,6 +840,8 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (TFCtxt -> TFOutput), ?asTF
     static member Conv2DBackpropInput(filters: DT<'T>, out_backprop: DT<'T>, ?stride: int, ?padding: string) : DT<'T> = 
         let stride = defaultArg stride 1
         let padding = defaultArg padding "SAME"
+        Shape.Unify "Conv2DBackpropInput (input)" out_backprop.Shape (Shape.NoFlex [| Dim.Inferred; Dim.Inferred; Dim.Inferred; Dim.Inferred |])
+        Shape.Unify "Conv2DBackpropInput (filters)" filters.Shape (Shape.NoFlex [| Dim.Inferred; Dim.Inferred; Dim.Inferred; Dim.Inferred |])
         let N, out_height, out_width, out_channels = out_backprop.Shape.AsRank4()
         //printfn "out_backprop.Shape = %A" out_backprop.Shape
         let _filter_height, _filter_width, in_channels, out_channels2 = filters.Shape.AsRank4()

@@ -1,10 +1,10 @@
-﻿  // Build the Debug 'TensorFlow.FSharp.Tests' before using this
+﻿// Build the Debug 'TensorFlow.FSharp.Tests' before using this
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
 #r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
 #r "../tests/bin/Debug/net461/TensorFlow.FSharp.dll"
-#r "FSharp.Compiler.Interactive.Settings.dll"
+#r "FSharp.Compiler.Interactive.Settings"
 #nowarn "49"
 
 open System
@@ -16,7 +16,7 @@ if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 
 fsi.AddPrintTransformer(DT.PrintTransform)
 
-module PlayWithTF = 
+module PlayWithFM = 
     
     let f x = 
        x * x + v 4.0 * x 
@@ -49,6 +49,7 @@ module PlayWithTF =
                      [1.0; 2.0] ]
         let matrix2 =  
             matrix [ [1.0; 2.0]
+                     [1.0; 2.0]  
                      [1.0; 2.0] ] 
         matrix1 *! matrix2 
     
@@ -70,7 +71,6 @@ module GradientDescent =
     let step f xs =   
         // Get the partial derivatives of the function
         let df xs =  DT.diff f xs  
-        printfn "xs = %A" xs
         let dzx = df xs 
         // Evaluate to output values 
         xs - v rate * dzx |> DT.Eval
