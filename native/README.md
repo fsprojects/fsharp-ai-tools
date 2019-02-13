@@ -29,3 +29,5 @@ Files that I expect to port
  * server.cc
  * server.h
  * utilities.h
+
+NOTE: CMake for Visual Studio does not seem to support include_directory(..). CppProperties.json is supposed to work around this. I have not got this to work yet.
