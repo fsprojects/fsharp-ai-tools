@@ -121,22 +121,22 @@ module EventPluginUtilities =
 /// </summary>
 /// <param name="filePath">Path to the file being read.</param>
 /// <param  name="compressionType">Compression type used for the file.</param>
-type EventFileReader internal ( filePath : string, ?compressionType : CompressionType) 
-    // TODO inherit TFDisposable(x : Handle) = 
-    // extends Clodable with Loader[Event]
-
-    member this.Load() : Seq<Event> = 
-        // Catches the enxt event stored in the file
-        seq {
-            try
-                ProtoBuf.Serializer.Serialize<Event>()
-            with
-            // TODO narrow to OutOfRangeException and DataLossException or the equivilent 
-            | :? Exception -> ()
-        }
-       NativeReader.RecordReaderWrapperReadnext()
-        //Event.parseFrom
-    let x =1 0
+//type EventFileReader internal ( filePath : string, ?compressionType : CompressionType) 
+//    // TODO inherit TFDisposable(x : Handle) = 
+//    // extends Clodable with Loader[Event]
+//
+//    member this.Load() : Seq<Event> = 
+//        // Catches the enxt event stored in the file
+//        seq {
+//            try
+//                ProtoBuf.Serializer.Serialize<Event>()
+//            with
+//            // TODO narrow to OutOfRangeException and DataLossException or the equivilent 
+//            | :? Exception -> ()
+//        }
+//       NativeReader.RecordReaderWrapperReadnext()
+//        //Event.parseFrom
+//    let x =1 0
 
 /// Accumulates event values collected from the provided path.
 ///
@@ -173,7 +173,7 @@ type EventAccumulator(
                       ?purgeOrphanedData : bool) as this = 
 
     // TODO maybe something other than seq here
-    let eventLoader : unit -> seq<Event> = EventAccumulator.EventLoaderFromPath(path)
+    let eventLoader : unit -> seq<Event> = failwith "todo" //TODOEventAccumulator.EventLoaderFromPath(path)
     static let defaultSizeGuidance (e:EventType) = 
         match e with
         | ScalarEventType -> 110000
@@ -232,10 +232,10 @@ type EventAccumulator(
                 failwith "todo"
             )
 
-    static member EventLoaderFromPath(path : string) : unit -> seq<Event> = 
-        if File.Exists(path) && Path.GetFileName.Contains("tfevents") then
-            fun () -> EventFileReader(path).Load()
-        else 
-            fun () -> failwith "todo" //TODO    DirectoryLoader(path, EventFileReader(_), fun p -> Path.GetFileName(p).Contains("tfevents")).Load()
-//    //let eventLoader : unit -> seq<Event> = EventAccumulator.eventLoaderFromPth(path)
-//
+//    static member EventLoaderFromPath(path : string) : unit -> seq<Event> = 
+//        if File.Exists(path) && Path.GetFileName.Contains("tfevents") then
+//            fun () -> EventFileReader(path).Load()
+//        else 
+//            fun () -> failwith "todo" //TODO    DirectoryLoader(path, EventFileReader(_), fun p -> Path.GetFileName(p).Contains("tfevents")).Load()
+////    //let eventLoader : unit -> seq<Event> = EventAccumulator.eventLoaderFromPth(path)
+////

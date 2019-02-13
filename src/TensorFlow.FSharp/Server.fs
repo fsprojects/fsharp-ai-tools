@@ -1,4 +1,7 @@
-﻿// NOTE: The TF_Server functions do not appear to be missing in the pre-build binaries we are currently using
+﻿namespace TensorFlow.FSharp
+
+
+// NOTE: The TF_Server functions do not appear to be missing in the pre-build binaries we are currently using
 //       The following functions are form c_api.h
 
 //// Creates a new in-process TensorFlow server configured using a serialized
