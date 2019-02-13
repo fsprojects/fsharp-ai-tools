@@ -18,28 +18,28 @@ module Native =
     extern IntPtr TF_NewStatus ()
 
     [<DllImport (libtensorflow)>]
-    extern void TF_DeleteStatus (IntPtr status);
+    extern void TF_DeleteStatus (IntPtr status)
 
     [<DllImport (libtensorflow)>]
-    extern int TF_GetCode (IntPtr s);
+    extern int TF_GetCode (IntPtr s)
 
     [<DllImport (libtensorflow)>]
-    extern IntPtr TF_NewApiDefMap (IntPtr buffer, IntPtr status);
+    extern IntPtr TF_NewApiDefMap (IntPtr buffer, IntPtr status)
 
     [<DllImport (libtensorflow)>]
-    extern void TF_DeleteApiDefMap (IntPtr handle);
+    extern void TF_DeleteApiDefMap (IntPtr handle)
 
     [<DllImport (libtensorflow)>]
-    extern void TF_ApiDefMapPut (IntPtr handle, string text, IntPtr textLen, IntPtr status);
+    extern void TF_ApiDefMapPut (IntPtr handle, string text, IntPtr textLen, IntPtr status)
 
     [<DllImport (libtensorflow)>]
-    extern LLBuffer *TF_ApiDefMapGet (IntPtr handle, string name, IntPtr nameLen, IntPtr status);
+    extern LLBuffer *TF_ApiDefMapGet (IntPtr handle, string name, IntPtr nameLen, IntPtr status)
 
     [<DllImport (libtensorflow)>]
-    extern IntPtr TF_Version ();
+    extern IntPtr TF_Version ()
 
     [<DllImport (libtensorflow)>]
-    extern LLBuffer *TF_GetAllOpList ();
+    extern LLBuffer *TF_GetAllOpList ()
 
 
 

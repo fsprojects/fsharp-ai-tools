@@ -108,7 +108,7 @@ module NeuralStyles =
     /// We use the empty weights for the LiveCheck
     [<LiveCheck>]
     let test() = 
-        let dummyImages = DT.Stack [ for i in 1 .. 10 -> DT.Dummy [474;  712; 3] ]
+        let dummyImages = DT.Stack [ for i in 1 .. 10 -> DT.Dummy [Dim.Known 474; Dim.Known 712; Dim.Known 3] ]
         transformImages [| |] dummyImages 
 
 //------------------------------------------------------------
