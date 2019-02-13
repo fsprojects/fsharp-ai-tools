@@ -276,7 +276,7 @@ LiveCheck for a DNN:
 3. Start the tool and edit using experimental VS instance
 
        cd TensorFlow.FSharp\examples
-       ..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe --eval --writeinfo --watch --vshack --livechecksonly  dsl-live.fsx
+       ..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe --eval --writeinfo --watch --vshack --livechecksonly  --define:LIVECHECK dsl-live.fsx
 
        devenv.exe /rootsuffix RoslynDev
        (open dsl-live.fsx)
