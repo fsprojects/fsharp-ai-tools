@@ -365,4 +365,4 @@ let run(dirs : string []) =
 
 let root = Path.Combine(__SOURCE_DIRECTORY__, "..")
 run([|Path.Combine(root, "tensorflow", "api_def")|]) 
-|> fun res -> File.WriteAllText(Path.Combine(root,"src", "Operations.g.fs"), res)
+|> fun res -> File.WriteAllText(Path.Combine(root,"src", "TensorFlow.FSharp", "Operations.g.fs"), res)

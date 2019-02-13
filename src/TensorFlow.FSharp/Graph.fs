@@ -29,11 +29,11 @@ type TFWhileParams = {
 /// Device type
 type DeviceType = 
     /// The device is the Central Processing Unit (CPU)
-    | CPU
+    | CPU = 0u
     /// The device is a Graphics Processing Unit (GPU)
-    | GPU
+    | GPU = 1u
     /// The device is a TFTensor Processing Unit (TPU)
-    | TPU
+    | TPU = 2u
 
 /// Describes the device attributes 
 type DeviceAttributes internal (name:string, deviceType:DeviceType, memoryLimitBytes:int64) =

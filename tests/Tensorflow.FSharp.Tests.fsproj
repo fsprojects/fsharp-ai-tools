@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net472</TargetFrameworks>
+    <TargetFrameworks>net461</TargetFrameworks>
     <RootNamespace>TensorFlow.FSharp.Tests</RootNamespace>
     <AssemblyName>TensorFlow.FSharp.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
@@ -16,7 +16,23 @@
       <HintPath>..\lib\TensorFlow.FSharp.Proto.dll</HintPath>
       <Private>true</Private>
     </Reference>
-<!--    <PackageReference Include="TensorFlowSharp" Version="1.11.0" /> -->
+    <Reference Include="LinuxNativeWorkaround">
+      <HintPath>..\lib\LinuxNativeWorkaround.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>..\lib\protobuf-net.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="protobuf-net.Reflection">
+      <HintPath>..\lib\protobuf-net.Reflection.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Google.Protobuf">
+      <HintPath>..\lib\Google.Protobuf.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <!--    <PackageReference Include="TensorFlowSharp" Version="1.11.0" /> -->
     <PackageReference Include="Argu" Version="5.1.0" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />
     <PackageReference Include="Google.Protobuf" Version="3.6.1" />
@@ -60,9 +76,10 @@
     <Compile Include="FFStyleVGG.fs" />
     <Compile Include="ResNet50.fs" />
     <Compile Include="Tests.fs" />
-    <None Include="..\examples\shared\dsl.fsx" />
     <None Include="..\examples\ImageClassifier.fsx" />
     <None Include="..\examples\NeuralStyleTransfer.fsx" />
+    <None Include="..\examples\NeuralStyleTransfer-dsl.fsx" />
+    <None Include="..\examples\dsl-live.fsx" />
     <None Include="Scratch.fsx" />
   </ItemGroup>
 

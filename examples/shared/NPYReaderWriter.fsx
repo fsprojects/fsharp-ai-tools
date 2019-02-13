@@ -1,5 +1,7 @@
 module NPYReaderWriter
 
+#r "netstandard"
+#I __SOURCE_DIRECTORY__
 #r "System.IO.Compression"
 open System
 open System.IO
@@ -7,7 +9,6 @@ open System.IO.Compression
 
 // WARN: This does not support nested record arrays and object arrays. For now this is by design.
 // TODO: Support Strings
-
 module Result =
     let requireOk (result:Result<'a,string>) = 
         match result with
@@ -29,69 +30,69 @@ type NPYDType =
     | Float16
     | Float32
     | Float64
-    with 
-        member this.ToNPYString() =
-            match this with
-            | Bool      -> "b1"
-            | Byte      -> "i1"
-            | UInt8     -> "u1"
-            | UInt16    -> "u2"
-            | UInt32    -> "u4"
-            | UInt64    -> "u8"
-            | Int8      -> "i1"
-            | Int16     -> "i2"
-            | Int32     -> "i4"
-            | Int64     -> "i8"
-            | Float16   -> "f2"
-            | Float32   -> "f4"
-            | Float64   -> "f8"
 
-        member this.ByteWidth =
-            match this with
-            | Bool      
-            | Byte      
-            | UInt8     
-            | Int8      -> 1
-            | UInt16    
-            | Int16     
-            | Float16   -> 2
-            | UInt32    
-            | Int32     
-            | Float32   -> 4
-            | UInt64    
-            | Int64     
-            | Float64   -> 8
+    member this.ToNPYString() =
+        match this with
+        | Bool      -> "b1"
+        | Byte      -> "i1"
+        | UInt8     -> "u1"
+        | UInt16    -> "u2"
+        | UInt32    -> "u4"
+        | UInt64    -> "u8"
+        | Int8      -> "i1"
+        | Int16     -> "i2"
+        | Int32     -> "i4"
+        | Int64     -> "i8"
+        | Float16   -> "f2"
+        | Float32   -> "f4"
+        | Float64   -> "f8"
 
-        static member FromNPYString(npyString:string) =
-            match npyString with
-            | "b1" -> Bool      
-            | "i1" -> Byte      
-            | "u1" -> UInt8
-            | "u2" -> UInt16    
-            | "u4" -> UInt32    
-            | "u8" -> UInt64    
-            | "i2" -> Int16
-            | "i4" -> Int32
-            | "i8" -> Int64
-            | "f2" -> Float16
-            | "f4" -> Float32
-            | "f8" -> Float64
-            | _ -> failwith "unsupported"
+    member this.ByteWidth =
+        match this with
+        | Bool      
+        | Byte      
+        | UInt8     
+        | Int8      -> 1
+        | UInt16    
+        | Int16     
+        | Float16   -> 2
+        | UInt32    
+        | Int32     
+        | Float32   -> 4
+        | UInt64    
+        | Int64     
+        | Float64   -> 8
+
+    static member FromNPYString(npyString:string) =
+        match npyString with
+        | "b1" -> Bool      
+        | "i1" -> Byte      
+        | "u1" -> UInt8
+        | "u2" -> UInt16    
+        | "u4" -> UInt32    
+        | "u8" -> UInt64    
+        | "i2" -> Int16
+        | "i4" -> Int32
+        | "i8" -> Int64
+        | "f2" -> Float16
+        | "f4" -> Float32
+        | "f8" -> Float64
+        | _ -> failwith "unsupported"
         
-        static member FromType(t:Type) =
-            let t = if t.IsArray then t.GetElementType() else t
-            if   t = typeof<bool>     then NPYDType.Bool
-            elif t = typeof<byte>     then NPYDType.Byte
-            elif t = typeof<uint8>    then NPYDType.UInt8
-            elif t = typeof<uint16>   then NPYDType.UInt16
-            elif t = typeof<uint32>   then NPYDType.UInt32
-            elif t = typeof<uint64>   then NPYDType.UInt64
-            elif t = typeof<int16>    then NPYDType.Int16
-            elif t = typeof<int32>    then NPYDType.Int32
-            elif t = typeof<int64>    then NPYDType.Int64
-            elif t = typeof<float32>  then NPYDType.Float32
-            elif t = typeof<double>   then NPYDType.Float64
-            else failwith "unsupported"
+    static member FromType(t:Type) =
+        let t = if t.IsArray then t.GetElementType() else t
+        if   t = typeof<bool>     then NPYDType.Bool
+        elif t = typeof<byte>     then NPYDType.Byte
+        elif t = typeof<uint8>    then NPYDType.UInt8
+        elif t = typeof<uint16>   then NPYDType.UInt16
+        elif t = typeof<uint32>   then NPYDType.UInt32
+        elif t = typeof<uint64>   then NPYDType.UInt64
+        elif t = typeof<int16>    then NPYDType.Int16
+        elif t = typeof<int32>    then NPYDType.Int32
+        elif t = typeof<int64>    then NPYDType.Int64
+        elif t = typeof<float32>  then NPYDType.Float32
+        elif t = typeof<double>   then NPYDType.Float64
+        else failwith "unsupported"
 
 let private ASCII = System.Text.ASCIIEncoding.ASCII
 
@@ -106,13 +107,13 @@ type NPYDescription =
         fortran_order:bool 
         shape:int[]
     }
-    with
-        static member Default = 
-            {
-                    npyDType=NPYDType.Float32; 
-                    isLittleEnding=Some(true); 
-                    fortran_order=false;shape=[||]
-            }
+    static member Default = 
+        {
+            npyDType=NPYDType.Float32
+            isLittleEnding=Some(true) 
+            fortran_order=false
+            shape=[||]
+        }
 
 let readNumpy(bytes:byte[]) : Result<(NPYDescription*Array),string> =
     let parseHeader(header:string) =
@@ -259,6 +260,7 @@ let saveToNPZ(npys:Map<string,NPYDescription*Array>) =
         s.Dispose()
     ms.ToArray()
 *)
+
 
 let readFromNPZ(data:byte[]) : (string * (NPYDescription*Array))[] =
     use ms = new MemoryStream(data)

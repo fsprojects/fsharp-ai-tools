@@ -1,20 +1,20 @@
-﻿// Build the Debug 'TensorFlow.FSharp.Tests' before using this
+﻿  // Build the Debug 'TensorFlow.FSharp.Tests' before using this
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../tests/bin/Debug/net472/TensorFlow.FSharp.dll"
-
+#r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
+#r "../tests/bin/Debug/net461/TensorFlow.FSharp.dll"
+#r "FSharp.Compiler.Interactive.Settings.dll"
 #nowarn "49"
 
 open System
 open TensorFlow.FSharp
 open TensorFlow.FSharp.DSL
+open Microsoft.FSharp.Compiler.Interactive.Settings
 
 if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 
-#if !LIVECHECKING
 fsi.AddPrintTransformer(DT.PrintTransform)
-#endif
 
 module PlayWithTF = 
     
@@ -37,75 +37,76 @@ module PlayWithTF =
 
     // You can wrap in "tf { return ... }" if you like
     tf { return v 2.0 + v 1.0 }
-          
-    // This can be handy for locals
-    tf { let x = (vec [1.0; 2.0] + vec [1.0;2.0] ) 
-         return x + x }   
-  
-    // Now show that adding vectors of the wrong sizes gives a static error
-    // Adding a vector and a matrix gives an error
-    vec [1.0; 2.0] + matrix [ [1.0; 2.0] ]
-         
-    // Math-multiplying matrices of the wrong sizes gives an error
-    tf { let matrix1 = 
-             matrix [ [1.0; 2.0]
-                      [1.0; 2.0]
-                      [1.0; 2.0] ]
-         let matrix2 =  
-             matrix [ [1.0; 2.0]
-                      [1.0; 2.0]
-                      [1.0; 2.0] ]
-         return matrix1 *! matrix2 }
+     
+     
+
+
+
+
+
+    let test1() = 
+        vec [1.0; 2.0] + vec [1.0; 2.0]
     
-    // What about functions?  
-    let f3 (x:int) = 
-        let m = matrix [ [1.0; 2.0; 4.0]; [1.0; 2.0; 6.0] ]
-        m
-         
-    // Functions are only checked when there is a [<LiveCheck>] exercising the code path
+    
+
+
+
+
+
+
+
+
+    // Math-multiplying matrices of the wrong sizes gives an error
+    let test2() = 
+        let matrix1 = 
+            matrix [ [1.0; 2.0]
+                     [1.0; 2.0]
+                     [1.0; 2.0] ]
+        let matrix2 =  
+            matrix [ [1.0; 2.0]
+                     [1.0; 2.0] ] 
+        matrix1 *! matrix2 
+    
+    // Things are only checked when there is a [<LiveCheck>] exercising the code path
     
     [<LiveCheck>]
-    let _ = f3 4
+    let check1 = test1() |> ignore
 
-    //let f19 = 
-    //    tf { return (vec [1.0; 2.0 ] + vec [ 1.0; 4.0 ]  )  }  
-    //      
-    //[<LiveCheck>] 
-    // let _ = f19 3   
-      
+    [<LiveCheck>]
+    let check2 = test2() |> ignore
 
-module GradientAscentWithoutVariables =
+module GradientDescent =
 
-    let inline sqr x = x * x
+    // Note, the rate in this example is constant. Many practical optimizers use variable
+    // update (rate) - often reducing - which makes them more robust to poor convergence.
+    let rate = 0.005
 
-    // Define a function which will be executed using TensorFlow
-    let f (xs: DT<double>) = 
-        sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
-           
-    // Get the partial derivatives of the function
-    let df xs =  DT.diff f xs  
-        
-    let rate = 0.1
-
-    // Gradient ascent
-    let step xs =   
+    // Gradient descent
+    let step f xs =   
+        // Get the partial derivatives of the function
+        let df xs =  DT.diff f xs  
         printfn "xs = %A" xs
         let dzx = df xs 
-        // Evaluate to output values and prevent graph explosion 
-        xs + v rate * dzx |> DT.Eval
+        // Evaluate to output values 
+        xs - v rate * dzx |> DT.Eval
 
-    let train steps = 
-        vec [ -0.3; 0.3 ] |> Seq.unfold (fun pos -> Some (pos, step pos)) |> Seq.truncate steps |> Seq.toArray
+    let train f initial steps = 
+        initial |> Seq.unfold (fun pos -> Some (pos, step f pos)) |> Seq.truncate steps 
+
+module GradientDescentExample =
+
+    // A numeric function of two parameters, returning a scalar, see
+    // https://en.wikipedia.org/wiki/Gradient_descent
+    let f (xs: DT<double>) = 
+        sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * -cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
+
+    // Pass this Define a numeric function of two parameters, returning a scalar
+    let train numSteps = GradientDescent.train f (vec [ -0.3; 0.3 ]) numSteps
 
     [<LiveCheck>] 
-    let _ = train 4 |> ignore 
+    let check1 = train 4 |> Seq.last 
     
-#if !LIVECHECKING
-    train 100 |> ignore 
-
-#endif
-
-
+    let results = train 200 |> Seq.last
 
 module ModelExample =
 
@@ -113,11 +114,9 @@ module ModelExample =
 
     let checkSize = 5
 
-#if !LIVECHECKING
     let trainSize = 500
 
     let validationSize = 100
-#endif
 
     let rnd = Random()
 
@@ -137,13 +136,11 @@ module ModelExample =
     /// Make the data used to symbolically check the model
     let checkData = makeData checkSize
 
-#if !LIVECHECKING 
     /// Make the training data
     let trainData = makeData trainSize
 
     /// Make the validation data
     let validationData = makeData validationSize
-#endif
  
     let prepare data = 
         let xs, y = Array.unzip data
@@ -153,7 +150,7 @@ module ModelExample =
 
     /// Evaluate the model for input and coefficients
     let model (xs: DT<double>, coeffs: DT<double>) = 
-        DT.Sum (xs * coeffs,axis= [| 1|])
+        DT.Sum (xs * coeffs,axis= [| 1 |])
            
     let meanSquareError (z: DT<double>) tgt = 
         let dz = z - tgt 
@@ -161,59 +158,28 @@ module ModelExample =
 
     /// The loss function for the model w.r.t. a true output
     let loss (xs, y) coeffs = 
-        let coeffsBatch = batchExtend coeffs
-        let y2 = model (xs, coeffsBatch)
+        let y2 = model (xs, batchExtend coeffs)
         meanSquareError y y2
           
-    // Gradient of the objective function w.r.t. the coefficients
-    let dloss_dcoeffs inputs coeffs = 
-        let z = loss inputs coeffs
-        DT.gradient z coeffs 
-
-#if !LIVECHECKING
     let validation coeffs = 
         let z = loss (prepare validationData) (vec coeffs)
         z |> DT.Eval
-#endif
 
-    // Note, the rate in this example is constant. Many practical optimizers use variable
-    // update (rate) - often reducing - which makes them more robust to poor convergence.
-    let rate = 2.0
-     
-    let step inputs (coeffs: DT<double>) = 
-        let dz = dloss_dcoeffs inputs coeffs 
-
-        // Note, force the evaluation at this step
-        let coeffs = (coeffs - v rate * dz) |> DT.Eval
-        printfn "coeffs = %A, dz = %A" coeffs (dz |> DT.Eval) //(validation coeffs)
-        coeffs 
-         
-    let initialCoeffs = vec [ for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize ]
-     
-    // Train the inputs in one batch
-    let train inputs nsteps =
-        let inputs2 = prepare inputs
-        initialCoeffs |> Seq.unfold (fun coeffs -> Some (coeffs, step inputs2 coeffs)) |> Seq.truncate nsteps |> Seq.last
+    let train inputs steps =
+        let initialCoeffs = vec [ for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize ]
+        let inputs = prepare inputs
+        GradientDescent.train (loss inputs) initialCoeffs steps
            
     [<LiveCheck>]
-    let check1 = train checkData 1 
+    let check1 = train checkData 1  |> Seq.last
 
-    // What happens if we LiveCheck twice?
-    //[<LiveCheck>]
-    //let check2 = train checkInputs2 checkOutputs2 1 
- 
-#if !LIVECHECKING
-    [<LiveTest>]
-    let test1 = train trainData 10
-
-    let learnedCoeffs = train trainData 200 |> DT.toArray
-     // [|1.017181246; 2.039034327; 2.968580146; 3.99544071; 4.935430581;
-     //   5.988228378; 7.030374908; 8.013975714; 9.020138699; 9.98575733|]
+    let learnedCoeffs = train trainData 200 |> Seq.last |> DT.toArray
+         // [|1.017181246; 2.039034327; 2.968580146; 3.99544071; 4.935430581;
+         //   5.988228378; 7.030374908; 8.013975714; 9.020138699; 9.98575733|]
 
     validation trueCoeffs
 
     validation learnedCoeffs
-#endif
 
 module ODEs = 
     let lotka_volterra(du, u: DT<double>, p: DT<double>, t) = 
@@ -231,12 +197,10 @@ module ODEs =
     //sol |> Chart.Lines 
 
 
-
-
-(*
 module NeuralTransferFragments =
-    let input = matrix4 [ for i in 0 .. 9 -> [ for j in 1 .. 40 -> [ for k in 1 .. 40 -> [ for m in 0 .. 2 -> double (i+j+k+m) ]]]]
+
     let name = "a"
+
     let instance_norm (input, name) =
         tf { use _ = DT.WithScope(name + "/instance_norm")
              let mu, sigma_sq = DT.Moments (input, axes=[0;1])
@@ -246,20 +210,16 @@ module NeuralTransferFragments =
              let normalized = (input - mu) / sqrt (sigma_sq + epsilon)
              return scale * normalized + shift }
 
-    let friendly4D (d : 'T[,,,]) =
-        [| for i in 0..Array4D.length1 d - 1 -> [| for j in 0..Array4D.length2 d - 1 -> [| for k in 0..Array4D.length3 d - 1 -> [| for m in 0..Array4D.length4 d - 1 -> d.[i,j,k,m]  |]|]|]|]
-        |> array2D |> Array2D.map array2D
-
-    instance_norm (input, name) |> DT.RunArray4D |> friendly4D
+    //instance_norm (input, name) |> DT.Eval |> DT.toArray4D |> friendly4D
 
     let out_channels = 128
     let filter_size = 7
     let conv_init_vars (out_channels:int, filter_size:int, is_transpose: bool, name) =
         let weights_shape = 
             if is_transpose then
-                Shape [| Dim filter_size; Dim filter_size; Dim out_channels; Dim.Inferred |]
+                Shape.Known [| Dim.Known filter_size; Dim.Known filter_size; Dim.Known out_channels; Dim.Inferred |]
             else
-                Shape [| Dim filter_size; Dim filter_size; Dim.Inferred; Dim out_channels |]
+                Shape.Known [| Dim.Known filter_size; Dim.Known filter_size; Dim.Inferred; Dim.Known out_channels |]
         tf { let truncatedNormal = DT.TruncatedNormal(weights_shape)
              return DT.Variable (truncatedNormal * v 0.1, name + "/weights") }
 
@@ -274,61 +234,25 @@ module NeuralTransferFragments =
              else 
                  return x }
 
-    conv_layer (input, out_channels, filter_size, 1, true, "layer")  |> DT.RunArray4D |> friendly4D
-    //(fun input -> conv_layer (input, out_channels, filter_size, 1, true, "layer")) |> DT.gradient |> apply input |> DT.RunArray4D |> friendly4D
-
-    let residual_block (input, filter_size, name) = 
-        tf { let tmp = conv_layer(input, 128, filter_size, 1, true, name + "_c1")
-             return input + conv_layer(tmp, 128, filter_size, 1, false, name + "_c2") }
+    //conv_layer (input, out_channels, filter_size, 1, true, "layer")  |> DT.Eval |> DT.toArray4D |> friendly4D
+    //(fun input -> conv_layer (input, out_channels, filter_size, 1, true, "layer")) |> DT.gradient |> apply input |> DT.Eval |> DT.toArray4D |> friendly4D
 
     let conv2D_transpose (input, filter, stride) = 
         tf { return DT.Conv2DBackpropInput(filter, input, stride, padding = "SAME") }
   
     let conv_transpose_layer (input: DT<double>, num_filters, filter_size, stride, name) =
         tf { let filters = conv_init_vars (num_filters, filter_size, true, name)
-             return DT.Relu (instance_norm (conv2D_transpose (input, filters, stride), name))
-           }
+             return DT.Relu (instance_norm (conv2D_transpose (input, filters, stride), name))}
 
     let to_pixel_value (input: DT<double>) = 
-        tf { return tanh input * v 150.0 + (v 255.0 / v 2.0) }
+        tanh input * v 150.0 + (v 255.0 / v 2.0) 
 
-    // The style-transfer tf
+    let residual_block (input, filter_size, name) = 
+        tf { let tmp = conv_layer(input, 128, filter_size, 1, true, name + "_c1")
+             return input + conv_layer(tmp, 128, filter_size, 1, false, name + "_c2") }
 
-    tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-         return x }
-    |> DT.RunArray4D |> friendly4D
-
-    tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-         let x = conv_layer (x, 64, 3, 2, true, "conv2")
-         return x }
-    |> DT.RunArray4D |> friendly4D
-
-    tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-         let x = conv_layer (x, 64, 3, 2, true, "conv2")
-         let x = conv_layer (x, 128, 3, 2, true, "conv3")
-         return x }
-    |> DT.RunArray4D |> friendly4D
-
-    tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-         let x = conv_layer (x, 64, 3, 2, true, "conv2")
-         let x = conv_layer (x, 128, 3, 2, true, "conv3")
-         let x = residual_block (x, 3, "resid1")
-         return x }
-    |> DT.RunArray4D |> friendly4D
-
-    tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-         let x = conv_layer (x, 64, 3, 2, true, "conv2")
-         let x = conv_layer (x, 128, 3, 2, true, "conv3")
-         let x = residual_block (x, 3, "resid1")
-         let x = residual_block (x, 3, "resid2")
-         let x = residual_block (x, 3, "resid3")
-         let x = residual_block (x, 3, "resid4")
-         let x = residual_block (x, 3, "resid5")
-         return x }
-    |> DT.RunArray4D |> friendly4D
-
-
-    let t1 = 
+    // The style-transfer neural network
+    let style_transfer input = 
         tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
              let x = conv_layer (x, 64, 3, 2, true, "conv2")
              let x = conv_layer (x, 128, 3, 2, true, "conv3")
@@ -337,12 +261,66 @@ module NeuralTransferFragments =
              let x = residual_block (x, 3, "resid3")
              let x = residual_block (x, 3, "resid4")
              let x = residual_block (x, 3, "resid5")
+             let x = conv_transpose_layer (x, 64, 3, 2, "conv_t1") 
+             let x = conv_transpose_layer (x, 32, 3, 2, "conv_t2")
+             let x = conv_layer (x, 3, 9, 1, false, "conv_t3")
+             let x = to_pixel_value x
+             let x = DT.ClipByValue (x, v 0.0, v 255.0)
              return x }
+        |> DT.Eval 
 
-    let t2 = 
-        tf { return conv_transpose_layer (t1, 64, 3, 2, "conv_t1") }
-        |> DT.RunArray4D |> friendly4D
 
+
+
+    let dummyImages() = DT.Stack [ for i in 1 .. 10 -> DT.Dummy [474;  712; 3] ]
+
+    [<LiveCheck>]
+    let test() = style_transfer (dummyImages())
+
+
+
+
+
+(*
+
+let to_pixel_value (input: DT<double>) = 
+    tf { return tanh input * v 150.0 + (v 255.0 / v 2.0) }
+
+tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
+     return x }
+|> DT.Eval |> DT.toArray4D |> friendly4D
+
+tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
+     let x = conv_layer (x, 64, 3, 2, true, "conv2")
+     return x }
+|> DT.Eval |> DT.toArray4D |> friendly4D
+
+tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
+     let x = conv_layer (x, 64, 3, 2, true, "conv2")
+     let x = conv_layer (x, 128, 3, 2, true, "conv3")
+     return x }
+|> DT.Eval |> DT.toArray4D |> friendly4D
+
+tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
+     let x = conv_layer (x, 64, 3, 2, true, "conv2")
+     let x = conv_layer (x, 128, 3, 2, true, "conv3")
+     let x = residual_block (x, 3, "resid1")
+     return x }
+|> DT.Eval |> DT.toArray4D |> friendly4D
+
+tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
+     let x = conv_layer (x, 64, 3, 2, true, "conv2")
+     let x = conv_layer (x, 128, 3, 2, true, "conv3")
+     let x = residual_block (x, 3, "resid1")
+     let x = residual_block (x, 3, "resid2")
+     let x = residual_block (x, 3, "resid3")
+     let x = residual_block (x, 3, "resid4")
+     let x = residual_block (x, 3, "resid5")
+     return x }
+|> DT.Eval |> DT.toArray4D |> friendly4D
+
+
+let t1 = 
     tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
          let x = conv_layer (x, 64, 3, 2, true, "conv2")
          let x = conv_layer (x, 128, 3, 2, true, "conv3")
@@ -351,11 +329,14 @@ module NeuralTransferFragments =
          let x = residual_block (x, 3, "resid3")
          let x = residual_block (x, 3, "resid4")
          let x = residual_block (x, 3, "resid5")
-         let x = conv_transpose_layer (x, 64, 3, 2, "conv_t1") // TODO: check fails
          return x }
-    |> DT.RunArray4D |> friendly4D
 
-(*
+let t2 = 
+    tf { return conv_transpose_layer (t1, 64, 3, 2, "conv_t1") }
+    |> DT.Eval |> DT.toArray4D |> friendly4D
+
+
+
 module SimpleCases = 
     tf { return (vec [1.0; 2.0]) }
     |> DT.RunArray
@@ -557,4 +538,4 @@ let x = conv_layer (x, 3, 9, 1, false, "conv_t3")
     //TFOutput
     //graph.Inpu
 
-    *)
+    
