@@ -50,15 +50,15 @@ type TFSession with
      /// </code>
      /// </remarks>
      member this.SaveTensors(filename : string, [<ParamArray>] tensors : (string*TFOutput) []) : TFTensor [] =
-//			return GetRunner ().AddTarget (Graph.Save (Graph.Const (TFTensor.CreateString (Encoding.UTF8.GetBytes (filename)), TFDataType.String),
-//				      Graph.Concat (Graph.Const (0), tensors.Select (T => {
-//					      TFTensor clone = TFTensor.CreateString (Encoding.UTF8.GetBytes (T.Item1));
-//					      return Graph.Const (new TFTensor (TFDataType.String,
-//											  new long [] { 1 },
-//											  clone.Data,
-//											  clone.TensorByteSize,
-//											  null, IntPtr.Zero));
-//				      }).ToArray ()), tensors.Select (d => d.Item2).ToArray ())).Run ();
+//            return GetRunner ().AddTarget (Graph.Save (Graph.Const (TFTensor.CreateString (Encoding.UTF8.GetBytes (filename)), TFDataType.String),
+//                      Graph.Concat (Graph.Const (0), tensors.Select (T => {
+//                          TFTensor clone = TFTensor.CreateString (Encoding.UTF8.GetBytes (T.Item1));
+//                          return Graph.Const (new TFTensor (TFDataType.String,
+//                                              new long [] { 1 },
+//                                              clone.Data,
+//                                              clone.TensorByteSize,
+//                                              null, IntPtr.Zero));
+//                      }).ToArray ()), tensors.Select (d => d.Item2).ToArray ())).Run ();
          let graph = this.Graph
          let clonedTensors = 
                      tensors |> Array.map (fun (x,_) ->  

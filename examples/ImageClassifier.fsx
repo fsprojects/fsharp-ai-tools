@@ -2,6 +2,7 @@
 #r "netstandard"
 #I "../tests/bin/Debug/net461/"
 #r "TensorFlow.FSharp.dll"
+#r "TensorFlow.FSharp.Proto.dll"
 #r "TensorFlow.FSharp.Tests.dll"
 #r "TensorFlow.FSharp.Proto.dll"
 #nowarn "760" "49"

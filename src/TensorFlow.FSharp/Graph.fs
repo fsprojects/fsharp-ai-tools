@@ -635,14 +635,13 @@ and TFGraph internal (handle) =
         if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
         let cstatus = TFStatus.Setup (?incoming=status)
         let ndims = TF_GraphGetTensorNumDims (this.Handle, output.Struct, cstatus.Handle)
-        if not(cstatus.CheckMaybeRaise (?incoming = status, last = false)) || 
-            ndims = 0
-        then box null :?> Int64 []
+        if not(cstatus.CheckMaybeRaise (?incoming = status, last = false)) || ndims = 0
+        then TFShape.Unknown
         else 
             let ret = Array.zeroCreate<int64> ndims 
             TF_GraphGetTensorShape (handle, output.Struct, ret, ndims, cstatus.Handle)
             cstatus.CheckMaybeRaise (?incoming=status) |> ignore
-            ret
+            TFShape(ret)
 
     /// <summary>
     /// Returns the current name scope in use, to change this, use the WithScope method.

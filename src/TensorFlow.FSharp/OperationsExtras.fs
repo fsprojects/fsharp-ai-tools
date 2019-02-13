@@ -101,7 +101,7 @@ type TFGraph with
         use newScope = graph.NameScope(name, "Variable", initialValue)
         let dtype = initialValue.TFDataType
         let shape = graph.GetShape (initialValue)
-        let variableHandle = graph.VarHandleOp (dtype, new TFShape (shape))
+        let variableHandle = graph.VarHandleOp (dtype, shape)
         use aScope = graph.NameScope("Assign")
         let assignOp = graph.AssignVariableOp (variableHandle, initialValue)
         use rScope = graph.NameScope("Read")
@@ -182,7 +182,7 @@ type TFGraph with
     /// </remarks>
     member graph.Dropout (x : TFOutput, keep_prob : TFOutput, ?noise_shape : TFShape, ?seed : int, ?name : string) =
         use newScope = graph.NameScope(name, "Dropout",x)
-        let noiseShape = noise_shape |> Option.defaultWith (fun () -> new TFShape (graph.GetShape (x)))
+        let noiseShape = noise_shape |> Option.defaultWith (fun () -> graph.GetShape (x))
         let shapeTensor = graph.ShapeTensorOutput (noiseShape)
         // uniform [keep_prob, 1.0 + keep_prob)
         let random_tensor = keep_prob
@@ -190,7 +190,7 @@ type TFGraph with
         // 0. if [keep_prob, 1.0) and 1. if [1.0, 1.0 + keep_prob)
         let binary_tensor = graph.Floor (random_tensor)
         let ret = graph.Mul (graph.Div (x, keep_prob), binary_tensor)
-        graph.SetTensorShape (ret, graph.GetShape (x))
+        graph.SetTensorShape (ret, graph.GetShape(x).ToLongArray())
         ret
 
     /// <summary>

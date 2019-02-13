@@ -676,11 +676,17 @@ type TFShape(dims:Dimension[] option) =
 
     static let unknown = TFShape(Option<Dimension[]>.None)
     static let scalar = TFShape(Array.empty<int64>)
-    new ([<ParamArray>] dims : int64[]) = TFShape(Some(dims |> Array.map Dimension))
-    new ([<ParamArray>] dims : int[]) = TFShape(Some(dims |> Array.map Dimension))
-    //new (proto : TensorFlow.FSharp.Proto.TensorShapeProto) =
-    //    if proto.UnknownRank then TFShape(Option<Dimension[]>.None) 
-    //    else new TFShape(Some([|for x in proto.Dims -> Dimension(x.Size)|]))
+    new ([<ParamArray>] dims : int64 option []) = 
+        TFShape(Some(dims |> Array.map (function | None | Some(-1L) -> Dimension.Unknown | Some(x) -> Dimension(x))))
+    new ([<ParamArray>] dims : int option []) = 
+        TFShape(Some(dims |> Array.map (function | None | Some(-1) -> Dimension.Unknown | Some(x) -> Dimension(x))))
+    new ([<ParamArray>] dims : int64[]) = 
+        TFShape(Some(dims |> Array.map (function | -1L -> Dimension.Unknown | x -> Dimension(x))))
+    new ([<ParamArray>] dims : int[]) = 
+        TFShape(Some(dims |> Array.map (function | -1 -> Dimension.Unknown | x -> Dimension(x))))
+    new (proto : TensorFlow.FSharp.Proto.TensorShapeProto) =
+        if proto.UnknownRank then TFShape(Option<Dimension[]>.None) 
+        else new TFShape(Some([|for x in proto.Dims -> Dimension(x.Size)|]))
 
     /// <summary>
     /// Represents an unknown number of dimensions in the tensor.

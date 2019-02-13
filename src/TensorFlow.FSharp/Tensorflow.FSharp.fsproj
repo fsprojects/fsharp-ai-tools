@@ -30,6 +30,9 @@
       <Private>true</Private>
     </Reference>
     <PackageReference Include="Argu" Version="5.1.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
+    <PackageReference Include="NLog" Version="4.5.11" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="1.4.0" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />
     <PackageReference Include="Google.Protobuf" Version="3.6.1" />
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
@@ -40,8 +43,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Logging.fs" />
+    <None Include="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="Utils.fs" />
+    <Compile Include="API.Utilities.fs" />
+    <Compile Include="Platform.TFLogging.fs" />
     <Compile Include="Common.fs" /> 
     <Compile Include="DType.fs" /> 
     <Compile Include="Disposable.fs" /> 
@@ -52,8 +59,10 @@
     <Compile Include="Variable.fs" /> 
     <Compile Include="GraphKeys.fs" /> 
     <Compile Include="Graph.fs" /> 
+    <Compile Include="Server.fs" /> 
     <Compile Include="Framework.Ops.fs" /> 
     <Compile Include="Funciton.fs" /> 
+    <Compile Include="CheckpointReader.fs" /> 
     <Compile Include="Session.fs" /> 
     <Compile Include="Operations.g.fs" /> 
     <Compile Include="OperationsExtras.fs" /> 
@@ -68,6 +77,7 @@
     <Compile Include="Datasets.fs" /> 
     <Compile Include="Operations.ArrayOps.fs" /> 
     <Compile Include="Operations.RandomOps.fs" /> 
+    <Compile Include="IO.Events.fs" /> 
     <Compile Include="FSIPrettyPrinting.fs" />
     <Compile Include="dsl.fs" />
   </ItemGroup>
