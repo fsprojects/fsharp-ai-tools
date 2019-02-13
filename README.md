@@ -10,7 +10,7 @@ See "src" and "tests" directory. Some examples under "examples".
 
 # FM: Prototype using F# for AI Models 
 
-FM: An F# DSL for writing numeric models. Models written in FM can be passed to 
+This is an F# eDSL for writing numeric models. Models written in FM can be passed to 
 optimization and training algorithms utilising automatic differentiation without
 any change to modelling code, and can be executed on GPUs and TPUs using TensorFlow.
 
