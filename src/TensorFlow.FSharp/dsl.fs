@@ -40,25 +40,6 @@ type Dim =
     /// The dimension is known
     | DimKnown of int
 
-    override dim.ToString() = 
-        match dim with 
-        | DimNamed (name, dim2) when name <> "?" -> 
-            let slntext = dim2.ToString()
-            name + (if slntext = "?" then "" else " (=" + slntext + ")")
-        | _ -> 
-        match dim.TryValue() with 
-        | Some v -> string v
-        | None ->  
-        match dim with 
-        | DimMulInt (expected, n) -> expected.ToString() + "*" + string n 
-        | DimDivInt (expected, n) -> expected.ToString() + "/" + string n 
-        | DimKnown n -> string n 
-        | DimNamed _ -> failwith "unreachable" 
-        | DimVar var -> 
-            match var.Solution with 
-            | Unsolved -> "?"
-            | Solved sln -> sln.ToString()
-
     member internal dim.StripSolutions() = 
         match dim with 
         | DimNamed (name, dim2) -> 
@@ -69,24 +50,22 @@ type Dim =
             | Solved v -> v.StripSolutions()
         | _ -> dim
 
-    /// Try to get the solved value for the dimension
+    /// Try to get the solved value for the dimension.
+    // Note this is lossy on the name
     member dim.TryValue() = 
-        match dim with 
+        match dim.StripSolutions() with 
         | DimNamed (_name, dim2) -> dim2.TryValue()
         | DimMulInt (expected,n) -> match expected.TryValue() with None -> None | Some dimv -> Some (dimv*n) 
         | DimDivInt (expected,n) -> match expected.TryValue() with None -> None | Some dimv -> Some (dimv/n + (if dimv % n > 0 then 1 else 0)) 
         | DimKnown n -> Some n 
-        | DimVar v -> 
-            match v.Solution with 
-            | Unsolved -> None 
-            | Solved v -> v.TryValue()
+        | DimVar v -> None 
 
-    member dim.HasName = 
+    member dim.TryName() = 
         match dim.StripSolutions() with 
-        | DimNamed _ -> true
-        | _ -> false
+        | DimNamed (nm, dim2) -> Some (nm, dim2)
+        | _ -> None
 
-    member internal dim.IsSolved = dim.TryValue().IsSome
+    member dim.HasName = dim.TryName().IsSome 
 
     member dim.Value = 
         match dim.TryValue() with 
@@ -157,6 +136,24 @@ type Dim =
             match actual.TryValue(), expected.TryValue() with 
             | None, _ | _, None -> Error "incomplete dimension"
             | _ -> Ok () // equal, see above
+
+    override dim.ToString() = 
+        match dim.TryName() with 
+        | Some (name, dim2) -> 
+            let slntext = dim2.ToString()
+            name + (if slntext = "?" then "" else " (=" + slntext + ")")
+        | None -> 
+        // Check if it is a computed constant
+        // We currently prefer this to showing symbolic names, e.g. N/2 or N/2*2
+        match dim.TryValue() with 
+        | Some v -> string v
+        | None ->  
+        match dim.StripSolutions() with 
+        | DimMulInt (expected, n) -> expected.ToString() + "*" + string n 
+        | DimDivInt (expected, n) -> expected.ToString() + "/" + string n 
+        | DimKnown n -> string n 
+        | DimNamed _ -> failwith "unreachable" 
+        | DimVar _ -> "?"
 
 /// Represents an inferred shape
 type Shape internal (flex: InferenceVar<Shape> option, dims: Dim[]) =
@@ -296,7 +293,7 @@ type Shape internal (flex: InferenceVar<Shape> option, dims: Dim[]) =
         // Preserve names from either
         let v1, dims1 = actual.DimensionsWithFlexVar
         let _v2, dims2 = expected.DimensionsWithFlexVar 
-        let dims = (dims1, dims2) ||> Array.map2 (fun dim1 dim2 -> if dim1.HasName then dim1 elif dim2.HasName then dim2 else dim1)
+        let dims = (dims1, dims2) ||> Array.map2 (fun dim1 dim2 -> if dim2.HasName then dim2 else dim1)
         Shape(v1, dims)
 
     override shape.ToString() = 
