@@ -308,6 +308,8 @@ Then:
 
 # Roadmap - DSL
 
+* Reuse graphs (deal with shape variables)
+
 * Switch to using ported gradient code when it is available in core API
 
 * Hand-code or generate larger TF surface area in FM DSL
@@ -320,7 +322,19 @@ Then:
 
 * Add examples of how to do static graph building and analysis based on FCS and quotations, e.g. for visualization
 
+* Add DiffSharp as a backend
+
+* Add Torch as a backend
+
 * Performance testing
+
+* Improve debugging for DSL through __CALLER__DEBUG__ feature for F#
+
+# Roadmap - Live checking
+
+* Make it into an F# Anaylzer, including adding tooltips to F# analyzer design
+
+* Make it into a nuget you reference and start live checking from the script
 
 # Roadmap - F# language things to consider
 
