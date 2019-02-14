@@ -350,5 +350,7 @@ Then:
 
 * Consider having anonymous records all implement some base indicator interface (`IFSharpRecord`) or something
 
+* Consider making constraints `'T : (int|double|int64|single)` be exposed as a proper F# language feature
+
 
 
