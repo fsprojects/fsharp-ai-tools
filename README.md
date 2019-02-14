@@ -341,3 +341,14 @@ Then:
 * Make use of `return` optional
 
 * Consider adding `0.5T` constants (for scalars that broadcast to tensors)
+
+* Remove `params` as a reserved keyword, possible some others too
+
+* Consider more overloading, e.g. overloading single keyword members
+
+* Optional and named arguments on module-defined functions
+
+* Consider having anonymous records all implement some base indicator interface (`IFSharpRecord`) or something
+
+
+
