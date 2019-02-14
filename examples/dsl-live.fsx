@@ -16,6 +16,12 @@ if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 
 fsi.AddPrintTransformer(DT.PrintTransform)
 
+module FirstLiveCheck = 
+    let f x shift = DT.Sum(x * x, [| 1 |]) + v shift
+
+    [<LiveCheck>]
+    let check1() = f (DT.Dummy [ Dim.Named "Size1" 10;  Dim.Named "Size2" 100]) 3.0
+
 module PlayWithFM = 
     
     let f x = 
@@ -55,10 +61,10 @@ module PlayWithFM =
     // Things are only checked when there is a [<LiveCheck>] exercising the code path
     
     [<LiveCheck>]
-    let check1 = test1() |> ignore
+    let check1() = test1() 
 
     [<LiveCheck>]
-    let check2 = test2() |> ignore
+    let check2() = test2() 
 
 module GradientDescent =
 
@@ -85,7 +91,7 @@ module GradientDescentExample =
     let train numSteps = GradientDescent.train f (vec [ -0.3; 0.3 ]) numSteps
 
     [<LiveCheck>] 
-    let check1 = train 4 |> Seq.last 
+    let check1() = train 4 |> Seq.last 
     
     let results = train 200 |> Seq.last
 
@@ -145,7 +151,7 @@ module ModelExample =
         GradientDescent.train (loss (xs, y)) initialCoeffs steps
            
     [<LiveCheck>]
-    let check1 = 
+    let check1() = 
         let TrainingSz = Dim.Named "TrainingSz" 100
         let ModelSz = Dim.Named "ModelSz" 10
         let coeffs = DT.Dummy [ ModelSz ]
@@ -246,7 +252,7 @@ module NeuralTransferFragments =
         |> DT.Eval 
 
     [<LiveCheck>]
-    let test() = 
+    let check1() = 
         let dummyImages = DT.Dummy [ Dim.Named "BatchSz" 10; Dim.Named "H" 474;  Dim.Named "W" 712; Dim.Named "Channels" 3 ]
         style_transfer dummyImages
 
