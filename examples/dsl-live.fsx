@@ -1,10 +1,10 @@
-﻿  // Build the Debug 'TensorFlow.FSharp.Tests' before using this
+﻿// Build the Debug 'TensorFlow.FSharp.Tests' before using this
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
 #r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
 #r "../tests/bin/Debug/net461/TensorFlow.FSharp.dll"
-#r "FSharp.Compiler.Interactive.Settings.dll"
+#r "FSharp.Compiler.Interactive.Settings"
 #nowarn "49"
 
 open System
@@ -16,7 +16,7 @@ if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 
 fsi.AddPrintTransformer(DT.PrintTransform)
 
-module PlayWithTF = 
+module PlayWithFM = 
     
     let f x = 
        x * x + v 4.0 * x 
@@ -35,27 +35,12 @@ module PlayWithTF =
 
     v 2.0 + v 1.0 
 
-    // You can wrap in "tf { return ... }" if you like
-    tf { return v 2.0 + v 1.0 }
-     
-     
-
-
-
-
-
+    // You can wrap in "fm { return ... }" if you like
+    fm { return v 2.0 + v 1.0 }
+      
     let test1() = 
         vec [1.0; 2.0] + vec [1.0; 2.0]
     
-    
-
-
-
-
-
-
-
-
     // Math-multiplying matrices of the wrong sizes gives an error
     let test2() = 
         let matrix1 = 
@@ -83,12 +68,8 @@ module GradientDescent =
 
     // Gradient descent
     let step f xs =   
-        // Get the partial derivatives of the function
-        let df xs =  DT.diff f xs  
-        printfn "xs = %A" xs
-        let dzx = df xs 
         // Evaluate to output values 
-        xs - v rate * dzx |> DT.Eval
+        xs - v rate * DT.diff f xs |> DT.Eval
 
     let train f initial steps = 
         initial |> Seq.unfold (fun pos -> Some (pos, step f pos)) |> Seq.truncate steps 
@@ -97,7 +78,7 @@ module GradientDescentExample =
 
     // A numeric function of two parameters, returning a scalar, see
     // https://en.wikipedia.org/wiki/Gradient_descent
-    let f (xs: DT<double>) = 
+    let f (xs: Vec) : Scalar = 
         sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * -cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
 
     // Pass this Define a numeric function of two parameters, returning a scalar
@@ -111,8 +92,6 @@ module GradientDescentExample =
 module ModelExample =
 
     let modelSize = 10
-
-    let checkSize = 5
 
     let trainSize = 500
 
@@ -133,23 +112,20 @@ module ModelExample =
             let xs = [| for i in 0 .. modelSize - 1 -> rnd.NextDouble() |]
             xs, trueFunction xs |]
          
-    /// Make the data used to symbolically check the model
-    let checkData = makeData checkSize
-
-    /// Make the training data
-    let trainData = makeData trainSize
-
-    /// Make the validation data
-    let validationData = makeData validationSize
- 
     let prepare data = 
         let xs, y = Array.unzip data
         let xs = batchOfVecs xs
         let y = batchOfScalars y
         (xs, y)
 
+    /// Make the training data
+    let trainData = makeData trainSize |> prepare
+
+    /// Make the validation data
+    let validationData = makeData validationSize |> prepare
+ 
     /// Evaluate the model for input and coefficients
-    let model (xs: DT<double>, coeffs: DT<double>) = 
+    let model (xs: VecBatch, coeffs: ScalarBatch) = 
         DT.Sum (xs * coeffs,axis= [| 1 |])
            
     let meanSquareError (z: DT<double>) tgt = 
@@ -162,18 +138,23 @@ module ModelExample =
         meanSquareError y y2
           
     let validation coeffs = 
-        let z = loss (prepare validationData) (vec coeffs)
+        let z = loss validationData (vec coeffs)
         z |> DT.Eval
 
-    let train inputs steps =
-        let initialCoeffs = vec [ for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize ]
-        let inputs = prepare inputs
-        GradientDescent.train (loss inputs) initialCoeffs steps
+    let train initialCoeffs (xs, y) steps =
+        GradientDescent.train (loss (xs, y)) initialCoeffs steps
            
     [<LiveCheck>]
-    let check1 = train checkData 1  |> Seq.last
+    let check1 = 
+        let TrainingSz = Dim.Named "TrainingSz" 100
+        let ModelSz = Dim.Named "ModelSz" 10
+        let coeffs = DT.Dummy [ ModelSz ]
+        let xs = DT.Dummy [ TrainingSz; ModelSz ]
+        let y = DT.Dummy [ TrainingSz ]
+        train coeffs (xs, y) 1  |> Seq.last
 
-    let learnedCoeffs = train trainData 200 |> Seq.last |> DT.toArray
+    let initialCoeffs = vec [ for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize ]
+    let learnedCoeffs = train initialCoeffs trainData 200 |> Seq.last |> DT.toArray
          // [|1.017181246; 2.039034327; 2.968580146; 3.99544071; 4.935430581;
          //   5.988228378; 7.030374908; 8.013975714; 9.020138699; 9.98575733|]
 
@@ -196,346 +177,77 @@ module ODEs =
     //let sol = solve(prob, Tsit5())
     //sol |> Chart.Lines 
 
-
 module NeuralTransferFragments =
 
     let name = "a"
 
     let instance_norm (input, name) =
-        tf { use _ = DT.WithScope(name + "/instance_norm")
-             let mu, sigma_sq = DT.Moments (input, axes=[0;1])
-             let shift = DT.Variable (v 0.0, name + "/shift")
-             let scale = DT.Variable (v 1.0, name + "/scale")
-             let epsilon = v 0.001
-             let normalized = (input - mu) / sqrt (sigma_sq + epsilon)
-             return scale * normalized + shift }
+        use __ = DT.WithScope(name + "/instance_norm")
+        let mu, sigma_sq = DT.Moments (input, axes=[0;1])
+        let shift = DT.Variable (v 0.0, name + "/shift")
+        let scale = DT.Variable (v 1.0, name + "/scale")
+        let epsilon = v 0.001
+        let normalized = (input - mu) / sqrt (sigma_sq + epsilon)
+        normalized * scale + shift 
 
-    //instance_norm (input, name) |> DT.Eval |> DT.toArray4D |> friendly4D
-
-    let out_channels = 128
-    let filter_size = 7
     let conv_init_vars (out_channels:int, filter_size:int, is_transpose: bool, name) =
         let weights_shape = 
             if is_transpose then
-                Shape.Known [| Dim.Known filter_size; Dim.Known filter_size; Dim.Known out_channels; Dim.Inferred |]
+                Shape.NoFlex [| Dim.Known filter_size; Dim.Known filter_size; Dim.Known out_channels; Dim.Inferred |]
             else
-                Shape.Known [| Dim.Known filter_size; Dim.Known filter_size; Dim.Inferred; Dim.Known out_channels |]
-        tf { let truncatedNormal = DT.TruncatedNormal(weights_shape)
-             return DT.Variable (truncatedNormal * v 0.1, name + "/weights") }
+                Shape.NoFlex [| Dim.Known filter_size; Dim.Known filter_size; Dim.Inferred; Dim.Known out_channels |]
+        let truncatedNormal = DT.TruncatedNormal(weights_shape)
+        DT.Variable (truncatedNormal * v 0.1, name + "/weights")
 
-    let is_relu = 1
-    let stride = 1
-    let conv_layer (input, out_channels, filter_size, stride, is_relu, name) = 
-        tf { let filters = conv_init_vars (out_channels, filter_size, false, name)
-             let x = DT.Conv2D (input, filters, stride=stride)
-             let x = instance_norm (x, name)
-             if is_relu then 
-                 return DT.Relu x 
-             else 
-                 return x }
+    let conv_layer (out_channels, filter_size, stride, is_relu, name) input = 
+        let filters = conv_init_vars (out_channels, filter_size, false, name)
+        let x = DT.Conv2D (input, filters, stride=stride)
+        let x = instance_norm (x, name)
+        if is_relu then 
+             relu x 
+        else 
+             x 
 
-    //conv_layer (input, out_channels, filter_size, 1, true, "layer")  |> DT.Eval |> DT.toArray4D |> friendly4D
-    //(fun input -> conv_layer (input, out_channels, filter_size, 1, true, "layer")) |> DT.gradient |> apply input |> DT.Eval |> DT.toArray4D |> friendly4D
-
-    let conv2D_transpose (input, filter, stride) = 
-        tf { return DT.Conv2DBackpropInput(filter, input, stride, padding = "SAME") }
+    let conv2D_transpose (filter, stride) input = 
+        DT.Conv2DBackpropInput(filter, input, stride, padding = "SAME")
   
-    let conv_transpose_layer (input: DT<double>, num_filters, filter_size, stride, name) =
-        tf { let filters = conv_init_vars (num_filters, filter_size, true, name)
-             return DT.Relu (instance_norm (conv2D_transpose (input, filters, stride), name))}
+    let conv_transpose_layer (num_filters, filter_size, stride, name) input =
+        let filters = conv_init_vars (num_filters, filter_size, true, name)
+        let x = instance_norm (conv2D_transpose (filters, stride) input, name)
+        relu x
 
     let to_pixel_value (input: DT<double>) = 
         tanh input * v 150.0 + (v 255.0 / v 2.0) 
 
-    let residual_block (input, filter_size, name) = 
-        tf { let tmp = conv_layer(input, 128, filter_size, 1, true, name + "_c1")
-             return input + conv_layer(tmp, 128, filter_size, 1, false, name + "_c2") }
+    let residual_block (filter_size, name) input = 
+        let tmp = conv_layer (128, filter_size, 1, true, name + "_c1") input
+        let tmp2 = conv_layer (128, filter_size, 1, false, name + "_c2") tmp
+        input + tmp2 
+
+    let clip min max x = 
+       DT.ClipByValue (x, v min, v max)
 
     // The style-transfer neural network
     let style_transfer input = 
-        tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-             let x = conv_layer (x, 64, 3, 2, true, "conv2")
-             let x = conv_layer (x, 128, 3, 2, true, "conv3")
-             let x = residual_block (x, 3, "resid1")
-             let x = residual_block (x, 3, "resid2")
-             let x = residual_block (x, 3, "resid3")
-             let x = residual_block (x, 3, "resid4")
-             let x = residual_block (x, 3, "resid5")
-             let x = conv_transpose_layer (x, 64, 3, 2, "conv_t1") 
-             let x = conv_transpose_layer (x, 32, 3, 2, "conv_t2")
-             let x = conv_layer (x, 3, 9, 1, false, "conv_t3")
-             let x = to_pixel_value x
-             let x = DT.ClipByValue (x, v 0.0, v 255.0)
-             return x }
+        input 
+        |> conv_layer (32, 9, 1, true, "conv1")
+        |> conv_layer (64, 3, 2, true, "conv2")
+        |> conv_layer (128, 3, 2, true, "conv3")
+        |> residual_block (3, "resid1")
+        |> residual_block (3, "resid2")
+        |> residual_block (3, "resid3")
+        |> residual_block (3, "resid4")
+        |> residual_block (3, "resid5")
+        |> conv_transpose_layer (64, 3, 2, "conv_t1") 
+        |> conv_transpose_layer (32, 3, 2, "conv_t2")
+        |> conv_layer (3, 9, 1, false, "conv_t3")
+        |> to_pixel_value
+        |> clip 0.0 255.0
         |> DT.Eval 
 
-
-
-
-    let dummyImages() = DT.Stack [ for i in 1 .. 10 -> DT.Dummy [474;  712; 3] ]
-
     [<LiveCheck>]
-    let test() = style_transfer (dummyImages())
-
-
-
-
-
-(*
-
-let to_pixel_value (input: DT<double>) = 
-    tf { return tanh input * v 150.0 + (v 255.0 / v 2.0) }
-
-tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-     return x }
-|> DT.Eval |> DT.toArray4D |> friendly4D
-
-tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-     let x = conv_layer (x, 64, 3, 2, true, "conv2")
-     return x }
-|> DT.Eval |> DT.toArray4D |> friendly4D
-
-tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-     let x = conv_layer (x, 64, 3, 2, true, "conv2")
-     let x = conv_layer (x, 128, 3, 2, true, "conv3")
-     return x }
-|> DT.Eval |> DT.toArray4D |> friendly4D
-
-tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-     let x = conv_layer (x, 64, 3, 2, true, "conv2")
-     let x = conv_layer (x, 128, 3, 2, true, "conv3")
-     let x = residual_block (x, 3, "resid1")
-     return x }
-|> DT.Eval |> DT.toArray4D |> friendly4D
-
-tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-     let x = conv_layer (x, 64, 3, 2, true, "conv2")
-     let x = conv_layer (x, 128, 3, 2, true, "conv3")
-     let x = residual_block (x, 3, "resid1")
-     let x = residual_block (x, 3, "resid2")
-     let x = residual_block (x, 3, "resid3")
-     let x = residual_block (x, 3, "resid4")
-     let x = residual_block (x, 3, "resid5")
-     return x }
-|> DT.Eval |> DT.toArray4D |> friendly4D
-
-
-let t1 = 
-    tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-         let x = conv_layer (x, 64, 3, 2, true, "conv2")
-         let x = conv_layer (x, 128, 3, 2, true, "conv3")
-         let x = residual_block (x, 3, "resid1")
-         let x = residual_block (x, 3, "resid2")
-         let x = residual_block (x, 3, "resid3")
-         let x = residual_block (x, 3, "resid4")
-         let x = residual_block (x, 3, "resid5")
-         return x }
-
-let t2 = 
-    tf { return conv_transpose_layer (t1, 64, 3, 2, "conv_t1") }
-    |> DT.Eval |> DT.toArray4D |> friendly4D
-
-
-
-module SimpleCases = 
-    tf { return (vec [1.0; 2.0]) }
-    |> DT.RunArray
-
-    tf { return (vec [1.0]).[0] }
-    |> DT.RunScalar
-
-    tf { return (vec [1.0; 2.0]).[1] }
-    |> DT.RunScalar
-   
-    tf { return (vec [1.0; 2.0]).[0..0] }
-    |> DT.RunArray
-
-    tf { return v 1.0 + v 4.0 }
-    |> DT.Run
-
-    tf { return DT.ReverseV2 (vec [1.0; 2.0]) }
-    |> DT.RunArray
-
-    let f x = tf { return x * x + v 4.0 * x }
-    let df x = DT.diff f x
-
-    //df (v 3.0)
-    //|> DT.RunScalar
-    //|> (=) (2.0 * 3.0 + 4.0)
-
-    tf { return vec [1.0; 2.0] + v 4.0 }
-    |> DT.RunArray
-
-    tf { return sum (vec [1.0; 2.0] + v 4.0) }
-    |> DT.RunScalar
-
-    let f2 x = tf { return sum (vec [1.0; 2.0] * x * x) }
-    let df2 x = DT.grad f2 x
-       
-    f2 (vec [1.0; 2.0])
-    |> DT.RunScalar
-
-    df2 (vec [1.0; 2.0])
-    |> DT.RunArray
-      
-    //let x = vec [1.0; 2.0]
-    //(DT.Stack [| x.[1]; x.[0] |]).Shape
-    //|> DT.RunArray
-
-    let f3 (x: DT<_>) = tf { return vec [1.0; 2.0] * x * DT.ReverseV2 x } //[ x1*x2; 2*x2*x1 ] 
-    let df3 x = DT.jacobian f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
-    let expected (x1, x2) = array2D [| [| x2; x1 |]; [| 2.0*x2; 2.0*x1 |] |]  
-
-    f3 (vec [1.0; 2.0])
-    |> DT.RunArray
-
-    df3 (vec [1.0; 2.0])
-    |> DT.RunArray2D
-    |> (=) (expected (1.0, 2.0))
-    // expect 
-
-    tf { use _ = DT.WithScope("foo")
-         return vec [1.0; 2.0] + v 4.0 }
-   // |> DT.Diff
-    |> DT.RunArray
-
-    tf { return matrix [ [ 1.0; 2.0 ]; [ 3.0; 4.0 ] ] }
-    |> DT.RunArray2D
-
-    let f100 (x: DT<double>) y = 
-        tf { return x + y } 
-    
-    [<LiveCheck>]
-    //let _ = f100 (vec [ 1.0; 2.0]) (vec [ 2.0; 3.0])
-    let g = f100 (vec [ 1.0; 2.0]) 
-    
-    g (vec [ 2.0; 3.0])
-     
-    [<LiveCheck>]
-    let _ = f100 (matrix [ [ 1.0; 2.0; 3.0 ]; [ 2.0; 3.0; 4.5] ]) (matrix [ [ 2.0; 3.0; 4.5]; [ 2.0; 3.0; 4.5] ])  
-      
-
-    tf { return matrix [ [ 1.0; 2.0 ]; [ 3.0; 4.0 ] ] + v 4.0 }
-    |> DT.RunArray2D
-
-    tf { return DT.Variable (vec [ 1.0 ], name="hey") + v 4.0 }
-    |> DT.RunArray
-
-    let var v nm = DT.Variable (v, name=nm)
-    
-    // Specifying values for variables in the graph
-    tf { return var (vec [ 1.0 ]) "x" + v 4.0 }
-    |> fun dt -> DT.RunArray(dt, ["x", (vec [2.0] :> _)] )
-     
-    tf { return var (vec [ 1.0 ]) "x" * var (vec [ 1.0 ]) "x" + v 4.0 }
-    |> DT.RunArray
-
-    tf { return DT.Variable (vec [ 1.0 ], name="hey") + v 4.0 }
-    |> fun dt -> DT.RunArray(dt, ["hey", upcast (vec [2.0])])
-       // Gives 6.0
-
-module GradientDescentWithVariables =
-    // Define a function which will be executed using TensorFlow
-    let f (x: DT<double>, y: DT<double>) = 
-        tf { return sin (v 0.5 * x * x - v 0.25 * y * y + v 3.0) * cos (v 2.0 * x + v 1.0 - exp y) }
-
-    // Get the partial derivatives of the scalar function
-    // computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
-    let df (x, y) = 
-        let dfs = DT.gradients (f (x,y))  [| x; y |] 
-        (dfs.[0], dfs.[1])
-
-    let rate = 0.1
-    let step (x, y) = 
-        // Repeatedly run the derivative 
-        let dzx, dzy = df (v x, v y) 
-        let dzx = dzx |> DT.RunScalar 
-        let dzy = dzy |> DT.RunScalar 
-        printfn "size = %f" (sqrt (dzx*dzx + dzy*dzy))
-        (x + rate * dzx, y + rate * dzy)
-
-    (-0.3, 0.3) |> Seq.unfold (fun pos -> Some (pos, step pos)) |> Seq.truncate 200 |> Seq.toArray
-
-
-module TensorFlow_PDE_Example = 
-    u_init = np.zeros([N, N], dtype=np.float32)
-    ut_init = np.zeros([N, N], dtype=np.float32)
-
-    # Some rain drops hit a pond at random points
-    for n in range(40):
-      a,b = np.random.randint(0, N, 2)
-      u_init[a,b] = np.random.uniform()
-
-    DisplayArray(u_init, rng=[-0.1, 0.1])
-
-    # Parameters:
-    # eps -- time resolution
-    # damping -- wave damping
-    eps = tf.placeholder(tf.float32, shape=())
-    damping = tf.placeholder(tf.float32, shape=())
-
-    # Create variables for simulation state
-    U  = tf.Variable(u_init)
-    Ut = tf.Variable(ut_init)
-
-    # Discretized PDE update rules
-    U_ = U + eps * Ut
-    Ut_ = Ut + eps * (laplace(U) - damping * Ut)
-
-    # Operation to update the state
-    step = tf.group(
-      U.assign(U_),
-      Ut.assign(Ut_))
-    # Initialize state to initial conditions
-    tf.global_variables_initializer().run()
-
-    # Run 1000 steps of PDE
-    for i in range(1000):
-      # Step simulation
-      step.run({eps: 0.03, damping: 0.04})
-      DisplayArray(U.eval(), rng=[-0.1, 0.1])
-*)
-
-(*
-(fun input -> 
-        tf { let x = conv_layer (input, 32, 9, 1, true, "conv1")
-             let x = conv_layer (x, 64, 3, 2, true, "conv2")
-             let x = conv_layer (x, 128, 3, 2, true, "conv3")
-             let x = residual_block (x, 3, "resid1")
-             let x = residual_block (x, 3, "resid2")
-             let x = residual_block (x, 3, "resid3")
-             let x = residual_block (x, 3, "resid4")
-             let x = residual_block (x, 3, "resid5")
-             let x = conv_transpose_layer (x, 64, 3, 2, "conv_t1") // TODO: check fails
-             return x })
-    |> DT.Diff |> apply input |> DT.Run |> fun x -> x.GetValue() :?> double[,,,] |> friendly4D
-
-//2019-01-24 17:21:17.095544: F tensorflow/core/grappler/costs/op_level_cost_estimator.cc:577] Check failed: iz == filter_shape.dim(in_channel_index).size() (64 vs. 128)
-    *)
-
-
-(*
-let x = conv_layer (x, 3, 9, 1, false, "conv_t3")
-             let x = to_pixel_value x
-             let x = DT.ClipByValue (x, v 0.0, v 255.0)
-             return x }
-*)
-
- (*
-    let d = array2D [| [| 1.0f; 2.0f |]; [| 3.0f; 4.0f |] |]
-    let shape = shape [ d.GetLength(0); d.GetLength(1)  ]
-    let graph = new TFGraph()
-    let session= new TFSession(graph)
-    let n1 = graph.Const(new TFTensor(d))
-    let res1 = session.Run( [|  |], [| |], [| n1 |])
-*)
-
-    //graph.Const("a", "b")
-    //graph.Variable( .MakeName("a", "b")
-
-    //TFTensor(TFDataType.Double, [| 2;2|], )
-    //(TFDataType.Double, [| 2;2|])
-    //TFOutput
-    //graph.Inpu
+    let test() = 
+        let dummyImages = DT.Dummy [ Dim.Named "BatchSz" 10; Dim.Named "H" 474;  Dim.Named "W" 712; Dim.Named "Channels" 3 ]
+        style_transfer dummyImages
 
     

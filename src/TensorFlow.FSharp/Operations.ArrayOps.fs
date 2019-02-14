@@ -31,7 +31,7 @@ type TFGraph with
         /// <param name="operName">Operation name, optional.</param>
         /// <returns></returns>
         member graph.Ones (shape : TFShape, ?dtype : TFDataType, ?name : string) = 
-            graph.Constant (1, shape, ?dtype = dtype, ?name = name);
+            graph.Constant (1, shape, ?dtype = dtype, ?name = name)
 
         /// <summary>
         /// Create a constant tensor based on a shape
@@ -46,8 +46,8 @@ type TFGraph with
         member graph.Constant (value : obj, tfshape : TFShape, ?dtype : TFDataType, ?name : string) =
             let dtype = defaultArg dtype TFDataType.Float32
             //convert the .net type to relevant tensorflow type
-            let dtvalue = TFTensor.FetchSimpleObj(dtype, value);
-            let shape = tfshape.ToLongArray ();
+            let dtvalue = TFTensor.FetchSimpleObj(dtype, value)
+            let shape = tfshape.ToLongArray ()
             let idx = Array.zeroCreate shape.Length
             for i = 0 to shape.Length - 1 do
                 if int64 shape.[i] > int64 Int32.MaxValue then 

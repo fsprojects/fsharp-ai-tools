@@ -5,6 +5,37 @@ open TensorFlow.FSharp.Utils
 open System
 
 type TFGraph with
+    /// <summary>
+    ///   Calculate the mean and variance of <c>x</c>
+    /// </summary>
+    /// <param name="inputs">
+    ///   A Tensor.
+    /// </param>
+    /// <param name="axes">
+    /// axes: Array of ints.  Axes along which to compute mean and
+    ///  variance.
+    /// <param>
+    /// <param name="name">
+    /// Name used to scope the operations that compute the moments.
+    /// </param>
+    /// <param name="keep_dims">
+    ///  produce moments with the same dimensionality as the input.
+    /// </param>
+    /// <returns>
+    /// </returns>
+    /// Two <c>Tensor</c> objects: <c>mean</c> and <c>variance</c> .
+    /// <remarks>
+    /// The mean and variance are calculated by aggregating the contents of <c>x</c> 
+    /// across <c>axes</c> .  If <c>x</c> is 1-D and <c>axes = [0]</c> this is just the mean
+    /// and variance of a vector.
+    /// Note: shift is currently not used; the true mean is computed and used.
+    /// When using these moments for batch normalization (see
+    /// <c>tf.nn.batch_normalization</c>):
+    ///  * for so-called "global normalization", used with convolutional filters with
+    ///    shape <c>[batch, height, width, depth]</c> , pass <c>axes=[0, 1, 2]</c> .
+    ///  * for simple batch normalization pass <c>axes=[0]</c> (batch only).
+    /// </remarks>
+    ///
     /// https://github.com/tensorflow/tensorflow/blob/r1.12/tensorflow/python/ops/nn_impl.py
     member graph.Moments(x:TFOutput, ?axes:TFOutput, ?shift, ?name, ?keep_dims) =
         let keep_dimsV = defaultArg keep_dims false
