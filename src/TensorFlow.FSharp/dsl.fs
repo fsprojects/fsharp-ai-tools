@@ -32,12 +32,20 @@ type Dim =
     | DimDivInt of Dim * int
 
     /// The dimension is a variable, possibly solved
-    | DimVar of string * InferenceVar<Dim>
+    | DimVar of InferenceVar<Dim>
+
+    /// The dimension is named
+    | DimNamed of string * Dim
 
     /// The dimension is known
     | DimKnown of int
 
     override dim.ToString() = 
+        match dim with 
+        | DimNamed (name, dim2) when name <> "?" -> 
+            let slntext = dim2.ToString()
+            name + (if slntext = "?" then "" else " (=" + slntext + ")")
+        | _ -> 
         match dim.TryValue() with 
         | Some v -> string v
         | None ->  
@@ -45,50 +53,65 @@ type Dim =
         | DimMulInt (expected, n) -> expected.ToString() + "*" + string n 
         | DimDivInt (expected, n) -> expected.ToString() + "/" + string n 
         | DimKnown n -> string n 
-        | DimVar (name, var) -> 
+        | DimNamed _ -> failwith "unreachable" 
+        | DimVar var -> 
             match var.Solution with 
-            | Unsolved -> name 
-            | Solved sln -> if name = "?" then sln.ToString() else name + "( = " + sln.ToString() + ")"
+            | Unsolved -> "?"
+            | Solved sln -> sln.ToString()
 
     member internal dim.StripSolutions() = 
         match dim with 
-        | DimVar (_name, v) -> 
-            match v.Solution with 
+        | DimNamed (name, dim2) -> 
+            DimNamed (name, dim2.StripSolutions())
+        | DimVar var -> 
+            match var.Solution with 
             | Unsolved -> dim
             | Solved v -> v.StripSolutions()
         | _ -> dim
 
+    /// Try to get the solved value for the dimension
     member dim.TryValue() = 
         match dim with 
+        | DimNamed (_name, dim2) -> dim2.TryValue()
         | DimMulInt (expected,n) -> match expected.TryValue() with None -> None | Some dimv -> Some (dimv*n) 
         | DimDivInt (expected,n) -> match expected.TryValue() with None -> None | Some dimv -> Some (dimv/n + (if dimv % n > 0 then 1 else 0)) 
         | DimKnown n -> Some n 
-        | DimVar (_name, v) -> 
+        | DimVar v -> 
             match v.Solution with 
             | Unsolved -> None 
             | Solved v -> v.TryValue()
+
+    member dim.HasName = 
+        match dim.StripSolutions() with 
+        | DimNamed _ -> true
+        | _ -> false
 
     member internal dim.IsSolved = dim.TryValue().IsSome
 
     member dim.Value = 
         match dim.TryValue() with 
-        | Some v -> v
+        | Some value -> value
         | None -> -1
 
     static member ( * ) (dim: Dim, stride: int) = if stride = 1 then dim else DimMulInt (dim, stride)
 
     static member ( / ) (dim: Dim, stride: int) = if stride = 1 then dim else DimDivInt (dim, stride)
 
-    static member Known n = DimKnown n
+    static member Known value = DimKnown value
 
-    static member Inferred = DimVar ("?", InferenceVar())
+    /// A dimension with an inferred value
+    static member Inferred = DimVar (InferenceVar())
 
-    static member Var nm = DimVar (nm, InferenceVar())
+    /// A named dimension with a known value
+    static member Named name value = DimNamed (name, Dim.Known value)
+
+    /// A named dimension with an variable value
+    static member Var name = DimNamed (name, DimVar (InferenceVar()))
 
     static member Unify op (actual: Dim) (expected: Dim) = 
         match Dim.UnifyInner op actual expected with
         | Ok () -> ()
-        | Error msg -> failwithf "mismatched dimensions: expected '%s' but got '%s' for operator %s (%s)" (expected.ToString())  (actual.ToString()) op msg
+        | Error msg -> failwithf "mismatched dimensions for operator %s: expected '%s' but got '%s' (%s)" op (expected.ToString())  (actual.ToString()) msg
 
     static member UnifyInner op (actual: Dim) (expected: Dim) = 
         match actual.TryValue(), expected.TryValue() with 
@@ -96,13 +119,11 @@ type Dim =
         | _ -> 
         match actual.StripSolutions(), expected.StripSolutions() with 
         // check for identical variables
-        | DimVar (_, var1), DimVar (_, var2) when Object.ReferenceEquals(var1,var2) -> Ok ()
+        | DimVar var1, DimVar var2 when Object.ReferenceEquals(var1,var2) -> Ok ()
         // solve
-        | DimVar (nm1, var1), _ -> 
-            if nm1 <> "?" then printfn "dimension '%s' was constrained to '%s'" nm1 (expected.ToString())
+        | DimVar var1, _ -> 
             var1.Solve expected; Ok()
-        | _, DimVar (nm2, var2) -> 
-            if nm2 <> "?" then printfn "dimension '%s' was constrained to '%s'" nm2 (expected.ToString())
+        | _, DimVar var2 -> 
             var2.Solve actual; Ok()
         | DimKnown _d1, DimKnown _d2 -> failwith "unreachable - each dimension had value"
         | DimMulInt (d1, n1), DimKnown d2 -> 
@@ -125,6 +146,13 @@ type Dim =
                 Error "different multipliers"
             else
                 Dim.UnifyInner op d1 d2
+        | DimNamed (name1, d1), DimNamed(name2, d2) when name1 = name2 -> 
+            if name1 <> name2 then 
+                printfn "named dimension '%s' was equated with named dimension '%s'" name1 name2
+            Dim.UnifyInner op d1 d2
+        | DimNamed (_, d1), d2 
+        | d1, DimNamed (_, d2) -> 
+            Dim.UnifyInner op d1 d2
         | _ -> 
             match actual.TryValue(), expected.TryValue() with 
             | None, _ | _, None -> Error "incomplete dimension"
@@ -223,7 +251,7 @@ type Shape internal (flex: InferenceVar<Shape> option, dims: Dim[]) =
             (dims1, dims2) ||> Seq.iter2 (fun dim1 dim2 ->
                 match Dim.UnifyInner op dim1 dim2 with 
                 | Ok () -> ()
-                | Error msg -> failwithf "mismatched shapes: expected %A but got %A for operator %s (expected dimension %s but got %s - %s) " expected actual op (dim2.ToString()) (dim1.ToString()) msg
+                | Error msg -> failwithf "mismatched shapes for operator %s: expected %A but got %A (dimension %s did not match %s, %s) " op expected actual (dim2.ToString()) (dim1.ToString()) msg
              )
 
             let n = min dims1.Length dims2.Length
@@ -265,7 +293,11 @@ type Shape internal (flex: InferenceVar<Shape> option, dims: Dim[]) =
 
     static member internal EquivShapes op (actual: Shape) (expected: Shape) = 
         Shape.Unify op actual expected
-        actual
+        // Preserve names from either
+        let v1, dims1 = actual.DimensionsWithFlexVar
+        let _v2, dims2 = expected.DimensionsWithFlexVar 
+        let dims = (dims1, dims2) ||> Array.map2 (fun dim1 dim2 -> if dim1.HasName then dim1 elif dim2.HasName then dim2 else dim1)
+        Shape(v1, dims)
 
     override shape.ToString() = 
         let flexvar, dims = shape.DimensionsWithFlexVar
@@ -823,8 +855,8 @@ type DT<'T> internal (shape: Shape, cost: int, eval: (TFCtxt -> TFOutput), ?asTF
         let stride = defaultArg stride 1
         let padding = defaultArg padding "SAME"
         let filtersShape = filters.Shape
-        Shape.Unify "Conv2D (input)" input.Shape (Shape.NoFlex [| Dim.Inferred; Dim.Inferred; Dim.Inferred; Dim.Inferred |])
-        Shape.Unify "Conv2D (filters)" filtersShape (Shape.NoFlex [| Dim.Inferred; Dim.Inferred; Dim.Inferred; Dim.Inferred |])
+       // Shape.Unify "Conv2D (input)" input.Shape (Shape.NoFlex [| Dim.Inferred; Dim.Inferred; Dim.Inferred; Dim.Inferred |])
+       // Shape.Unify "Conv2D (filters)" filtersShape (Shape.NoFlex [| Dim.Inferred; Dim.Inferred; Dim.Inferred; Dim.Inferred |])
         let N, H, W, C = input.Shape.AsRank4()
         let _F1, _F2, C2, COut = filtersShape.AsRank4()
         Dim.Unify "Conv2D" C C2
@@ -1007,43 +1039,40 @@ type Tensor4<'T> = DT<'T>
 /// Alias for a 5-dimensional tensor 
 type Tensor5<'T> = DT<'T>
 
+/// Alias for a batch of scalars (a vector).
+type ScalarBatch<'T> = DT<'T>
+
 /// Alias for a tensor vector.
-type Vec<'T> = Vector<'T>
+type VecBatch<'T> = DT<'T>
 
 /// Alias for a 3-dimensional tensor 
 type Tensor<'T> = DT<'T>
 
-/// Alias for a tensor matrix
-type Mat<'T> = Matrix<'T>
-
-/// Alias for a 3-dimensional tensor 
-type Tns3<'T> = Tensor3<'T>
-
-/// Alias for a 4-dimensional tensor 
-type Tns4<'T> = Tensor4<'T>
-
-/// Alias for a 5-dimensional tensor 
-type Tns5<'T> = Tensor5<'T>
-
 /// Alias for a tensor scalar.
 type Scalar = Scalar<double>
 
+/// Alias for a batch of scalars.
+type ScalarBatch = ScalarBatch<double>
+
 /// Alias for a tensor vector.
-type Vec = Vec<double>
+type Vec = Vector<double>
+
+/// Alias for a batch of vectors
+type VecBatch = VecBatch<double>
 
 /// Alias for a tensor matrix
-type Mat = Mat<double>
+type Mat = Matrix<double>
 
 /// Alias for a 3-dimensional tensor 
-type Tns3 = Tensor3<double>
+type Tensor3 = Tensor3<double>
 
 /// Alias for a 4-dimensional tensor 
-type Tns4 = Tensor4<double>
+type Tensor4 = Tensor4<double>
 
 /// Alias for a 5-dimensional tensor 
-type Tns5 = Tensor5<double>
+type Tensor5 = Tensor5<double>
 
-type Tns = Tensor<double>
+type Tensor = Tensor<double>
 
 
 /// F#-style module of operations for tensor values
@@ -1096,14 +1125,14 @@ module DT =
         (x |> f, diffN n f x)
 
     /// Original value and gradient of a vector-to-scalar function `f`, at point `x`. Reverse AD.
-    let evalAndGrad (f: Vec<'T> -> Scalar<'T>) (x: Vec<'T>) : Scalar<'T> * Vec<'T> = 
+    let evalAndGrad (f: Vector<'T> -> Scalar<'T>) (x: Vector<'T>) : Scalar<'T> * Vector<'T> = 
         Shape.Unify "evalAndGrad" x.Shape Shape.DV
         let y = f x
         let dy = gradient y x
         y, dy
 
     /// Gradient of a vector-to-scalar function `f`, at point `x`. Reverse AD.
-    let grad (f: Vec<'T> -> Scalar<'T>) x : Vec<'T> =
+    let grad (f: Vector<'T> -> Scalar<'T>) x : Vector<'T> =
         evalAndGrad f x |> snd
 
 (*
@@ -1136,7 +1165,7 @@ module DT =
         jacobianv' f x v |> snd
 *)
     /// Original value and Jacobian of a vector-to-vector function `f`, at point `x`. Forward or reverse AD, depending on input and output dimensions.
-    let evalAndJacobian (f: Vec<'T> -> Vec<'T>) (x:Vec<'T>) : Vec<'T> * Mat<'T> =
+    let evalAndJacobian (f: Vector<'T> -> Vector<'T>) (x:Vector<'T>) : Vector<'T> * Matrix<'T> =
         let y = f x
         let ysize = 
             match y.Shape.DimensionsEliminatingFlex.[0].TryValue() with 
@@ -1146,24 +1175,24 @@ module DT =
         y, jydx
 
     /// Jacobian of a vector-to-vector function `f`, at point `x`. Forward or reverse AD, depending on input and output dimensions.
-    let jacobian (f: Vec<'T> -> Vec<'T>) x : Mat<'T> =
+    let jacobian (f: Vector<'T> -> Vector<'T>) x : Matrix<'T> =
         evalAndJacobian f x |> snd
 
     /// Gradient and Hessian of a vector-to-scalar function `f`, at point `x`. Forward-on-reverse AD.
-    let gradAndHessian (f: Vec<'T> -> Scalar<'T>) x : Vec<'T> * Mat<'T> =
+    let gradAndHessian (f: Vector<'T> -> Scalar<'T>) x : Vector<'T> * Matrix<'T> =
         evalAndJacobian (grad f) x
 
     /// Original value, gradient, and Hessian of a vector-to-scalar function `f`, at point `x`. Forward-on-reverse AD.
-    let evalAndGradAndHessian (f: Vec<'T> -> Scalar<'T>) x : Scalar<'T> * Vec<'T> * Mat<'T> =
+    let evalAndGradAndHessian (f: Vector<'T> -> Scalar<'T>) x : Scalar<'T> * Vector<'T> * Matrix<'T> =
         let g, h = gradAndHessian f x
         (f x, g, h)
 
     /// Hessian of a vector-to-scalar function `f`, at point `x`. Forward-on-reverse AD.
-    let hessian (f: Vec<'T> -> Scalar<'T>) x : Mat<'T> =
+    let hessian (f: Vector<'T> -> Scalar<'T>) x : Matrix<'T> =
         jacobian (grad f) x
 
     /// Original value and Hessian of a vector-to-scalar function `f`, at point `x`. Forward-on-reverse AD.
-    let evalAndHessian (f: Vec<'T> -> Scalar<'T>) x : Scalar<'T> * Mat<'T> =
+    let evalAndHessian (f: Vector<'T> -> Scalar<'T>) x : Scalar<'T> * Matrix<'T> =
         (x |> f, hessian f x)
 
 (*
@@ -1188,42 +1217,42 @@ module DT =
     let trace v = DT.Sum (DT.DiagPart v)
 
     /// Original value and Laplacian of a vector-to-scalar function `f`, at point `x`. Reverse-on-forward AD.
-    let evalAndLaplacian (f: Vec<'T> -> Scalar<'T>) x : Scalar<'T> * Scalar<'T> = 
+    let evalAndLaplacian (f: Vector<'T> -> Scalar<'T>) x : Scalar<'T> * Scalar<'T> = 
         let v, h = evalAndHessian f x
         (v, trace h)
 
     /// Laplacian of a vector-to-scalar function `f`, at point `x`. Reverse-on-forward AD.
-    let laplacian (f: Vec<'T> -> Scalar<'T>) x : Scalar<'T> =
+    let laplacian (f: Vector<'T> -> Scalar<'T>) x : Scalar<'T> =
         evalAndLaplacian f x |> snd
 
     /// Original value and curl of a vector-to-vector function `f`, at point `x`. Supported only for functions with a three-by-three Jacobian matrix.
-    let evalAndCurl (f: Vec<'T> -> Vec<'T>) x =
+    let evalAndCurl (f: Vector<'T> -> Vector<'T>) x =
         let v, j = evalAndJacobian f x
         //if (j.Rows, j.Cols) <> (3, 3) then ErrorMessages.InvalidArgCurl()
         v, DT.Stack [|j.[1, 2] - j.[2, 1]; j.[2, 0] - j.[0, 2]; j.[0, 1] - j.[1, 0]|]
 
     /// Curl of a vector-to-vector function `f`, at point `x`. Supported only for functions with a three-by-three Jacobian matrix.
-    let curl (f: Vec<'T> -> Vec<'T>) x : Vec<'T> =
+    let curl (f: Vector<'T> -> Vector<'T>) x : Vector<'T> =
         evalAndCurl f x |> snd
 
     /// Original value and divergence of a vector-to-vector function `f`, at point `x`. Defined only for functions with a square Jacobian matrix.
-    let evalAndDivergence (f: Vec<'T> -> Vec<'T>) x =
+    let evalAndDivergence (f: Vector<'T> -> Vector<'T>) x =
         let v, j = evalAndJacobian f x
         //if j.Rows <> j.Cols then ErrorMessages.InvalidArgDiv()
         v, DT.Trace j
 
     /// Divergence of a vector-to-vector function `f`, at point `x`. Defined only for functions with a square Jacobian matrix.
-    let divergence (f: Vec<'T> -> Vec<'T>) x : Scalar<'T> =
+    let divergence (f: Vector<'T> -> Vector<'T>) x : Scalar<'T> =
         evalAndDivergence f x |> snd
 
     /// Original value, curl, and divergence of a vector-to-vector function `f`, at point `x`. Supported only for functions with a three-by-three Jacobian matrix.
-    let evalAndCurlAndDivergence (f: Vec<'T> -> Vec<'T>) x =
+    let evalAndCurlAndDivergence (f: Vector<'T> -> Vector<'T>) x =
         let v, j = evalAndJacobian f x
         //if (j.Rows, j.Cols) <> (3, 3) then ErrorMessages.InvalidArgCurlDiv()
         v, DT.Stack [|j.[1, 2] - j.[2, 1]; j.[2, 0] - j.[0, 2]; j.[0, 1] - j.[1, 0]|], trace j
 
     /// Curl and divergence of a vector-to-vector function `f`, at point `x`. Supported only for functions with a three-by-three Jacobian matrix.
-    let curlAndDivergence (f: Vec<'T> -> Vec<'T>) x : Vec<'T> * Scalar<'T> =
+    let curlAndDivergence (f: Vector<'T> -> Vector<'T>) x : Vector<'T> * Scalar<'T> =
         evalAndCurlAndDivergence f x |> (fun (_,b,c) -> b,c)
 
     /// Convert the input to an array if possible
