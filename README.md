@@ -255,7 +255,7 @@ LiveCheck for a vector addition:
 LiveCheck for a DNN:
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/7204669/52525657-ecc36d80-2ca4-11e9-9a37-3bd2d1841618.gif" width="512"  title="LiveCheck example for vectors">
+  <img src="https://user-images.githubusercontent.com/7204669/52758231-6c33a280-2fff-11e9-9098-2c47b60f71fe.gif" width="512"  title="LiveCheck example for vectors">
 </p>
 
 
