@@ -20,8 +20,8 @@ module FirstLiveCheck =
     let f x shift = DT.Sum(x * x, [| 1 |]) + v shift
 
     [<LiveCheck>]
-    let check1() = f (DT.Dummy [ Dim.Named "Size1" 10;  Dim.Named "Size2" 100]) 3.0
-
+    let check1() = f (DT.Dummy (Shape [ Dim.Named "Size1" 10;  Dim.Named "Size2" 100 ])) 3.0
+     
 module PlayWithFM = 
     
     let f x = 
@@ -75,16 +75,16 @@ module GradientDescent =
     // Gradient descent
     let step f xs =   
         // Evaluate to output values 
-        xs - v rate * DT.diff f xs |> DT.Eval
-
-    let train f initial steps = 
-        initial |> Seq.unfold (fun pos -> Some (pos, step f pos)) |> Seq.truncate steps 
+        xs - v rate * DT.diff f xs
+    
+    let train f initial numSteps = 
+        initial |> Seq.unfold (fun pos -> Some (pos, step f pos  |> DT.Eval)) |> Seq.truncate numSteps 
 
 module GradientDescentExample =
 
     // A numeric function of two parameters, returning a scalar, see
     // https://en.wikipedia.org/wiki/Gradient_descent
-    let f (xs: Vec) : Scalar = 
+    let f (xs: Vector) : Scalar = 
         sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * -cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
 
     // Pass this Define a numeric function of two parameters, returning a scalar
@@ -131,7 +131,7 @@ module ModelExample =
     let validationData = makeData validationSize |> prepare
  
     /// Evaluate the model for input and coefficients
-    let model (xs: VecBatch, coeffs: ScalarBatch) = 
+    let model (xs: Vectors, coeffs: Scalars) = 
         DT.Sum (xs * coeffs,axis= [| 1 |])
            
     let meanSquareError (z: DT<double>) tgt = 
@@ -152,11 +152,11 @@ module ModelExample =
            
     [<LiveCheck>]
     let check1() = 
-        let TrainingSz = Dim.Named "TrainingSz" 100
+        let DataSz = Dim.Named "DataSz" 100
         let ModelSz = Dim.Named "ModelSz" 10
-        let coeffs = DT.Dummy [ ModelSz ]
-        let xs = DT.Dummy [ TrainingSz; ModelSz ]
-        let y = DT.Dummy [ TrainingSz ]
+        let coeffs = DT.Dummy (Shape [ ModelSz ])
+        let xs = DT.Dummy (Shape [ DataSz; ModelSz ])
+        let y = DT.Dummy (Shape [ DataSz ])
         train coeffs (xs, y) 1  |> Seq.last
 
     let initialCoeffs = vec [ for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize ]
@@ -174,7 +174,7 @@ module ODEs =
         let α, β, δ, γ = p.[0], p.[1], p.[2], p.[3]
         let dx = α*x - β*x*y
         let dy = -δ*y + γ*x*y 
-        DT.Stack [dx; dy]
+        DT.Pack [dx; dy]
 
     let u0 = vec [1.0; 1.0]
     let tspan = (0.0, 10.0)
@@ -183,9 +183,42 @@ module ODEs =
     //let sol = solve(prob, Tsit5())
     //sol |> Chart.Lines 
 
-module NeuralTransferFragments =
+module GradientDescentC =
+    // mucking about with model preparation/compilation
 
-    let name = "a"
+    // Note, the rate in this example is constant. Many practical optimizers use variable
+    // update (rate) - often reducing - which makes them more robust to poor convergence.
+    let rate = 0.005
+
+    // Gradient descent
+    let step f xs =   
+        // Evaluate to output values 
+        xs - v rate * DT.diff f xs
+    
+    let stepC f inputShape = DT.Preprocess (step f, inputShape)
+
+    let trainC f inputShape = 
+        let stepC = stepC f inputShape
+        fun initial numSteps -> initial |> Seq.unfold (fun pos -> Some (pos, stepC pos)) |> Seq.truncate numSteps 
+
+module GradientDescentExampleC =
+
+    // A numeric function of two parameters, returning a scalar, see
+    // https://en.wikipedia.org/wiki/Gradient_descent
+    let f (xs: Vector) : Scalar = 
+        sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * -cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
+
+    // Pass this Define a numeric function of two parameters, returning a scalar
+    let trainC = GradientDescentC.trainC f (shape [ 2 ])
+
+    let train numSteps = trainC (vec [ -0.3; 0.3 ]) numSteps
+
+    [<LiveCheck>] 
+    let check1() = train 4 |> Seq.last 
+    
+    let results = train 200 |> Seq.last
+
+module NeuralTransferFragments =
 
     let instance_norm (input, name) =
         use __ = DT.WithScope(name + "/instance_norm")
@@ -196,38 +229,22 @@ module NeuralTransferFragments =
         let normalized = (input - mu) / sqrt (sigma_sq + epsilon)
         normalized * scale + shift 
 
-    let conv_init_vars (out_channels:int, filter_size:int, is_transpose: bool, name) =
-        let weights_shape = 
-            if is_transpose then
-                Shape.NoFlex [| Dim.Known filter_size; Dim.Known filter_size; Dim.Known out_channels; Dim.Inferred |]
-            else
-                Shape.NoFlex [| Dim.Known filter_size; Dim.Known filter_size; Dim.Inferred; Dim.Known out_channels |]
-        let truncatedNormal = DT.TruncatedNormal(weights_shape)
-        DT.Variable (truncatedNormal * v 0.1, name + "/weights")
+    let conv_layer (out_channels, filter_size, stride, name) input = 
+        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights")
+        let x = DT.Conv2D (input, filters, out_channels, filter_size=filter_size, stride=stride)
+        instance_norm (x, name)
 
-    let conv_layer (out_channels, filter_size, stride, is_relu, name) input = 
-        let filters = conv_init_vars (out_channels, filter_size, false, name)
-        let x = DT.Conv2D (input, filters, stride=stride)
-        let x = instance_norm (x, name)
-        if is_relu then 
-             relu x 
-        else 
-             x 
-
-    let conv2D_transpose (filter, stride) input = 
-        DT.Conv2DBackpropInput(filter, input, stride, padding = "SAME")
-  
-    let conv_transpose_layer (num_filters, filter_size, stride, name) input =
-        let filters = conv_init_vars (num_filters, filter_size, true, name)
-        let x = instance_norm (conv2D_transpose (filters, stride) input, name)
-        relu x
+    let conv_transpose_layer (out_channels, filter_size, stride, name) input =
+        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights")
+        let x = DT.Conv2DBackpropInput(filters, input, out_channels, filter_size=filter_size, stride=stride, padding="SAME")
+        instance_norm (x, name)
 
     let to_pixel_value (input: DT<double>) = 
         tanh input * v 150.0 + (v 255.0 / v 2.0) 
 
     let residual_block (filter_size, name) input = 
-        let tmp = conv_layer (128, filter_size, 1, true, name + "_c1") input
-        let tmp2 = conv_layer (128, filter_size, 1, false, name + "_c2") tmp
+        let tmp = conv_layer (128, filter_size, 1, name + "_c1") input  |> relu
+        let tmp2 = conv_layer (128, filter_size, 1, name + "_c2") tmp
         input + tmp2 
 
     let clip min max x = 
@@ -236,24 +253,24 @@ module NeuralTransferFragments =
     // The style-transfer neural network
     let style_transfer input = 
         input 
-        |> conv_layer (32, 9, 1, true, "conv1")
-        |> conv_layer (64, 3, 2, true, "conv2")
-        |> conv_layer (128, 3, 2, true, "conv3")
+        |> conv_layer (32, 9, 1, "conv1") |> relu
+        |> conv_layer (64, 3, 2, "conv2") |> relu
+        |> conv_layer (128, 3, 2, "conv3") |> relu
         |> residual_block (3, "resid1")
         |> residual_block (3, "resid2")
         |> residual_block (3, "resid3")
         |> residual_block (3, "resid4")
         |> residual_block (3, "resid5")
-        |> conv_transpose_layer (64, 3, 2, "conv_t1") 
-        |> conv_transpose_layer (32, 3, 2, "conv_t2")
-        |> conv_layer (3, 9, 1, false, "conv_t3")
+        |> conv_transpose_layer (64, 3, 2, "conv_t1") |> relu
+        |> conv_transpose_layer (32, 3, 2, "conv_t2") |> relu
+        |> conv_layer (3, 9, 1, "conv_t3")
         |> to_pixel_value
         |> clip 0.0 255.0
         |> DT.Eval 
 
     [<LiveCheck>]
     let check1() = 
-        let dummyImages = DT.Dummy [ Dim.Named "BatchSz" 10; Dim.Named "H" 474;  Dim.Named "W" 712; Dim.Named "Channels" 3 ]
+        let dummyImages = DT.Dummy (Shape [ Dim.Named "BatchSz" 10; Dim.Named "H" 474;  Dim.Named "W" 712; Dim.Named "Channels" 3 ])
         style_transfer dummyImages
 
     

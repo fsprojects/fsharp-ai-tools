@@ -428,11 +428,6 @@ type Dimension(value : int64 option) =
 
     member this.Value = value
     
-    static member op_Implicit (dimension: Dimension) : int = 
-        match dimension.Value with 
-        | Some(x) -> int x 
-        | None -> raise(ValueError("Unknown dimension"))
-
     static member Unknown = unknownDimension
 
     interface IFSIPrint with
@@ -626,9 +621,7 @@ type Dimension(value : int64 option) =
     static member op_Implicit (d : int64 option) : Dimension = match d with | None -> Dimension.Unknown | _ -> Dimension(d)
 
     static member op_Explicit (d : Dimension) : int64 = match d.Value with | None -> -1L | Some(x) -> x
-
-    // NOTE This does not seem to work??
-    //static member op_Explicit (d : Dimension) : int32 = match d.Value with | None -> -1 | Some(x) -> int32 x
+    static member op_Explicit (dimension: Dimension) : int = match dimension.Value with None -> -1 | Some(x) -> int x 
 
 /// <summary>
 /// Represents the shape of a tensor, it describes how many dimensions the tensor has in a given axis
