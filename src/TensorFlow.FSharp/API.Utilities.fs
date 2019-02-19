@@ -139,7 +139,8 @@ type Coding() =
                 yield byte ((unsigned &&& (B - 1L)) ||| B)
                 unsigned <- unsigned >>> 7
                 position <- position + 1
-        |]
+            yield byte unsigned
+        |] 
 
     static member DecodeVarInt32(bytes : byte[]) : (int*int) = 
         // TODO double check this there may be errors introduced by casting
@@ -164,7 +165,7 @@ type Proto() =
     /// <summary>
     /// Writes `message` to the specified file.
     /// </summary>
-    /// <param name="directory">Directoryh in which to write the file.</param>
+    /// <param name="directory">Directory in which to write the file.</param>
     /// <param name="filename">Name of the file.</param>
     /// <param name="message">ProtoBuf message to write.</param>
     /// <param name="asText">Boolean value indicating wheter to serialize the ProtoBuf message in the human-friendly text format, or in the more efficent binary format.</param>

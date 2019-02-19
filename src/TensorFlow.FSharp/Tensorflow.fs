@@ -7,7 +7,7 @@ open System.Runtime.InteropServices
 open TensorFlow.FSharp.Utils
 open FSharp.NativeInterop
 
-#nowarn "9" "86"
+#nowarn "9" "86" "51"
 
 type Dim = TensorFlow.FSharp.Proto.TensorShapeProto.Dim
 
@@ -140,11 +140,11 @@ type TFCode =
 module internal TFString = 
     // extern size_t TF_StringEncode (const char *src, size_t src_len, char *dst, size_t dst_len, TF_Status *status)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern size_t TF_StringEncode (byte* src, size_t src_len, sbyte* dst, size_t dst_len, TF_Status status)
+    extern size_t TF_StringEncode (byte* src, size_t src_len, byte* dst, size_t dst_len, TF_Status status)
 
     // extern size_t TF_StringDecode (const char *src, size_t src_len, const char **dst, size_t *dst_len, TF_Status *status)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
-    extern size_t TF_StringDecode (sbyte* src, size_t src_len, IntPtr* dst, size_t* dst_len, TF_Status status)
+    extern size_t TF_StringDecode (byte* src, size_t src_len, IntPtr* dst, size_t* dst_len, TF_Status status)
 
     // extern size_t TF_StringEncodedSize (size_t len)
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
@@ -1082,6 +1082,12 @@ module TensorExtension =
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     extern TF_Tensor TF_AllocateTensor (TFDataType dataType, IntPtr zeroDim, int num_dims, size_t len)
 
+    // NOTE: PInvokes will probably be moved to their own modules to support GPU/CPU lib indirection
+    module TFTensor = 
+        // extern TF_Tensor * TF_AllocateTensor (TF_DataType, const int64_t *dims, int num_dims, size_t len)
+        [<DllImport (NativeBinding.TensorFlowLibrary)>]
+        extern TF_Tensor TF_AllocateTensor (uint32 dataType, int64 [] dims, int num_dims, size_t len)
+
     type TFTensor with
 
         static member SetupTensor (dt : TFDataType, shape : TFShape, data : Array, start : int, count : int, size : int) : IntPtr =
@@ -1091,28 +1097,95 @@ module TensorExtension =
             | None -> failwith "Shape %s is not fully specified"
 
         // Convenience, should I add T[,] and T[,,] as more convenience ones?
-        /// <summary>
         /// Creates a single-dimension tensor from a byte buffer.  This is different than creating a tensor from a byte array that produces a tensor with as many elements as the byte array.
-        /// </summary>
         static member CreateString (buffer : byte []) : TFTensor =
-          if box buffer = null then raise(ArgumentNullException ("buffer"))
-          //
-          // TF_STRING tensors are encoded with a table of 8-byte offsets followed by
-          // TF_StringEncode-encoded bytes.
-          //
-          let size = TFString.TF_StringEncodedSize (UIntPtr(uint64 buffer.Length))
-          let handle = TF_AllocateTensor (TFDataType.String, IntPtr.Zero, 0, UIntPtr((uint64(size) + 8uL)))
-      
-          // Clear offset table
-          let dst = TF_TensorData (handle)
-          Marshal.WriteInt64 (dst, 0L)
-          use status = new TFStatus()
-          use src = fixed &buffer.[0]
-          TFString.TF_StringEncode (src, UIntPtr(uint64 buffer.Length), dst.Add(8) |> NativePtr.ofNativeInt<int8>, size, status.Handle) |> ignore
-          if status.Ok then
-              new TFTensor (handle)
-          else box null :?> TFTensor
+            if box buffer = null then raise(ArgumentNullException ("buffer"))
+            // TF_STRING tensors are encoded with a table of 8-byte offsets followed by TF_StringEncode-encoded bytes.
+            // [offset1, offset2,...,offsetn, s1size, s1bytes, s2size, s2bytes,...,snsize,snbytes]
+            let size = TFString.TF_StringEncodedSize (UIntPtr(uint64 buffer.Length))
+            let handle = TF_AllocateTensor (TFDataType.String, IntPtr.Zero, 0, UIntPtr((uint64(size) + 8uL)))
+            // Clear offset table
+            let dst = TF_TensorData (handle)
+            Marshal.WriteInt64 (dst, 0L)
+            use status = new TFStatus()
+            use src = fixed &buffer.[0]
+            TFString.TF_StringEncode (src, UIntPtr(uint64 buffer.Length), dst.Add(8) |> NativePtr.ofNativeInt<byte>, size, status.Handle) |> ignore
+            if status.Ok then
+                new TFTensor (handle)
+            else box null :?> TFTensor
+            
+        static member DecodeString(tensor : TFTensor) =
+            if box tensor = null then raise (ArgumentNullException "tensor")
+            // TF_STRING tensors are encoded with a table of 8-byte offsets followed by TF_StringEncode-encoded bytes.
+            // [offset1, offset2,...,offsetn, s1size, s1bytes, s2size, s2bytes,...,snsize,snbytes]
+            let src = TF_TensorData(tensor.Handle)
+            use status = new TFStatus()
+            let mutable dst = IntPtr.Zero
+            let mutable dstLen = UIntPtr.Zero
+            TFString.TF_StringDecode(src.Add(8) |> NativePtr.ofNativeInt, tensor.TensorByteSize.Sub(8), &&dst, &&dstLen, status.Handle) |> ignore
+            let buffer = Array.zeroCreate<byte> (int dstLen)
+            Marshal.Copy(dst, buffer, 0, buffer.Length)
+            if status.Ok then
+                buffer
+            else box null :?> byte[]
 
+        /// Creates a multi-dimension tensor from an array of byte buffer. The bytes for string[i] are represented as buffer[i][:]
+        static member CreateString(buffer : byte[][], shape : TFShape) = 
+            if box buffer = null then raise(ArgumentNullException ("buffer"))
+            // TF_STRING tensors are encoded with a table of 8-byte offsets followed by TF_StringEncode-encoded bytes.
+            // [offset1, offset2,...,offsetn, s1size, s1bytes, s2size, s2bytes,...,snsize,snbytes]
+            let size = buffer |> Array.sumBy (fun x -> int <| TFString.TF_StringEncodedSize(UIntPtr(uint64 x.Length)))
+            let totalSize = size + buffer.Length * 8
+            let handle = TFTensor.TF_AllocateTensor(uint32 TFDataType.String, shape.ToLongArray(), shape.Dims.Length, UIntPtr(uint64 totalSize))
+            // Clear offset table
+            let mutable offset = 0uL
+            let mutable pOffset = TF_TensorData(handle)
+            let mutable dst = pOffset.Add(buffer.Length * 8)
+            let dstLimit = pOffset.Add(totalSize)
+            use status = new TFStatus()
+            for i = 0 to buffer.Length - 1 do
+                if status.Ok then
+                    Marshal.WriteInt64(pOffset, int64 offset)
+                    use src = fixed &buffer.[i].[0]
+                    let written = TFString.TF_StringEncode(src, UIntPtr(uint64 buffer.[i].Length), dst |> NativePtr.ofNativeInt, UIntPtr(uint64(dstLimit.Sub(int64 dst))), status.Handle)
+                    pOffset <- pOffset.Add(8)
+                    dst <- dst.Add(int written)
+                    offset <- offset + uint64 written
+            if status.Ok then
+                new TFTensor(handle)
+            else box null :?> TFTensor
+        
+        /// Converts a multi-dimension tensor into a byte buffer array. The byte array can be further decoded into strings using appropriate encoding scheme e.g. "UTF8"
+        static member DecodeMultiDimensionString(tensor : TFTensor) =
+            if box tensor = null then raise(ArgumentNullException "tensor")
+            // TF_STRING tensors are encoded with a table of 8-byte offsets followed by TF_StringEncode-encoded bytes.
+            // [offset1, offset2,...,offsetn, s1size, s1bytes, s2size, s2bytes,...,snsize,snbytes]
+            let size = int (tensor.Shape |> Array.fold (*) 1L)
+            let mutable src = TF_TensorData(tensor.Handle)
+            let srcLen = src.ToInt64() + int64(tensor.TensorByteSize)
+            src <- src.Add(size * 8)
+            use status = new TFStatus()
+            let buffers = 
+                [|
+                    for i = 0 to size - 1 do
+                        if status.Ok then
+                            let mutable dst = IntPtr.Zero
+                            let mutable dstLen = UIntPtr.Zero
+                            let read = TFString.TF_StringDecode(src |> NativePtr.ofNativeInt, UIntPtr(uint64 (srcLen - src.ToInt64())), &&dst, &&dstLen, status.Handle)
+                            if status.Ok then
+                                let buffer = Array.zeroCreate<byte> (int dstLen)
+                                Marshal.Copy(dst, buffer, 0, buffer.Length)
+                                src <- src.Add(int read)
+                                yield buffer
+                |]
+            if status.Ok then 
+                buffers
+            else box null :?> byte[][]
+                        
+
+
+
+            
 /// <summary>
 /// A grouping of operations with defined inputs and outputs.
 /// Once created and added to graphs, functions can be invoked by creating an

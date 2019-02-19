@@ -274,7 +274,7 @@ type TFTensor internal (handle: IntPtr) =
                 | TFDataType.Bool
                 | TFDataType.Complex128 -> target.SetValue (value, idx)
                 | TFDataType.String -> 
-                    raise(NotImplementedException ("String decoding not implemented for tensor vecotrs yet"))
+                    raise(NotImplementedException ("String decoding not implemented for tensor vectors yet"))
                 | _ -> raise(NotImplementedException ())
                 idx.[level] <- idx.[level] + 1
 
@@ -901,6 +901,5 @@ type TFTensor internal (handle: IntPtr) =
     /// array.
     /// </remarks>
     static member op_Implicit (array: Array) = new TFTensor (array)
-  
   
   

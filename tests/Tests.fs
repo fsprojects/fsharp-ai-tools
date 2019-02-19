@@ -402,5 +402,46 @@ let ``Test Parameters With Indexes`` () =
     if value.[0] <> 8 || value.[1] <> 6 || value.[2] <> 4 || value.[3] <> 2 then
         Assert.Fail("Expected 8, 6, 4, 2")
     
+let toBytes (x:string) = System.Text.Encoding.UTF8.GetBytes x
+let fromBytes x = System.Text.Encoding.UTF8.GetString x
 
-        
+[<Test>]
+let ``String Tests with Multi Dim String Tensor As Input Output`` () =
+    use graph = new TFGraph()
+    use session = new TFSession(graph)
+    let W = graph.Placeholder(TFDataType.String, new TFShape(-1,2))
+    let identityW = graph.Identity(W)
+    let dataW = [|[|"This is fine"; "That's ok."|]; [|"This is fine.";"That's ok."|]|]
+    let bytes = dataW |> Array.collect id |> Array.map toBytes
+    let tensorW = TFTensor.CreateString(bytes, new TFShape(2,2))
+    let outputTensor = session.Run([|W|],[|tensorW|],[|identityW|])
+    let outputW = TFTensor.DecodeMultiDimensionString(outputTensor.[0])
+    Assert.AreEqual(dataW.[0].[0], fromBytes outputW.[0])
+    Assert.AreEqual(dataW.[0].[1], fromBytes outputW.[1])
+    Assert.AreEqual(dataW.[1].[0], fromBytes outputW.[2])
+    Assert.AreEqual(dataW.[1].[1], fromBytes outputW.[3])
+
+
+[<Test>]
+let ``String Test With Multi Dim String Tesnor As Input And Scala String As Output`` () =
+    use graph = new TFGraph()
+    use session = new TFSession(graph)
+    let X = graph.Placeholder(TFDataType.String, new TFShape(-1))
+    let delimiter = graph.Const(TFTensor.CreateString(toBytes "/"))
+    let indices = graph.Const(new TFTensor(0))
+    let (_,values,_) = graph.StringSplit(X,delimiter)
+    let Y = graph.ReduceJoin(values, indices, separator = " ")
+    let dataX = [|"Thank/you/very/much!."; "I/am/greatful/to/you.";"So/nice/of/you."|]
+    let bytes = dataX |> Array.map toBytes
+    let tensorX = TFTensor.CreateString(bytes, TFShape(3))
+    let outputTensors = session.Run([|X|], [|tensorX|], [|Y|])
+    let outputY = TFTensor.DecodeString(outputTensors.[0])
+    Assert.AreEqual((dataX |> String.concat " ").Replace('/',' '), outputY)
+
+
+
+
+
+
+
+

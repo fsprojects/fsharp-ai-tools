@@ -145,6 +145,21 @@ type IntPtr with
 
     member this.Add(x:int64) = IntPtr(int64 this + x)
 
+    member this.Sub(x:int) = IntPtr(int64 this - int64 x)
+
+    member this.Sub(x:int64) = IntPtr(int64 this - x)
+
+type UIntPtr with 
+
+    member this.Add(x:int) = UIntPtr(uint64 this + uint64 x)
+
+    member this.Add(x:int64) = UIntPtr(uint64 this + uint64 x)
+
+    member this.Sub(x:int) = UIntPtr(uint64 this - uint64 x)
+
+    member this.Sub(x:int64) = UIntPtr(uint64 this - uint64 x)
+
+
 /// This interface enables FSI specific printing
 type IFSIPrint =
     abstract member ToFSIString : unit -> string
