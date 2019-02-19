@@ -1,20 +1,26 @@
-# FM: F# for AI Models  (WIP, currently executing using TensorFlow.FSharp)
-
-The repo contains:
+This repo is work-in-progress containing two things:
 
 1. TensorFlow.FSharp: An F# API for TensorFlow 
 
-2. FM: An F# DSL for writing numeric models. Models written in FM can be passed to 
-   optimization and training algorithms utilising automatic differentiation without
-   any change to modelling code, and can be executed on GPUs and TPUs using TensorFlow.
+2. FM: A prototype of a DSL "F# for AI Models". This currently executes using TensorFlow.FSharp but could have additional backends such as DiffSharp.
 
-3. Experimental tooling for interactive tensor shape-checking, inference, tooltips and other nice things. 
+# TensorFlow.FSharp
+
+See "src" and "tests" directory. Some examples under "examples".
+
+# FM: F# for AI Models 
+
+This is an F# eDSL for writing numeric models. Models written in FM can be passed to 
+optimization and training algorithms utilising automatic differentiation without
+any change to modelling code, and can be executed on GPUs and TPUs using TensorFlow.
+
+There is also experimental tooling for interactive tensor shape-checking, inference, tooltips and other nice things. 
 
 This is a POC that it is possible to configure F# to be suitable for authoring AI models. We
 execute them as real, full-speed TensorFlow graphs, achieving cohabitation and win-win with the TF ecosystem.
 Live trajectory execution tooling can give added correctness guarantess interactively.
 
-# FM: F# for AI Models
+FM currently executes using TensorFlow.FSharp, which is why it's in this repo.
 
 The aim of FM is to support the authoring of numeric functions and AI models - including
 neural networks - in F# code. For example:
@@ -249,7 +255,7 @@ LiveCheck for a vector addition:
 LiveCheck for a DNN:
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/7204669/52525657-ecc36d80-2ca4-11e9-9a37-3bd2d1841618.gif" width="512"  title="LiveCheck example for vectors">
+  <img src="https://user-images.githubusercontent.com/7204669/52758231-6c33a280-2fff-11e9-9098-2c47b60f71fe.gif" width="512"  title="LiveCheck example for vectors">
 </p>
 
 
@@ -270,7 +276,7 @@ LiveCheck for a DNN:
 3. Start the tool and edit using experimental VS instance
 
        cd TensorFlow.FSharp\examples
-       ..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe --eval --writeinfo --watch --vshack --livechecksonly  dsl-live.fsx
+       ..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe --eval --writeinfo --watch --vshack --livechecksonly  --define:LIVECHECK dsl-live.fsx
 
        devenv.exe /rootsuffix RoslynDev
        (open dsl-live.fsx)
@@ -302,6 +308,8 @@ Then:
 
 # Roadmap - DSL
 
+* Reuse graphs (deal with shape variables)
+
 * Switch to using ported gradient code when it is available in core API
 
 * Hand-code or generate larger TF surface area in FM DSL
@@ -314,10 +322,35 @@ Then:
 
 * Add examples of how to do static graph building and analysis based on FCS and quotations, e.g. for visualization
 
+* Add DiffSharp as a backend
+
+* Add Torch as a backend
+
 * Performance testing
+
+* Improve debugging for DSL through __CALLER__DEBUG__ feature for F#
+
+# Roadmap - Live checking
+
+* Make it into an F# Anaylzer, including adding tooltips to F# analyzer design
+
+* Make it into a nuget you reference and start live checking from the script
 
 # Roadmap - F# language things to consider
 
 * Make use of `return` optional
 
 * Consider adding `0.5T` constants (for scalars that broadcast to tensors)
+
+* Remove `params` as a reserved keyword, possible some others too
+
+* Consider more overloading, e.g. overloading single keyword members
+
+* Optional and named arguments on module-defined functions
+
+* Consider having anonymous records all implement some base indicator interface (`IFSharpRecord`) or something
+
+* Consider making constraints `'T : (int|double|int64|single)` be exposed as a proper F# language feature
+
+
+

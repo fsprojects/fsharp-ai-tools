@@ -35,11 +35,11 @@ let graph = sess.Graph
 
 let weights_path = Path.Combine(pretrained_dir, sprintf "fast_style_weights_%s.npz" style)
 let weights = 
-            readFromNPZ((File.ReadAllBytes(weights_path)))
-            |> Map.toArray 
-            |> Array.map (fun (k,(metadata, arr)) -> 
-                k.Substring(0, k.Length-4), graph.Reshape(graph.Const(new TFTensor(arr)), graph.Const(TFShape(metadata.shape |> Array.map int64).AsTensor()))) 
-            |> Map.ofArray
+    readFromNPZ((File.ReadAllBytes(weights_path)))
+    |> Map.toArray 
+    |> Array.map (fun (k,(metadata, arr)) -> 
+        k.Substring(0, k.Length-4), graph.Reshape(graph.Const(new TFTensor(arr)), graph.Const(TFShape(metadata.shape |> Array.map int64).AsTensor()))) 
+    |> Map.ofArray
 
 //let input = graph.Placeholder(TFDataType.Float32, TFShape(1L,474L,712L,3L),"input")
 

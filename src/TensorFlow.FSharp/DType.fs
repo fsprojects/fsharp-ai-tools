@@ -167,7 +167,7 @@ module DTypeExtensions =
             elif t = typeof<bool>      then TFDataType.Bool
             elif t = typeof<uint16>    then TFDataType.UInt16
             elif t = typeof<Complex>   then TFDataType.Complex128
-            else raise(ArgumentOutOfRangeException ("t", sprintf "The given type could not be mapped to an existing TFDataType."))
+            else raise(ArgumentOutOfRangeException ("t", sprintf "The given type %A could not be mapped to an existing TFDataType." t))
         
         static member Double = TFDataType.Float64
         static member Single = TFDataType.Float32
