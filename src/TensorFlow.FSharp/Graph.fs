@@ -614,16 +614,25 @@ and TFGraph internal (handle) =
         | Some(op) -> op.[x.Index] = x
 
     /// <summary>
-    /// Returns the enumerator that returns all the Operations in a graph.
+    /// Returns the enumerable that returns all the Operations in a graph.
     /// </summary>
-    /// <returns>The enumerator.</returns>
-    member this.GetEnumerator () : IEnumerable<TFOperation> =
-        if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
-        let mutable token = IntPtr.Zero
-        Seq.unfold (fun _ -> 
-            match TF_GraphNextOperation (handle, &token) with
-            | operll when operll = IntPtr.Zero -> None
-            | operll -> Some(TFOperation(operll),())) ()
+    /// <returns>The enumerable.</returns>
+    interface IEnumerable<TFOperation> with
+        member this.GetEnumerator() : IEnumerator<TFOperation> = 
+            if handle = IntPtr.Zero then raise(ObjectDisposedException ("handle"))
+            let mutable token = IntPtr.Zero
+            (Seq.unfold (fun _ -> 
+                match TF_GraphNextOperation (handle, &token) with
+                | operll when operll = IntPtr.Zero -> None
+                | operll -> Some(TFOperation(operll),())) ()).GetEnumerator()
+        member this.GetEnumerator(): Collections.IEnumerator = 
+            (this :> IEnumerable<TFOperation>).GetEnumerator() :> Collections.IEnumerator
+
+    member this.AllVariables() : TFOperation[] = [| for x in this do if x.OpType = "VariableV2" then yield x |]
+    member this.AllVariableNames() : string[] = this.AllVariables() |> Array.map (fun x -> x.Name)
+
+//    member this.TrainalbeVariables() = failwith "todo"
+//    member this.TrainalbeVariableNames() = failwith "todo"
 
     /// <summary>
     ///  Returns the tensor shape for the specific output parameters as an array of longs.

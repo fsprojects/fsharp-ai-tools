@@ -1101,11 +1101,14 @@ module TensorExtension =
             let dst = TF_TensorData (handle)
             Marshal.WriteInt64 (dst, 0L)
             use status = new TFStatus()
-            use src = fixed &buffer.[0]
+            use src = fixed buffer
             TFString.TF_StringEncode (src, UIntPtr(uint64 buffer.Length), dst.Add(8) |> NativePtr.ofNativeInt<byte>, size, status.Handle) |> ignore
             if status.Ok then
                 new TFTensor (handle)
             else box null :?> TFTensor
+        
+        /// Creates a single-dimension tensor from a string.
+        static member CreateString(value : string) = TFTensor.CreateString(System.Text.UTF8Encoding.UTF8.GetBytes(value))
             
         static member DecodeString(tensor : TFTensor) =
             if box tensor = null then raise (ArgumentNullException "tensor")
@@ -1123,7 +1126,8 @@ module TensorExtension =
             else box null :?> byte[]
 
         /// Creates a multi-dimension tensor from an array of byte buffer. The bytes for string[i] are represented as buffer[i][:]
-        static member CreateString(buffer : byte[][], shape : TFShape) = 
+        static member CreateString(buffer : byte[][], ?shape : TFShape) = 
+            let shape = defaultArg shape (TFShape(buffer.Length))
             if box buffer = null then raise(ArgumentNullException ("buffer"))
             // TF_STRING tensors are encoded with a table of 8-byte offsets followed by TF_StringEncode-encoded bytes.
             // [offset1, offset2,...,offsetn, s1size, s1bytes, s2size, s2bytes,...,snsize,snbytes]
@@ -1139,15 +1143,19 @@ module TensorExtension =
             for i = 0 to buffer.Length - 1 do
                 if status.Ok then
                     Marshal.WriteInt64(pOffset, int64 offset)
-                    use src = fixed &buffer.[i].[0]
+                    use src = fixed buffer.[i]
                     let written = TFString.TF_StringEncode(src, UIntPtr(uint64 buffer.[i].Length), dst |> NativePtr.ofNativeInt, UIntPtr(uint64(dstLimit.Sub(int64 dst))), status.Handle)
-                    pOffset <- pOffset.Add(8)
                     dst <- dst.Add(int written)
                     offset <- offset + uint64 written
+                    pOffset <- pOffset.Add(8)
             if status.Ok then
                 new TFTensor(handle)
             else box null :?> TFTensor
         
+        /// Creates a multi-dimension tensor from strings.
+        static member CreateString(values : string[], ?shape : TFShape) = 
+            TFTensor.CreateString(values |> Array.map (fun x -> System.Text.UTF8Encoding.UTF8.GetBytes(x)), ?shape = shape)
+
         /// Converts a multi-dimension tensor into a byte buffer array. The byte array can be further decoded into strings using appropriate encoding scheme e.g. "UTF8"
         static member DecodeMultiDimensionString(tensor : TFTensor) =
             if box tensor = null then raise(ArgumentNullException "tensor")

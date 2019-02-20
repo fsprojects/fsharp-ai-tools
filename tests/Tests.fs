@@ -4,6 +4,7 @@ open TensorFlow.FSharp
 open TensorFlow.FSharp.Operations
 open System.Runtime.CompilerServices
 open System
+open System.IO
 open System.Runtime.InteropServices
 
 //open TensorFlow.FSharp.RandomOps
@@ -411,7 +412,7 @@ let ``String Tests with Multi Dim String Tensor As Input Output`` () =
     use session = new TFSession(graph)
     let W = graph.Placeholder(TFDataType.String, new TFShape(-1,2))
     let identityW = graph.Identity(W)
-    let dataW = [|[|"This is fine"; "That's ok."|]; [|"This is fine.";"That's ok."|]|]
+    let dataW = [|[|""; "That's ok."|]; [|"This is fine.";"That's ok."|]|]
     let bytes = dataW |> Array.collect id |> Array.map toBytes
     let tensorW = TFTensor.CreateString(bytes, new TFShape(2,2))
     let outputTensor = session.Run([|W|],[|tensorW|],[|identityW|])
@@ -439,9 +440,30 @@ let ``String Test With Multi Dim String Tesnor As Input And Scala String As Outp
     Assert.AreEqual((dataX |> String.concat " ").Replace('/',' '), outputY)
 
 
-
-
-
-
-
-
+[<Test>]
+let ``Save and Restore`` () =
+    let dir = Path.Combine(Path.GetTempPath(),Path.GetFileNameWithoutExtension(Path.GetRandomFileName()))
+    Directory.CreateDirectory(dir) |> ignore
+    do
+        use graph = new TFGraph()
+        use sess = new TFSession(graph)
+        let A = graph.VariableV2(TFShape(3,4),TFDataType.Float32,name="A")
+        let B = graph.VariableV2(TFShape(3,4),TFDataType.Float32,name="B")
+        let C = graph.Add(A,B)
+        let assignA = graph.Assign(A,graph.Const(new TFTensor(Array2D.init 3 4 (fun x y -> float32(x * y)))))
+        let assignB = graph.Assign(B,graph.Const(new TFTensor(Array2D.init 3 4 (fun x y -> float32(x * y + 1)))))
+        sess.Run([||],[||],[|assignA;assignB|]) |> ignore
+        let saveOp = graph.SaveVariablesOp(Path.Combine(dir,"model"))
+        sess.Run([||],[||],[||],targetOpers=[|saveOp|]) |> ignore
+    do
+        use graph = new TFGraph()
+        use sess = new TFSession(graph)
+        let A = graph.VariableV2(TFShape(3,4),TFDataType.Float32,name="A")
+        let B = graph.VariableV2(TFShape(3,4),TFDataType.Float32,name="B")
+        let C = graph.Add(A,B)
+        let restoreOp = graph.Restore(Path.Combine(dir, "model"))
+        sess.Run([||],[||],[||],targetOpers=[|restoreOp|]) |> ignore
+        let res = sess.Run([||],[||],[|C|]).[0].GetValue() :?> Array
+        let expected = Array2D.init 3 4 (fun x y -> float32((x * y) * 2 + 1)) :> Array
+        Assert.AreEqual(expected, res)
+    Directory.Delete(dir,true)

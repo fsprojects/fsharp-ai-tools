@@ -62,7 +62,6 @@
     <Compile Include="Server.fs" /> 
     <Compile Include="Framework.Ops.fs" /> 
     <Compile Include="Funciton.fs" /> 
-    <Compile Include="CheckpointReader.fs" /> 
     <Compile Include="Session.fs" /> 
     <Compile Include="Operations.g.fs" /> 
     <Compile Include="OperationsExtras.fs" /> 
@@ -70,6 +69,7 @@
     <Compile Include="SessionExtras.fs" /> 
     <Compile Include="Operations.NN.fs" /> 
     <Compile Include="TensorflowGlobal.fs" /> 
+    <Compile Include="Checkpoints.fs" /> 
     <Compile Include="GradientRegistry.fs" /> 
     <Compile Include="HDF5ReaderWriter.fs" /> 
     <Compile Include="NPYReaderWriter.fs" /> 

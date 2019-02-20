@@ -6,6 +6,7 @@ open System.Collections.Generic
 open System.Collections.Concurrent
 open FSharp.NativeInterop
 open System.Runtime.InteropServices
+open ProtoBuf
 
 #nowarn "9"
 
@@ -175,4 +176,18 @@ type ConcurrentDictionary<'a,'b> with
         this.[index] <- b'
         b'
 
+[<ProtoContract>]
+type Any = {
+    [<ProtoMember(1)>]
+    type_url : string
+    [<ProtoMember(2)>]
+    value : byte[]
+}
 
+let loadAny = 
+    lazy
+        ProtoBuf.Meta.RuntimeTypeModel.Default.Add(typeof<Google.Protobuf.WellKnownTypes.Any>,false).SetSurrogate(typeof<Any>)
+
+let deserialize<'a> x = 
+    loadAny.Force()
+    Serializer.Deserialize<'a> x

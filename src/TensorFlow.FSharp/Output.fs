@@ -49,8 +49,8 @@ type TFInput(handle : TF_Operation, index : int) =
     /// </summary>
     member __.Index = index
 
-    member __.GetOutput (operIn : TF_Input) : TFOutput = 
-        let tfOut = TF_OperationInput operIn
+    member this.GetOutput () : TFOutput = 
+        let tfOut = TF_OperationInput this.Struct
         new TFOutput(tfOut.handle,tfOut.index)
 
     member __.TFDataType : TFDataType = TF_OperationInputType ({operation = handle; index = index})
@@ -207,6 +207,6 @@ module TFOperationExtensions =
 
         member this.Outputs = [|for i in 0..this.NumOutputs - 1 -> TFOutput(this.Handle,i)|]
 
-        member this.Inputs  = [|for i in 0..this.NumInputs - 1 -> TFInput(this.Handle,i)|]
+        member this.Inputs  = [|for i in 0..this.NumInputs - 1 -> TFInput(this.Handle,i).GetOutput()|]
 
         member this.TryGetOutput(i:int) = if i >= 0 && i < this.NumOutputs then Some(this.[i]) else None
