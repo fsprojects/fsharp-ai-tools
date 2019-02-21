@@ -352,5 +352,10 @@ Then:
 
 * Consider making constraints `'T : (int|double|int64|single)` be exposed as a proper F# language feature
 
+* Extension methods satisfying constraints
+
+* Make existing constraints generalizable independently of Extension methods satisfying constraints
+
+
 
 
