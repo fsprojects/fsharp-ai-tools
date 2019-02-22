@@ -1,4 +1,5 @@
-﻿module Tests
+﻿module TensorFow.FSharp.Tests
+
 open NUnit.Framework
 open TensorFlow.FSharp
 open TensorFlow.FSharp.Operations
@@ -6,12 +7,6 @@ open System.Runtime.CompilerServices
 open System
 open System.IO
 open System.Runtime.InteropServices
-
-//open TensorFlow.FSharp.RandomOps
-//open RandomOps
-
-[<Test>]
-let ``smoke test`` () = ()
 
 /// TensorFlow has some quirky naming rules that we need to mathc
 [<Test>]
