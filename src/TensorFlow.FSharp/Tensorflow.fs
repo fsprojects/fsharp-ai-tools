@@ -804,7 +804,8 @@ type TFShape(dims:Dimension[] option) =
     /// <exception cref="System.ArguementException">If key is outside the range of the dimensions</exception>
     member this.Item (key:int) = 
         match dims with
-        | Some(dims) -> dims.[key]
+        | Some(dims) -> 
+            dims.[key]
         | None -> Dimension.Unknown
     
 //    """Returns the value of a dimension or a shape, depending on the key.
@@ -841,12 +842,13 @@ type TFShape(dims:Dimension[] option) =
             if (start < 0 || finish < 0) || start >= finish then TFShape.Unknown
             else TFShape.UnknownShape(ndims = finish - start)
 
-    /// Returns the total number of elemetns, or none for incomplete shapes.
+    /// Returns the total number of elements, or none for incomplete shapes.
     member this.NumElements // TODO: should this e TryNumElements?
         with get() = 
             if this.IsFullyDefined  
             then Some(this.Dims |> Array.choose (fun x -> x.Value) |> Array.fold (*) 1L)
             else None
+
 
     ///<summary>Returns a `TensorShape` combining the information in `self` and `other`.
     ///

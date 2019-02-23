@@ -54,6 +54,11 @@ type TypeError(msg:string) =
 type GraphMismatchException(msg:string) =
     inherit Exception(msg)
 
+type ShapeMismatchException(msg:string) = 
+    inherit Exception(msg)
+
+type InvalidDataTypeException(msg:string) = 
+    inherit Exception(msg)
 
 // module op_def_registery = 
 //     let get_registered_ops() = failwith "todo"

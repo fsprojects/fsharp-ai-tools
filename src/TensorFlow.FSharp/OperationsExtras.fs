@@ -2,6 +2,7 @@
 module TensorFlow.FSharp.OperationExtras
 
 open System
+open TensorFlow.FSharp.Operations
 
 type TFGraph with
     /// <summary>
@@ -96,20 +97,20 @@ type TFGraph with
         graph.Mean (input, graph.ReduceDims (boolToInt8Cast(input), ?axis=axis), keep_dims, ?name=name);
 
 
-    // Helper method to create a variable and track it.
-    member graph.MakeVariable (initialValue : TFOutput, trainable : bool, ?name : string) : TFVariable =
-        use newScope = graph.NameScope(name, "Variable", initialValue)
-        let dtype = initialValue.TFDataType
-        let shape = graph.GetShape (initialValue)
-        let variableHandle = graph.VarHandleOp (dtype, shape)
-        use aScope = graph.NameScope("Assign")
-        let assignOp = graph.AssignVariableOp (variableHandle, initialValue)
-        use rScope = graph.NameScope("Read")
-        let readHandle = graph.ReadVariableOp (variableHandle, dtype)
-        let nv = new TFVariable (variableHandle.Struct, readHandle.Struct, assignOp.Handle)
-        if trainable then graph.AddTrainableVariable (nv)
-        graph.AddInitVariable (assignOp)
-        nv
+//    // Helper method to create a variable and track it.
+//    member graph.MakeVariable (initialValue : TFOutput, trainable : bool, ?name : string) : TFVariable =
+//        use newScope = graph.NameScope(name, "Variable", initialValue)
+//        let dtype = initialValue.TFDataType
+//        let shape = graph.GetShape (initialValue)
+//        let variableHandle = graph.VarHandleOp (dtype, shape)
+//        use aScope = graph.NameScope("Assign")
+//        let assignOp = graph.AssignVariableOp (variableHandle, initialValue)
+//        use rScope = graph.NameScope("Read")
+//        let readHandle = graph.ReadVariableOp (variableHandle, dtype)
+//        let nv = new TFVariable (variableHandle.Struct, readHandle.Struct, assignOp.Handle)
+//        if trainable then graph.AddTrainableVariable (nv)
+//        graph.AddInitVariable (assignOp)
+//        nv
 
     /// <summary>
     /// Variable node, with a starting initial value.
@@ -122,9 +123,9 @@ type TFGraph with
     /// Variables need to be initialized before the main execution so you will typically want to
     /// run the session on the variable
     /// </remarks>
-    member graph.Variable (initialValue : TFOutput, ?trainable : bool, ?name : string) =
-        let trainable = defaultArg trainable true
-        graph.MakeVariable (initialValue, trainable, ?name=name)
+//    member graph.Variable (initialValue : TFOutput, ?trainable : bool, ?name : string) =
+//        let trainable = defaultArg trainable true
+//        graph.MakeVariable (initialValue, trainable, ?name=name)
 
     /// <summary>
     /// Registers a specified variable as an initialization variable.
@@ -142,11 +143,11 @@ type TFGraph with
     /// at their convenience.
     /// </para>
     /// </remarks>
-    member graph.AddInitVariable (variable : TFOperation) =
-        graph.PendingInitVariables.Add (variable)
-
-    member graph.AddTrainableVariable (variable : TFVariable) =
-        graph.TrainingVariables.Add (variable)
+//    member graph.AddInitVariable (variable : TFOperation) =
+//        graph.PendingInitVariables.Add (variable)
+//
+//    member graph.AddTrainableVariable (variable : TFVariable) =
+//        graph.TrainingVariables.Add (variable)
 
     /// <summary>
     /// Gets the list of all registered global variables.
@@ -156,10 +157,10 @@ type TFGraph with
     /// After this method is invoked the list of pending initialization variables
     /// is cleared.
     /// </remarks>
-    member graph.GetGlobalVariablesInitializer () : TFOperation [] =
-        let res = graph.PendingInitVariables.ToArray ()
-        graph.PendingInitVariables.Clear () // NOTE: (matt) I'm not sure about this, I suppose it makes sense
-        res
+//    member graph.GetGlobalVariablesInitializer () : TFOperation [] =
+//        let res = graph.PendingInitVariables.ToArray ()
+//        graph.PendingInitVariables.Clear () // NOTE: (matt) I'm not sure about this, I suppose it makes sense
+//        res
 
     //
     // Converts a shape to a tensor, to a Output
@@ -518,3 +519,61 @@ type TFGraph with
         let rnd = graph.RandomUniform(shapeTensor, TFDataType.Float32, int64 graphSeed, int64 localSeed)
         let mul = graph.Mul(rnd, graph.Sub(maxvalTensor, minvalTensor))
         graph.Add(mul, minvalTensor, name = string ns)
+
+    /// <summary>
+    /// Outputs random values from a normal distribution
+    /// </summary>
+    /// <returns>A tensor of the specified shape filled with random truncated normal values.</returns>
+    /// <param name="shape">Shape of the output tensor.</param>
+    /// <param name="mean">The mean of the standard distribution.</param>
+    /// <param name="stddev">The standard deviation of the normal distribution.</param>
+    /// <param name="seed">Integer seed used for the random distribution, using the TensorFlow SetRandomSeed .</param>
+    /// <param name="operName">Operation name, optional.</param>
+    member graph.RandomTruncatedNormal (shape : TFShape, ?mean : float32, ?stddev : float32, ?seed : int, ?name : string) =
+        let mean = defaultArg mean 0.f
+        let stddev = defaultArg stddev 1.f
+        use ns = graph.NameScope(name, "RandomNormal")
+        let shapeTensor = graph.ShapeTensorOutput (shape)
+        let tmean = graph.Const(new TFTensor(mean), "mean")
+        let tstddev = graph.Const(new TFTensor(stddev), "stddev")
+        let graphSeed, localSeed = graph.GetRandomSeeds(?operationSeed=seed)
+        let rnd = graph.TruncatedNormal(shapeTensor, TFDataType.Float32, int64 graphSeed, int64 localSeed)
+        let mul = graph.Mul(rnd, tstddev)
+        graph.Add(mul, tmean,name= string ns)
+
+    /// NOTE: many options are missing here. This is a simplified interface to enable
+    ///       This is a bit of hack
+    member graph.GetVariable(name : string, dtype : TFDataType, shape :  TFShape, ?trainable : bool, ?initializer : TFShape -> TFOutput) =
+        let varName = sprintf "%s/%s" graph.CurrentNameScope name
+        let existingVar = graph.VariableStore.TryFind(varName)
+        match graph.Reuse,existingVar with 
+        | CreateNewOnly, Some(_) -> invalidArg "name" (sprintf "A variable '%s' is already exists" varName)
+        | ReuseExistingOnly, None -> invalidArg "name" (sprintf "A variable '%s' does not exists" varName)
+        | ReuseExistingOnly, Some(v) 
+        | ReuseOrCreateNew, Some(v)->  v
+        | CreateNewOnly, None 
+        | ReuseOrCreateNew, None -> 
+            /// NOTE: we intentionally don't create a new namescope as this would 'hide' reuse of variables where
+            /// we want to be explicit about it
+            let v = graph.VariableV2(shape, dtype,name=name)
+            let initializer = initializer |> Option.defaultWith (fun _ ->  fun shape -> graph.Zeros(shape,dtype))
+            let assignOp = graph.Assign(v,initializer(shape))
+            let trainable = defaultArg trainable true
+            graph.AddVariableToStore(varName,v)
+            graph.AddToCollections(v, [| yield GraphKeys.GLOBAL_VARIABLES; if trainable then yield GraphKeys.TRAINABLE_VARIABLES|])
+            graph.AddToCollections(assignOp, GraphKeys.INIT_OP)
+            v
+
+    member graph.GlobalVariablesInitializer() =
+        let assignOps = 
+            graph.GetCollections(GraphKeys.INIT_OP) |> Set.toArray
+            |> Array.map (fun (x:TFOutput) -> x.Operation)
+        use _deps = graph.WithDependencies(assignOps)
+        graph.NoOp()
+
+    member graph.GetGlobalVariables() =
+        graph.GetCollections(GraphKeys.GLOBAL_VARIABLES)
+
+    member graph.GetTrainableVariables() =
+        graph.GetCollections(GraphKeys.TRAINABLE_VARIABLES)
+

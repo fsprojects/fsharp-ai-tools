@@ -59,6 +59,14 @@ module DTypeExtensions =
             | TFDataType.Int8 | TFDataType.Int16 | TFDataType.Int32 | TFDataType.Int64 -> true
             | _ -> false
         
+        member this.IsUnsigned =
+            match this with
+            | TFDataType.UInt8 | TFDataType.UInt16 | TFDataType.UInt32 | TFDataType.UInt64 -> true
+            | _ -> false
+
+        member this.IsBoolean = this = TFDataType.Bool
+
+        
         member this.Name =
             match this with
             | TFDataType.Float16 -> "float16"

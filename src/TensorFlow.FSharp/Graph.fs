@@ -59,6 +59,23 @@ module TFImportGraphDefOptionsExternal =
     [<DllImport (NativeBinding.TensorFlowLibrary)>]
     extern TF_ImportGraphDefOptions TF_NewImportGraphDefOptions ()
 
+/// Enumeration of possible varaible reuse options, used by variable scopes and variable stores.
+/// The supported options are:
+///     - ReuseExistingOnly: Reuse exising variables only and throw an exception if no appropriate variable exists.
+///     - CreateNewOnly: Create new varaibles only and throw an exception if a varaible with the same name exists.
+///     - ReuseOrCreateNew: Reuse existing variables or create new ones, if no variable with the provided name exists.
+type Reuse = 
+    /// Reuse existing varaibles only and throw an exception if no appropriate variables exists.
+    | ReuseExistingOnly
+    /// Create new variables only and throw an exception if a variable with the same name exists.
+    | CreateNewOnly
+    /// Reuse existing variables or create new ones, if no variable with the provided name exists.
+    | ReuseOrCreateNew
+    member this.ReuseAllowed =
+        match this with
+        | ReuseExistingOnly | ReuseOrCreateNew -> true
+        | CreateNewOnly -> false
+
 /// Contains options that are used to control how graph importing works.
 type TFImportGraphDefOptions() =
     inherit TFDisposable(TFImportGraphDefOptionsExternal.TF_NewImportGraphDefOptions ())
@@ -98,6 +115,7 @@ type TFImportGraphDefOptions() =
     member this.SetPrefix (prefix : string) =
         if this.Handle = IntPtr.Zero then raise(ObjectDisposedException ("Handle"))
         TF_ImportGraphDefOptionsSetPrefix (this.Handle, prefix)
+
 
 
     /// <summary>
@@ -241,14 +259,13 @@ and GraphUnowned internal (handle:IntPtr) =
     // Nothing, we do not own the handle
     override this.NativeDispose (handle : TF_Status) = ()
 
+
 and NameScope(graph : TFGraph, ?name:string, ?defaultName:string, ?values:TFOutput[]) =
     static let VALID_SCOPE_NAME_REGEX = new Regex("^[A-Za-z0-9_.\\-/]*$", RegexOptions.Compiled)
     let values = defaultArg values [||]
     do
         if values.Length > 0 && name.IsNone && defaultName.IsNone then
             raise (ValueError(sprintf "Either name or defaultName needs to be set if values are provided"))
-
-            
 
     let name = name |> Option.orElse defaultName |> Option.defaultValue "" 
     let oldStack = graph.CurrentNameScope
@@ -299,12 +316,23 @@ and TFGraph internal (handle) =
     let assertNotFrozen() = Debug.Assert(not isFrozen,"This graph has already been frozen.")
     let mutable cleanupFunctions : (unit -> unit)[] = [||]
 
+    /// This is simplified variable_scope to enable porting of test code
+    let mutable variableStore : Map<string,TFOutput> = Map.empty
+    let mutable reuse = ReuseOrCreateNew
+
     let namesInUse = new DictionaryCount<string> ()
 
     let mutable seed = None
 
-    let pending_init_variables : List<TFOperation> = List<TFOperation>()
-    let trainable_variables : List<TFVariable> = List<TFVariable>()
+    /// NOTE: These are being replaced with 
+    //let pending_init_variables : List<TFOperation> = List<TFOperation>()
+    //let trainable_variables : List<TFVariable> = List<TFVariable>()
+
+    // NOTE: This is a temporary stand in..
+    let mutable globalVariables : Set<TFVariable> = set []
+
+    /// NOTE: We may need to include TFVarialbe in here??
+    let mutable collections : Map<string,Set<TFOutput>> = Map.empty
 
     let mutable lastId = 0
 
@@ -393,18 +421,19 @@ and TFGraph internal (handle) =
         cleanupFunctions |> Array.iter (fun x -> x())
         TF_DeleteGraph (handle)
 
-    member this.PendingInitVariables with get() = pending_init_variables
-    member this.TrainingVariables with get() = trainable_variables
+    member this.PendingInitVariables with get() = failwith "todo" //pending_init_variables
+    member this.TrainingVariables with get() = failwith "todo" //trainable_variables
 
     member this.IsFrozen = isFrozen
 
     /// Freezes this graph, meaning that no more ops can be added to it after a call to this function. This method is used
     /// to ensure that no operations are added to a graph when it is shared between mutliple threads
-    member this.Freeze() = isFrozen <- true
+    member this.Freeze() = 
+        failwith "todo - implement isFrozen check for ops"
+        isFrozen <- true
 
     // Unfreezes this graph
     member this.UnFreeze() = isFrozen <- false
-
 
 
     /// <summary>
@@ -629,7 +658,23 @@ and TFGraph internal (handle) =
             (this :> IEnumerable<TFOperation>).GetEnumerator() :> Collections.IEnumerator
 
     member this.AllVariables() : TFOperation[] = [| for x in this do if x.OpType = "VariableV2" then yield x |]
+
     member this.AllVariableNames() : string[] = this.AllVariables() |> Array.map (fun x -> x.Name)
+
+
+    member this.Collections with get() = collections and set(x) = collections <- x
+
+    member this.AddToCollections(output : TFOutput, [<ParamArray>] keys : string[]) =
+        collections <- 
+            keys |> Array.fold (fun xs key -> xs |> Map.addOrUpdate(key, set [output], fun x -> Set.union x (set [output]))) collections
+
+
+    member this.GetCollections([<ParamArray>] keys : string[]) = 
+        keys |> Array.fold (fun acc key -> Set.union acc (this.Collections.TryFind(key) |> Option.defaultValue (set[]))) (set [])
+
+        
+    //member this.GlobalVaraibles with get() = globalVariables and set(x) = globalVariables <- x
+
 
 //    member this.TrainalbeVariables() = failwith "todo"
 //    member this.TrainalbeVariableNames() = failwith "todo"
@@ -792,6 +837,26 @@ and TFGraph internal (handle) =
     member graph.NameScope (name:string, defaultName:string, [<ParamArray>] values : TFOutput[]) = new NameScope(graph, name, defaultName = defaultName, values = values)
     member graph.NameScope (name:string option, defaultName:string, [<ParamArray>] values : TFOutput[]) = new NameScope(graph, ?name = name, defaultName = defaultName, values = values)
     member graph.NameScope (name:string, [<ParamArray>] values : TFOutput[]) = new NameScope(graph, name, values = values)
+
+
+    member graph.Reuse with get() = reuse and set(x) = reuse <- x
+    member graph.VariableStore = variableStore
+    /// This should be temporary
+    member graph.AddVariableToStore(name : string, variable : TFOutput) =
+        variableStore <- variableStore.Add(name,variable)
+     
+    /// NOTE: This is temporary hack to get the API for the DSL working
+    member graph.VariableScope(name : string, ?reuse : Reuse) : IDisposable=
+        let oldScope = graph.CurrentNameScope
+        let oldReuse = graph.Reuse
+        graph.CurrentNameScope <- 
+            if graph.CurrentNameScope = "" then name
+            else sprintf "%s/%s" graph.CurrentNameScope name
+        reuse |> Option.iter (fun x -> graph.Reuse <- x)
+        {new IDisposable with
+             member this.Dispose(): unit = 
+                graph.CurrentNameScope <- oldScope
+                graph.Reuse <- oldReuse}
 
     /// This checks all of the following operations are contained in this graph
     /// This thorws a ValueError if operations that are not part of this graph are found

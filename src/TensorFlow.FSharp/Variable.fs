@@ -1,4 +1,5 @@
 namespace TensorFlow.FSharp
+/// NOTE: This will probably need to be fundamentally reworked
 //
 // TensorFlow.cs; Bindings to the TensorFlow C API for .NET
 // 
@@ -9,6 +10,7 @@ open System
 open System.Numerics
 open System.Runtime.InteropServices
 open System.Text
+
 
 /// <summary>
 /// The Variable class holds the Output nodes that are used to initialize, read and assign a value to a variable.   
@@ -68,3 +70,23 @@ type TFVariable internal (variableHandle : TF_Output, readHandle : TF_Output, as
     /// created Variables and expected the result to be the VariableOp.
     /// </remarks>
     static member op_Implicit (variable : TFVariable) : TFOutput = new TFOutput(variable.VariableOp)
+
+    interface IComparable with 
+        member this.CompareTo(x : obj) = 
+            if (x.GetType() <> this.GetType()) then -1
+            else (this :> IComparable<TFVariable>).CompareTo(x :?> TFVariable)
+
+    interface IComparable<TFVariable> with 
+        member this.CompareTo(other : TFVariable) =
+            let left = this.VariableOp.Struct.handle.ToInt64()
+            let right = other.VariableOp.Struct.handle.ToInt64()
+            if left <> right then
+                left.CompareTo(right)
+            else this.VariableOp.Struct.index.CompareTo(other.VariableOp.Struct.index)
+
+    override this.Equals(x:obj) = 
+        match x with
+        | :? TFVariable as other -> (this.VariableOp.Struct = other.VariableOp.Struct)
+        | _ -> false
+    
+    override this.GetHashCode() = this.VariableOp.Struct.GetHashCode()

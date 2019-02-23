@@ -114,18 +114,19 @@ let ``Basic Variables`` () =
             .Run(mul).GetValue()
     Assert.AreEqual(mulV,6s)
 
-[<Test>]
-let ``Test Variable`` =
-    use s = new TFSession()
-    let g = s.Graph
-    let initValue = g.Const(new TFTensor(1.5))
-    let increment = g.Const(new TFTensor(0.5))
-    let tfv = g.Variable(initValue)
-    // Not 100% on the following
-    let update = g.AssignVariableOp(tfv.VariableOp, g.Add(tfv.Read, increment))
-    for i = 0 to 4 do
-        let result = s.GetRunner().Fetch(tfv.Read).AddTarget(update).Run()
-        Assert.AreEqual(result, 1.5 + (float i * 0.5)) // there should not be floating point errors but ther may be
+// This tests and old verion of how variables work
+//[<Test>]
+//let ``Test Variable`` =
+//    use s = new TFSession()
+//    let g = s.Graph
+//    let initValue = g.Const(new TFTensor(1.5))
+//    let increment = g.Const(new TFTensor(0.5))
+//    let tfv = g.Variable(initValue)
+//    // Not 100% on the following
+//    let update = g.AssignVariableOp(tfv.VariableOp, g.Add(tfv.Read, increment))
+//    for i = 0 to 4 do
+//        let result = s.GetRunner().Fetch(tfv.Read).AddTarget(update).Run()
+//        Assert.AreEqual(result, 1.5 + (float i * 0.5)) // there should not be floating point errors but ther may be
 
 [<Test>]
 let ``Basic Multidimensional Array`` () =
@@ -467,3 +468,46 @@ let ``Save and Restore`` () =
         let expected = Array2D.init 3 4 (fun x y -> float32((x * y) * 2 + 1)) :> Array
         Assert.AreEqual(expected, res)
     Directory.Delete(dir,true)
+
+[<Test>]
+let ``VariableScope with initialization and re-use`` () =
+    let dir = Path.Combine(Path.GetTempPath(),Path.GetFileNameWithoutExtension(Path.GetRandomFileName()))
+    Directory.CreateDirectory(dir) |> ignore
+    do
+        use graph = new TFGraph()
+        use sess = new TFSession(graph)
+        let A1 = 
+            use vs = graph.VariableScope("A",Reuse.CreateNewOnly)
+            graph.GetVariable("v", TFDataType.Float32, TFShape(3,4))
+        let A1_reused = 
+            use vs = graph.VariableScope("A",Reuse.ReuseExistingOnly)
+            graph.GetVariable("v", TFDataType.Float32, TFShape(3,4))
+        Assert.AreEqual(A1, A1_reused)
+        let onesInitializer (shape : TFShape) = graph.Ones(shape)
+        let B = graph.GetVariable("B",TFDataType.Float32, TFShape(3,4),initializer = onesInitializer)
+        do
+            use vs = graph.VariableScope("A",Reuse.CreateNewOnly)
+            try
+                graph.GetVariable("v", TFDataType.Float32, TFShape(3,4)) |> ignore
+                Assert.Fail("Exception expected prior to this point for creating a new variable")
+            with _ -> () // this is supposed to happen
+        do
+            use vs = graph.VariableScope("A",Reuse.ReuseExistingOnly)
+            try
+                graph.GetVariable("v", TFDataType.Float32, TFShape(3,4)) |> ignore
+                Assert.Fail("Exception expected prior to this point for reusing existing variable")
+            with  _ -> () // this is supposed to happen
+        let initConst = graph.Const(new TFTensor(Array2D.init 3 4 (fun x y -> float32(x * y + 1))))
+        let C = graph.GetVariable("C", TFDataType.Float32, TFShape(3,4), initializer = fun _ -> initConst)
+        let D = [A1;B;C] |> Seq.reduce (fun x y -> graph.Add(x,y))
+        try
+            sess.Run([||],[||],[|D|]).[0].GetValue() :?> Array |> ignore
+            Assert.Fail("Expecting an uninitlized error")
+        with _ -> () // expected
+        let initOp = graph.GlobalVariablesInitializer()
+        for x in graph do
+            printfn "%s" x.Name
+        sess.Run([||],[||],[||], targetOpers = [|initOp|]) |> ignore
+        let res = sess.Run([||],[||],[|D|]).[0].GetValue() :?> Array
+        let expected = Array2D.init 3 4 (fun x y -> float32((x * y) + 2)) :> Array
+        Assert.AreEqual(expected, res)

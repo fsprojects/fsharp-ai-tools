@@ -56,6 +56,12 @@ module Map =
 
     let keys (x:Map<_,_>) = [|for KeyValue(k,v) in x -> k|]
 
+    // I Would like to replace this but I'm not sure on how to get the types to line up
+    let addOrUpdate(key : 'T, value : 'U, update : 'U -> 'U) (map : Map<'T,'U>) = 
+        match map.TryFind(key) with 
+        | None -> map.Add(key,value)
+        | Some(found) -> map.Add(key,update(found))
+
 module Enum =
 
     let castMap (f:'T->'b) (x:'c): 'd = LanguagePrimitives.EnumOfValue(f(LanguagePrimitives.EnumToValue x))
@@ -191,3 +197,6 @@ let loadAny =
 let deserialize<'a> x = 
     loadAny.Force()
     Serializer.Deserialize<'a> x
+
+type Math with
+    static member Sqrt(x : float32) = float32 (Math.Sqrt(float32 x))
