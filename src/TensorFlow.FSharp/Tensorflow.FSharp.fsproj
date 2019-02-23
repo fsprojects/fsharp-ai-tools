@@ -81,7 +81,7 @@
     <Compile Include="Operations.RandomOps.fs" /> 
     <Compile Include="IO.Events.fs" /> 
     <Compile Include="FSIPrettyPrinting.fs" />
-    <Compile Include="dsl.fs" />
+    <Compile Include="FM.fs" />
   </ItemGroup>
 
 </Project>
