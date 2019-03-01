@@ -133,7 +133,7 @@ let ``basic checks grad``() =
 [<Test>]
 let ``basic checks jacobian``() = 
     let f3e (x: double[]) = [| x.[0]*x.[1]; 2.0*x.[1]*x.[0] |] 
-    let f3 (x: DT<_>) = fm { return vec [1.0; 2.0] * x * DT.Reverse x } //[ x1*x2; 2*x2*x1 ] 
+    let f3 (x: DT<_>) = vec [1.0; 2.0] * x * DT.Reverse x //[ x1*x2; 2*x2*x1 ] 
     let df3 x = DT.jacobian f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
     let expected (x1, x2) = array2D [| [| x2; x1 |]; [| 2.0*x2; 2.0*x1 |] |]  
 
@@ -148,8 +148,42 @@ let ``basic checks jacobian``() =
     |> shouldEqual "wcevwo16" (expected (1.0, 2.0))
     // expect 
    
+[<Test>]
+let ``basic checks grad 2``() = 
+    let f3e (x: double[]) = x.[0]*x.[1] + 2.0*x.[1]*x.[0]
+    let f3 (x: DT<_>) = x.[0]*x.[1] + v 2.0*x.[1]*x.[0]
+    let g3 x = DT.grad f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
+    let expected (x0, x1) = [| 3.0*x1; 3.0*x0  |]
+
+    f3 (vec [1.0; 2.0])
+    |> DT.Eval
+    |> DT.toScalar
+    |> shouldEqual "wcevwo17" (f3e [| 1.0; 2.0 |])
+
+    g3 (vec [1.0; 2.0])
+    |> DT.Eval
+    |> DT.toArray
+    |> shouldEqual "wcevwo18" (expected (1.0, 2.0))
 
 (*
+
+[<Test>]
+let ``basic checks hessian``() = 
+    let f3e (x: double[]) = x.[0]*x.[1] + 2.0*x.[1]*x.[0]
+    let f3 (x: DT<_>) = x.[0]*x.[1] + v 2.0*x.[1]*x.[0]
+    let hf3 = DT.hessian f3 
+    let expected (x0, x1) = array2D [| [| 3.0*x1; 3.0*x0  |] |]
+
+    f3 (vec [1.0; 2.0])
+    |> DT.Eval
+    |> DT.toScalar
+    |> shouldEqual "wcevwo17" (f3e [| 1.0; 2.0 |])
+
+    hf3 (vec [1.0; 2.0])
+    |> DT.Eval
+    |> DT.toArray2D
+    |> shouldEqual "wcevwo18" (expected (1.0, 2.0))
+
 fm { use _ = DT.WithScope("foo")
          return vec [1.0; 2.0] + v 4.0 }
    // |> DT.Diff
