@@ -599,8 +599,7 @@ and DT internal (shape: Shape, nodeCount: int,
         | Some t -> t.GetValue()
         | None -> 
             if value.NodeCount < 10 then 
-                let v = DT.Run(value)
-                v
+                DT.Run(value)
             else
                 box (sprintf "%A" value.Shape + " (unevaluated)")
 
@@ -1527,15 +1526,20 @@ module DT =
         let g, h = gradAndHessian f x
         (f x, g, h)
 
+(*
+    // NOTE: not supported on TensorFlow due to use of C++ AddGradients only supporting
+    // first-order differentials 
+    // Message: TensorFlow.FSharp.TFException : No gradient defined for op: OnesLike. 
+
     /// Hessian of a vector-to-scalar function `f`, at point `x`. Forward-on-reverse AD.
-    let hessian (f: Vector<'T> -> Scalars<'T>) x : Matrix<'T> =
+    let hessian (f: DT<'T> -> Scalars<'T>) x : Matrices<'T> =
         jacobian (grad f) x
 
     /// Original value and Hessian of a vector-to-scalar function `f`, at point `x`. Forward-on-reverse AD.
     let evalAndHessian (f: Vector<'T> -> Scalars<'T>) x : Scalars<'T> * Matrix<'T> =
         (x |> f, hessian f x)
 
-(*
+
     /// Original value, gradient-vector product (directional derivative), and Hessian-vector product of a vector-to-scalar function `f`, at point `x`, along vector `v`. Reverse-on-forward AD.
     let gradAndHessianv' (f: DV<'T> -> D<'T>) x v =
         let gv, hv = evalAndGrad (fun xx -> gradv f xx v) x
@@ -1556,6 +1560,7 @@ module DT =
 
     let trace v = DT.Sum (DT.DiagPart v)
 
+(*
     /// Original value and Laplacian of a vector-to-scalar function `f`, at point `x`. Reverse-on-forward AD.
     let evalAndLaplacian (f: Vector<'T> -> Scalars<'T>) x : Scalars<'T> * Scalars<'T> = 
         let v, h = evalAndHessian f x
@@ -1564,6 +1569,7 @@ module DT =
     /// Laplacian of a vector-to-scalar function `f`, at point `x`. Reverse-on-forward AD.
     let laplacian (f: Vector<'T> -> Scalars<'T>) x : Scalars<'T> =
         evalAndLaplacian f x |> snd
+*)
 
     /// Original value and curl of a vector-to-vector function `f`, at point `x`. Supported only for functions with a three-by-three Jacobian matrix.
     let evalAndCurl (f: Vector<'T> -> Vector<'T>) x =
