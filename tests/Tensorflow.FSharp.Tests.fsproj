@@ -12,13 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="TensorFlow.FSharp.Proto">
-      <HintPath>..\lib\TensorFlow.FSharp.Proto.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
     <Reference Include="LinuxNativeWorkaround">
       <HintPath>..\lib\LinuxNativeWorkaround.dll</HintPath>
       <Private>true</Private>
+    </Reference>
+    <Reference Include="NumSharp.Core">
+      <HintPath>..\..\TensorFlow.NET\src\TensorFlowNET.Core\bin\Debug\netstandard2.0\NumSharp.Core.dll</HintPath>
     </Reference>
     <Reference Include="protobuf-net">
       <HintPath>..\lib\protobuf-net.dll</HintPath>
@@ -32,10 +31,14 @@
       <HintPath>..\lib\Google.Protobuf.dll</HintPath>
       <Private>true</Private>
     </Reference>
+    <Reference Include="TensorFlow.NET">
+      <HintPath>..\..\TensorFlow.NET\src\TensorFlowNET.Core\bin\Debug\netstandard2.0\TensorFlow.NET.dll</HintPath>
+    </Reference>
     <!--    <PackageReference Include="TensorFlowSharp" Version="1.11.0" /> -->
-    <PackageReference Include="Argu" Version="5.1.0" />
+    <PackageReference Include="Argu" Version="5.2.0" />
+    <PackageReference Include="NumSharp" Version="0.8.3" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />
-    <PackageReference Include="Google.Protobuf" Version="3.6.1" />
+    <PackageReference Include="Google.Protobuf" Version="3.7.0" />
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
     <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.200" />
     <PackageReference Update="FSharp.Core" Version="4.5.2" />
@@ -44,28 +47,12 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.6.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.9.0" />
     <PackageReference Include="NUnit" Version="3.9.0" />
-    <ProjectReference Include="..\src\TensorFlow.FSharp\TensorFlow.FSharp.fsproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\lib\libtensorflow.dll" Link="libtensorflow.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\lib\libtensorflow_framework.so" Link="libtensorflow_framework.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\lib\libtensorflow.so" Link="libtensorflow.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\lib\libtensorflow_framework.dylib" Link="libtensorflow_framework.dylib">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\lib\libtensorflow.dylib" Link="libtensorflow.dylib">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup> 
 
   <ItemGroup>
+    <None Include="..\..\TensorFlow.NET\src\TensorFlowNET.Core\bin\Debug\netstandard2.0\tensorflow.dll" Link="tensorflow.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="examples\chicago.jpg" />
     <None Include="examples\example_0.jpeg" />
     <None Include="examples\example_1.jpeg" />
@@ -73,6 +60,7 @@
     <None Include="examples\example_3.jpeg" />
     <None Include="examples\example_4.jpeg" />
     <None Include="examples\example_5.jpeg" />
+    <Compile Include="FFStyleVGGTensorFlowNet.fs" />
     <Compile Include="FFStyleVGG.fs" />
     <Compile Include="ResNet50.fs" />
     <Compile Include="Tests.fs" />

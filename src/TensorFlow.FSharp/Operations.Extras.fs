@@ -1,10 +1,12 @@
-[<AutoOpen>]
+﻿[<AutoOpen>]
 module TensorFlow.FSharp.OperationExtras
 
 open System
-open TensorFlow.FSharp.Operations
 
-type TFGraph with
+open Tensorflow.Operations
+
+
+type gen_ops with
     /// <summary>
     /// Creates a constant operation from a TFTensor or constant
     /// </summary>
@@ -576,4 +578,3 @@ type TFGraph with
 
     member graph.GetTrainableVariables() =
         graph.GetCollections(GraphKeys.TRAINABLE_VARIABLES)
-

@@ -29,12 +29,14 @@
       <HintPath>..\..\lib\protobuf-net.Reflection.dll</HintPath>
       <Private>true</Private>
     </Reference>
-    <PackageReference Include="Argu" Version="5.1.0" />
+    <Reference Include="TensorFlow.NET">
+      <HintPath>..\..\..\TensorFlow.NET\src\TensorFlowNET.Core\bin\Debug\netstandard2.0\TensorFlow.NET.dll</HintPath>
+    </Reference>
+    <PackageReference Include="Argu" Version="5.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
-    <PackageReference Include="NLog" Version="4.5.11" />
     <PackageReference Include="NLog.Extensions.Logging" Version="1.4.0" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />
-    <PackageReference Include="Google.Protobuf" Version="3.6.1" />
+    <PackageReference Include="Google.Protobuf" Version="3.7.0" />
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
     <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.200" />
     <PackageReference Update="FSharp.Core" Version="4.5.2" />
@@ -43,44 +45,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="TFNetWrapper.g.fs" />
     <None Include="nlog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Compile Include="Utils.fs" />
-    <Compile Include="API.Utilities.fs" />
-    <Compile Include="Platform.TFLogging.fs" />
-    <Compile Include="Common.fs" /> 
-    <Compile Include="DType.fs" /> 
-    <Compile Include="Disposable.fs" /> 
-    <Compile Include="Tensor.fs" /> 
-    <Compile Include="Tensorflow.fs" /> 
-    <Compile Include="Operation.fs" /> 
-    <Compile Include="Output.fs" /> 
-    <Compile Include="Variable.fs" /> 
-    <Compile Include="GraphKeys.fs" /> 
-    <Compile Include="Graph.fs" /> 
-    <Compile Include="GraphConstructionScope.fs" /> 
-    <Compile Include="Server.fs" /> 
-    <Compile Include="Framework.Ops.fs" /> 
-    <Compile Include="Funciton.fs" /> 
-    <Compile Include="Session.fs" /> 
-    <Compile Include="Operations.g.fs" /> 
-    <Compile Include="Operations.ArrayOps.fs" /> 
-    <Compile Include="OperationsExtras.fs" /> 
-    <Compile Include="Queue.fs" /> 
-    <Compile Include="SessionExtras.fs" /> 
+    <Compile Include="Utils.fs" /> 
     <Compile Include="Operations.NN.fs" /> 
-    <Compile Include="TensorflowGlobal.fs" /> 
-    <Compile Include="Checkpoints.fs" /> 
-    <Compile Include="Variables.fs" /> 
-    <Compile Include="GradientRegistry.fs" /> 
     <Compile Include="HDF5ReaderWriter.fs" /> 
     <Compile Include="NPYReaderWriter.fs" /> 
-    <Compile Include="ImageWriter.fs" /> 
-    <Compile Include="Datasets.fs" /> 
-    <Compile Include="Operations.RandomOps.fs" /> 
-    <Compile Include="IO.Events.fs" /> 
-    <Compile Include="FSIPrettyPrinting.fs" />
+    <Compile Include="ImageWriter.fs" />
     <Compile Include="FM.fs" />
   </ItemGroup>
 

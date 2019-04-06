@@ -1,55 +1,57 @@
-﻿module ResNet50
+﻿module ResNet50TensorFlowNet
 //open TensorFlow.FSharp
 open System
-(*
+open Tensorflow
+type ops = Tensorflow.Operations.gen_ops
+
 // TODO replace fixed weights with variables
 // TODO add the ability to use variable name scoping
 
-let model(graph : TFGraph, input : TFOutput, weights:Map<string,TFOutput>) =
-    use ns = graph.NameScope("Resnet50")
-    let relu x = graph.Relu(x)
-    let add y x = graph.Add(x,y)
-    let matMul y x = graph.MatMul(x,y) 
+let model(input : Tensor, weights:Map<string,Tensor>) =
+    //use ns = ops.NameScope("Resnet50")
+    let relu x = ops.relu(x)
+    let add y x = ops.add(x,y)
+    let matMul y x = ops.mat_mul(x,y) 
     let dense(W,b) x = x |> matMul W |> add b
-    let softmax x = graph.Softmax(x)
+    let softmax x = ops.softmax(x)
     let maxPool(ksizes:int*int*int*int,strides:int*int*int*int,padding:string,dataFormat:string) x = 
-        let f(a,b,c,d) = [|a;b;c;d|] |> Array.map int64
-        graph.MaxPool(x,f(ksizes),f(strides),padding=padding,data_format=dataFormat)
+        let f(a,b,c,d) = [|a;b;c;d|]
+        ops.max_pool(x,f(ksizes),f(strides),padding=padding,data_format=dataFormat)
 
     let getWeights(name:string) = weights.[name + ".npy"]
 
     let get_conv_tensor(conv_name:string) = getWeights(sprintf "%s/%s_W:0" conv_name conv_name)
 
     let batch_norm(bn_name:string) bnx = 
-        use ns = graph.NameScope("batchnorm")
+        //use ns = ops.NameScope("batchnorm")
         let getT(nm) = getWeights(sprintf "%s/%s_%s:0" bn_name bn_name nm)
         let moving_variance = getT("running_std")
         let gamma           = getT("gamma") // AKA scale
         let moving_mean     = getT("running_mean")
         let beta            = getT("beta")
-        let (fbn,_,_,_,_) = graph.FusedBatchNorm(bnx,gamma,beta,mean=moving_mean,
-                             variance=moving_variance, epsilon=0.00001f,
-                             is_training=false, data_format="NHWC")
+        let (fbn,_,_,_,_) = ops.fused_batch_norm(bnx,gamma,beta,mean=moving_mean,
+                             variance=moving_variance, epsilon=Nullable(0.00001f),
+                             is_training=Nullable(false), data_format="NHWC").ToTuple()
         fbn                         
 
     let res_block(stage:int, 
                   block:char, 
                   is_strided:bool, 
                   conv_shortcut:bool)
-                  (input_tensor:TFOutput) =
-        use scope = graph.NameScope("resblock", input_tensor)
+                  (input_tensor:Tensor) =
+        //use scope = graph.NameScope("resblock", input_tensor)
         let conv_name_base = sprintf "res%i%c_branch" stage block
         let bn_name_base = sprintf "bn%i%c_branch" stage block
         let conv(postfix,is_strided:bool) cx =
-            use ns = graph.NameScope("conv")
+            //use ns = graph.NameScope("conv")
             let conv_name = sprintf "res%i%c_branch" stage block
-            let strides = if is_strided then [|1L;2L;2L;1L|] else [|1L;1L;1L;1L|]
-            graph.Conv2D(cx,
+            let strides = if is_strided then [|1;2;2;1|] else [|1;1;1;1|]
+            ops.conv2d(cx,
                          get_conv_tensor(conv_name_base + postfix),
                          strides,
                          padding="SAME",
                          data_format="NHWC",
-                         dilations=[|1L;1L;1L;1L|],
+                         dilations=[|1;1;1;1|],
                          name=conv_name + postfix)
         let right = 
             input_tensor
@@ -68,24 +70,24 @@ let model(graph : TFGraph, input : TFOutput, weights:Map<string,TFOutput>) =
         (right,left) ||> add |> relu
 
     /// TODO make this simpler with helper functions
-    let paddings = graph.Reshape(graph.Const(new TFTensor([|0;0;3;3;3;3;0;0|])), graph.Const(TFShape(4L,2L).AsTensor()))
-    let padded_input = graph.Pad(input,paddings, "CONSTANT")
+    let paddings = ops.reshape(tf.constant([|0;0;3;3;3;3;0;0|]), tf.constant(TensorShape(4,2)))
+    let padded_input = ops.pad(input,paddings, "CONSTANT")
 
-    let build_stage(stage:int,blocks:string) (x:TFOutput) =
+    let build_stage(stage:int,blocks:string) (x:Tensor) =
         blocks.ToCharArray() 
         |> Array.fold (fun x c -> res_block(stage,c,c='a' && stage<>2,c='a')(x)) x
 
-    let toAxis (xs:int[]) : TFOutput = 
-        graph.Const(new TFTensor(xs),TFDataType.Int32)
+    let toAxis (xs:int[]) : Tensor = 
+        tf.constant(xs,TF_DataType.TF_INT32)
 
-    let reduceMean(axis:int list) (x:TFOutput) = graph.ReduceMean(x,axis = (axis  |> Array.ofList |> toAxis))
+    let reduceMean(axis:int list) (x:Tensor) = ops.reduce_mean(x,axis = (axis  |> Array.ofList |> toAxis))
     //let matMul x y = graph.MatMul(x,y)
     let finalWeights = getWeights("fc1000/fc1000_W:0")
     let finalBias = getWeights("fc1000/fc1000_b:0")
     let initial_conv x = 
-        graph.Conv2D(x, 
+        ops.conv2d(x, 
                      get_conv_tensor("conv1"),
-                     [|1L;2L;2L;1L|],
+                     [|1;2;2;1|],
                      padding="VALID",
                      data_format="NHWC",
                      name="conv1")
@@ -105,4 +107,3 @@ let model(graph : TFGraph, input : TFOutput, weights:Map<string,TFOutput>) =
         |> softmax
 
     output
-*)

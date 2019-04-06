@@ -1,9 +1,12 @@
 ﻿module FFStyleVGG
-open TensorFlow.FSharp
+(*
+//open TensorFlow.FSharp
+open Tensoflow
 
 // TODO: replace fixed weights with variables
 // TODO: add the ability to use variable name scoping
 // NOTE: This model architecture is tailored for fast feed forward style transfer and not as genearully useful as something like ResNet
+
 
 let model(graph:TFGraph, input_img : TFOutput, weights : Map<string,TFOutput>) =
     // TODO: Create the following using Variables and use a checkpoint loader to load the values
@@ -65,3 +68,5 @@ let model(graph:TFGraph, input_img : TFOutput, weights : Map<string,TFOutput>) =
     |> conv_transpose_layer(64L,3L,2L,"conv_t1")
     |> conv_transpose_layer(32L,3L,2L,"conv_t2")
     |> conv_layer(3L,9L,1L,false,"conv_t3")
+
+*)
