@@ -1,15 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>TensorFlow</RootNamespace>
-    <AssemblyName>TensorFlow.FSharp</AssemblyName>
-    <ReleaseVersion>0.1</ReleaseVersion>
-    <TensorFlowRuntimeVersion>1.11.0</TensorFlowRuntimeVersion>
-    <NuspecFile>build\TensorFlow.FSharp.nuspec</NuspecFile>
-    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-    <PlatformTarget>x64</PlatformTarget>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,17 +19,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Utils.fs" /> 
-    <Compile Include="Operations.NN.fs" /> 
-    <Compile Include="HDF5ReaderWriter.fs" /> 
-    <Compile Include="NPYReaderWriter.fs" /> 
-    <Compile Include="ImageWriter.fs" />
-    <Compile Include="FM.fs" />
+    <Compile Include="NeuralStyleTransferDSL.fs" />
+    <Compile Include="..\tests\FFStyleVGG.fs" Link="FFStyleVGG.fs" />
+    <None Include="..\..\TensorFlow.NET\src\TensorFlowNET.Core\bin\Debug\netstandard2.0\tensorflow.dll" Link="tensorflow.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Compile Include="..\tests\ResNet50.fs" Link="ResNet50.fs" />
+    <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\TensorFlow.NET\src\TensorFlowNET.Core\TensorFlowNET.Core.csproj" />
+    <ProjectReference Include="..\..\TensorFlow.NET\src\TensorFlowNET.Core\TensorFlowNET.Core.csproj" />
+    <ProjectReference Include="..\src\TensorFlow.FSharp\TensorFlow.FSharp.fsproj" />
   </ItemGroup>
 
 </Project>
-

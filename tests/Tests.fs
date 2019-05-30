@@ -1,4 +1,4 @@
-﻿module TensorFow.FSharp.Tests
+﻿//module TensorFow.FSharp.Tests
 
 //
 //

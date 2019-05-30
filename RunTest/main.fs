@@ -9,7 +9,13 @@ type ops = gen_ops
 // TODO add the ability to use variable name scoping
 
 let model(input : Tensor, weights:Map<string,Tensor>) =
+    for KeyValue(x,y) in weights do 
+      printfn "%s" x
+      let va = weights.[x]
+      ()
+
     use ns = tf.name_scope("Resnet50")
+
     let relu x = gen_ops.relu(x)
     let add y x = gen_ops.add(x,y)
     let matMul y x = gen_ops.mat_mul(x,y) 
@@ -19,7 +25,12 @@ let model(input : Tensor, weights:Map<string,Tensor>) =
         let f(a,b,c,d) = [|a;b;c;d|] 
         gen_ops.max_pool(x,f(ksizes),f(strides),padding=padding,data_format=dataFormat)
 
-    let getWeights(name:string) = weights.[name + ".npy"]
+    let getWeights(name:string) = 
+      printfn "key name %s" name
+      printfn "key name %s" name
+      printfn "key name %s" name
+      printfn "key name %s" name
+      weights.[name + ".npy"]
 
     let get_conv_tensor(conv_name:string) = getWeights(sprintf "%s/%s_W:0" conv_name conv_name)
 

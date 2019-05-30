@@ -24,10 +24,10 @@ let nugetFiles =
               yield! [|"libtensorflow_framework.dylib"; "libtensorflow.dylib"|] |> Array.map (sprintf @"runtimes/osx/native/%s")
         |]
         // https://eiriktsarpalis.wordpress.com/2013/03/27/a-declarative-argument-parser-for-f/ 
-        "Argu/5.1.0",[|"lib/netstandard2.0/Argu.dll"|]
-        "Google.Protobuf/3.6.1", [|"dll";"xml"|] |> Array.map (sprintf "lib/net45/Google.Protobuf.%s")
-        "protobuf-net/2.4.0",[|"dll";"xml"|] |> Array.map (sprintf "lib/net40/protobuf-net.%s")
-        "protobuf-net.protogen/2.3.17", [| for x in [|"protobuf-net";"protobuf-net.Reflection"|] do for y in [|"dll";"xml"|] -> sprintf "tools/netcoreapp2.1/any/%s.%s" x y |]
+        //"Argu/5.1.0",[|"lib/netstandard2.0/Argu.dll"|]
+        //"Google.Protobuf/3.6.1", [|"dll";"xml"|] |> Array.map (sprintf "lib/net45/Google.Protobuf.%s")
+        //"protobuf-net/2.4.0",[|"dll";"xml"|] |> Array.map (sprintf "lib/net40/protobuf-net.%s")
+        //"protobuf-net.protogen/2.3.17", [| for x in [|"protobuf-net";"protobuf-net.Reflection"|] do for y in [|"dll";"xml"|] -> sprintf "tools/netcoreapp2.1/any/%s.%s" x y |]
     |]
 
 downloadAndExtractNugetFiles nugetFiles
@@ -37,14 +37,14 @@ open System.IO
 let dir = __SOURCE_DIRECTORY__
 let lib = Path.Combine(dir, "..","lib")
 
-printfn "Building TensorFlow Proto"
-runFSI (Path.Combine(dir,"BuildTensorFlowProto.fsx"))
-printfn "Finished building TensorFlow Proto"
-
-printfn "Code genearting operations"
-runFSC (sprintf "%s -o %s" (Path.Combine(dir,"LinuxNativeWorkaround.fs")) (Path.Combine(lib,"LinuxNativeWorkaround.dll")))
-runFSI (Path.Combine(dir,"OperationCodeGenerationFSharp.fsx"))
-printfn "Finished code genearting operations"
+//printfn "Building TensorFlow Proto"
+//runFSI (Path.Combine(dir,"BuildTensorFlowProto.fsx"))
+//printfn "Finished building TensorFlow Proto"
+//
+//printfn "Code genearting operations"
+//runFSC (sprintf "%s -o %s" (Path.Combine(dir,"LinuxNativeWorkaround.fs")) (Path.Combine(lib,"LinuxNativeWorkaround.dll")))
+//runFSI (Path.Combine(dir,"OperationCodeGenerationFSharp.fsx"))
+//printfn "Finished code genearting operations"
 
 printfn "Fetching pre-trained weights for testing"
 [| 

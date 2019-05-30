@@ -1,7 +1,6 @@
 // Build the Debug 'TensorFlow.FSharp.Tests' before using this
 
 module FM.Tests
-(*
 
 open NUnit.Framework
 
@@ -626,5 +625,3 @@ let x = conv_layer (x, 3, 9, 1, false, "conv_t3")
     //(TFDataType.Double, [| 2;2|])
     //TFOutput
     //graph.Inpu
-
- *)  

@@ -2,8 +2,9 @@
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
 #r "../tests/bin/Debug/net461/TensorFlow.FSharp.dll"
+#r "../tests/bin/Debug/net461/NumSharp.Core.dll"
+#r "../tests/bin/Debug/net461/Tensorflow.Net.dll"
 #r "FSharp.Compiler.Interactive.Settings"
 #nowarn "49"
 
@@ -272,5 +273,3 @@ module NeuralTransferFragments =
     let check1() = 
         let dummyImages = DT.Dummy (Shape [ Dim.Named "BatchSz" 10; Dim.Named "H" 474;  Dim.Named "W" 712; Dim.Named "Channels" 3 ])
         style_transfer dummyImages
-
-    

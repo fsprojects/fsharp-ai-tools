@@ -12,10 +12,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="LinuxNativeWorkaround">
-      <HintPath>..\lib\LinuxNativeWorkaround.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
     <Reference Include="NumSharp.Core">
       <HintPath>..\..\TensorFlow.NET\src\TensorFlowNET.Core\bin\Debug\netstandard2.0\NumSharp.Core.dll</HintPath>
     </Reference>
@@ -23,33 +19,26 @@
       <HintPath>..\lib\protobuf-net.dll</HintPath>
       <Private>true</Private>
     </Reference>
-    <Reference Include="protobuf-net.Reflection">
-      <HintPath>..\lib\protobuf-net.Reflection.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
     <Reference Include="Google.Protobuf">
       <HintPath>..\lib\Google.Protobuf.dll</HintPath>
       <Private>true</Private>
     </Reference>
-    <Reference Include="TensorFlow.NET">
-      <HintPath>..\..\TensorFlow.NET\src\TensorFlowNET.Core\bin\Debug\netstandard2.0\TensorFlow.NET.dll</HintPath>
-    </Reference>
     <!--    <PackageReference Include="TensorFlowSharp" Version="1.11.0" /> -->
-    <PackageReference Include="Argu" Version="5.2.0" />
-    <PackageReference Include="NumSharp" Version="0.8.3" />
-    <PackageReference Include="protobuf-net" Version="2.4.0" />
-    <PackageReference Include="Google.Protobuf" Version="3.7.0" />
-    <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
+    <PackageReference Include="Argu" Version="5.4.0" />
+    <PackageReference Include="NumSharp" Version="0.10.2" />
     <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.200" />
-    <PackageReference Update="FSharp.Core" Version="4.5.2" />
-    <PackageReference Include="System.Runtime" Version="4.3.0" />
+    <PackageReference Include="TensorFlow.NET" Version="0.8.0" />
+    <PackageReference Update="FSharp.Core" Version="4.6.2" />
+    <PackageReference Update="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="System.Runtime" Version="4.3.1" />
     <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.6.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.9.0" />
-    <PackageReference Include="NUnit" Version="3.9.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.1.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
+    <PackageReference Include="NUnit" Version="3.12.0" />
   </ItemGroup> 
 
   <ItemGroup>
+    <None Include="NPYReaderWriter.fsx" />
     <None Include="..\..\TensorFlow.NET\src\TensorFlowNET.Core\bin\Debug\netstandard2.0\tensorflow.dll" Link="tensorflow.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -60,16 +49,18 @@
     <None Include="examples\example_3.jpeg" />
     <None Include="examples\example_4.jpeg" />
     <None Include="examples\example_5.jpeg" />
-    <Compile Include="FFStyleVGGTensorFlowNet.fs" />
     <Compile Include="FFStyleVGG.fs" />
     <Compile Include="ResNet50.fs" />
-    <Compile Include="Tests.fs" />
     <Compile Include="FMTests.fs" />
     <None Include="..\examples\ImageClassifier.fsx" />
     <None Include="..\examples\NeuralStyleTransfer.fsx" />
     <None Include="..\examples\NeuralStyleTransfer-dsl.fsx" />
     <None Include="..\examples\dsl-live.fsx" />
     <None Include="Scratch.fsx" />
+  </ItemGroup> 
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\TensorFlow.FSharp\TensorFlow.FSharp.fsproj" />
   </ItemGroup>
 
 </Project>

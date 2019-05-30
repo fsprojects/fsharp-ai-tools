@@ -1,14 +1,6 @@
-﻿#I __SOURCE_DIRECTORY__
-#r "netstandard"
-#I "../tests/bin/Debug/net461/"
-#r "TensorFlow.FSharp.dll"
-#r "Tensorflow.NET.dll"
-#r "NumSharp.Core.dll"
-#r "TensorFlow.FSharp.Tests.dll"
-//#r "Ionic.ZLib.Core.dll"
-#r "System.IO.Compression.dll"
+﻿module Program
+
 #nowarn "760" "49"
-#load "../tests/NPYReaderWriter.fsx"
 
 open Tensorflow
 open Tensorflow.Operations
@@ -30,7 +22,6 @@ let label_map = File.ReadAllLines(labels_path)
 let sess = new Session()
 let graph = sess.graph
 
-weights_path
 
 let xs2 = readFromNPZ((File.ReadAllBytes(weights_path)))
 
@@ -44,7 +35,6 @@ let weights_map =
 //weights_map.Count
 //xs2.Count
 //let weights_map2 = xs |> Map.map (fun k (metadata,arr) -> 1)
-weights_map.["fc1000/fc1000_b:0.npy"]
 
 for KeyValue(x,y) in weights_map do 
   printfn "%s" x
@@ -92,6 +82,11 @@ let classifyFile(path:string) =
     //label_map.[(res.[0] :?> int64[]) |> Array.item 0 |> int]
     label_map.[res.GetInt32(0)]
 
-printfn "example_0.jpeg is %s " (classifyFile(Path.Combine(example_dir,"example_0.jpeg")))
-printfn "example_1.jpeg is %s " (classifyFile(Path.Combine(example_dir,"example_1.jpeg")))
-printfn "example_2.jpeg is %s " (classifyFile(Path.Combine(example_dir,"example_2.jpeg")))
+
+[<EntryPoint>]
+let main argv = 
+    printfn "%A" argv
+    printfn "example_0.jpeg is %s " (classifyFile(Path.Combine(example_dir,"example_0.jpeg")))
+    printfn "example_1.jpeg is %s " (classifyFile(Path.Combine(example_dir,"example_1.jpeg")))
+    printfn "example_2.jpeg is %s " (classifyFile(Path.Combine(example_dir,"example_2.jpeg")))
+    0 // return an integer exit code

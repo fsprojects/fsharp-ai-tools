@@ -32,7 +32,6 @@ module Endian =
             (int32 buf.[offset+3])
 
 /// Spec from https://en.wikipedia.org/wiki/BMP_file_format
-/// NOTE: 
 let RGBAToBitmap(height:int, width:int, pixels:int[]) = 
     let header =
         [|
