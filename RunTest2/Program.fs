@@ -141,5 +141,6 @@ let main argv =
     //FFStyle.run("starry_night")
     //FFStyle.run("wave")
     //Classifier.run()
-    NeuralStyleTransferDSL.run()
+    //NeuralStyleTransferDSL.run()
+    let mnist = MNist.Dataset.MNistDataset.read_data_sets("mnist2",one_hot = true, validation_size = 5000)
     0 

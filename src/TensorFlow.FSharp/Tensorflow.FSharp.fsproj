@@ -20,6 +20,7 @@
     <PackageReference Include="Google.Protobuf" Version="3.7.0" />
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
     <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.200" />
+    <PackageReference Include="TensorFlow.NET" Version="0.8.0" />
     <PackageReference Update="FSharp.Core" Version="4.6.2" />
     <PackageReference Include="System.Runtime" Version="4.3.1" />
     <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
@@ -32,10 +33,6 @@
     <Compile Include="NPYReaderWriter.fs" /> 
     <Compile Include="ImageWriter.fs" />
     <Compile Include="FM.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\TensorFlow.NET\src\TensorFlowNET.Core\TensorFlowNET.Core.csproj" />
   </ItemGroup>
 
 </Project>
