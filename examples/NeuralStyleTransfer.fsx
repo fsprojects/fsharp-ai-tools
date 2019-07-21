@@ -17,9 +17,8 @@ open TensorFlow.FSharp.ImageWriter
 
 let sess = new Session()
 
-let weights = Utils.fetchRainWeights()
+let weights = Utils.fetchStyleWeights("rain")
 let input_data = tf.placeholder(TF_DataType.TF_STRING)
-
 
 let input_img = TF.VGGStyleTransfer.binaryJPGToImage(input_data)
 
@@ -37,4 +36,4 @@ let getImg(m:NDArray) : byte[] =
 
 let data = getImg(res)
 
-File.WriteAllBytes(@"C:\EE\ss.png",data)
+File.WriteAllBytes(Path.Combine(Utils.basePath,"images","chicargo_rain"),data)
