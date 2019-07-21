@@ -1,7 +1,7 @@
-﻿module NeuralStyleTransferDSL
+﻿module FSharp.AI.VGGStyleTransferDSL
+
 // NOTE: Most operations were converted from double (float) to single as that is how this model was designed
 // NOTE: I'm unsure why the shape resolver is not working 
-
 
 // This example shows the NeuralStyles transfer model using the FM F#-for-AI-models DSL.
 //
@@ -113,6 +113,7 @@ module NeuralStyles =
 
 //for i in 1 .. 10 do 
 //    time (fun () -> processImage rain "chicago.jpg" )
+
 let run() =
     // Read the weights map
     let readWeights weightsFile = 
@@ -150,16 +151,20 @@ let run() =
 
     let processImage (modelForStyle, style) imageName = 
         printfn "processing image %s in style %s" imageName style
-        //let inputImage = readImage (imageFile imageName) 
         // TODO the DSL for read image isn't working that well, I belive it's something to do with Tensorflow.Net needing additional String support that this DSL hits
+        // Specifically NDArray.ToByteArray() is throwing a not implemented exception
+        //let inputImage = readImage (imageFile imageName) 
+        // This line may cause an issue with the dtype being a runtime type, although the shape is correct, could just be a debugging issue
         //let inputImage = DT.ConstArray3D(Array3D.zeroCreate<single> 712 474 3,false) // NOTE: Consts probably can't be used as inputs in this context
-        // TODO / WARN for some reason the NDArray seem to be run through tensorflow returning a NDArray<NDArray> instead of the original NDArray<single>
-        let inputImage : DT<single> = DT.FromNDArray(NumSharp.NDArray([|for _ in 1..(712*474*3) -> 0.f|],NumSharp.Shape(712,474,3)))// DT.ConstArray3D(Array3D.zeroCreate<single> 712 474 3,false)
+        //let inputImage : DT<single> = DT.FromNDArray(NumSharp.NDArray([|for _ in 1..(712*474*3) -> 0.f|],NumSharp.Shape(712,474,3)))// DT.ConstArray3D(Array3D.zeroCreate<single> 712 474 3,false)
+        let inputImage : DT<single> = DT.Cast<single>(DT.ConstArray([|for _ in 1..(712*474*3) -> 0.f|] :> System.Array,DSL.Shape([|712;474;3|])))// DT.ConstArray3D(Array3D.zeroCreate<single> 712 474 3,false)
         let image = (modelForStyle inputImage) |> DT.toArray3D
         let png = image  |> ImageWriter.arrayToPNG_HWC 
         let outfile = Path.Combine(__SOURCE_DIRECTORY__, sprintf "%s_in_%s_style2.png" imageName style)
         File.WriteAllBytes(outfile, png)
-    processImage starry_night "chicago.jpg" 
+
+    ()
+    ///processImage starry_night "chicago.jpg" 
 //    processImage wave "chicago.jpg" 
 //    processImage wave "chicago.jpg" 
 //    processImage wave "example_1.jpeg" 

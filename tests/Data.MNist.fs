@@ -1,47 +1,25 @@
-﻿// This is spike to see why we can't
+﻿module FSharp.AI.Tests.Data.MNist
 
-#I __SOURCE_DIRECTORY__
-#r "netstandard"
-#I "../tests/bin/Debug/net461/"
-#r "TensorFlow.FSharp.dll"
-#r "ArrayFire.dll"
-#r "Ionic.ZLib.Core.dll"
-#r "TensorFlow.Net.dll"
-#r "NumSharp.Core.dll"
-#r "TensorFlow.FSharp.Tests.dll"
-#r "ICSharpCode.SharpZipLib.dll"
-#r "System.IO.Compression.dll"
-#r "System.IO.Compression.FileSystem.dll"
-//#r "System.IO.Compression.Brotli.dll"
-#r "System.IO.Compression.ZipFile.dll"
-#r "System.Runtime.Extensions.dll"
-
-
+open NumSharp
 open System
 open System.IO
 open System.IO.Compression
-
-open System.Net
 open System.Linq
+open System.Net
 open System.Threading
 open System.Threading.Tasks
 open Tensorflow
-open NumSharp
-open ICSharpCode.SharpZipLib.Core
-open ICSharpCode.SharpZipLib.GZip
 
 type Compress() = 
     static member ExtractGZip(gzipFileName : string, targetDir : string) =
-        let dataBuffer = Array.zeroCreate<byte> 4096
-        use fs = new FileStream(gzipFileName, FileMode.Open, FileAccess.Read)
+        //let dataBuffer = Array.zeroCreate<byte> 4096
+        //use fs = new FileStream(gzipFileName, FileMode.Open, FileAccess.Read)
+        //use gzipStream = new Ionic.Zlib.GZipStream(fs, Ionic.Zlib.CompressionMode.Decompress)
         let fnOut = Path.Combine(targetDir, Path.GetFileNameWithoutExtension(gzipFileName))
         File.WriteAllBytes(fnOut,Ionic.Zlib.GZipStream.UncompressBuffer(File.ReadAllBytes(gzipFileName)))
-//        let dataBuffer = Array.zeroCreate<byte> 4096
-//        use fs = new FileStream(gzipFileName, FileMode.Open, FileAccess.Read)
-//        use gzipStream = new GZipInputStream(fs)
-//        let fnOut = Path.Combine(targetDir, Path.GetFileNameWithoutExtension(gzipFileName))
-//        let fsOut = File.Create(fnOut)
-//        StreamUtils.Copy(gzipStream, fsOut, dataBuffer)
+        //let fsOut = File.Create(fnOut)
+        //StreamUtils.Copy(gzipStream, fsOut, dataBuffer)
+        
     static member UnZip(gzArchiveName : string, destFolder : string) =
         let flag = gzArchiveName.Split(Path.DirectorySeparatorChar).Last().Split('.').First() + ".bin"
         if not(File.Exists(Path.Combine(destFolder, flag))) then
@@ -55,7 +33,7 @@ type Compress() =
             printfn "Extracting is complete"
 
 type Web() =
-    /// TODO make this better more more F#
+    /// TODO make this better 
     static member Download(url : string, destDir : string, ?destFileName : string) = 
         let destFileName = defaultArg destFileName (url.Split(Path.DirectorySeparatorChar).Last())
         Directory.CreateDirectory(destDir) |> ignore
@@ -92,7 +70,7 @@ type DataSet(images : NDArray, labels : NDArray, dtype : TF_DataType, reshape : 
     member this.next_batch(batch_size : int, ?fake_data : bool, ?shuffle : bool) = 
         let fake_data = defaultArg fake_data false
         let shuffle = defaultArg shuffle true
-        let mutable start = _index_in_epoch
+        let start = _index_in_epoch
         let applyShuffle() = 
             let perm0 = np.arange(_num_examples)
             np.random.shuffle(perm0)
@@ -110,7 +88,7 @@ type DataSet(images : NDArray, labels : NDArray, dtype : TF_DataType, reshape : 
             let rest_num_examples = _num_examples - start
             if shuffle then applyShuffle()
 
-            start <- 0
+            let mutable start = 0
             _index_in_epoch <- batch_size - rest_num_examples
             let _end = _index_in_epoch
             (_images.[np.arange(start, _end)], _images.[np.arange(start, _end)])
@@ -216,4 +194,3 @@ module Dataset =
             let validation = new DataSet(validation_images, validation_labels, dtype, reshape)
             let test = new DataSet(test_images, test_labels, dtype, reshape)
             {train = train; validation = validation; test = test}
-

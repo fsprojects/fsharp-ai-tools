@@ -1,6 +1,4 @@
-﻿// The regression sample
-
-#I __SOURCE_DIRECTORY__
+﻿#I __SOURCE_DIRECTORY__
 #r "netstandard"
 #I "../tests/bin/Debug/net461/"
 #r "TensorFlow.FSharp.dll"
@@ -9,22 +7,11 @@
 #r "Argu.dll"
 #r "TensorFlow.FSharp.Tests.dll"
 
-
 open System
 open System.IO
-//open Argu
 open Tensorflow
 open NumSharp
 open Tensorflow.Operations
-
-//do
-//  let a = tf.constant(4.0f)
-//  let b = tf.constant(4.0f)
-//  let c = tf.add(a,b)
-//  let sess = tf.Session()
-//  let res = sess.run([|c;c|])
-//  printfn "%A" (res.Data<float32>())
-
 
 // Linear Regression
 

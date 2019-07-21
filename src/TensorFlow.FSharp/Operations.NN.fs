@@ -13,21 +13,20 @@ type gen_ops with
         | Some(axis) -> axis
         | None ->
             // Fast path: avoid creating Rank and Range ops if ndims is known.
-            let shape = input.GetShape()
+            let shape = input.TensorShape
             if shape.is_fully_defined() then
                 // NOTE: The python code distinguishes between tensor and sparsetensor
                 tf.constant([|0 .. shape.Size- 1|], TF_DataType.TF_INT32)
             else
                 // Otherwise, we rely on Range and Rank to do the right thing at run-time.
                 gen_ops.range(tf.constant(0), gen_ops.rank (input), tf.constant(1))
-            
 
 
     static member conv2d_transpose(value : Tensor, filter : Tensor, outputShape : Tensor, strides:int[], ?padding:string, ?data_format:string,?name:string) = 
         let paddingV     = defaultArg padding "SAME"
         let data_formatV = defaultArg data_format "NHWC"
         let name = defaultArg name "conv2d_transpose"
-        // TODO Dimension and Shape functions 
+        // TODO re-do Dimension and Shape functions 
         // https://github.com/fsprojects/TensorFlow.FSharp/blob/cdbd841bc86136f8ef24524cfc346e77bf21e6af/src/TensorFlow.FSharp/Tensorflow.fs#L409
 //        if not (data_formatV = "NCHW" || data_formatV = "NHWC") then 
 //            failwith "dataformat has to be either NCHW or NHWC."

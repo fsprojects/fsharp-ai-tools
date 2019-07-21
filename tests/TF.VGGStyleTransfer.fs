@@ -1,8 +1,8 @@
-﻿module FFStyleVGG
+﻿module FSharp.AI.Tests.TF.VGGStyleTransfer
 
+open System
 open Tensorflow
 open Tensorflow.Operations
-type ops = gen_ops
 
 // TODO: replace fixed weights with variables
 // NOTE: This model architecture is tailored for fast feed forward style transfer and not as genearully useful as something like ResNet
@@ -40,8 +40,8 @@ let model(input_img : Tensor, weights : Map<string,Tensor>) =
     let conv_layer(num_filters:int, filter_size:int, strides:int, is_relu:bool, name:string) (input:Tensor) = 
         let weights_init = conv_init_vars(input, num_filters, filter_size,false,name)
         
-        let x = instance_norm(ops.conv2d(input, weights_init, [|1;strides;strides;1|], padding="SAME"),true, name)
-        if is_relu then ops.relu(x) else x
+        let x = instance_norm(gen_ops.conv2d(input, weights_init, [|1;strides;strides;1|], padding="SAME"),true, name)
+        if is_relu then gen_ops.relu(x) else x
 
     let residual_block(filter_size:int, name:string) (input:Tensor) = 
         let tmp = input |> conv_layer(128, filter_size, 1, true, name + "_c1")
@@ -53,10 +53,10 @@ let model(input_img : Tensor, weights : Map<string,Tensor>) =
         let out_shape = 
             //ops.shape
             let x = if strides = 1 then array_ops.shape(input) else tf.multiply(array_ops.shape(input), tf.constant(strides_array))
-            ops.concat_v2([|ops.slice(x,tf.constant([|0|]),tf.constant([|3|]));tf.constant([|num_filters|])|],axis=tf.constant(0))
-        let rev(x) = ops.reverse(x,tf.constant([|true|]))
+            gen_ops.concat_v2([|gen_ops.slice(x,tf.constant([|0|]),tf.constant([|3|]));tf.constant([|num_filters|])|],axis=tf.constant(0))
+        let rev(x) = gen_ops.reverse(x,tf.constant([|true|]))
         //let out_shape = graph.Print(out_shape,[|rev(graph.Shape(weights_init));rev(out_shape); rev(graph.Shape(input))|],"out_shape") 
-        ops.relu(instance_norm(ops.conv2d_backprop_input(input_sizes = out_shape, filter = weights_init, out_backprop = input, strides = strides_array, padding = "SAME", data_format = "NHWC"), true, name))
+        gen_ops.relu(instance_norm(gen_ops.conv2d_backprop_input(input_sizes = out_shape, filter = weights_init, out_backprop = input, strides = strides_array, padding = "SAME", data_format = "NHWC"), true, name))
 
     input_img
     |> conv_layer(32,9,1,true,"conv1")
@@ -70,5 +70,13 @@ let model(input_img : Tensor, weights : Map<string,Tensor>) =
     |> conv_transpose_layer(64,3,2,"conv_t1")
     |> conv_transpose_layer(32,3,2,"conv_t2")
     |> conv_layer(3,9,1,false,"conv_t3")
+    |> fun x -> tf.cast(gen_ops.clip_by_value(tf.add(tf.multiply(tf.tanh(x),tf.constant(150.f)) , tf.constant(255.f/2.f)),tf.constant(0.f),tf.constant(255.f)),TF_DataType.TF_UINT8)
 
-
+/// Load and normalize JPEG Binary
+let binaryJPGToImage(input:Tensor) =
+    let mean_pixel = tf.constant([|123.68f; 116.778f; 103.939f|])
+    let decoded = tf.cast(gen_ops.decode_jpeg(contents=input, channels=Nullable(3)), TF_DataType.TF_FLOAT)
+    let preprocessed = tf.sub(decoded,mean_pixel)
+    let expanded = gen_ops.expand_dims(input=preprocessed, dim = tf.constant(0))
+    //let resized = graph.ResizeBicubic(expanded,graph.Const(new TFTensor([|256;256|])),align_corners=Nullable(true))
+    expanded

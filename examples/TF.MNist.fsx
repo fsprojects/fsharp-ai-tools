@@ -4,35 +4,25 @@
 #r "TensorFlow.FSharp.dll"
 #r "TensorFlow.Net.dll"
 #r "NumSharp.Core.dll"
-#r "TensorFlow.FSharp.Tests.dll"
+#r "FSharp.AI.Tests.dll"
 #r "ICSharpCode.SharpZipLib.dll"
 #r "System.IO.Compression.dll"
 #r "System.IO.Compression.FileSystem.dll"
-//#r "System.IO.Compression.Brotli.dll"
 #r "System.IO.Compression.ZipFile.dll"
 #r "System.Runtime.Extensions.dll"
-#load "MNistDataset.fsx"
 
 // TODO needs better random initializers that draw from a normal
 // TODO tf.get_variable is not implemented
 // TODO get_gradient_function Conv2D is not implemented
-// TODO implement dropout
+// TODO implement dropout to improve accuracy
 
 open System
-open System.IO
-open System.IO.Compression
-open System.Net
-open System.Linq
-open System.Threading
-open System.Threading.Tasks
 open Tensorflow
 open Tensorflow.Operations
 open NumSharp
-open ICSharpCode.SharpZipLib.Core
-open ICSharpCode.SharpZipLib.GZip
-open MNistDataset
+open FSharp.AI.Tests.Data
 
-let mnist = MNistDataset.read_data_sets("mnist2",one_hot = true, validation_size = 5000)
+let mnist = MNist.Dataset.MNistDataset.read_data_sets("mnist2",one_hot = true, validation_size = 5000)
 
 let xtr = tf.placeholder(tf.float32, TensorShape(-1, 784))
 let ytr = tf.placeholder(tf.float32, TensorShape(-1, 10))
@@ -40,14 +30,16 @@ let ytr = tf.placeholder(tf.float32, TensorShape(-1, 10))
 let getRandom(shape:int[]) = 
     np.random.randn(shape).astype(typeof<single>)
 
-let basicModel(xtr) : Tensor = 
-    let b = tf.Variable(getRandom([|32|]), name = "bias",dtype = TF_DataType.TF_FLOAT)
-    let W = tf.Variable(getRandom([|784;32|]), name = "weight")
-    let res =  gen_ops.relu(tf.matmul(xtr , (W._AsTensor())) + (b._AsTensor()))
-    let b1 = tf.Variable(getRandom([|10|]), name = "weight2",dtype = TF_DataType.TF_FLOAT)
-    let W1 = tf.Variable(getRandom([|32;10|]), name = "bias2")
-    tf.sigmoid(tf.matmul(res, (W1._AsTensor())) + (b1._AsTensor()))
-    
+let basicModel(x) : Tensor = 
+    let W = tf.Variable(getRandom([|784;128|]), name = "weight")
+    let b = tf.Variable(getRandom([|128|]), name = "bias",dtype = TF_DataType.TF_FLOAT)
+    let x =  gen_ops.relu(tf.matmul(x, (W._AsTensor())) + (b._AsTensor()))
+    let W1 = tf.Variable(getRandom([|128;48|]), name = "bias1")
+    let b1 = tf.Variable(getRandom([|48|]), name = "weight1",dtype = TF_DataType.TF_FLOAT)
+    let x =  gen_ops.relu(tf.matmul(x, (W1._AsTensor())) + (b1._AsTensor()))
+    let W2 = tf.Variable(getRandom([|48;10|]), name = "weight2")
+    let b2 = tf.Variable(getRandom([|10|]), name = "bias2",dtype = TF_DataType.TF_FLOAT)
+    tf.sigmoid(tf.matmul(x, (W2._AsTensor())) + (b2._AsTensor()))
 
 // NHWC
 let cnnModel(xtr) : Tensor= 
@@ -76,7 +68,7 @@ let output = basicModel(xtr)
 let sess = tf.Session()
 
 let (loss,_) = gen_ops.softmax_cross_entropy_with_logits(output,ytr).ToTuple()
-let optimizer = tf.train.GradientDescentOptimizer(0.1f).minimize(loss)
+let optimizer = tf.train.AdamOptimizer(0.001f).minimize(loss)
 let init = tf.global_variables_initializer()
 sess.run(init)
 
@@ -98,3 +90,4 @@ let train(res,loss,optimizer,batches,display_step) =
 
 for _ in 0..10 do
     train(output,loss,optimizer,batches,display_step)
+

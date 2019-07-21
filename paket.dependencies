@@ -1,9 +1,0 @@
-
-framework: netstandard2.0
-source https://api.nuget.org/v3/index.json
-github fsprojects/FSharp.Compiler.PortaCode:master src/ProjectCracker.fs
-github fsprojects/FSharp.Compiler.PortaCode:master src/CodeModel.fs
-github fsprojects/FSharp.Compiler.PortaCode:master src/Interpreter.fs
-github fsprojects/FSharp.Compiler.PortaCode:master src/FromCompilerService.fs
-github fsprojects/FSharp.Compiler.PortaCode:master src/ProcessCommandLine.fs
-

@@ -5,15 +5,7 @@ VisualStudioVersion = 15.0.28307.271
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "TensorFlow.FSharp", "src\TensorFlow.FSharp\TensorFlow.FSharp.fsproj", "{2C0E5D68-1DED-4F19-8397-77B80767FC04}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "TensorFlow.FSharp.Tests", "tests\TensorFlow.FSharp.Tests.fsproj", "{0F43F9C4-6696-45D5-AEB0-DBB4B24658F3}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RunTest", "RunTest\RunTest.fsproj", "{6CE8F635-C559-4E48-90DD-5285345562DC}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RunModels", "RunTest2\RunModels.fsproj", "{744084D6-BD67-45E7-894F-90E18595672D}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TensorFlowNET.Core", "..\TensorFlow.NET\src\TensorFlowNET.Core\TensorFlowNET.Core.csproj", "{B6E797FD-F117-418C-9FE2-51A538541DE7}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TensorFlowNET.Examples", "..\TensorFlow.NET\test\TensorFlowNET.Examples\TensorFlowNET.Examples.csproj", "{B9F05C84-551B-4695-A597-C5F1F01FA992}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FSharp.AI.Tests", "tests\FSharp.AI.Tests.fsproj", "{0F43F9C4-6696-45D5-AEB0-DBB4B24658F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,22 +21,6 @@ Global
 		{0F43F9C4-6696-45D5-AEB0-DBB4B24658F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F43F9C4-6696-45D5-AEB0-DBB4B24658F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F43F9C4-6696-45D5-AEB0-DBB4B24658F3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6CE8F635-C559-4E48-90DD-5285345562DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6CE8F635-C559-4E48-90DD-5285345562DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6CE8F635-C559-4E48-90DD-5285345562DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6CE8F635-C559-4E48-90DD-5285345562DC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{744084D6-BD67-45E7-894F-90E18595672D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{744084D6-BD67-45E7-894F-90E18595672D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{744084D6-BD67-45E7-894F-90E18595672D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{744084D6-BD67-45E7-894F-90E18595672D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B6E797FD-F117-418C-9FE2-51A538541DE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B6E797FD-F117-418C-9FE2-51A538541DE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B6E797FD-F117-418C-9FE2-51A538541DE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B6E797FD-F117-418C-9FE2-51A538541DE7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B9F05C84-551B-4695-A597-C5F1F01FA992}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B9F05C84-551B-4695-A597-C5F1F01FA992}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B9F05C84-551B-4695-A597-C5F1F01FA992}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B9F05C84-551B-4695-A597-C5F1F01FA992}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

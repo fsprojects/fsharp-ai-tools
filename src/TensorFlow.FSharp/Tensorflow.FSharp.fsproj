@@ -13,14 +13,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Argu" Version="5.4.0" />
+    <PackageReference Include="Argu" Version="5.5.0" />
+    <PackageReference Include="Markeli.Half" Version="1.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
-    <PackageReference Include="NumSharp" Version="0.10.2" />
-    <PackageReference Include="protobuf-net" Version="2.4.0" />
-    <PackageReference Include="Google.Protobuf" Version="3.7.0" />
+    <PackageReference Include="NumSharp" Version="0.10.4" />
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
-    <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.200" />
-    <PackageReference Include="TensorFlow.NET" Version="0.8.0" />
+    <PackageReference Include="SciSharp.TensorFlow.Redist" Version="1.14.0" />
+    <PackageReference Include="TensorFlow.NET" Version="0.10.0-rc" />
     <PackageReference Update="FSharp.Core" Version="4.6.2" />
     <PackageReference Include="System.Runtime" Version="4.3.1" />
     <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
@@ -29,10 +28,17 @@
   <ItemGroup>
     <Compile Include="Utils.fs" /> 
     <Compile Include="Operations.NN.fs" /> 
-    <Compile Include="HDF5ReaderWriter.fs" /> 
     <Compile Include="NPYReaderWriter.fs" /> 
     <Compile Include="ImageWriter.fs" />
     <Compile Include="FM.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="$(NuGetPackageRoot)scisharp.tensorflow.redist\1.14.0\runtimes\win-x64\native\*.dll" Condition="'$(PlatformTarget)' == 'x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+      <Link>%(Filename)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
 </Project>

@@ -171,15 +171,14 @@ let RGBAToPNG(height:int, width:int, pixels:int[]) : byte[] =
 
 // TODO: give this a nicer API
 // NOTE: Assumed NHWC dataformat
-let arrayToPNG_HWC (img:single[,,]) =
+let arrayToPNG_HWC (img:uint8[,,]) =
     let H = Array3D.length1 img
     let W = Array3D.length2 img
     let pixels = 
         [|
             for h in 0.. Array3D.length1 img - 1 do
                 for w in 0.. Array3D.length2 img - 1 do
-                    let getV c = min 255.f (max 0.f img.[h,w,c]) |> byte
-                    yield BitConverter.ToInt32([|getV 0; getV 1; getV 2; 255uy|], 0) 
+                    yield BitConverter.ToInt32([|img.[h,w,0]; img.[h,w,1]; img.[h,w,2]; 255uy|], 0) 
         |]
     RGBAToPNG(H,W,pixels)
 

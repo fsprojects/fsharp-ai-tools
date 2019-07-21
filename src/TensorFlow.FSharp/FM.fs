@@ -12,6 +12,8 @@ open System.Numerics
 open System.Runtime.InteropServices
 open TensorFlow.FSharp.NNImpl
 
+
+
 #nowarn "9"
 
 type TFGraph = Graph
@@ -40,6 +42,14 @@ module Array3D =
 // NOTE: This should be moved elsewhere
 [<AutoOpen>]
 module Utils = 
+    type NDArray with
+        /// This  recursivly flattens NDArray<NDArray>s to the base type arrays
+        /// NOTE: the impetus for this fuction is because the return type for session.run([|output|]) is NDArray and not NDArray[]
+        ///       while NDArray design is from Numpy which can support complex and nested arrays I don't belive Tensorflow supports this
+        member this.Flatten() = 
+            if this.dtype <> typeof<NumSharp.NDArray> then [|this|]
+            else [|for i in 0..this.len - 1 do yield! this.GetNDArray(i).Flatten()|]
+
     open Microsoft.FSharp.NativeInterop
 
     type TF_Status = IntPtr
@@ -432,6 +442,7 @@ type Shape internal (flex: InferenceVar<Shape> option, suffix: Dim[]) =
 
     /// Create a shape with the given dimension information. The shape does not support broadcasting.
     new (dims) = Shape(None, Array.ofSeq dims)
+    new (dims:int[]) = Shape(None, Array.ofSeq (dims |> Array.map (function | -1 -> Dim.Inferred | n -> Dim.Known(n))))
 
     /// Create a shape with the given dimension information. The shape supports broadcasting to further initial dimensions.
     static member Flex dims = Shape(Some (InferenceVar()), dims)
@@ -458,7 +469,7 @@ type Shape internal (flex: InferenceVar<Shape> option, suffix: Dim[]) =
     static member FromTFShape (shape: TensorShape) = 
         shape.Dimensions |> Shape.FromTFShapeArray
 
-    static member internal D = Shape [| |]
+    static member internal D = Shape Array.empty<Dim>
     
     static member internal DV = Shape [| Dim.Inferred |]
     
@@ -668,7 +679,7 @@ and DT internal (shape: Shape, nodeCount: int,
     static member RunNDArrays(values: DT[], ?weights: seq<string * DT>) : NDArray[] = 
         let _dimVarPlaceholders, _placeholderNodes, _outputs, outputNodes, session = 
             DT.PreprocessCore((fun _ -> values), [| |], ?weights=weights)
-        [|session.run(outputNodes)|]
+        session.run(outputNodes).Flatten()
 
     static member RunNDArray(value: DT, ?weights: seq<string * DT>) : NDArray = 
         match value.TryAsConstNDArray() with 
@@ -680,7 +691,7 @@ and DT internal (shape: Shape, nodeCount: int,
             // TODO: give a better dummy value back here
             obj()
         else
-            DT.RunNDArray(value, ?weights=weights).Array |> box
+            DT.RunNDArray(value, ?weights=weights).Data() |> box
 
     static member Run(values: DT[], ?weights: seq<string * DT>) : obj[] = 
         if livecheck then 
@@ -688,7 +699,7 @@ and DT internal (shape: Shape, nodeCount: int,
             [| for v in values -> obj() |]
         else
             let results = DT.RunNDArrays(values, ?weights=weights)
-            [| for res in results -> res.Array |]
+            [| for res in results -> res.Data() |]
 
     /// A method to transform this object to a formattable object, used by F# interactive
     /// TODO double check that `obj` is in fact the desired return type
@@ -1390,7 +1401,13 @@ and [<Sealed>] DT<'T> internal
                        else
                            failwith "the input shape didn't give a value for shape variable"
                    yield inputTensor |]
-            let outputTensors = session.run(resultNodes,  feed_dict = [| for k,v in (placeholders, inputs) ||> Array.zip -> FeedItem(k,v) |])
+            /// Error: System.Exception: 'You must feed a value for placeholder tensor 'Placeholder_166' with dtype float and shape [?,?,?] [[{{node Placeholder_166}}]]'
+            /// Stepping through it appears that the inputs are fed correctly to the given placeholders. 
+            /// Judging by the number of placeholders created in the graph it is possible that these are the wrong placeholders for the requested output
+            /// Closer examination is needed as to why 166 are created when only 4 should be needed.
+            /// Given that the shape is often derived from the input placeholder it is usual to only have 1 placeholder
+            /// Alternatively it could be surfacing a bug in NDArray which gives the wrong dtype
+            let outputTensors = session.run(resultNodes,  feed_dict = [| for k,v in (placeholders, inputs) ||> Array.zip -> FeedItem(k,v) |]).Flatten()
             let outputShape = outputValues.[0].Shape.Subst(dimVarSubst)
             DT.FromNDArray outputTensors.[0] |> DT.AssertShape outputShape)
 
