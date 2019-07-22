@@ -1,12 +1,16 @@
 This repo is work-in-progress containing two things:
 
-1. TensorFlow.FSharp: An F# API for TensorFlow 
+1. TensorFlow.FSharp: An F# API for TensorFlow
 
 2. FM: A prototype of a DSL "F# for AI Models". This currently executes using TensorFlow.FSharp but could have additional backends such as DiffSharp.
 
 # TensorFlow.FSharp
 
 See "src" and "tests" directory. Some examples under "examples".
+
+This component is 
+* similar in scope to [TensorFlow.NET](https://github.com/SciSharp/TensorFlow.NET) and [TensorFlow for Scala](https://github.com/eaplatanios/tensorflow_scala/)
+* larger in scope than [TensorFlowSharp](https://github.com/migueldeicaza/TensorFlowSharp), as it intends to include training scenarios (though not all pieces to support those scenarios are currently in place)
 
 # FM: F# for AI Models 
 

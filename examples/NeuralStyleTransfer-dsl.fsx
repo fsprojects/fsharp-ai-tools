@@ -6,10 +6,12 @@
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
 #r "../tests/bin/Debug/net461/TensorFlow.FSharp.dll"
-#load "shared/NPYReaderWriter.fsx"
-#load "shared/ScriptLib.fsx"
+#r "../tests/bin/Debug/net461/Tensorflow.Net.dll"
+#r "../tests/bin/Debug/net461/NumSharp.Core.dll"
+//#load "shared/NPYReaderWriter.fsx"
+//#load "shared/ScriptLib.fsx"
+
 
 //------------------------------------------------------------------------------
 // Preliminaries for F# scripting
@@ -147,13 +149,13 @@ let processImage (modelForStyle, style) imageName =
     let outfile = Path.Combine(__SOURCE_DIRECTORY__, sprintf "%s_in_%s_style2.png" imageName style)
     File.WriteAllBytes(outfile, png)
 
-for i in 1 .. 10 do 
-    time (fun () -> processImage rain "chicago.jpg" )
-     
-processImage starry_night "chicago.jpg" 
-processImage wave "chicago.jpg" 
-processImage wave "chicago.jpg" 
-processImage wave "example_1.jpeg" 
-processImage wave "example_0.jpeg" 
+//for i in 1 .. 10 do 
+//    time (fun () -> processImage rain "chicago.jpg" )
+//     
+//processImage starry_night "chicago.jpg" 
+//processImage wave "chicago.jpg" 
+//processImage wave "chicago.jpg" 
+//processImage wave "example_1.jpeg" 
+//processImage wave "example_0.jpeg" 
 
 

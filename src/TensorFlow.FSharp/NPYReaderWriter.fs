@@ -201,7 +201,10 @@ let readNumpy(bytes:byte[]) : Result<(NPYDescription*Array),string> =
             let returnArray = Array.zeroCreate<int64> length
             Buffer.BlockCopy(bytes,offset,returnArray,0,length * dtype.ByteWidth)
             returnArray :> Array
-        | NPYDType.Float16 -> failwith "unsuported"
+        | NPYDType.Float16 -> 
+            let returnArray = Array.zeroCreate<uint16> length
+            Buffer.BlockCopy(bytes,offset,returnArray,0,length * dtype.ByteWidth)
+            returnArray |> Array.map System.Half.ToHalf :> Array
         | NPYDType.Float32 ->
             let returnArray = Array.zeroCreate<float32> length
             Buffer.BlockCopy(bytes,offset,returnArray,0,length * dtype.ByteWidth)
