@@ -107,6 +107,16 @@ let ``basic checks diff``() =
     |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
 
 [<Test>]
+let ``basic checks scalar addition, multiplication, subtraction``() = 
+    let f (x: DT<_>) = 1 * x * x * 1 / 1.0 + 4 * x + 5 - 1 + 1
+    let df x = DT.diff f x
+
+    df (v 3.0)
+    |> DT.Eval
+    |> DT.toScalar
+    |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
+
+[<Test>]
 let ``basic checks broadcast``() = 
     fm { return vec [1.0; 2.0] + v 4.0 }
     |> DT.Eval
@@ -196,6 +206,9 @@ fm { use _ = DT.WithScope("foo")
     |> DT.Eval
 
     fm { return DT.Variable (vec [ 1.0 ], name="hey") + v 4.0 }
+    |> DT.Eval
+
+    fm { return DT.Variable (1.0, name="hey") + 4.0 }
     |> DT.Eval
 
     let var v nm = DT.Variable (v, name=nm)

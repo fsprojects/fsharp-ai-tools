@@ -34,21 +34,21 @@ module NeuralStyles =
 
     let instance_norm name input  =
         use __ = DT.WithScope(name + "/instance_norm")
-        let mu, sigma_sq = DT.Moments (input, axes= (if input.Shape.Rank = 3 then [0;1] else [1;2])) // TODO: the axes computation is needed to be usabe with 3D or 4D. Would be nice if this could be simpler
-        let shift = variable (v 0.0) (name + "/shift")
-        let scale = variable (v 1.0) (name + "/scale")
-        let epsilon = v 0.001
+        let mu, sigma_sq = DT.Moments (input, axes= (if input.Rank = 3 then [0;1] else [1;2])) 
+        let shift = DT.Variable (0.0, name + "/shift")
+        let scale = DT.Variable (1.0, name + "/scale")
+        let epsilon = 0.001
         let normalized = (input - mu) / sqrt (sigma_sq + epsilon)
         scale * normalized + shift 
 
     // Set up a convolution layer in the DNN
     let conv_layer (out_channels, filter_size, stride, name) input = 
-        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights") 
+        let filters = variable (DT.TruncatedNormal() * 0.1) (name + "/weights") 
         DT.Conv2D (input, filters, out_channels, stride=stride, filter_size=filter_size)
         |> instance_norm name
 
     let conv_transpose_layer (out_channels, filter_size, stride, name) input =
-        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights") 
+        let filters = variable (DT.TruncatedNormal() * 0.1) (name + "/weights") 
         DT.Conv2DBackpropInput(filters, input, out_channels, stride, padding = "SAME", filter_size=filter_size) 
         |> instance_norm name 
 
@@ -56,8 +56,8 @@ module NeuralStyles =
         let tmp = input |> conv_layer (128, filter_size, 1, name + "_c1") |> relu
         input + conv_layer (128, filter_size, 1, name + "_c2") tmp
 
-    let to_pixel_value input = 
-        tanh input * v 150.0 + (v 255.0 / v 2.0)
+    let to_pixel_value (input: DT<_>) = 
+        tanh input * 150.0 + (255.0 / 2.0)
 
     let clip min max input = 
        DT.ClipByValue (input, v min, v max)
@@ -73,21 +73,22 @@ module NeuralStyles =
         |> residual_block (3, "resid3")
         |> residual_block (3, "resid4")
         |> residual_block (3, "resid5")
-        |> conv_transpose_layer (64, 3, 2, "conv_t1") |> relu
-        |> conv_transpose_layer (32, 3, 2, "conv_t2") |> relu
+        |> conv_transpose_layer (64, 3, 1, "conv_t1") |> relu
+        |> conv_transpose_layer (32, 3, 1, "conv_t2") |> relu
         |> conv_layer (3, 9, 1, "conv_t3")
         |> to_pixel_value 
         |> clip 0.0 255.0
-        |> DT.Cast<single> 
+        |> DT.AssertShape image.Shape
 
     /// PretrainedFFStyleVGG is the complete model, taking either 
     ///    - an image to an image
     ///    - a batch of images to a batch of images
     ///
     let inputShapeForSingle = Shape [| Dim.Var "H";  Dim.Var "W"; Dim.Var "C" |]
-    let inputShapeForBatch  = Shape [| Dim.Var "N";  Dim.Var "H";  Dim.Var "W"; Dim.Var "C" |]
+    let inputShapeForBatch  = Shape [| Dim.Var "N";  Dim.Named "H" 400;  Dim.Named "W" 200; Dim.Named "C" 3 |]
+    //let inputShapeForBatch  = Shape [| Dim.Var "N";  Dim.Var "H";  Dim.Var "W"; Dim.Var "C" |]
 
-    /// As usual, the LiveCheck is placed at the point where the model is finished.
+    /// The LiveCheck is placed at the point where the model is finished.
     /// 
     /// We use dummy data for the LiveCheck.  
     ///
@@ -141,7 +142,7 @@ let starry_night = prepareModelForStyle "starry_night"
 let processImage (modelForStyle, style) imageName = 
     printfn "processing image %s in style %s" imageName style
     let inputImage = readImage (imageFile imageName) 
-    let image = modelForStyle inputImage |> DT.toArray3D
+    let image = modelForStyle inputImage |> DT.Cast<single> |> DT.toArray3D
     let png = image  |> ImageWriter.arrayToPNG_HWC 
     let outfile = Path.Combine(__SOURCE_DIRECTORY__, sprintf "%s_in_%s_style2.png" imageName style)
     File.WriteAllBytes(outfile, png)

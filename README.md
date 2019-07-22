@@ -29,7 +29,7 @@ neural networks - in F# code. For example:
 /// A numeric function of two parameters, returning a scalar, see
 /// https://en.wikipedia.org/wiki/Gradient_descent
 let f (xs: DT<double>) = 
-    sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * -cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
+    sin (0.5 * sqr xs.[0] - 0.25 * sqr xs.[1] + 3.0) * -cos (2.0 * xs.[0] + 1.0 - exp xs.[1])
 ```
 
 These functions and models can then be passed to optimization algorithms that utilise gradients, e.g.
