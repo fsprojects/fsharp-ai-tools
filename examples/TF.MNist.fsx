@@ -22,7 +22,7 @@ open Tensorflow.Operations
 open NumSharp
 open FSharp.AI.Tests.Data
 
-let mnist = MNist.Dataset.MNistDataset.read_data_sets("mnist2",one_hot = true, validation_size = 5000)
+let mnist = MNist.Dataset.MNistDataset.read_data_sets("mnist",one_hot = true, validation_size = 5000)
 
 let xtr = tf.placeholder(tf.float32, TensorShape(-1, 784))
 let ytr = tf.placeholder(tf.float32, TensorShape(-1, 10))

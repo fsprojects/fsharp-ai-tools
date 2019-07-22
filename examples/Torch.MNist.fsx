@@ -2,7 +2,7 @@
 
 // NOTES:
 // * The need to use the static Model name is a bit verbose
-// * The shapes are simpler as they are determined entirely at runtime
+// * The shape logic is simpler as they are determined entirely at runtime
 // * The tensor lifetime is managed with a series of disposable tensors.
 
 

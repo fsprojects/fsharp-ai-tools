@@ -8,6 +8,7 @@
 #nowarn "9"
 
 open System
+open NumSharp
 open Ionic.Zlib
 
 module Endian =
@@ -169,8 +170,7 @@ let RGBAToPNG(height:int, width:int, pixels:int[]) : byte[] =
     writeInt(buf,pixelBytes.Length + 49,-1371381630) // CRC of IEND
     buf
 
-// TODO: give this a nicer API
-// NOTE: Assumed NHWC dataformat
+/// HWC dataformat where C is 3
 let arrayToPNG_HWC (img:uint8[,,]) =
     let H = Array3D.length1 img
     let W = Array3D.length2 img
@@ -182,4 +182,10 @@ let arrayToPNG_HWC (img:uint8[,,]) =
         |]
     RGBAToPNG(H,W,pixels)
 
+/// NHWC where C is 3
+let ndarrayToPNG_NHWC(img:NDArray) =
+    let xs = img.Data<uint8>()
+    match img.shape with
+    | [|_N;H;W;3|] -> Array3D.init H W 3 (fun h w c ->  xs.[h * (W * 3) + w * 3 + c]) |> arrayToPNG_HWC
+    | _ -> failwithf "shape %A is unsupported" img.shape
 

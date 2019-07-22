@@ -4,7 +4,6 @@ module FM.Tests
 
 open NUnit.Framework
 
-//open Argu
 open System
 open TensorFlow.FSharp
 open TensorFlow.FSharp.DSL
@@ -96,15 +95,15 @@ let ``basic checks Zero AssertShape``() =
     |> DT.toArray2D
     |> shouldEqual "wcevwo11" (array2D [ [ 0.0; 0.0 ]; [0.0; 0.0]])
 
-[<Test>]
-let ``basic checks diff``() = 
-    let f x = fm { return x * x + v 4.0 * x }
-    let df x = DT.diff f x
-
-    df (v 3.0)
-    |> DT.Eval
-    |> DT.toScalar
-    |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
+//[<Test>]
+//let ``basic checks diff``() = 
+//    let f x = fm { return x * x + v 4.0 * x }
+//    let df x = DT.diff f x
+//
+//    df (v 3.0)
+//    |> DT.Eval
+//    |> DT.toScalar
+//    |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
 
 [<Test>]
 let ``basic checks broadcast``() = 
@@ -120,50 +119,50 @@ let ``basic checks sum plus broadcast``() =
     |> DT.toScalar
     |> shouldEqual "wcevwo14" 11.0
 
-[<Test>]
-let ``basic checks grad``() = 
-    let f2 x = fm { return sum (vec [1.0; 2.0] * x * x) }
-    let df2 x = DT.grad f2 x
-
-    f2 (vec [1.0; 2.0])
-    |> DT.Eval
-    |> DT.toScalar
-    |> shouldEqual "wcevwo15" 9.0
-
-[<Test>]
-let ``basic checks jacobian``() = 
-    let f3e (x: double[]) = [| x.[0]*x.[1]; 2.0*x.[1]*x.[0] |] 
-    let f3 (x: DT<_>) = vec [1.0; 2.0] * x * DT.Reverse x //[ x1*x2; 2*x2*x1 ] 
-    let df3 x = DT.jacobian f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
-    let expected (x1, x2) = array2D [| [| x2; x1 |]; [| 2.0*x2; 2.0*x1 |] |]  
-
-    f3 (vec [1.0; 2.0])
-    |> DT.Eval
-    |> DT.toArray
-    |> shouldEqual "wcevwo16" (f3e [| 1.0; 2.0 |])
-
-    df3 (vec [1.0; 2.0])
-    |> DT.Eval
-    |> DT.toArray2D
-    |> shouldEqual "wcevwo16" (expected (1.0, 2.0))
-    // expect 
+//[<Test>]
+//let ``basic checks grad``() = 
+//    let f2 x = fm { return sum (vec [1.0; 2.0] * x * x) }
+//    let df2 x = DT.grad f2 x
+//
+//    f2 (vec [1.0; 2.0])
+//    |> DT.Eval
+//    |> DT.toScalar
+//    |> shouldEqual "wcevwo15" 9.0
+//
+//[<Test>]
+//let ``basic checks jacobian``() = 
+//    let f3e (x: double[]) = [| x.[0]*x.[1]; 2.0*x.[1]*x.[0] |] 
+//    let f3 (x: DT<_>) = vec [1.0; 2.0] * x * DT.Reverse x //[ x1*x2; 2*x2*x1 ] 
+//    let df3 x = DT.jacobian f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
+//    let expected (x1, x2) = array2D [| [| x2; x1 |]; [| 2.0*x2; 2.0*x1 |] |]  
+//
+//    f3 (vec [1.0; 2.0])
+//    |> DT.Eval
+//    |> DT.toArray
+//    |> shouldEqual "wcevwo16" (f3e [| 1.0; 2.0 |])
+//
+//    df3 (vec [1.0; 2.0])
+//    |> DT.Eval
+//    |> DT.toArray2D
+//    |> shouldEqual "wcevwo16" (expected (1.0, 2.0))
+//    // expect 
    
-[<Test>]
-let ``basic checks grad 2``() = 
-    let f3e (x: double[]) = x.[0]*x.[1] + 2.0*x.[1]*x.[0]
-    let f3 (x: DT<_>) = x.[0]*x.[1] + v 2.0*x.[1]*x.[0]
-    let g3 x = DT.grad f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
-    let expected (x0, x1) = [| 3.0*x1; 3.0*x0  |]
-
-    f3 (vec [1.0; 2.0])
-    |> DT.Eval
-    |> DT.toScalar
-    |> shouldEqual "wcevwo17" (f3e [| 1.0; 2.0 |])
-
-    g3 (vec [1.0; 2.0])
-    |> DT.Eval
-    |> DT.toArray
-    |> shouldEqual "wcevwo18" (expected (1.0, 2.0))
+//[<Test>]
+//let ``basic checks grad 2``() = 
+//    let f3e (x: double[]) = x.[0]*x.[1] + 2.0*x.[1]*x.[0]
+//    let f3 (x: DT<_>) = x.[0]*x.[1] + v 2.0*x.[1]*x.[0]
+//    let g3 x = DT.grad f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
+//    let expected (x0, x1) = [| 3.0*x1; 3.0*x0  |]
+//
+//    f3 (vec [1.0; 2.0])
+//    |> DT.Eval
+//    |> DT.toScalar
+//    |> shouldEqual "wcevwo17" (f3e [| 1.0; 2.0 |])
+//
+//    g3 (vec [1.0; 2.0])
+//    |> DT.Eval
+//    |> DT.toArray
+//    |> shouldEqual "wcevwo18" (expected (1.0, 2.0))
 
 (*
 

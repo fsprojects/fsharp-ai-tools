@@ -1,7 +1,6 @@
 namespace TensorFlow.FSharp.DSL
 
-// TODO make sure we can return an array from session.run
-// TODO support tf.constant(NDArray([|0uy|])) i.e. bytes and uint8s as well as uint8
+
 
 open System
 open System.Reflection
@@ -32,6 +31,8 @@ type internal InferenceVarSoln<'T> =
     | Solved of 'T
     | Unsolved
 
+    
+    
 module Array3D = 
     /// Not properly tested, probably slow, not to be used beyond a temporary work around
     let flatten(xsss:'a[,,]) = 
@@ -39,9 +40,23 @@ module Array3D =
           for y in 0..(xsss.GetLength(1)-1) do 
             for z in 0..(xsss.GetLength(2)-1) -> xsss.[x,y,z]|]
 
+
 // NOTE: This should be moved elsewhere
 [<AutoOpen>]
 module Utils = 
+    let private convert<'t>(x:NDArray) =
+        let xs = x.Data<'t>() 
+        match x.shape with
+        | [||] -> x.Data<'t>().[0] |> box
+        | [|_|] -> x.Data<'t>() |> box
+        | [|d1;d2|] -> 
+            Array2D.init d1 d2 (fun a b -> xs.[a * d2 + b]) |> box
+        | [|d1;d2;d3|] -> 
+            Array3D.init d1 d2 d3 (fun a b c -> xs.[a * d2 * d3 + b * d3 + c]) |> box
+        | [|d1;d2;d3;d4|] -> 
+            Array4D.init d1 d2 d3 d4 (fun a b c d -> xs.[a * d2 * d3 * d4 + b * d3 * d4 + c * d4 + d]) |> box
+        | x -> failwithf "Shape %A is unsupported at this time" x
+
     type NDArray with
         /// This  recursivly flattens NDArray<NDArray>s to the base type arrays
         /// NOTE: the impetus for this fuction is because the return type for session.run([|output|]) is NDArray and not NDArray[]
@@ -50,6 +65,19 @@ module Utils =
             if this.dtype <> typeof<NumSharp.NDArray> then [|this|]
             else [|for i in 0..this.len - 1 do yield! this.GetNDArray(i).Flatten()|]
 
+        /// TODO this may need a mechanism for 
+        member this.ToArrayOrSingle() = 
+            match this.dtype.ToString() with
+            | "System.Int32" -> convert<int32>  this
+            | "System.UInt32" -> convert<uint32>  this
+            | "System.Int16" -> convert<int16> this
+            | "System.UInt16" -> convert<uint16> this
+            | "System.Int8" -> convert<int8> this
+            | "System.UInt8" -> convert<uint8> this
+            | "System.Double" -> convert<float> this
+            | "System.Single" -> convert<float32> this
+            | x -> failwithf "Type %s is unsupported at this time" x
+    
     open Microsoft.FSharp.NativeInterop
 
     type TF_Status = IntPtr
@@ -691,7 +719,7 @@ and DT internal (shape: Shape, nodeCount: int,
             // TODO: give a better dummy value back here
             obj()
         else
-            DT.RunNDArray(value, ?weights=weights).Data() |> box
+            DT.RunNDArray(value, ?weights=weights).ToArrayOrSingle() |> box
 
     static member Run(values: DT[], ?weights: seq<string * DT>) : obj[] = 
         if livecheck then 
@@ -699,7 +727,7 @@ and DT internal (shape: Shape, nodeCount: int,
             [| for v in values -> obj() |]
         else
             let results = DT.RunNDArrays(values, ?weights=weights)
-            [| for res in results -> res.Data() |]
+            [| for res in results -> res.ToArrayOrSingle() |]
 
     /// A method to transform this object to a formattable object, used by F# interactive
     /// TODO double check that `obj` is in fact the desired return type
@@ -1135,8 +1163,8 @@ and [<Sealed>] DT<'T> internal
         DT<'T>(shape, nodeCount, 
                DT.ProducesCorrectShape (fun ctxt -> 
                   let graph = ctxt.Graph
-                  let tensor = asNDArray()
-                  let prelimOutputNode = tf.constant(tensor)
+                  let tensor = asNDArray() : NDArray
+                  let prelimOutputNode = tf.constant(tensor) //tf.constant(tensor)
                   ops.reshape(prelimOutputNode, shape.AsTFNode(graph, ctxt.DimVarNodes))),
                asNDArray = asNDArray)
 
@@ -1161,15 +1189,15 @@ and [<Sealed>] DT<'T> internal
         | _ -> failwithf "invalid scalar type %A" (typeof<'T>)
         let asNDArray () = 
             match obj with 
-            | :? bool as d -> new NDArray([|d|])
-            | :? byte as d -> new  NDArray([|d|])
-            | :? sbyte as d -> new  NDArray([|d|])
-            | :? int16 as d -> new  NDArray([|d|])
-            | :? uint16 as d -> new  NDArray([|d|])
-            | :? int32 as d -> new  NDArray([|d|])
-            | :? int64 as d -> new  NDArray([|d|])
-            | :? single as d -> new NDArray([|d|])
-            | :? double as d -> new NDArray([|d|])
+            | :? bool as d -> NDArray.Scalar(d)
+            | :? byte as d -> NDArray.Scalar(d)
+            | :? sbyte as d -> NDArray.Scalar(d)
+            | :? int16 as d -> NDArray.Scalar(d)
+            | :? uint16 as d -> NDArray.Scalar(d)
+            | :? int32 as d -> NDArray.Scalar(d)
+            | :? int64 as d -> NDArray.Scalar(d)
+            | :? single as d -> NDArray.Scalar(d)
+            | :? double as d -> NDArray.Scalar(d)
             | _ -> failwith "unreachable"
         DT.MakeConstWithBroadcast(shape, asNDArray)
     
