@@ -16,3 +16,4 @@ notes.txt
 **/.vs/*
 tests/pretrained/
 setup/protogen/
+pretrained/

@@ -8,6 +8,7 @@
 #nowarn "9"
 
 open System
+open NumSharp
 open Ionic.Zlib
 
 module Endian =
@@ -32,7 +33,6 @@ module Endian =
             (int32 buf.[offset+3])
 
 /// Spec from https://en.wikipedia.org/wiki/BMP_file_format
-/// NOTE: 
 let RGBAToBitmap(height:int, width:int, pixels:int[]) = 
     let header =
         [|
@@ -170,18 +170,22 @@ let RGBAToPNG(height:int, width:int, pixels:int[]) : byte[] =
     writeInt(buf,pixelBytes.Length + 49,-1371381630) // CRC of IEND
     buf
 
-// TODO: give this a nicer API
-// NOTE: Assumed NHWC dataformat
-let arrayToPNG_HWC (img:single[,,]) =
+/// HWC dataformat where C is 3
+let arrayToPNG_HWC (img:uint8[,,]) =
     let H = Array3D.length1 img
     let W = Array3D.length2 img
     let pixels = 
         [|
             for h in 0.. Array3D.length1 img - 1 do
                 for w in 0.. Array3D.length2 img - 1 do
-                    let getV c = min 255.f (max 0.f img.[h,w,c]) |> byte
-                    yield BitConverter.ToInt32([|getV 0; getV 1; getV 2; 255uy|], 0) 
+                    yield BitConverter.ToInt32([|img.[h,w,0]; img.[h,w,1]; img.[h,w,2]; 255uy|], 0) 
         |]
     RGBAToPNG(H,W,pixels)
 
+/// NHWC where C is 3
+let ndarrayToPNG_NHWC(img:NDArray) =
+    let xs = img.Data<uint8>()
+    match img.shape with
+    | [|_N;H;W;3|] -> Array3D.init H W 3 (fun h w c ->  xs.[h * (W * 3) + w * 3 + c]) |> arrayToPNG_HWC
+    | _ -> failwithf "shape %A is unsupported" img.shape
 

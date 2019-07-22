@@ -6,11 +6,12 @@ open System.Collections.Generic
 open System.Collections.Concurrent
 open FSharp.NativeInterop
 open System.Runtime.InteropServices
-open ProtoBuf
+//open ProtoBuf
 
 #nowarn "9"
 
 module Option =
+
     let orNull (x:'T option) = match x with | None -> box null :?> 'T | Some(x) -> x
 
     let mapOrNull (f:'T->'b) (x:'T option)  = match x with | None -> box null :?> 'b | Some(x) when box x = null -> box null :?> 'b | Some(x) -> f(x)
@@ -20,20 +21,30 @@ module Option =
     let ofRef (result:bool,byref:'T) = if result then Some(byref) else None
 
     let collect (x:'T[] option) = match x with | None -> [||] | Some(xs) -> xs; 
+
     /// nullable
     let ofNullable (x : 'T) = if box x <> null then Some x else None
+
     /// System.Nullable
     let ofSystemNullable (x : System.Nullable<'T>) = if x.HasValue then Some x.Value else None
+
     let tryGetAll (xs:'T option []) =
         if xs |> Array.exists (function | None -> true | _ -> false)
         then None
         else xs |> Array.map (Option.get) |> Some
+
     let ofType<'Out> : obj -> 'Out option = function | :? 'Out as x -> Some x | _ -> None
+
     let tryNullOfType<'Out>(x:obj) : 'Out option = x |> tryNull |> ofType<'Out>
+
     let ofUnrelatedType<'In, 'Out> (x : 'In) = box x |> ofType<'Out>
+
     let isOfType<'T> (x:obj) = match x with | :? 'T -> true | _ -> false
+
     let orElse (second:'T option) (first:'T option)  = match first with | Some(x) -> Some(x) | None -> match second with | Some(y) -> Some(y) | None -> None
+
     let tryFind (predicate:'T -> bool) (x:'T option) = match x with | Some(x) when predicate x -> Some(x) | _ -> None
+
     let dispose<'T when 'T :> IDisposable> (x:'T option) = x |> Option.iter (fun x -> x.Dispose())
 
 type Dictionary<'T,'b> with 
@@ -181,22 +192,6 @@ type ConcurrentDictionary<'a,'b> with
         let b' = update this.[index]
         this.[index] <- b'
         b'
-
-[<ProtoContract>]
-type Any = {
-    [<ProtoMember(1)>]
-    type_url : string
-    [<ProtoMember(2)>]
-    value : byte[]
-}
-
-let loadAny = 
-    lazy
-        ProtoBuf.Meta.RuntimeTypeModel.Default.Add(typeof<Google.Protobuf.WellKnownTypes.Any>,false).SetSurrogate(typeof<Any>)
-
-let deserialize<'a> x = 
-    loadAny.Force()
-    Serializer.Deserialize<'a> x
 
 type Math with
     static member Sqrt(x : float32) = float32 (Math.Sqrt(float32 x))
