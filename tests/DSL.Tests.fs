@@ -107,7 +107,7 @@ let ``basic checks diff``() =
 
 
 // [<Test>]
-// let ``basic checks scalar addition, multiplication, subtraction``() = 
+// let ``basic checks scalar addition, multiplication, subtraction, division``() = 
 //     let f (x: DT<_>) = 1 * x * x * 1 / 1.0 + 4 * x + 5 - 1 + 1
 //     let df x = DT.diff f x
 
@@ -131,15 +131,15 @@ let ``basic checks sum plus broadcast``() =
     |> DT.toScalar
     |> shouldEqual "wcevwo14" 11.0
 
-//[<Test>]
-//let ``basic checks grad``() = 
-//    let f2 x = fm { return sum (vec [1.0; 2.0] * x * x) }
-//    let df2 x = DT.grad f2 x
-//
-//    f2 (vec [1.0; 2.0])
-//    |> DT.Eval
-//    |> DT.toScalar
-//    |> shouldEqual "wcevwo15" 9.0
+[<Test>]
+let ``basic checks grad``() = 
+    let f2 x = fm { return sum (vec [1.0; 2.0] * x * x) }
+    let df2 x = DT.grad f2 x
+
+    f2 (vec [1.0; 2.0])
+    |> DT.Eval
+    |> DT.toScalar
+    |> shouldEqual "wcevwo15" 9.0
 //
 //[<Test>]
 //let ``basic checks jacobian``() = 
