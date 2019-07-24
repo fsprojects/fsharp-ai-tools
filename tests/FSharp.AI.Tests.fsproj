@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0;net472</TargetFrameworks>
     <RuntimeIdentifiers>win-x64;osx-x86;linux-x64</RuntimeIdentifiers>
     <RootNamespace>TensorFlow.FSharp.Tests</RootNamespace>
     <AssemblyName>FSharp.AI.Tests</AssemblyName>
