@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net461</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0;net472</TargetFrameworks>
     <RuntimeIdentifiers>win-x64;osx-x86;linux-x64</RuntimeIdentifiers>
     <RootNamespace>TensorFlow.FSharp.Tests</RootNamespace>
     <AssemblyName>FSharp.AI.Tests</AssemblyName>
@@ -19,9 +19,12 @@
     <PackageReference Include="TorchSharp" Version="0.2.0-preview-27915-4" />
     <PackageReference Update="FSharp.Core" Version="4.6.2" />
     <PackageReference Update="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="System.IO.Compression" Version="4.3.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.1.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
     <PackageReference Include="NUnit" Version="3.12.0" />
+    <PackageReference Include="Argu" Version="5.5.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
   </ItemGroup> 
 
   <ItemGroup>

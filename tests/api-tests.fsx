@@ -2,8 +2,8 @@
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../tests/bin/Debug/net461/TensorFlow.FSharp.Proto.dll"
-#r "bin/Debug/net461/TensorFlow.FSharp.dll"
+#r "../tests/bin/Debug/net472/TensorFlow.FSharp.Proto.dll"
+#r "bin/Debug/net472/TensorFlow.FSharp.dll"
 #nowarn "49"
 
 //open Argu
