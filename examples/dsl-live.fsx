@@ -26,10 +26,12 @@ module FirstLiveCheck =
 module PlayWithFM = 
     
     let f x = 
-       x * x + v 4.0 * x 
+       x * x + scalar 4.0 * x 
 
     // Get the derivative of the function. This computes "x*2 + 4.0"
     let df x = DT.diff f x  
+
+
 
     // Run the function
     f (v 3.0) 
@@ -45,9 +47,31 @@ module PlayWithFM =
     // You can wrap in "fm { return ... }" if you like
     fm { return v 2.0 + v 1.0 }
       
+
+
+
+
+
+
+
     let test1() = 
-        vec [1.0; 2.0] + vec [1.0; 2.0]
+        vec [1.0; 2.0] + vec [1.0; 3.0; 4.0]
     
+    [<LiveCheck>]
+    let check1() = test1() 
+
+
+
+
+
+
+
+
+
+
+
+
+
     // Math-multiplying matrices of the wrong sizes gives an error
     let test2() = 
         let matrix1 = 
@@ -56,16 +80,26 @@ module PlayWithFM =
                      [1.0; 2.0] ]
         let matrix2 =  
             matrix [ [1.0; 2.0]
+                     [1.0; 2.0]
                      [1.0; 2.0] ] 
         matrix1 *! matrix2 
+
+
+
+
+
+
+
+
+
     
     // Things are only checked when there is a [<LiveCheck>] exercising the code path
     
     [<LiveCheck>]
-    let check1() = test1() 
-
-    [<LiveCheck>]
     let check2() = test2() 
+
+
+
 
 module GradientDescent =
 
@@ -86,9 +120,9 @@ module GradientDescentExample =
     // A numeric function of two parameters, returning a scalar, see
     // https://en.wikipedia.org/wiki/Gradient_descent
     let f (xs: Vector) : Scalar = 
-        sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * -cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
+        sin (0.5 * sqr xs.[0] - 0.25 * sqr xs.[1] + 3) * -cos (2 * xs.[0] + 1 - exp xs.[1])
 
-    // Pass this Define a numeric function of two parameters, returning a scalar
+    // Pass this to gradient descent
     let train numSteps = GradientDescent.train f (vec [ -0.3; 0.3 ]) numSteps
 
     [<LiveCheck>] 
@@ -137,7 +171,7 @@ module ModelExample =
            
     let meanSquareError (z: DT<double>) tgt = 
         let dz = z - tgt 
-        DT.Sum (dz * dz) / v (double modelSize) / v (double z.Shape.[0].Value) 
+        DT.Sum (dz * dz) / modelSize / z.Length 
 
     /// The loss function for the model w.r.t. a true output
     let loss (xs, y) coeffs = 
@@ -184,7 +218,7 @@ module ODEs =
     //let sol = solve(prob, Tsit5())
     //sol |> Chart.Lines 
 
-module GradientDescentC =
+module GradientDescentPreprocessed =
     // mucking about with model preparation/compilation
 
     // Note, the rate in this example is constant. Many practical optimizers use variable
@@ -202,20 +236,20 @@ module GradientDescentC =
         let stepC = stepC f inputShape
         fun initial numSteps -> initial |> Seq.unfold (fun pos -> Some (pos, stepC pos)) |> Seq.truncate numSteps 
 
-module GradientDescentExampleC =
+module GradientDescentExamplePreprocessed =
 
     // A numeric function of two parameters, returning a scalar, see
     // https://en.wikipedia.org/wiki/Gradient_descent
     let f (xs: Vector) : Scalar = 
-        sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * -cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
+        sin (0.5 * sqr xs.[0] - 0.25 * sqr xs.[1] + 3) * -cos (2 * xs.[0] + 1 - exp xs.[1])
 
     // Pass this Define a numeric function of two parameters, returning a scalar
-    let trainC = GradientDescentC.trainC f (shape [ 2 ])
+    let trainC = GradientDescentPreprocessed.trainC f (shape [ 2 ])
 
     let train numSteps = trainC (vec [ -0.3; 0.3 ]) numSteps
 
     [<LiveCheck>] 
-    let check1() = train 4 |> Seq.last 
+    let check1() = f (vec [ -0.3; 0.3 ])
     
     let results = train 200 |> Seq.last
 
@@ -224,24 +258,24 @@ module NeuralTransferFragments =
     let instance_norm (input, name) =
         use __ = DT.WithScope(name + "/instance_norm")
         let mu, sigma_sq = DT.Moments (input, axes=[0;1])
-        let shift = DT.Variable (v 0.0, name + "/shift")
-        let scale = DT.Variable (v 1.0, name + "/scale")
-        let epsilon = v 0.001
+        let shift = DT.Variable (0, name + "/shift")
+        let scale = DT.Variable (1, name + "/scale")
+        let epsilon = 0.001
         let normalized = (input - mu) / sqrt (sigma_sq + epsilon)
         normalized * scale + shift 
 
     let conv_layer (out_channels, filter_size, stride, name) input = 
-        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights")
+        let filters = variable (DT.TruncatedNormal() * 0.1) (name + "/weights")
         let x = DT.Conv2D (input, filters, out_channels, filter_size=filter_size, stride=stride)
         instance_norm (x, name)
 
     let conv_transpose_layer (out_channels, filter_size, stride, name) input =
-        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights")
+        let filters = variable (DT.TruncatedNormal() * 0.1) (name + "/weights")
         let x = DT.Conv2DBackpropInput(filters, input, out_channels, filter_size=filter_size, stride=stride, padding="SAME")
         instance_norm (x, name)
 
     let to_pixel_value (input: DT<double>) = 
-        tanh input * v 150.0 + (v 255.0 / v 2.0) 
+        tanh input * v 150.0 + (255.0 / 2.0) 
 
     let residual_block (filter_size, name) input = 
         let tmp = conv_layer (128, filter_size, 1, name + "_c1") input  |> relu
@@ -273,3 +307,110 @@ module NeuralTransferFragments =
     let check1() = 
         let dummyImages = DT.Dummy (Shape [ Dim.Named "BatchSz" 10; Dim.Named "H" 474;  Dim.Named "W" 712; Dim.Named "Channels" 3 ])
         style_transfer dummyImages
+
+    (*
+    
+    def gram_matrix(input_tensor):
+      # We make the image channels first 
+      channels = int(input_tensor.shape[-1])
+      a = tf.reshape(input_tensor, [-1, channels])
+      n = tf.shape(a)[0]
+      gram = tf.matmul(a, a, transpose_a=True)
+      return gram / tf.cast(n, tf.float32)
+     
+    def get_style_loss(base_style, gram_target):
+      """Expects two images of dimension h, w, c"""
+      # height, width, num filters of each layer
+      height, width, channels = base_style.get_shape().as_list()
+      gram_style = gram_matrix(base_style)
+      
+      return tf.reduce_mean(tf.square(gram_style - gram_target))
+    
+    def get_feature_representations(model, content_path, style_path):
+      """Helper function to compute our content and style feature representations.
+     
+      This function will simply load and preprocess both the content and style 
+      images from their path. Then it will feed them through the network to obtain
+      the outputs of the intermediate layers. 
+      
+      Arguments:
+        model: The model that we are using.
+        content_path: The path to the content image.
+        style_path: The path to the style image
+        
+      Returns:
+        returns the style features and the content features. 
+      """
+      # Load our images in 
+      content_image = load_and_process_img(content_path)
+      style_image = load_and_process_img(style_path)
+      
+      # batch compute content and style features
+      stack_images = np.concatenate([style_image, content_image], axis=0)
+      model_outputs = model(stack_images)
+      
+      # Get the style and content feature representations from our model  
+      style_features = [style_layer[0] for style_layer in model_outputs[:num_style_layers]]
+      content_features = [content_layer[1] for content_layer in model_outputs[num_style_layers:]]
+      return style_features, content_features
+      
+
+      def compute_loss(model, loss_weights, init_image, gram_style_features, content_features):
+      """This function will compute the loss total loss.
+      
+      Arguments:
+        model: The model that will give us access to the intermediate layers
+        loss_weights: The weights of each contribution of each loss function. 
+          (style weight, content weight, and total variation weight)
+        init_image: Our initial base image. This image is what we are updating with 
+          our optimization process. We apply the gradients wrt the loss we are 
+          calculating to this image.
+        gram_style_features: Precomputed gram matrices corresponding to the 
+          defined style layers of interest.
+        content_features: Precomputed outputs from defined content layers of 
+          interest.
+          
+      Returns:
+        returns the total loss, style loss, content loss, and total variational loss
+      """
+      style_weight, content_weight, total_variation_weight = loss_weights
+      
+      # Feed our init image through our model. This will give us the content and 
+      # style representations at our desired layers. Since we're using eager
+      # our model is callable just like any other function!
+      model_outputs = model(init_image)
+      
+      style_output_features = model_outputs[:num_style_layers]
+      content_output_features = model_outputs[num_style_layers:]
+      
+      style_score = 0
+      content_score = 0
+
+      # Accumulate style losses from all layers
+      # Here, we equally weight each contribution of each loss layer
+      weight_per_style_layer = 1.0 / float(num_style_layers)
+      for target_style, comb_style in zip(gram_style_features, style_output_features):
+        style_score += weight_per_style_layer * get_style_loss(comb_style[0], target_style)
+        
+      # Accumulate content losses from all layers 
+      weight_per_content_layer = 1.0 / float(num_content_layers)
+      for target_content, comb_content in zip(content_features, content_output_features):
+        content_score += weight_per_content_layer* get_content_loss(comb_content[0], target_content)
+      
+      style_score *= style_weight
+      content_score *= content_weight
+      total_variation_score = total_variation_weight * total_variation_loss(init_image)
+
+      # Get total loss
+      loss = style_score + content_score + total_variation_score 
+      return loss, style_score, content_score, total_variation_score
+
+
+      
+      def compute_grads(cfg):
+        with tf.GradientTape() as tape: 
+          all_loss = compute_loss // *cfg)
+        # Compute gradients wrt input image
+        total_loss = all_loss[0]
+        return tape.gradient(total_loss, cfg['init_image']), all_loss
+      *)
