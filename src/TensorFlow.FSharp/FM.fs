@@ -717,7 +717,8 @@ and DT internal (shape: Shape, nodeCount: int,
     static member RunNDArrays(values: DT[], ?weights: seq<string * DT>) : NDArray[] = 
         let _dimVarPlaceholders, _placeholderNodes, _outputs, outputNodes, session = 
             DT.PreprocessCore((fun _ -> values), [| |], ?weights=weights)
-        session.run(outputNodes).Flatten()
+        let outputs = session.run(outputNodes)
+        outputs.Flatten()
 
     static member RunNDArray(value: DT, ?weights: seq<string * DT>) : NDArray = 
         match value.TryAsConstNDArray() with 
@@ -1348,10 +1349,13 @@ and [<Sealed>] DT<'T> internal
              (fun ctxt -> 
                 let dynodes = 
                     memoize ctxt.AddGradientNodes key (fun () -> 
-                        let xnodes = DT.MakeNodesOfCorrectShape(ctxt, xs)
-                        let ynode = y.MakeNodeOfCorrectShape(ctxt)
-                        let dynodesIn = match dy with None -> None | Some z -> Some [| z.MakeNodeOfCorrectShape(ctxt) |]
-                        let dynodes = gen_ops.add_gradients([| ynode |], xnodes, ?dy=dynodesIn)
+                        let xnodes: Tensor[] = DT.MakeNodesOfCorrectShape(ctxt, xs)
+                        let ynodes : Tensor[] = [| y.MakeNodeOfCorrectShape(ctxt) |]
+                        let dynodesIn : Tensor[] option = match dy with None -> None | Some z -> Some [| z.MakeNodeOfCorrectShape(ctxt) |]
+                        let dynodes = 
+                            match dynodesIn with 
+                            | None -> tf.gradients(ys = ynodes, xs=xnodes)
+                            | Some gys -> tf.gradients(ys = ynodes, xs=xnodes, grad_ys=gys)
                         dynodes)
                 dynodes.[i])))
 

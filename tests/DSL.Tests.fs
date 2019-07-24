@@ -95,27 +95,27 @@ let ``basic checks Zero AssertShape``() =
     |> DT.toArray2D
     |> shouldEqual "wcevwo11" (array2D [ [ 0.0; 0.0 ]; [0.0; 0.0]])
 
-//[<Test>]
-//let ``basic checks diff``() = 
-//    let f x = fm { return x * x + v 4.0 * x }
-//    let df x = DT.diff f x
-//
-//    df (v 3.0)
-//    |> DT.Eval
-//    |> DT.toScalar
-//    |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
-
-(*
 [<Test>]
-let ``basic checks scalar addition, multiplication, subtraction``() = 
-    let f (x: DT<_>) = 1 * x * x * 1 / 1.0 + 4 * x + 5 - 1 + 1
+let ``basic checks diff``() = 
+    let f x = fm { return x * x + v 4.0 * x }
     let df x = DT.diff f x
 
     df (v 3.0)
     |> DT.Eval
     |> DT.toScalar
     |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
-*)
+
+
+// [<Test>]
+// let ``basic checks scalar addition, multiplication, subtraction``() = 
+//     let f (x: DT<_>) = 1 * x * x * 1 / 1.0 + 4 * x + 5 - 1 + 1
+//     let df x = DT.diff f x
+
+//     df (v 3.0)
+//     |> DT.Eval
+//     |> DT.toScalar
+//     |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
+
 
 [<Test>]
 let ``basic checks broadcast``() = 

@@ -6,9 +6,9 @@
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../tests/bin/Debug/net461/TensorFlow.FSharp.dll"
-#r "../tests/bin/Debug/net461/Tensorflow.Net.dll"
-#r "../tests/bin/Debug/net461/NumSharp.Core.dll"
+#r "../tests/bin/Debug/net472/TensorFlow.FSharp.dll"
+#r "../tests/bin/Debug/net472/Tensorflow.Net.dll"
+#r "../tests/bin/Debug/net472/NumSharp.Core.dll"
 //#load "shared/NPYReaderWriter.fsx"
 //#load "shared/ScriptLib.fsx"
 

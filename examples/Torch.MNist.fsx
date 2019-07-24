@@ -8,7 +8,7 @@
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#I "../tests/bin/Debug/net461/"
+#I "../tests/bin/Debug/net472/"
 #r "TorchSharp"
 #r "FSharp.AI.Tests.dll"
 
