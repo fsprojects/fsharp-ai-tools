@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
-    <id>TensorFlow.FSharp</id>
+    <id>FSharp.AI</id>
     <version>1.11.0-pre1</version>
-    <title>TensorFlow.FSharp</title>
+    <title>FSharp.AI</title>
     <!-- TODO add more authors owners etc. e.g. Don Syme and Miguel de Icaza -->
     <authors>Matthew Moloney</authors>
     <owners>Matthew Moloney</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <!-- a weird error in licence <license>MIT</license> -->
-    <licenseUrl>https://github.com/fsprojects/Tensorflow.FSharp/Licence</licenseUrl>
-    <projectUrl>https://github.com/fsprojects/Tensorflow.FSharp/</projectUrl>
+    <licenseUrl>https://github.com/fsprojects/FSharp.AI/Licence</licenseUrl>
+    <projectUrl>https://github.com/fsprojects/FSharp.AI/</projectUrl>
     <!--<iconUrl></iconUrl>-->
-    <repository type="git" url=" https://github.com/fsprojects/Tensorflow.FSharp/" />
+    <repository type="git" url=" https://github.com/fsprojects/FSharp.AI/" />
     <description>F# .NET Bindings for TensorFlow</description>
     <summary>F# .NET API for TensorFlow, Google's Machine Intelligence framework</summary>
     <releaseNotes>1.11.0 adds support for the TensorFlow 1.11 release</releaseNotes>
@@ -28,16 +28,16 @@
       <dependency id="System.Runtime.InteropServices" version="4.3.0" />
     </dependencies>
     <references>
-      <reference file="TensorFlow.FSharp.Proto.dll" />
-      <reference file="TensorFlow.FSharp.dll" />
+      <reference file="FSharp.AI.Proto.dll" />
+      <reference file="FSharp.AI.dll" />
     </references>
   </metadata>
   <files>
-    <file src="..\..\..\lib\TensorFlow.FSharp.Proto.dll" target="lib\netstandard2.0\TensorFlow.FSharp.Proto.dll" />
+    <file src="..\..\..\lib\FSharp.AI.Proto.dll" target="lib\netstandard2.0\FSharp.AI.Proto.dll" />
     <!-- NOTE: should we use Debug instead of Release? -->
-    <file src="..\bin\Release\netstandard2.0\TensorFlow.FSharp.dll" target="lib\netstandard2.0\TensorFlow.FSharp.dll" />
-    <file src="..\bin\Release\netstandard2.0\TensorFlow.FSharp.xml" target="lib\netstandard2.0\TensorFlow.FSharp.xml" />
-    <file src="..\..\..\lib\TensorFlow.FSharp.Proto.dll" target="lib\netstandard2.0\TensorFlow.FSharp.Proto.dll" />
+    <file src="..\bin\Release\netstandard2.0\FSharp.AI.dll" target="lib\netstandard2.0\FSharp.AI.dll" />
+    <file src="..\bin\Release\netstandard2.0\FSharp.AI.xml" target="lib\netstandard2.0\FSharp.AI.xml" />
+    <file src="..\..\..\lib\FSharp.AI.Proto.dll" target="lib\netstandard2.0\FSharp.AI.Proto.dll" />
     <file src="..\..\..\lib\libtensorflow.dll" target="lib\netstandard2.0\libtensorflow.dll" />
     <file src="..\..\..\lib\libtensorflow.dylib" target="lib\netstandard2.0\libtensorflow.dylib" />
     <file src="..\..\..\lib\libtensorflow_framework.dylib" target="lib\netstandard2.0\libtensorflow_framework.dylib" />

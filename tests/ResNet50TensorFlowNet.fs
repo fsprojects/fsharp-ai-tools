@@ -1,5 +1,5 @@
 ﻿module ResNet50TensorFlowNet
-//open TensorFlow.FSharp
+//open FSharp.AI
 open System
 open Tensorflow
 type ops = Tensorflow.Operations.gen_ops

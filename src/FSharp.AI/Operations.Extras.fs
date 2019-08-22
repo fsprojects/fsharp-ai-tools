@@ -1,5 +1,5 @@
 ﻿[<AutoOpen>]
-module TensorFlow.FSharp.OperationExtras
+module FSharp.AI.OperationExtras
 
 open System
 

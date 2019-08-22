@@ -69,7 +69,7 @@ filename=\"%s\"\r\n" filename filename |> toBytes
 #r @"..\lib\Microsoft.Web.XmlTransform.dll"
 #r @"..\lib\NuGet.Core.dll"
 
-let name = "TensorFlow.FSharp"
+let name = "FSharp.AI"
 let version = "0.0.0.1"
 let description = "TensorFlow bindings for F#. Code ported from TensorFlowSharp (C#) and from TensorFlow (python)"
 let releaseNotes = "Alpha"
@@ -82,7 +82,7 @@ let mm = NuGet.ManifestMetadata(
             Description = description,
             Summary = description,
             ReleaseNotes = releaseNotes,
-            ProjectUrl = "https://github.com/fsprojects/TensorFlow.FSharp",
+            ProjectUrl = "https://github.com/fsprojects/FSharp.AI",
             Copyright = "Microsoft and contributors",
             Authors = "Microsoft",
             Owners = "fsprojects, dsyme",
@@ -120,8 +120,8 @@ sprintf @"C:\Users\fsprojects\AppData\Local\Statfactory\FCell\%s"
 let dependecies =  [ ("ionic.zlib","1.9.1.5"); ("HDF.PInvoke.NETStandard","1.10.200"); ("Argu","5.1.0");("Google.Protobuf","3.6.1"); ("protobuf-net","2.4.0")]
 
 [|
-    for file in ["TensorFlow.FSharp.dll";"TensorFlow.FSharp.XML"; "libtensorflow.dll";
-"TensorFlow.FSharp.Proto.dll";"TensorFlow.FSharp.Proto.xml"]  ->
+    for file in ["FSharp.AI.dll";"FSharp.AI.XML"; "libtensorflow.dll";
+"FSharp.AI.Proto.dll";"FSharp.AI.Proto.xml"]  ->
         MPackageFile(file,@"lib\net40\" + file, net40,[|net40|], File.ReadAllBytes(__SOURCE_DIRECTORY__ + sprintf "\\bin\\Debug\\%s"
 file))
 |] |> Seq.iter pb.Files.Add

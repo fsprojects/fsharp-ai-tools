@@ -1,10 +1,10 @@
 ﻿module FSharp.AI.Tests.Utils
 
 open Tensorflow
-open TensorFlow.FSharp
+open FSharp.AI
 open System.IO
 open Tensorflow.Operations
-open TensorFlow.FSharp.NPYReaderWriter
+open FSharp.AI.NPYReaderWriter
 
 let basePath = Path.Combine(__SOURCE_DIRECTORY__,"..")
 

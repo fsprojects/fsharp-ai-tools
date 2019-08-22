@@ -1,15 +1,15 @@
-// Build the Debug 'TensorFlow.FSharp.Tests' before using this
+// Build the Debug 'FSharp.AI.Tests' before using this
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../tests/bin/Debug/net472/TensorFlow.FSharp.Proto.dll"
-#r "bin/Debug/net472/TensorFlow.FSharp.dll"
+#r "../tests/bin/Debug/net472/FSharp.AI.Proto.dll"
+#r "bin/Debug/net472/FSharp.AI.dll"
 #nowarn "49"
 
 //open Argu
 open System
 open System.IO
-open TensorFlow.FSharp
+open FSharp.AI
 
 if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 

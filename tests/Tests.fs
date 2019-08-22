@@ -3,8 +3,8 @@
 //
 //
 //open NUnit.Framework
-//open TensorFlow.FSharp
-//open TensorFlow.FSharp.Operations
+//open FSharp.AI
+//open FSharp.AI.Operations
 //open System.Runtime.CompilerServices
 //open System
 //open System.IO

@@ -1,11 +1,11 @@
 ﻿#I __SOURCE_DIRECTORY__
 #r "netstandard"
 #I "../tests/bin/Debug/net472/"
-#r "TensorFlow.FSharp.dll"
+#r "FSharp.AI.dll"
 #r "TensorFlow.Net.dll"
 #r "NumSharp.Core.dll"
 #r "Argu.dll"
-#r "TensorFlow.FSharp.Tests.dll"
+#r "FSharp.AI.Tests.dll"
 
 open System
 open System.IO

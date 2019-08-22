@@ -1,12 +1,12 @@
-// Build the Debug 'TensorFlow.FSharp.Tests' before using this
+// Build the Debug 'FSharp.AI.Tests' before using this
 
 module FM.Tests
 
 open NUnit.Framework
 
 open System
-open TensorFlow.FSharp
-open TensorFlow.FSharp.DSL
+open FSharp.AI
+open FSharp.AI.DSL
 
 [<Test>]
 let check64() = 
@@ -246,7 +246,7 @@ module GradientAscentWithRecordOfParameters =
     // It is important that you feel comfortable with evaluating tensor values.
     type DParams = 
         { xs: DT<double>
-          y: DT<double> } 
+              y: DT<double> } 
 
     // Inline helpers can be used to simplify some mathematical presentation
     let inline sqr x = x * x 

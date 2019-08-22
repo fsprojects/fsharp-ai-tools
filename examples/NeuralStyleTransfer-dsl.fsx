@@ -2,11 +2,11 @@
 //
 // See https://medium.com/tensorflow/neural-style-transfer-creating-art-with-deep-learning-using-tf-keras-and-eager-execution-7d541ac31398
 //
-// Build the Debug 'TensorFlow.FSharp.Tests' before using this
+// Build the Debug 'FSharp.AI.Tests' before using this
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../tests/bin/Debug/net472/TensorFlow.FSharp.dll"
+#r "../tests/bin/Debug/net472/FSharp.AI.dll"
 #r "../tests/bin/Debug/net472/Tensorflow.Net.dll"
 #r "../tests/bin/Debug/net472/NumSharp.Core.dll"
 //#load "shared/NPYReaderWriter.fsx"
@@ -18,8 +18,8 @@
 
 open System
 open System.IO
-open TensorFlow.FSharp
-open TensorFlow.FSharp.DSL
+open FSharp.AI
+open FSharp.AI.DSL
 open NPYReaderWriter
 
 // Check the process is 64-bit.  
