@@ -1,14 +1,17 @@
 ﻿[<AutoOpen>]
-module TensorFlow.FSharp.NNImpl
+module FSharp.AI.NNImpl
 
 open System
-open TensorFlow.FSharp.Utils
+open FSharp.AI.Utils
 open Tensorflow
 open Tensorflow.Operations
 
+let tf = Tensorflow.Binding.tf
+
 type gen_ops with
 
-    static member reduce_dims(input : Tensor, ?axis : Tensor) = 
+    static member reduce_dims(input : Tensor, ?axis : Tensor) =
+        
         match axis with
         | Some(axis) -> axis
         | None ->
@@ -16,7 +19,7 @@ type gen_ops with
             let shape = input.TensorShape
             if shape.is_fully_defined() then
                 // NOTE: The python code distinguishes between tensor and sparsetensor
-                tf.constant([|0 .. shape.Size- 1|], TF_DataType.TF_INT32)
+                tf.constant([|0 .. shape.size - 1|], TF_DataType.TF_INT32)
             else
                 // Otherwise, we rely on Range and Rank to do the right thing at run-time.
                 gen_ops.range(tf.constant(0), gen_ops.rank (input), tf.constant(1))
@@ -27,7 +30,7 @@ type gen_ops with
         let data_formatV = defaultArg data_format "NHWC"
         let name = defaultArg name "conv2d_transpose"
         // TODO re-do Dimension and Shape functions 
-        // https://github.com/fsprojects/TensorFlow.FSharp/blob/cdbd841bc86136f8ef24524cfc346e77bf21e6af/src/TensorFlow.FSharp/Tensorflow.fs#L409
+        // https://github.com/fsprojects/FSharp.AI/blob/cdbd841bc86136f8ef24524cfc346e77bf21e6af/src/FSharp.AI/Tensorflow.fs#L409
 //        if not (data_formatV = "NCHW" || data_formatV = "NHWC") then 
 //            failwith "dataformat has to be either NCHW or NHWC."
 //        let axis = if data_formatV = "NHWC" then 3 else 1

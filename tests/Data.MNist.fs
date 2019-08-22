@@ -56,18 +56,20 @@ type Web() =
 type DataSet(images : NDArray, labels : NDArray, dtype : TF_DataType, reshape : bool) = 
     let _num_examples = images.shape.[0]
     let images = images.reshape(images.shape.[0], images.shape.[1] * images.shape.[2])
-    let mutable _images = np.multiply(images.astype(dtype.as_numpy_datatype()), NDArray.op_Implicit(1.0f / 255.f))
-    let mutable _labels = labels.astype(dtype.as_numpy_datatype())
+    let img = images.astype(dtype.as_numpy_dtype())
+    let scale = NDArray.op_Implicit(1.0f / 255.f)
+    let mutable _images = np.multiply(&img, &scale)
+    let mutable _labels = labels.astype(dtype.as_numpy_dtype())
     let mutable _epochs_completed = 0
     let mutable _index_in_epoch = 0
 
-    member this.Images = _images
-    member this.Labels = _labels
-    member this.EpochsCompleted = _epochs_completed
-    member this.IndexInEpoch = _index_in_epoch
-    member this.NumExamples = _num_examples
+    member __.Images = _images
+    member __.Labels = _labels
+    member __.EpochsCompleted = _epochs_completed
+    member __.IndexInEpoch = _index_in_epoch
+    member __.NumExamples = _num_examples
 
-    member this.next_batch(batch_size : int, ?fake_data : bool, ?shuffle : bool) = 
+    member __.next_batch(batch_size : int, ?fake_data : bool, ?shuffle : bool) = 
         let fake_data = defaultArg fake_data false
         let shuffle = defaultArg shuffle true
         let start = _index_in_epoch
@@ -110,20 +112,26 @@ type Datasets = {
 module Dataset = 
 
     let DEFAULT_SOURCE_URL = "https://storage.googleapis.com/cvdf-datasets/mnist/";
-    let TRAIN_IMAGES = "train-images-idx3-ubyte.gz";
-    let TRAIN_LABELS = "train-labels-idx1-ubyte.gz";
-    let TEST_IMAGES = "t10k-images-idx3-ubyte.gz";
-    let TEST_LABELS = "t10k-labels-idx1-ubyte.gz";
+
+    let TRAIN_IMAGES = "train-images-idx3-ubyte.gz"
+
+    let TRAIN_LABELS = "train-labels-idx1-ubyte.gz"
+
+    let TEST_IMAGES = "t10k-images-idx3-ubyte.gz"
+
+    let TEST_LABELS = "t10k-labels-idx1-ubyte.gz"
+
     let private _read32(bytestream : FileStream) =  
         let buffer = Array.zeroCreate<byte> (sizeof<uint32>)
         let count = bytestream.Read(buffer, 0, 4)
-        np.frombuffer(buffer, ">u4").Data<uint32>(0) //MM) Is this really necessary?
+        np.frombuffer(buffer, ">u4").GetUInt32(0) //  Is this really necessary?
+
     let dense_to_one_hot(labels_dense : NDArray, num_classes : int) =
         let num_labels = labels_dense.shape.[0]
         let index_offset = np.arange(num_labels) * NDArray.op_Implicit(num_labels)
         let labels_one_hot = np.zeros(num_labels, num_classes)
         for row in 0 .. num_labels - 1 do
-            let col = int(labels_dense.Data<byte>(row))
+            let col = int(labels_dense.GetByte(row))
             labels_one_hot.SetData(1.0, row,col)
         labels_one_hot
 

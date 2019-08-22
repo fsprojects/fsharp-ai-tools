@@ -1,7 +1,7 @@
 ﻿#I __SOURCE_DIRECTORY__
 #r "netstandard"
 #I "../tests/bin/Debug/net472/"
-#r "TensorFlow.FSharp.dll"
+#r "FSharp.AI.dll"
 #r "TensorFlow.Net.dll"
 #r "NumSharp.Core.dll"
 #r "FSharp.AI.Tests.dll"
@@ -14,7 +14,7 @@ open Tensorflow
 open Tensorflow.Operations
 open NumSharp
 open FSharp.AI.Tests
-open TensorFlow.FSharp.ImageWriter
+open FSharp.AI.ImageWriter
 
 let sess = new Session()
 let weights = Utils.fetchStyleWeights("rain")

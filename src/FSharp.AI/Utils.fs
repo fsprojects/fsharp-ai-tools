@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module TensorFlow.FSharp.Utils
+module FSharp.AI.Utils
 open System
 open System.Collections
 open System.Collections.Generic

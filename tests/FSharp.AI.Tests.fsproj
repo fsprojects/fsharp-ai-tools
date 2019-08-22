@@ -4,7 +4,7 @@
     <OutputType>Library</OutputType>
     <TargetFrameworks>netcoreapp2.0;net472</TargetFrameworks>
     <RuntimeIdentifiers>win-x64;osx-x86;linux-x64</RuntimeIdentifiers>
-    <RootNamespace>TensorFlow.FSharp.Tests</RootNamespace>
+    <RootNamespace>FSharp.AI.Tests</RootNamespace>
     <AssemblyName>FSharp.AI.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
@@ -57,7 +57,7 @@
    
   </Target>
  <ItemGroup>
-    <ProjectReference Include="..\src\TensorFlow.FSharp\TensorFlow.FSharp.fsproj" />
+    <ProjectReference Include="..\src\FSharp.AI\FSharp.AI.fsproj" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(OS)' == 'Windows_NT' ">
