@@ -7,6 +7,7 @@ open Tensorflow.Operations
 // TODO: replace fixed weights with variables
 // NOTE: This model architecture is tailored for fast feed forward style transfer and not as genearully useful as something like ResNet
 // TODO recover from checkpoint
+let tf = Tensorflow.Binding.tf
 
 let model(input_img : Tensor, weights : Map<string,Tensor>) =
     // TODO: Create the following using Variables and use a checkpoint loader to load the values

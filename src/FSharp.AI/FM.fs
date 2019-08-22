@@ -16,6 +16,7 @@ open FSharp.AI.NNImpl
 #nowarn "9"
 
 type TFGraph = Graph
+
 type TFOutput = Tensorflow.Tensor
 
 type ops = Tensorflow.Operations.gen_ops
@@ -30,8 +31,6 @@ module LiveChecking =
 type internal InferenceVarSoln<'T> =
     | Solved of 'T
     | Unsolved
-
-    
     
 module Array3D = 
     /// Not properly tested, probably slow, not to be used beyond a temporary work around
@@ -40,15 +39,14 @@ module Array3D =
           for y in 0..(xsss.GetLength(1)-1) do 
             for z in 0..(xsss.GetLength(2)-1) -> xsss.[x,y,z]|]
 
-
 // NOTE: This should be moved elsewhere
 [<AutoOpen>]
 module Utils = 
-    let private convert<'t>(x:NDArray) =
-        let xs = x.Data<'t>() 
+    let private convert<'T when 'T : (new : unit -> 'T) and 'T: struct and 'T :> ValueType>(x: NDArray) =
+        let xs = x.Data<'T>() 
         match x.shape with
-        | [||] -> x.Data<'t>().[0] |> box
-        | [|_|] -> x.Data<'t>() |> box
+        | [||] -> x.Data<'T>().[0] |> box
+        | [|_|] -> x.Data<'T>().ToArray() |> box
         | [|d1;d2|] -> 
             Array2D.init d1 d2 (fun a b -> xs.[a * d2 + b]) |> box
         | [|d1;d2;d3|] -> 
@@ -58,18 +56,11 @@ module Utils =
         | x -> failwithf "Shape %A is unsupported at this time" x
 
     type NDArray with
-        /// This  recursivly flattens NDArray<NDArray>s to the base type arrays
-        /// NOTE: the impetus for this fuction is because the return type for session.run([|output|]) is NDArray and not NDArray[]
-        ///       while NDArray design is from Numpy which can support complex and nested arrays I don't belive Tensorflow supports this
-        member this.Flatten() = 
-            if this.dtype <> typeof<NumSharp.NDArray> then [|this|]
-            else [|for i in 0..this.len - 1 do yield! this.GetNDArray(i).Flatten()|]
 
-        /// TODO this may need a mechanism for 
         member this.ToArrayOrSingle() = 
             match this.dtype.ToString() with
-            | "System.Int32" -> convert<int32>  this
-            | "System.UInt32" -> convert<uint32>  this
+            | "System.Int32" -> convert<int32> this
+            | "System.UInt32" -> convert<uint32> this
             | "System.Int16" -> convert<int16> this
             | "System.UInt16" -> convert<uint16> this
             | "System.Int8" -> convert<int8> this
@@ -90,7 +81,7 @@ module Utils =
         /// </summary>
         /// <param name="t">The system type to be converted.</param>
         /// <returns>The <see cref="TFDataType"/> corresponding to the given type.</returns>
-        static member FromType (t:Type) : TF_DataType = 
+        static member FromType (t:Type): TF_DataType = 
             //if true then TFDataType.Float32 else TFDataType.Unknown
             if   t = typeof<float32>     then TF_DataType.TF_FLOAT
             elif t = typeof<double>    then TF_DataType.TF_DOUBLE
@@ -108,8 +99,7 @@ module Utils =
     [<DllImport ("tensorflow")>]
     extern void TF_AddGradients (TF_Graph graph, TF_Output* ys, int ny, TF_Output* xs, int nx, TF_Output* dx, TF_Status status, TF_Output* dy)
 
-
-   /// <summary>
+    /// <summary>
     /// Adds a gradient: the operations needed to compute the partial derivatives of sum of <paramref name="y"/>` wrt to <paramref name="x"/>.
     /// </summary>
     /// <returns>The partial derivatives, the size of the array is the same as the length of the <paramref name="y"/> array.</returns>
@@ -122,8 +112,8 @@ module Utils =
     /// d(y[0] + y[1]+ ...)/dx[0], d(y[0] + y[1] + ...)/dx[1]z...
     /// </remarks>
     type gen_ops =
-      // TODO this should be updated when the Status functions progress through TensorFlow.Net
-      static member add_gradients(y : TFOutput [], x : TFOutput [], ?dy : TFOutput []) : TFOutput [] =
+        // TODO this should be updated when the Status functions progress through TensorFlow.Net
+        static member add_gradients(y: TFOutput [], x: TFOutput [], ?dy: TFOutput []): TFOutput [] =
           if y = null then raise(ArgumentNullException ("y"))
           if x = null then raise(ArgumentNullException ("x"))
           dy |> Option.iter (fun dy -> 
@@ -131,12 +121,12 @@ module Utils =
                   raise(ArgumentException ("If dy is not null, the size of the gradients must match the size of y", "dy")))
           let ret = Array.zeroCreate<TF_Output> x.Length //new Output [x.Length]
           use pret = fixed &ret.[0]
-          let f xs = xs |> Array.map (fun x -> TFOutput.op_Implicit(x) : IntPtr)
+          let f xs = xs |> Array.map (fun x -> TFOutput.op_Implicit(x): IntPtr)
           let y = f y 
           let x = f x 
           use py = fixed &y.[0]
           use px = fixed &x.[0] 
-          let graph_handle = Graph.op_Implicit(tf.get_default_graph()) : IntPtr
+          let graph_handle = Graph.op_Implicit(tf.get_default_graph()): IntPtr
           use status = new Status()
           match dy with
           | None ->
@@ -151,7 +141,7 @@ module Utils =
             [|for x in ret -> new TFOutput(x)|]
 
 type internal InferenceVar<'T>() = 
-    let mutable solution : InferenceVarSoln<'T> = Unsolved
+    let mutable solution: InferenceVarSoln<'T> = Unsolved
     
     member __.IsSolved = match solution with Solved _ -> true | Unsolved -> false
 
@@ -244,7 +234,7 @@ type Dim =
             | DimVar v -> 
                if subst.ContainsKey(v) then subst.[v] 
                else 
-                   //printfn "Dim.AsTFNode: didn't find instantiation for variable dimension in %A, assuming 1" dim
+                   //printfn "Dim.AsTFNode: didn'T find instantiation for variable dimension in %A, assuming 1" dim
                    tf.constant(1)
         loop dim
 
@@ -257,7 +247,7 @@ type Dim =
         | DimVar v -> 
             if subst.ContainsKey(v) then subst.[v] 
             else 
-                //printfn "Dim.Subst: didn't find instantiation for variable dimension in %A, assuming unchanged" dim
+                //printfn "Dim.Subst: didn'T find instantiation for variable dimension in %A, assuming unchanged" dim
                 dim
 
     static member ( * ) (dim: Dim, stride: int) = if stride = 1 then dim else DimMulInt (dim, stride)
@@ -437,11 +427,11 @@ type Shape internal (flex: InferenceVar<Shape> option, suffix: Dim[]) =
     /// Get the shape as a TensorFlow node
     member internal shape.AsTFNode(graph: TFGraph, subst: IDictionary<InferenceVar<Dim>, TFOutput>) = 
         if shape.IsSolved then 
-            tf.constant(shape.AsTFShape().Dimensions) // NOTE: we're assuming tf.constant can handle shapes
+            tf.constant(shape.AsTFShape().dims) // NOTE: we're assuming tf.constant can handle shapes
         else
             let dims = shape.DimensionsEliminatingFlex
             if dims.Length = 0 then 
-                tf.constant(shape.AsTFShape().Dimensions) // NOTE: we're assuming tf.constant can handle shapes
+                tf.constant(shape.AsTFShape().dims) // NOTE: we're assuming tf.constant can handle shapes
             else
                 ops.pack([| for dim in dims -> dim.AsTFNode(subst) |])
 
@@ -470,7 +460,7 @@ type Shape internal (flex: InferenceVar<Shape> option, suffix: Dim[]) =
         //printfn "after matching, shapeCopied = %A, shape2 = %A, shape = %A, #acc = %d" shapeCopied shape2 shape acc.Count
         dict [| for (KeyValue(v1, v2)) in acc do
                     match v2.Solution with 
-                    | Unsolved -> failwith "the input shape didn't solve a shape variable"
+                    | Unsolved -> failwith "the input shape didn'T solve a shape variable"
                     | Solved d -> yield (v1, d) |]
 
     /// Create a shape with the given dimension information. The shape does not support broadcasting.
@@ -503,7 +493,7 @@ type Shape internal (flex: InferenceVar<Shape> option, suffix: Dim[]) =
 
     /// Create a shape from a TensorFlow shape
     static member FromTFShape (shape: TensorShape) = 
-        shape.Dimensions |> Shape.FromTFShapeArray
+        shape.dims |> Shape.FromTFShapeArray
 
     static member internal D = Shape Array.empty<Dim>
     
@@ -623,7 +613,6 @@ type internal WithScopeDisposable(name:string) =
         member __.Dispose() = ()
     member __.Name = name        
 
-
 /// Represents a context for turning differentiable tensors into a TensorFlow graph
 type internal  TFCtxt = 
     { Graph: TFGraph 
@@ -638,8 +627,8 @@ and DT internal (shape: Shape, nodeCount: int,
                  makeNode: (TFCtxt * bool -> TFOutput * bool), 
                  asNDArray: (unit -> NDArray) option) = 
 
-    /// Used for operations that can produce a shape that doesn't need broadcasting
-    static member internal ProducesCorrectShape f (ctxt:TFCtxt, _canProduceSmallerShape: bool) : TFOutput * bool =
+    /// Used for operations that can produce a shape that doesn'T need broadcasting
+    static member internal ProducesCorrectShape f (ctxt:TFCtxt, _canProduceSmallerShape: bool): TFOutput * bool =
         f ctxt, false
 
     /// Used for operations that can produce a smaller shape and may need broadcasting
@@ -669,20 +658,19 @@ and DT internal (shape: Shape, nodeCount: int,
     /// Get the inferred shape of the differentiable tensor 
     member internal __.NodeCount = nodeCount 
 
-    /// A quick check to see if this is a constant tensor, so we don't have to create a graph to
+    /// A quick check to see if this is a constant tensor, so we don'T have to create a graph to
     /// view or analyze it.
     member internal __.TryAsConstNDArray() = 
         if livecheck then 
-            failwith "can't evaluate tensor during LiveCheck"
+            failwith "can'T evaluate tensor during LiveCheck"
         match asNDArray with 
         | None -> None 
         | Some f -> Some (f())
 
-
     /// Execute a computed DT<'T> value, returning a constant DT<'T> value.
     static member internal PreprocessCore (code: (DT[] -> DT[]), inputShapes: (Type * Shape)[], ?weights: seq<string * DT>)  = 
         if livecheck then 
-            failwith "can't compile during LiveCheck"
+            failwith "can'T compile during LiveCheck"
         let session = new Session()
         let graph = session.graph
         let freeDimVars = Shape.FreeVars(Array.map snd inputShapes) 
@@ -700,7 +688,7 @@ and DT internal (shape: Shape, nodeCount: int,
         let outputNodes = outputs |> Array.map (fun value -> value.MakeNodeOfCorrectShape(ctxt))
         dimVarPlaceholders, placeholderNodes, outputs, outputNodes, session
 
-    static member Placeholder (ty, shape) : DT = 
+    static member Placeholder (ty, shape): DT = 
         let nodeCount = 100
         
         // Unfortunately we have to use reflection to make an object of the correct specific type
@@ -714,25 +702,25 @@ and DT internal (shape: Shape, nodeCount: int,
         System.Activator.CreateInstance(gty, BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance, null, args, culture=null)
           :?> DT
 
-    static member RunNDArrays(values: DT[], ?weights: seq<string * DT>) : NDArray[] = 
+    static member RunNDArrays(values: DT[], ?weights: seq<string * DT>): NDArray[] = 
         let _dimVarPlaceholders, _placeholderNodes, _outputs, outputNodes, session = 
             DT.PreprocessCore((fun _ -> values), [| |], ?weights=weights)
         let outputs = session.run(outputNodes)
-        outputs.Flatten()
+        outputs
 
-    static member RunNDArray(value: DT, ?weights: seq<string * DT>) : NDArray = 
+    static member RunNDArray(value: DT, ?weights: seq<string * DT>): NDArray = 
         match value.TryAsConstNDArray() with 
         | None -> DT.RunNDArrays([| value |], ?weights=weights).[0]
         | Some t -> t
 
-    static member Run(value: DT, ?weights: seq<string * DT>) : obj = 
+    static member Run(value: DT, ?weights: seq<string * DT>): obj = 
         if livecheck then 
             // TODO: give a better dummy value back here
             obj()
         else
             DT.RunNDArray(value, ?weights=weights).ToArrayOrSingle() |> box
 
-    static member Run(values: DT[], ?weights: seq<string * DT>) : obj[] = 
+    static member Run(values: DT[], ?weights: seq<string * DT>): obj[] = 
         if livecheck then 
             // TODO: give a better dummy value back here
             [| for v in values -> obj() |]
@@ -742,7 +730,7 @@ and DT internal (shape: Shape, nodeCount: int,
 
     /// A method to transform this object to a formattable object, used by F# interactive
     /// TODO double check that `obj` is in fact the desired return type
-    static member PrintTransform(value: DT) : obj = 
+    static member PrintTransform(value: DT): obj = 
         // nodeCount = 0 implies constant, e.g. result from Eval
         match value.TryAsConstNDArray() with 
         | Some t -> box t
@@ -752,7 +740,7 @@ and DT internal (shape: Shape, nodeCount: int,
             else
                 box (sprintf "%A" value.Shape + " (unevaluated)")
 
-    static member Cast<'T>(input: DT) : DT<'T> = 
+    static member Cast<'T>(input: DT): DT<'T> = 
         let outputShape = input.Shape
         let nodeCount = input.NodeCount + 1
         DT<'T> (outputShape, nodeCount, 
@@ -781,7 +769,7 @@ and [<Sealed>] DT<'T> internal
 
     inherit DT(shape, nodeCount, eval, asNDArray)
 
-    static member inline internal Unop f (input: DT<'T>) : DT<'T> =  
+    static member inline internal Unop f (input: DT<'T>): DT<'T> =  
         let outputShape = input.Shape
         let nodeCount = input.NodeCount + 1
         DT<'T>(outputShape, nodeCount, fun (ctxt, canProduceSmallerShape) -> 
@@ -790,7 +778,7 @@ and [<Sealed>] DT<'T> internal
             let outputHasSmallerShape = inputHasSmallerShape
             outputNode, outputHasSmallerShape)
 
-    static member inline internal Binop opName f scalarf (input1: DT<'T>) (input2: DT<'T>) : DT<'T> = 
+    static member inline internal Binop opName f scalarf (input1: DT<'T>) (input2: DT<'T>): DT<'T> = 
         let outputShape = Shape.EquivShapes opName input1.Shape input2.Shape
         let nodeCount = input1.NodeCount + input2.NodeCount + 1
         DT<_> (outputShape, nodeCount, 
@@ -802,7 +790,7 @@ and [<Sealed>] DT<'T> internal
                    let prelimOutputHasSmallerShape = inputHasSmallerShape1 && inputHasSmallerShape2
                    prelimOutputNode, prelimOutputHasSmallerShape))
 
-    static member inline internal ReduceOp keep_dims (axis: int[] option) (input: DT<'T>) (f : TFCtxt -> int[] option -> TFOutput-> TFOutput) : DT<'T> = 
+    static member inline internal ReduceOp keep_dims (axis: int[] option) (input: DT<'T>) (f: TFCtxt -> int[] option -> TFOutput-> TFOutput): DT<'T> = 
         let outputShape = 
             match keep_dims, axis with
             | Some true, _ -> input.Shape 
@@ -821,7 +809,7 @@ and [<Sealed>] DT<'T> internal
                    let inputNode = input.MakeNodeOfCorrectShape(ctxt)
                    f ctxt axis inputNode))
 
-    static member AddN (inputs: DT<'T>[]) : DT<'T> = 
+    static member AddN (inputs: DT<'T>[]): DT<'T> = 
         let outputShape = inputs.[0].Shape 
         let nodeCount = (inputs |> Array.sumBy (fun (v: DT<'T>) -> v.NodeCount)) + 1
         for v in inputs do Shape.Unify "AddN" outputShape v.Shape
@@ -832,84 +820,84 @@ and [<Sealed>] DT<'T> internal
                     ops.add_n(inputNodes)))
 
     /// Pointwise negation
-    static member ( ~- ) (input: DT<'T>) : DT<'T> = 
+    static member ( ~- ) (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.neg node) input
 
     /// Pointwise addition
-    static member (+) (input1: DT<'T>, input2: DT<'T>) : DT<'T> = 
+    static member (+) (input1: DT<'T>, input2: DT<'T>): DT<'T> = 
         // TODO: should this be AddV2
         DT.Binop "(+)" (fun graph node1 node2 -> ops.add(node1, node2)) (+) input1 input2
 
     /// Pointwise addition with implicit lift to broadcastable tensor
-    static member (+) (input1: DT<double>, input2: double) : DT<double> = 
+    static member (+) (input1: DT<double>, input2: double): DT<double> = 
         input1 + DT<double>.Const (input2, flex=true)
 
     /// Pointwise addition with implicit lift to broadcastable tensor
-    static member (+) (input1: DT<double>, input2: int) : DT<double> = 
+    static member (+) (input1: DT<double>, input2: int): DT<double> = 
         input1 + double input2
 
     /// Pointwise addition with implicit lift to broadcastable tensor
-    static member (+) (input1: double, input2: DT<double>) : DT<double> = 
+    static member (+) (input1: double, input2: DT<double>): DT<double> = 
         DT<double>.Const (input1, flex=true) + input2
 
     /// Pointwise addition with implicit lift to broadcastable tensor
-    static member (+) (input1: int, input2: DT<double>) : DT<double> = 
+    static member (+) (input1: int, input2: DT<double>): DT<double> = 
         double input1 + input2
 
     /// Pointwise subtraction
-    static member (-) (input1: DT<'T>, input2: DT<'T>) : DT<'T> = 
+    static member (-) (input1: DT<'T>, input2: DT<'T>): DT<'T> = 
         DT.Binop "(-)" (fun graph node1 node2 -> ops.sub(node1, node2)) (-) input1 input2
 
     /// Pointwise subtraction with implicit lift to broadcastable tensor
-    static member (-) (input1: DT<double>, input2: double) : DT<double> = 
+    static member (-) (input1: DT<double>, input2: double): DT<double> = 
         input1 - DT<double>.Const (input2, flex=true)
 
     /// Pointwise subtraction with implicit lift to broadcastable tensor
-    static member (-) (input1: DT<double>, input2: int) : DT<double> = 
+    static member (-) (input1: DT<double>, input2: int): DT<double> = 
         input1 - double input2
 
     /// Pointwise subtraction with implicit lift to broadcastable tensor
-    static member (-) (input1: double, input2: DT<double>) : DT<double> = 
+    static member (-) (input1: double, input2: DT<double>): DT<double> = 
         DT<double>.Const (input1, flex=true) - input2
 
     /// Pointwise subtraction with implicit lift to broadcastable tensor
-    static member (-) (input1: int, input2: DT<double>) : DT<double> = 
+    static member (-) (input1: int, input2: DT<double>): DT<double> = 
         double input1 - input2
 
     /// Pointwise multiplication
-    static member (*) (input1: DT<'T>, input2: DT<'T>) : DT<'T> = 
+    static member (*) (input1: DT<'T>, input2: DT<'T>): DT<'T> = 
         DT.Binop "(*)" (fun graph node1 node2 -> ops.mul(node1, node2)) ( * ) input1 input2
 
     /// Pointwise multiplication with implicit lift to broadcastable tensor
-    static member (*) (input1: DT<double>, input2: double) : DT<double> = 
+    static member (*) (input1: DT<double>, input2: double): DT<double> = 
         input1 * DT<double>.Const (double input2, flex=true)
 
     /// Pointwise multiplication with implicit lift to broadcastable tensor
-    static member (*) (input1: DT<double>, input2: int) : DT<double> = 
+    static member (*) (input1: DT<double>, input2: int): DT<double> = 
         input1 * double input2
 
     /// Pointwise multiplication with implicit lift to broadcastable tensor
-    static member (*) (input1: double, input2: DT<double>) : DT<double> = 
+    static member (*) (input1: double, input2: DT<double>): DT<double> = 
         DT<double>.Const (input1, flex=true) * input2
 
     /// Pointwise multiplication with implicit lift to broadcastable tensor
-    static member (*) (input1: int, input2: DT<double>) : DT<double> = 
+    static member (*) (input1: int, input2: DT<double>): DT<double> = 
         double input1 * input2
 
     /// Pointwise division
-    static member (/) (input1: DT<'T>, input2: DT<'T>) : DT<'T> = 
+    static member (/) (input1: DT<'T>, input2: DT<'T>): DT<'T> = 
         DT.Binop "(/)" (fun graph node1 node2 -> ops.div(node1, node2)) (/) input1 input2
 
     /// Pointwise division with implicit lift to broadcastable tensor
-    static member (/) (input1: DT<double>, input2: double) : DT<double> = 
+    static member (/) (input1: DT<double>, input2: double): DT<double> = 
         input1 / DT<double>.Const (input2, flex=true)
 
     /// Pointwise division with implicit lift to broadcastable tensor
-    static member (/) (input1: DT<double>, input2: int) : DT<double> = 
+    static member (/) (input1: DT<double>, input2: int): DT<double> = 
         input1 / double input2
 
     /// Matrix 'MatMul' math multiplication
-    static member ( *! ) (input1: DT<'T>, input2: DT<'T>) : DT<'T> = 
+    static member ( *! ) (input1: DT<'T>, input2: DT<'T>): DT<'T> = 
         let n1,m,n2 = Dim.Inferred, Dim.Inferred, Dim.Inferred 
         Shape.Unify "MatMul"  input1.Shape (Shape.NoFlex [| n1; m |])
         Shape.Unify "MatMul" input2.Shape (Shape.NoFlex [| m; n2 |])
@@ -922,63 +910,63 @@ and [<Sealed>] DT<'T> internal
                     ops.mat_mul(inputNode1, inputNode2)))
 
     /// Pointwise absolute-value
-    static member Abs (input: DT<'T>) : DT<'T> = 
+    static member Abs (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.abs node) input
 
     /// Pointwise arc-cosine
-    static member Acos (input: DT<'T>) : DT<'T> = 
+    static member Acos (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.acos node) input
 
     /// Pointwise hyperbolic arc-cosine
-    static member Acosh (input: DT<'T>) : DT<'T> = 
+    static member Acosh (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.acosh node) input
 
     /// Pointwise arc-sine
-    static member Asin (input: DT<'T>) : DT<'T> = 
+    static member Asin (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.asin node) input
 
     /// Pointwise cosine
-    static member Cos (input: DT<'T>) : DT<'T> = 
+    static member Cos (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.cos node) input
 
     /// Pointwise hyperbolic cosine
-    static member Cosh (input: DT<'T>) : DT<'T> =  
+    static member Cosh (input: DT<'T>): DT<'T> =  
         DT.Unop (fun graph node -> ops.cosh node) input
 
     /// Pointwise sine
-    static member Sin (input: DT<'T>) : DT<'T> = 
+    static member Sin (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.sin node) input
 
     /// Pointwise hyperbolic sine
-    static member Sinh (input: DT<'T>) : DT<'T> = 
+    static member Sinh (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.sinh node) input
 
     /// Pointwise sqrt
-    static member Sqrt (input: DT<'T>) : DT<'T> = 
+    static member Sqrt (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.sqrt node) input
 
     /// Pointwise square
-    static member Square (input: DT<'T>) : DT<'T> = 
+    static member Square (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.square node) input
 
     /// Pointwise exponential
-    static member Exp (input: DT<'T>) : DT<'T> = 
+    static member Exp (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.exp node) input
 
     /// Pointwise relu
-    static member Relu(input: DT<'T>) : DT<'T> = 
+    static member Relu(input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.relu node) input
 
     /// Pointwise tangent 
-    static member Tan (input: DT<'T>) : DT<'T> = 
+    static member Tan (input: DT<'T>): DT<'T> = 
         DT.Unop (fun graph node -> ops.tan node) input
 
     /// Pointwise hyperbolic tangent
-    static member Tanh (input: DT<'T>) : DT<'T> =  
+    static member Tanh (input: DT<'T>): DT<'T> =  
         DT.Unop (fun graph node -> ops.tanh node) input
 
     /// Sum along a particular axis. The default axis is zero.
-    static member Sum (v: DT<'T>, ?axis: int[], ?keep_dims: bool) : DT<'T> = 
+    static member Sum (v: DT<'T>, ?axis: int[], ?keep_dims: bool): DT<'T> = 
         DT.ReduceOp keep_dims axis v 
             (fun ctxt axis vnode -> 
               // workaround
@@ -989,7 +977,7 @@ and [<Sealed>] DT<'T> internal
               )
 
     /// Take an average along a particular axis. The default axis is zero.
-    static member Mean (v: DT<'T>, ?axis: int[], ?keep_dims: bool) : DT<'T> = 
+    static member Mean (v: DT<'T>, ?axis: int[], ?keep_dims: bool): DT<'T> = 
         DT.ReduceOp keep_dims axis v
             (fun ctxt axis vnode -> 
               match axis,keep_dims with
@@ -1000,9 +988,9 @@ and [<Sealed>] DT<'T> internal
               ) 
 
     /// Take a product along a particular axis. The default axis is zero.
-    static member Prod (v: DT<'T>, ?axis: int[], ?keep_dims: bool) : DT<'T> = 
+    static member Prod (v: DT<'T>, ?axis: int[], ?keep_dims: bool): DT<'T> = 
         DT.ReduceOp keep_dims axis v 
-            (fun ctxt (axis : int[] option) vnode -> 
+            (fun ctxt (axis: int[] option) vnode -> 
               match axis,keep_dims with
               | Some(axis),Some(keep_dims) -> math_ops.reduce_prod(vnode, axis=axis,keepdims=keep_dims)
               | Some(axis),None -> math_ops.reduce_prod(vnode, axis=axis)
@@ -1011,7 +999,7 @@ and [<Sealed>] DT<'T> internal
               ) 
 
     /// Take a minimum across all values in the tensor.
-    static member Min (input: DT<'T>, ?keep_dims: bool) : DT<'T> = 
+    static member Min (input: DT<'T>, ?keep_dims: bool): DT<'T> = 
         let outputShape = if keep_dims = Some true then input.Shape else Shape.D
         let nodeCount = input.NodeCount + 1
         DT<_> (outputShape, nodeCount, 
@@ -1022,7 +1010,7 @@ and [<Sealed>] DT<'T> internal
                    ops.min(inputNode, reduce_dims, keep_dims= (keep_dims |> Option.toNullable))))
 
     /// Take a maximum across all values in the tensor
-    static member Max (input: DT<'T>, ?keep_dims: bool) : DT<'T> = 
+    static member Max (input: DT<'T>, ?keep_dims: bool): DT<'T> = 
         let outputShape = if keep_dims = Some true then input.Shape else Shape.D
         let nodeCount = input.NodeCount + 1
         DT<_> (outputShape, nodeCount, 
@@ -1032,7 +1020,7 @@ and [<Sealed>] DT<'T> internal
                    ops.max(inputNode, ops.reduce_dims(inputNode), keep_dims= (keep_dims |> Option.toNullable))))
 
     // TODO: take the dimension along which to reverse
-    static member Reverse (input: DT<'T>) : DT<'T> = 
+    static member Reverse (input: DT<'T>): DT<'T> = 
         let outputShape = input.Shape
         let nodeCount = input.NodeCount + 1
         DT<'T>(outputShape, nodeCount, 
@@ -1041,7 +1029,7 @@ and [<Sealed>] DT<'T> internal
                     let inputNode = input.MakeNodeOfCorrectShape(ctxt)
                     ops.reverse_v2(inputNode, tf.constant([|0|]))))
 
-    static member DiagPart (input: DT<'T>) : DT<'T> = 
+    static member DiagPart (input: DT<'T>): DT<'T> = 
         let dims = input.Shape.DimensionsEliminatingFlex
         let n = dims.Length
         if n % 2 <> 0 then invalidArg "DiagPart: v" "expected a tensor with even rank"
@@ -1054,7 +1042,7 @@ and [<Sealed>] DT<'T> internal
                     let inputNode = input.MakeNodeOfCorrectShape(ctxt)
                     ops.diag_part(inputNode)))
 
-    static member Norm (v: DT<'T>, ?axis, ?keep_dims: bool) : DT<'T> = 
+    static member Norm (v: DT<'T>, ?axis, ?keep_dims: bool): DT<'T> = 
         DT.Sqrt(DT.Sum(v * v, ?axis=axis, ?keep_dims= keep_dims))
 
     static member Trace v = 
@@ -1075,7 +1063,7 @@ and [<Sealed>] DT<'T> internal
 
     member input.GetLength(n) = input.Shape.[n].Value
 
-    member input.Slice (_begin: int[], size: int[]) : DT<'T> = 
+    member input.Slice (_begin: int[], size: int[]): DT<'T> = 
         let inputShape = Shape.NoFlex [| for _dim in _begin -> Dim.Inferred |]
         Shape.Unify "Slice (input)" input.Shape inputShape
         if _begin.Length <> size.Length then failwith "Slice: begin and size arrays are different"
@@ -1100,7 +1088,7 @@ and [<Sealed>] DT<'T> internal
                     let inputNode = input.MakeNodeOfCorrectShape(ctxt)
                     ops.slice(inputNode, tf.constant(_begin), tf.constant(size))))
 
-    member input.Squeeze (squeeze_dims: int[]) : DT<'T> = 
+    member input.Squeeze (squeeze_dims: int[]): DT<'T> = 
         let inputShape = Shape.NoFlex [| for i, dim in Array.indexed input.Shape.DimensionsEliminatingFlex -> if Array.contains i squeeze_dims then Dim.Known 1 else dim |]
         let outputShape = Shape.NoFlex [| for i, dim in Array.indexed input.Shape.DimensionsEliminatingFlex do if not (Array.contains i squeeze_dims) then yield dim |]
         Shape.Unify "Squeeze (input)" input.Shape inputShape
@@ -1109,7 +1097,7 @@ and [<Sealed>] DT<'T> internal
                    let inputNode = input.MakeNodeOfCorrectShape(ctxt)
                    ops.squeeze(inputNode, squeeze_dims)))
 
-    member input.GetItem (indexes: int[]) : DT<'T> = 
+    member input.GetItem (indexes: int[]): DT<'T> = 
         input.Slice(indexes, [| for i in indexes -> 1 |]).Squeeze([| for (pos, _) in Array.indexed indexes -> pos |])
 
     member input.GetSlice(choices: Choice<int, int option * int option>[]) =
@@ -1139,22 +1127,22 @@ and [<Sealed>] DT<'T> internal
 
     /// Supports notation `input.[n]`. Index an element in a vector tensor.
     member input.Item 
-        with get (n: int) : DT<'T> = 
+        with get (n: int): DT<'T> = 
             input.GetSlice [| Choice1Of2 n |]
 
     /// input.[n1,n2]
     member input.Item 
-        with get (n1: int, n2: int) : DT<'T> = 
+        with get (n1: int, n2: int): DT<'T> = 
             input.GetSlice [| Choice1Of2 n1; Choice1Of2 n2 |]
 
     /// input.[n1,n2,n3]
     member input.Item 
-        with get (n1: int, n2: int,n3: int) : DT<'T> = 
+        with get (n1: int, n2: int,n3: int): DT<'T> = 
             input.GetSlice [| Choice1Of2 n1; Choice1Of2 n2; Choice1Of2 n3 |]
 
     /// input.[n1,n2,n3,n4]
     member input.Item 
-        with get (n1: int, n2: int, n3: int, n4: int) : DT<'T> = 
+        with get (n1: int, n2: int, n3: int, n4: int): DT<'T> = 
             input.GetSlice [| Choice1Of2 n1; Choice1Of2 n2; Choice1Of2 n3 ; Choice1Of2 n4 |]
 
     /// input.[n1..n2] and input.[n1..] and input.[..n2]
@@ -1180,7 +1168,7 @@ and [<Sealed>] DT<'T> internal
     // TODO: add the remaining slice operations (currently only slicing on first dimension)
 
     // TODO: handle expansion along multiple arbitrary dimensions
-    static member ExpandDims(input: DT<'T>, ?dim: int) : DT<'T> = 
+    static member ExpandDims(input: DT<'T>, ?dim: int): DT<'T> = 
         let dim = defaultArg dim 0
         let inputShape = input.Shape
         // TODO: flex here?
@@ -1198,14 +1186,14 @@ and [<Sealed>] DT<'T> internal
                    let inputNode = input.MakeNodeOfCorrectShape(ctxt)
                    ops.expand_dims(inputNode, tf.constant([| dim |]))))
 
-    //static member Concat (concat_dim: int, vs: seq<DT<'T>>) : DT<'T> = 
+    //static member Concat (concat_dim: int, vs: seq<DT<'T>>): DT<'T> = 
     //    let vs = Seq.toArray vs
     //    if vs.Length = 0 then failwith "Vec: zero elements in vector"
     //    let actual = vs.[0].Shape
     //    let outputShape = Shape [| yield! actual.DimensionsEliminatingFlex; yield Dim (vs.Length) |]
     //    DT<'T>(outputShape, nodeCount, fun (ctxt, canProduceSmallerShape) -> ctxt.Graph.Concat(ctxt.tf.constant(new NDArray(concat_dim)), v.Apply ctxt))
 
-    static member Pack (inputs: seq<DT<'T>>, ?axis: int) : DT<'T> = 
+    static member Pack (inputs: seq<DT<'T>>, ?axis: int): DT<'T> = 
         let inputs = Seq.toArray inputs
         if inputs.Length = 0 then failwith "Pack: zero elements in vector"
         let axis = defaultArg axis 0
@@ -1224,7 +1212,7 @@ and [<Sealed>] DT<'T> internal
             let outputNode = ops.pack(inputNodes, axis = Nullable(axis))
             outputNode, false)
 
-    static member Reshape shape (input: DT<'T>) : DT<'T> = 
+    static member Reshape shape (input: DT<'T>): DT<'T> = 
         let nodeCount = input.NodeCount + 1
         DT<'T>(shape, nodeCount, 
                DT.ProducesCorrectShape (fun ctxt  -> 
@@ -1232,19 +1220,19 @@ and [<Sealed>] DT<'T> internal
                    let graph = ctxt.Graph
                    ops.reshape(inputNode, shape.AsTFNode(graph, ctxt.DimVarNodes))))
 
-    static member BroadcastTo (input: DT<'T>, outputShape: Shape) : DT<'T> = 
+    static member BroadcastTo (input: DT<'T>, outputShape: Shape): DT<'T> = 
         let nodeCount = input.NodeCount + 1
         DT<'T>(outputShape, nodeCount, 
                DT.ProducesSmallerShape outputShape (fun ctxt -> 
                 let prelimOutputNode = input.MakeNodeOfCorrectShape(ctxt)
-                let sizesSmaller = (input.Shape.AsTFShape().Dimensions <> outputShape.AsTFShape().Dimensions)
+                let sizesSmaller = (input.Shape.AsTFShape().dims <> outputShape.AsTFShape().dims)
                 prelimOutputNode, sizesSmaller))
 
-    static member AssertShape (expectedShape: Shape) (input: DT<'T>) : DT<'T> = 
+    static member AssertShape (expectedShape: Shape) (input: DT<'T>): DT<'T> = 
         Shape.Unify "AssertShape" input.Shape expectedShape 
         input
 
-    static member internal MakeConstWithBroadcast (shape, asNDArray: unit -> NDArray) : DT<'T> = 
+    static member internal MakeConstWithBroadcast (shape, asNDArray: unit -> NDArray): DT<'T> = 
         let nodeCount = 0
         DT<'T>(shape, nodeCount, 
                DT.ProducesSmallerShape shape (fun ctxt -> 
@@ -1252,25 +1240,25 @@ and [<Sealed>] DT<'T> internal
                   // This somewhat odd use of memoize enures asNDArray is only executed once per closure
                   memoize ctxt.ConstNodes (box asNDArray) (fun () -> 
                       let tensor = asNDArray()
-                      let sizesSmaller = (tensor.shape <> shape.AsTFShape().Dimensions)
+                      let sizesSmaller = (tensor.shape <> shape.AsTFShape().dims)
                       tf.constant(tensor), sizesSmaller)))
 
-    static member internal MakeConstWithReshape (shape, asNDArray) : DT<'T> = 
+    static member internal MakeConstWithReshape (shape, asNDArray): DT<'T> = 
         let nodeCount = 0
         DT<'T>(shape, nodeCount, 
                DT.ProducesCorrectShape (fun ctxt -> 
                   let graph = ctxt.Graph
-                  let tensor = asNDArray() : NDArray
+                  let tensor = asNDArray(): NDArray
                   let prelimOutputNode = tf.constant(tensor) //tf.constant(tensor)
                   ops.reshape(prelimOutputNode, shape.AsTFNode(graph, ctxt.DimVarNodes))),
                asNDArray = asNDArray)
 
     /// MM) opening this up temporarily try to do a workaround
-    static member (*internal*) FromNDArray (tensor: NDArray) : DT<'T> = 
+    static member (*internal*) FromNDArray (tensor: NDArray): DT<'T> = 
         let shape = Shape.FromTFShapeArray(tensor.shape)
         DT.MakeConstWithBroadcast(shape, (fun () -> tensor))
 
-    static member internal MakeScalarFromObj (obj: obj, ?flex: bool) : DT<'T> = 
+    static member internal MakeScalarFromObj (obj: obj, ?flex: bool): DT<'T> = 
         let flex = defaultArg flex false
         let shape = Shape.PossibleFlex flex [| |] // broadcast or scalar
         match obj with 
@@ -1298,10 +1286,10 @@ and [<Sealed>] DT<'T> internal
             | _ -> failwith "unreachable"
         DT.MakeConstWithBroadcast(shape, asNDArray)
     
-    static member Const (value: 'T, ?flex: bool) : DT<'T> = 
+    static member Const (value: 'T, ?flex: bool): DT<'T> = 
         DT.MakeScalarFromObj(box value, ?flex=flex)
 
-    static member ConstArray (value: System.Array, ?shape: Shape) : DT = 
+    static member ConstArray (value: System.Array, ?shape: Shape): DT = 
         let shape = shape |> Option.defaultWith (fun () -> Shape.NoFlex [| for i in 1 .. value.Rank -> Dim.Known (value.GetLength(i-1)) |])
 
         // Unfortunately we have to use reflection to make an object of the correct specific type
@@ -1315,25 +1303,25 @@ and [<Sealed>] DT<'T> internal
         gty.InvokeMember("MakeConstWithReshape", BindingFlags.InvokeMethod ||| BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Static, null, null, [| box arg1; box arg2 |], culture=null)
            :?> DT
 
-    static member ConstArray1D (value: 'T[], ?flex: bool) : DT<'T> = 
+    static member ConstArray1D (value: 'T[], ?flex: bool): DT<'T> = 
         let flex = defaultArg flex false
         let shape = Shape.PossibleFlex flex [| Dim.Known value.Length |]
         let asNDArray() = new NDArray(value)
         DT.MakeConstWithBroadcast (shape, asNDArray)
 
-    static member ConstArray2D (value: 'T[,], ?flex: bool) : DT<'T> = 
+    static member ConstArray2D (value: 'T[,], ?flex: bool): DT<'T> = 
         let flex = defaultArg flex false
         let shape = Shape.PossibleFlex flex [| Dim.Known (value.GetLength(0)); Dim.Known (value.GetLength(1))|]
         let asNDArray() = new NDArray(value)
         DT.MakeConstWithBroadcast (shape, asNDArray)
 
-    static member ConstArray3D (value: 'T[,,], ?flex: bool) : DT<'T> = 
+    static member ConstArray3D (value: 'T[,,], ?flex: bool): DT<'T> = 
         let flex = defaultArg flex false
         let shape = Shape.PossibleFlex flex [| Dim.Known (value.GetLength(0)); Dim.Known (value.GetLength(1)); Dim.Known (value.GetLength(2))|]
         let asNDArray() = new NDArray(value |> Array3D.flatten, NumSharp.Shape(value.GetLength(0),value.GetLength(1),value.GetLength(2)))
         DT.MakeConstWithBroadcast (shape, asNDArray)
 
-    static member ConstArray4D (value: 'T[,,,], ?flex: bool) : DT<'T> = 
+    static member ConstArray4D (value: 'T[,,,], ?flex: bool): DT<'T> = 
         let flex = defaultArg flex false
         let shape = Shape.PossibleFlex flex [| Dim.Known (value.GetLength(0)); Dim.Known (value.GetLength(1)); Dim.Known (value.GetLength(2)); Dim.Known (value.GetLength(3))|]
         let asNDArray() = new NDArray(value)
@@ -1350,8 +1338,8 @@ and [<Sealed>] DT<'T> internal
                 let dynodes = 
                     memoize ctxt.AddGradientNodes key (fun () -> 
                         let xnodes: Tensor[] = DT.MakeNodesOfCorrectShape(ctxt, xs)
-                        let ynodes : Tensor[] = [| y.MakeNodeOfCorrectShape(ctxt) |]
-                        let dynodesIn : Tensor[] option = match dy with None -> None | Some z -> Some [| z.MakeNodeOfCorrectShape(ctxt) |]
+                        let ynodes: Tensor[] = [| y.MakeNodeOfCorrectShape(ctxt) |]
+                        let dynodesIn: Tensor[] option = match dy with None -> None | Some z -> Some [| z.MakeNodeOfCorrectShape(ctxt) |]
                         let dynodes = 
                             match dynodesIn with 
                             | None -> tf.gradients(ys = ynodes, xs=xnodes)
@@ -1359,13 +1347,13 @@ and [<Sealed>] DT<'T> internal
                         dynodes)
                 dynodes.[i])))
 
-    static member Variable (value: double, ?name: string) : DT<double> = 
+    static member Variable (value: double, ?name: string): DT<double> = 
         DT.Variable (DT.Const(value, flex=true), ?name=name)
 
-    static member Variable (value: int, ?name: string) : DT<double> = 
+    static member Variable (value: int, ?name: string): DT<double> = 
         DT.Variable (double value, ?name=name)
 
-    static member Variable (value: DT<'T>, ?name: string) : DT<'T> = 
+    static member Variable (value: DT<'T>, ?name: string): DT<'T> = 
         let outputShape = value.Shape
         let nodeCount = 100
         DT<'T>(outputShape, nodeCount, fun (ctxt, canProduceSmallerShape) -> 
@@ -1386,7 +1374,7 @@ and [<Sealed>] DT<'T> internal
     /// Works on 3D or 4D (4D = batch-of-3D) tensors
     //input: V[N,H,W,C], filters: V[F1;F2;C;COut]) -> output:V[N,H,W,COut] 
     //input: V[H,W,C], filters: V[F1;F2;C;COut]) -> output:V[H,W,COut] 
-    static member Conv2D (input: DT<'T>, filters: DT<'T>, out_channels: int, ?stride: int, ?padding: string, ?filter_size: int) : DT<'T> = 
+    static member Conv2D (input: DT<'T>, filters: DT<'T>, out_channels: int, ?stride: int, ?padding: string, ?filter_size: int): DT<'T> = 
         let stride = defaultArg stride 1
         let padding = defaultArg padding "SAME"
         let filtersShape = filters.Shape
@@ -1421,11 +1409,11 @@ and [<Sealed>] DT<'T> internal
     // out_backprop: 3-D or 4-D with shape [batch, out_height, out_width, out_channels]. Gradients w.r.t. the output of the convolution.
     // input_sizes: An integer vector representing the shape of input, where input is a 4-D [batch, in_height, in_width, in_channels] tensor.
     // Output: 3-D of 4-D with shape [batch, in_height, in_width, in_channels]. Gradient w.r.t. the input of the convolution.
-    // TODO: this doesn't yet allow for fully variable input shapes
+    // TODO: this doesn'T yet allow for fully variable input shapes
     //
     //input: V[N,H,W,C], filters: V[F1;F2;C;COut]) -> output:V[N,H,W,COut] 
     //input: V[H,W,C], filters: V[F1;F2;C;COut]) -> output:V[H,W,COut] 
-    static member Conv2DBackpropInput(filters: DT<'T>, out_backprop: DT<'T>, input_channels: int, ?stride: int, ?padding: string, ?filter_size: int) : DT<'T> = 
+    static member Conv2DBackpropInput(filters: DT<'T>, out_backprop: DT<'T>, input_channels: int, ?stride: int, ?padding: string, ?filter_size: int): DT<'T> = 
         let stride = defaultArg stride 1
         let padding = defaultArg padding "SAME"
         let filtersShape = filters.Shape
@@ -1457,7 +1445,7 @@ and [<Sealed>] DT<'T> internal
             inputNode, false)
 
     /// Clips tensor values to a specified min and max.
-    static member ClipByValue (input: DT<'T>, low: DT<'T>, high: DT<'T>) : DT<'T> = 
+    static member ClipByValue (input: DT<'T>, low: DT<'T>, high: DT<'T>): DT<'T> = 
         let outputShape = Shape.EquivShapes "ClipByValue" (Shape.EquivShapes "ClipByValue" input.Shape low.Shape) high.Shape
         let nodeCount = input.NodeCount + 1
         DT<'T>(outputShape, nodeCount, 
@@ -1468,7 +1456,7 @@ and [<Sealed>] DT<'T> internal
                    ops.clip_by_value(inputNode, lowNode, highNode)))
 
     /// Calculate the mean and variance of <c>input</c>
-    static member Moments(input: DT<'T>, axes: int list) : DT<'T> * DT<'T> = 
+    static member Moments(input: DT<'T>, axes: int list): DT<'T> * DT<'T> = 
         // Note: keep_dims = true
         let outputShape = input.Shape
         let compute (ctxt: TFCtxt) = 
@@ -1492,7 +1480,7 @@ and [<Sealed>] DT<'T> internal
     /// <param name="channels">
     ///    Optional argument. Number of color channels for the decoded image.
     /// </param>
-    static member DecodeJpeg(input:DT<string>, ?channels: int) : DT<int> = // V[int,H,W,C]
+    static member DecodeJpeg(input:DT<string>, ?channels: int): DT<int> = // V[int,H,W,C]
         let channels = defaultArg channels 3 // CHECK ME
         let outputShape = Shape.NoFlex [| Dim.Inferred; Dim.Inferred; DimKnown channels |]
         let nodeCount = 1
@@ -1501,26 +1489,26 @@ and [<Sealed>] DT<'T> internal
                    let inputNode = input.MakeNodeOfCorrectShape(ctxt)
                    ops.decode_jpeg(contents=inputNode, channels=Nullable(3))))
 
-    static member WithScope(name: string) : IDisposable = 
+    static member WithScope(name: string): IDisposable = 
         new WithScopeDisposable(name) :> _
 
-    static member UsingWithScope (name: string) (f: unit -> DT<'T>) : DT<'T> = 
+    static member UsingWithScope (name: string) (f: unit -> DT<'T>): DT<'T> = 
         let input = f()
         let outputShape = input.Shape
         let nodeCount = input.NodeCount
         DT<'T>(outputShape, nodeCount, fun (ctxt, canProduceSmallerShape) -> use _scope = tf.name_scope(name) in input.MakeNode(ctxt, canProduceSmallerShape))
 
-    static member CreateString(value: byte[]) : DT<string> = 
+    static member CreateString(value: byte[]): DT<string> = 
         let shape = Shape.Flex [| |]
         DT.MakeConstWithBroadcast(shape, (fun () -> NDArray(value)))
 
-    member value.ToScalar () : 'T = 
+    member value.ToScalar (): 'T = 
         if livecheck then 
             Unchecked.defaultof<'T>
         else
             DT.Run(value) :?> 'T
 
-    static member Preprocess (model : (DT<'T1> -> DT<'T2>), inputShape: Shape, ?weights: seq<string * DT>) : (DT<'T1> -> DT<'T2>) = 
+    static member Preprocess (model: (DT<'T1> -> DT<'T2>), inputShape: Shape, ?weights: seq<string * DT>): (DT<'T1> -> DT<'T2>) = 
         let dimVarPlaceholders, placeholderNodes, outputValues, resultNodes, session = 
             DT.PreprocessCore((fun inputs -> [| model (inputs.[0] :?> DT<'T1>) :> DT |]), [| (typeof<'T1>, inputShape) |], ?weights=weights)
         (fun input -> 
@@ -1534,7 +1522,7 @@ and [<Sealed>] DT<'T> internal
                            let dim = dimVarSubst.[dimVar] 
                            yield new NDArray([|dim.Value|])
                        else
-                           failwith "the input shape didn't give a value for shape variable"
+                           failwith "the input shape didn'T give a value for shape variable"
                    yield inputTensor |]
             /// Error: System.Exception: 'You must feed a value for placeholder tensor 'Placeholder_166' with dtype float and shape [?,?,?] [[{{node Placeholder_166}}]]'
             /// Stepping through it appears that the inputs are fed correctly to the given placeholders. 
@@ -1542,12 +1530,13 @@ and [<Sealed>] DT<'T> internal
             /// Closer examination is needed as to why 166 are created when only 4 should be needed.
             /// Given that the shape is often derived from the input placeholder it is usual to only have 1 placeholder
             /// Alternatively it could be surfacing a bug in NDArray which gives the wrong dtype
-            let outputTensors = session.run(resultNodes,  feed_dict = [| for k,v in (placeholders, inputs) ||> Array.zip -> FeedItem(k,v) |]).Flatten()
+            let feed_dict = [| for k,v in (placeholders, inputs) ||> Array.zip -> FeedItem(k,v) |]
+            let outputTensors = session.run(resultNodes,  feed_dict = feed_dict)
             let outputShape = outputValues.[0].Shape.Subst(dimVarSubst)
             DT.FromNDArray outputTensors.[0] |> DT.AssertShape outputShape)
 
     /// Execute a computed DT<'T> value, returning a constant DT<'T> value.
-    static member Eval (value: DT<'T>, ?weights: seq<string * DT>) : DT<'T> = 
+    static member Eval (value: DT<'T>, ?weights: seq<string * DT>): DT<'T> = 
         if livecheck then 
             value
         else
@@ -1555,7 +1544,7 @@ and [<Sealed>] DT<'T> internal
             DT.FromNDArray tensor |> DT.AssertShape value.Shape
 
     /// Execute a pair of DT<'T> values, returning constant DT<'T> values
-    static member Eval2 (value1: DT<'T1>, value2: DT<'T2>, ?weights: seq<string * DT>) : DT<'T1> * DT<'T2> = 
+    static member Eval2 (value1: DT<'T1>, value2: DT<'T2>, ?weights: seq<string * DT>): DT<'T1> * DT<'T2> = 
         if livecheck then 
             value1, value2
         else
@@ -1565,7 +1554,7 @@ and [<Sealed>] DT<'T> internal
             DT.FromNDArray tensors.[1]  |> DT.AssertShape value2.Shape
 
     /// Execute a triple of DT<'T> values, returning triple of DT<'T> values
-    static member Eval3 (value1: DT<'T1>, value2: DT<'T2>, value3: DT<'T3>,  ?weights: seq<string * DT>) : DT<'T1> * DT<'T2> * DT<'T3> = 
+    static member Eval3 (value1: DT<'T1>, value2: DT<'T2>, value3: DT<'T3>,  ?weights: seq<string * DT>): DT<'T1> * DT<'T2> * DT<'T3> = 
         if livecheck then 
             value1, value2, value3
         else
@@ -1576,7 +1565,7 @@ and [<Sealed>] DT<'T> internal
             DT.FromNDArray tensors.[2]  |> DT.AssertShape value3.Shape
 
     /// Execute a DT<'T> value and get its value as an object
-    member value.GetValue() : obj = 
+    member value.GetValue(): obj = 
         if livecheck then 
             // TODO: give a better dummy value back here
             obj()
@@ -1584,7 +1573,7 @@ and [<Sealed>] DT<'T> internal
             DT.Run(value) 
 
     /// Execute a DT<'T> value and get its value as an array of scalars
-    member value.ToArray() : 'T[] = 
+    member value.ToArray(): 'T[] = 
         if livecheck then 
             let dim1 = value.Shape.AsRank1()
             Array.zeroCreate dim1.ValueOrZero
@@ -1592,7 +1581,7 @@ and [<Sealed>] DT<'T> internal
             DT.Run(value) :?> 'T[]
 
     /// Execute a DT<'T> value and get its value as a 2D array of scalars
-    member value.ToArray2D() : 'T[,] = 
+    member value.ToArray2D(): 'T[,] = 
         if livecheck then 
             let dim1, dim2 = value.Shape.AsRank2()
             Array2D.zeroCreate dim1.ValueOrZero dim2.ValueOrZero
@@ -1600,7 +1589,7 @@ and [<Sealed>] DT<'T> internal
             DT.Run(value) :?> 'T[,]
 
     /// Execute a DT<'T> value and get its value as a 3D array of scalars
-    member value.ToArray3D() : 'T[,,] = 
+    member value.ToArray3D(): 'T[,,] = 
         if livecheck then 
             let dim1, dim2, dim3 = value.Shape.AsRank3()
             Array3D.zeroCreate dim1.ValueOrZero dim2.ValueOrZero dim3.ValueOrZero
@@ -1608,7 +1597,7 @@ and [<Sealed>] DT<'T> internal
             DT.Run(value) :?> 'T[,,]
 
     /// Execute a DT<'T> value and get its value as a 4D array of scalars
-    member value.ToArray4D() : 'T[,,,] = 
+    member value.ToArray4D(): 'T[,,,] = 
         if livecheck then 
             let dim1, dim2, dim3, dim4 = value.Shape.AsRank4()
             Array4D.zeroCreate dim1.ValueOrZero dim2.ValueOrZero dim3.ValueOrZero dim4.ValueOrZero
@@ -1616,11 +1605,11 @@ and [<Sealed>] DT<'T> internal
             DT.Run(value) :?> 'T[,,,]
 
     /// Get a DT<'T> value representing zeros
-    static member Zero : DT<'T> = 
+    static member Zero: DT<'T> = 
         DT.MakeScalarFromObj(box (Unchecked.defaultof<'T>), flex=true)
 
     /// Get a dummy value with the given shape for use in live checking
-    static member Dummy(shape: Shape) : DT<'T> = 
+    static member Dummy(shape: Shape): DT<'T> = 
         DT.MakeConstWithBroadcast(shape, (fun () -> failwith "dummy nodes should not be evaluated during live checking"))
 
 /// Alias for a tensor scalar.
@@ -1705,21 +1694,21 @@ module DT =
     let diff (f: DT<'T> -> Scalars<'T>) x = evalAndDiff f x |> snd
 
     /// Second derivative of a scalars-to-scalar function `f`, at point `x`.
-    let diff2 (f: DT<'T> -> Scalars<'T>) x  : Scalars<'T> =
+    let diff2 (f: DT<'T> -> Scalars<'T>) x : Scalars<'T> =
         diff (diff f) x
 
     /// Original value, first derivative, and second derivative of a scalars-to-scalar function `f`, at point `x`.
-    let evalAndDiffAndDiff2 (f: DT<'T> -> Scalars<'T>) x : Scalars<'T> * DT<'T> * DT<'T> =
+    let evalAndDiffAndDiff2 (f: DT<'T> -> Scalars<'T>) x: Scalars<'T> * DT<'T> * DT<'T> =
         let v, d = evalAndDiff f x
         let d2 = diff2 f x
         (v, d, d2)
 
     /// Original value and second derivative of a scalars-to-scalar function `f`, at point `x`.
-    let diffAndDiff2 (f: DT<'T> -> Scalars<'T>) x  : DT<'T> * DT<'T> =
+    let diffAndDiff2 (f: DT<'T> -> Scalars<'T>) x : DT<'T> * DT<'T> =
         evalAndDiffAndDiff2 f x |> (fun (a,_,c) -> a,c)
 
     /// `n`-th derivative of a scalar-to-scalar function `f`, at point `x`.
-    let diffN n (f: DT<'T> -> Scalars<'T>) x  : DT<'T> =
+    let diffN n (f: DT<'T> -> Scalars<'T>) x : DT<'T> =
         if n < 0 then invalidArg "n" "must be positive"
         elif n = 0 then f x
         else
@@ -1730,33 +1719,33 @@ module DT =
             x |> d n f
 
     /// Original value and `n`-th derivative of a scalar-to-scalar function `f`, at point `x`.
-    let evalAndDiffN n (f: DT<'T> -> Scalars<'T>) x  : Scalars<'T> * DT<'T> =
+    let evalAndDiffN n (f: DT<'T> -> Scalars<'T>) x : Scalars<'T> * DT<'T> =
         (x |> f, diffN n f x)
 
     /// Original value and gradient of a vector-to-scalar function `f`, at point `x`. Reverse AD.
-    let evalAndGrad (f: DT<'T> -> Scalars<'T>) (x: DT<'T>) : Scalars<'T> * DT<'T> = 
+    let evalAndGrad (f: DT<'T> -> Scalars<'T>) (x: DT<'T>): Scalars<'T> * DT<'T> = 
         let y = f x
         let dy = gradient y x
         y, dy
 
     /// Gradient of a vector-to-scalar function `f`, at point `x`. Reverse AD.
-    let grad (f: DT<'T> -> Scalars<'T>) x : DT<'T> =
+    let grad (f: DT<'T> -> Scalars<'T>) x: DT<'T> =
         evalAndGrad f x |> snd
 
 (*
     /// Original value and gradient-vector product (directional derivative) of a vector-to-scalar function `f`, at point `x`, along vector `v`.
-    let gradv' (f: DV<'T> -> D<'T>) x (v: DV<'T>) : D<'T> * D<'T> =
+    let gradv' (f: DV<'T> -> D<'T>) x (v: DV<'T>): D<'T> * D<'T> =
         let yv = f v
         let y = f x
         let dyv = DT.AddGradients (y, x, yv)
         y, dyv
 
     /// Gradient-vector product (directional derivative) of a vector-to-scalar function `f`, at point `x`, along vector `v`.
-    let gradv (f: DV<'T> -> D<'T>) x v : D<'T> =
+    let gradv (f: DV<'T> -> D<'T>) x v: D<'T> =
         gradv' f x v |> snd
 
     /// Original value and Jacobian-vector product of a vector-to-vector function `f`, at point `x`, along vector `v`.
-    let jacobianv' (f: DV<'T> -> DV<'T>) (x: DV<'T>) (v: DV<'T>) : DV<'T> * DV<'T> =
+    let jacobianv' (f: DV<'T> -> DV<'T>) (x: DV<'T>) (v: DV<'T>): DV<'T> * DV<'T> =
         Shape.Unify x.Shape Shape.DV
         Shape.Unify v.Shape Shape.DV
         let yv = f v
@@ -1769,11 +1758,11 @@ module DT =
         y, dyv
 
     /// Jacobian-vector product of a vector-to-vector function `f`, at point `x`, along vector `v`.
-    let jacobianv (f: DV<'T> -> DV<'T>) x v : DV<'T> =
+    let jacobianv (f: DV<'T> -> DV<'T>) x v: DV<'T> =
         jacobianv' f x v |> snd
 *)
     /// Original value and Jacobian of a vector-to-vector function `f`, at point `x`. Forward or reverse AD, depending on input and output dimensions.
-    let evalAndJacobian (f: DT<'T> -> Vectors<'T>) (x:DT<'T>) : Vectors<'T> * Matrices<'T> =
+    let evalAndJacobian (f: DT<'T> -> Vectors<'T>) (x:DT<'T>): Vectors<'T> * Matrices<'T> =
         let y = f x
         let ysize = 
             let dims = y.Shape.DimensionsEliminatingFlex
@@ -1792,21 +1781,21 @@ module DT =
         evalAndJacobian (grad f) x
 
     /// Original value, gradient, and Hessian of a vector-to-scalar function `f`, at point `x`. Forward-on-reverse AD.
-    let evalAndGradAndHessian (f: Vector<'T> -> Scalars<'T>) x : Scalars<'T> * Vector<'T> * Matrix<'T> =
+    let evalAndGradAndHessian (f: Vector<'T> -> Scalars<'T>) x: Scalars<'T> * Vector<'T> * Matrix<'T> =
         let g, h = gradAndHessian f x
         (f x, g, h)
 
 (*
     // NOTE: not supported on TensorFlow due to use of C++ AddGradients only supporting
     // first-order differentials 
-    // Message: FSharp.AI.TFException : No gradient defined for op: OnesLike. 
+    // Message: FSharp.AI.TFException: No gradient defined for op: OnesLike. 
 
     /// Hessian of a vector-to-scalar function `f`, at point `x`. Forward-on-reverse AD.
-    let hessian (f: DT<'T> -> Scalars<'T>) x : Matrices<'T> =
+    let hessian (f: DT<'T> -> Scalars<'T>) x: Matrices<'T> =
         jacobian (grad f) x
 
     /// Original value and Hessian of a vector-to-scalar function `f`, at point `x`. Forward-on-reverse AD.
-    let evalAndHessian (f: Vector<'T> -> Scalars<'T>) x : Scalars<'T> * Matrix<'T> =
+    let evalAndHessian (f: Vector<'T> -> Scalars<'T>) x: Scalars<'T> * Matrix<'T> =
         (x |> f, hessian f x)
 
 
@@ -1816,7 +1805,7 @@ module DT =
         (x |> f, gv, hv)
 
     /// Gradient-vector product (directional derivative) and Hessian-vector product of a vector-to-scalar function `f`, at point `x`, along vector `v`. Reverse-on-forward AD.
-    let gradAndHessianv (f: DV<'T> -> D<'T>) x v : D<'T> * DV<'T> =
+    let gradAndHessianv (f: DV<'T> -> D<'T>) x v: D<'T> * DV<'T> =
         gradAndHessianv' f x v |> (fun (_,b,c) -> b,c)
 
     /// Original value and Hessian-vector product of a vector-to-scalar function `f`, at point `x`, along vector `v`. Reverse-on-forward AD.
@@ -1824,7 +1813,7 @@ module DT =
         gradAndHessianv' f x v |> (fun (a,_,c) -> a,c)
 
     /// Hessian-vector product of a vector-to-scalar function `f`, at point `x`, along vector `v`. Reverse-on-forward AD.
-    let hessianv (f: DV<'T> -> D<'T>) x v : DV<'T> =
+    let hessianv (f: DV<'T> -> D<'T>) x v: DV<'T> =
         hessianv' f x v |> snd
 *)
 
@@ -1832,12 +1821,12 @@ module DT =
 
 (*
     /// Original value and Laplacian of a vector-to-scalar function `f`, at point `x`. Reverse-on-forward AD.
-    let evalAndLaplacian (f: Vector<'T> -> Scalars<'T>) x : Scalars<'T> * Scalars<'T> = 
+    let evalAndLaplacian (f: Vector<'T> -> Scalars<'T>) x: Scalars<'T> * Scalars<'T> = 
         let v, h = evalAndHessian f x
         (v, trace h)
 
     /// Laplacian of a vector-to-scalar function `f`, at point `x`. Reverse-on-forward AD.
-    let laplacian (f: Vector<'T> -> Scalars<'T>) x : Scalars<'T> =
+    let laplacian (f: Vector<'T> -> Scalars<'T>) x: Scalars<'T> =
         evalAndLaplacian f x |> snd
 *)
 
@@ -1848,7 +1837,7 @@ module DT =
         v, DT.Pack [|j.[1, 2] - j.[2, 1]; j.[2, 0] - j.[0, 2]; j.[0, 1] - j.[1, 0]|]
 
     /// Curl of a vector-to-vector function `f`, at point `x`. Supported only for functions with a three-by-three Jacobian matrix.
-    let curl (f: Vector<'T> -> Vector<'T>) x : Vector<'T> =
+    let curl (f: Vector<'T> -> Vector<'T>) x: Vector<'T> =
         evalAndCurl f x |> snd
 
     /// Original value and divergence of a vector-to-vector function `f`, at point `x`. Defined only for functions with a square Jacobian matrix.
@@ -1858,7 +1847,7 @@ module DT =
         v, DT.Trace j
 
     /// Divergence of a vector-to-vector function `f`, at point `x`. Defined only for functions with a square Jacobian matrix.
-    let divergence (f: Vector<'T> -> Vector<'T>) x : Scalars<'T> =
+    let divergence (f: Vector<'T> -> Vector<'T>) x: Scalars<'T> =
         evalAndDivergence f x |> snd
 
     /// Original value, curl, and divergence of a vector-to-vector function `f`, at point `x`. Supported only for functions with a three-by-three Jacobian matrix.
@@ -1868,7 +1857,7 @@ module DT =
         v, DT.Pack [|j.[1, 2] - j.[2, 1]; j.[2, 0] - j.[0, 2]; j.[0, 1] - j.[1, 0]|], trace j
 
     /// Curl and divergence of a vector-to-vector function `f`, at point `x`. Supported only for functions with a three-by-three Jacobian matrix.
-    let curlAndDivergence (f: Vector<'T> -> Vector<'T>) x : Vector<'T> * Scalars<'T> =
+    let curlAndDivergence (f: Vector<'T> -> Vector<'T>) x: Vector<'T> * Scalars<'T> =
         evalAndCurlAndDivergence f x |> (fun (_,b,c) -> b,c)
 
     /// Convert the input to an array if possible
@@ -1910,30 +1899,30 @@ module FMHelpers =
     let shape (ints: int list) = Shape.Known ints
 
     /// Create a scalar node (with implicit broadcast)
-    let scalar (value:'T) : DT<'T> = DT.Const (value, flex=true)
+    let scalar (value:'T): DT<'T> = DT.Const (value, flex=true)
 
     /// Create a scalar node (with implicit broadcast)
     let v x = scalar x
 
     /// Create a vector from raw data
-    let vec (data:seq<'T>) : DT<'T> = 
+    let vec (data:seq<'T>): DT<'T> = 
         let d = Seq.toArray data
         DT.ConstArray1D(d, flex=false)
 
     /// Create a vector from existing differentiable tensors
-    let vecOfScalars (xs:seq<DT<'T>>) : DT<'T> = 
+    let vecOfScalars (xs:seq<DT<'T>>): DT<'T> = 
         DT.Pack xs
 
     /// Extend the scalar node, adding a batch dimension
     let batchOfScalars d = vec d
 
     /// Create a matrix from raw data
-    let matrix (data: seq< #seq<'T>>) : DT<'T> = 
+    let matrix (data: seq< #seq<'T>>): DT<'T> = 
         let data = array2D data 
         DT.ConstArray2D(data, flex=false)
 
     /// Create a matrix by stacking existing vectors of differentiable tensors
-    let matrixOfVecs (ds:seq<DT<'T>>) : DT<'T> = 
+    let matrixOfVecs (ds:seq<DT<'T>>): DT<'T> = 
         DT.Pack ds
 
     /// Extend the vector node, adding a batch dimension
@@ -1954,7 +1943,7 @@ module FMHelpers =
         Array4D.init r1 r2 r3 r4 (fun i j k m -> data.[i,j].[k,m])
 
     /// Create a rank-3 tensor from raw data
-    let tensor3 (data: seq< #seq< #seq<'T>>>) : DT<'T> = 
+    let tensor3 (data: seq< #seq< #seq<'T>>>): DT<'T> = 
         DT.ConstArray3D(array3D data, flex=false)
 
     /// Makes a tensor from a 1D array representing a pixel of an image. The inferred tensor shape
@@ -1968,7 +1957,7 @@ module FMHelpers =
         DT.ConstArray3D(array3D data, flex=true)
 
     /// Create a rank-4 tensor from raw data
-    let tensor4 (data: seq< #seq< #seq< #seq<'T>>>>) : DT<'T> = 
+    let tensor4 (data: seq< #seq< #seq< #seq<'T>>>>): DT<'T> = 
         DT.ConstArray4D(array4D data, flex=false)
 
     let batchOfImages d = tensor4 d 
@@ -1984,47 +1973,47 @@ module FMHelpers =
         DT.Moments(x, axes=axes)
 
     /// The pointwise relu function of the elements of a tensor
-    let relu (x: DT<'T>) : DT<'T> = 
+    let relu (x: DT<'T>): DT<'T> = 
         DT.Relu(x)
-        // We can't use this because of reflection issues for the live check interpreter
-        //(DT<'T>: (static member Relu : DT<'T> -> DT<'T>) (x))
+        // We can'T use this because of reflection issues for the live check interpreter
+        //(DT<'T>: (static member Relu: DT<'T> -> DT<'T>) (x))
 
     /// The sum of the elements of a tensor
-    let sum (x: DT<'T>) : DT<'T> = 
+    let sum (x: DT<'T>): DT<'T> = 
         DT.Sum(x)
-        // We can't use this because of reflection issues for the live check interpreter
-        //(DT<'T>: (static member Sum : DT<'T> -> DT<'T>) (x))
+        // We can'T use this because of reflection issues for the live check interpreter
+        //(DT<'T>: (static member Sum: DT<'T> -> DT<'T>) (x))
 
     /// The product of the elements of a tensor
-    let prod (x: DT<'T>) : DT<'T> = 
+    let prod (x: DT<'T>): DT<'T> = 
         DT.Prod(x)
-        //(DT<'T>: (static member Prod : DT<'T> -> DT<'T>) (x))
-        // We can't use this because of reflection issues for the live check interpreter
+        //(DT<'T>: (static member Prod: DT<'T> -> DT<'T>) (x))
+        // We can'T use this because of reflection issues for the live check interpreter
 
     /// The average value of the elements of a tensor
-    let mean (x: DT<'T>) : DT<'T> = 
+    let mean (x: DT<'T>): DT<'T> = 
         DT.Mean(x)
-        // We can't use this because of reflection issues for the live check interpreter
-        //(DT<'T>: (static member Mean : DT<'T> -> DT<'T>) (x))
+        // We can'T use this because of reflection issues for the live check interpreter
+        //(DT<'T>: (static member Mean: DT<'T> -> DT<'T>) (x))
 
     /// The max value of the elements of a tensor
-    let maxValue (x: DT<'T>) : DT<'T> = 
+    let maxValue (x: DT<'T>): DT<'T> = 
         DT.Max(x)
-        // We can't use this because of reflection issues for the live check interpreter
-        //(DT<'T>: (static member Max : DT<'T> -> DT<'T>) (x))
+        // We can'T use this because of reflection issues for the live check interpreter
+        //(DT<'T>: (static member Max: DT<'T> -> DT<'T>) (x))
 
     /// The min value of the elements of a tensor
-    let minValue (x: DT<'T>) : DT<'T> = 
+    let minValue (x: DT<'T>): DT<'T> = 
         DT.Min(x)
-        // We can't use this because of reflection issues for the live check interpreter
-        //(DT<'T>: (static member Min : DT<'T> -> DT<'T>) (x))
+        // We can'T use this because of reflection issues for the live check interpreter
+        //(DT<'T>: (static member Min: DT<'T> -> DT<'T>) (x))
 
 
     /// The norm of a tensor
-    let norm (x: DT<'T>) : DT<'T> = 
+    let norm (x: DT<'T>): DT<'T> = 
         DT.Norm(x)
-        // We can't use this because of reflection issues for the live check interpreter
-        //(DT<'T>: (static member Norm : DT<'T> -> DT<'T>) (x))
+        // We can'T use this because of reflection issues for the live check interpreter
+        //(DT<'T>: (static member Norm: DT<'T> -> DT<'T>) (x))
 
     let inline sqr x = x * x
 
@@ -2034,17 +2023,17 @@ module FMHelpers =
     /// Prepare a randome number using the global generator
     let rand() = rnd.NextDouble()
 
-    let crossEntropy (x:DT<_>) (y:DT<_>) : DT<double> = failwith "fail"
+    let crossEntropy (x:DT<_>) (y:DT<_>): DT<double> = failwith "fail"
     //    -(x |> DM.toCols |> Seq.mapi (fun i v -> 
     //        (DV.standardBasis v.Length (int (float y.[0, i]))) * log v) |> Seq.sum) / x.Cols
 
     /// Change a 3D-array to friendly notation
-    let friendly3D (d : 'T[,,]) =
+    let friendly3D (d: 'T[,,]) =
         [| for i in 0..Array3D.length1 d - 1 -> [| for j in 0..Array3D.length2 d - 1 -> [| for k in 0..Array3D.length3 d - 1 -> d.[i,j,k]  |]|]|]
         |> Array.map array2D
 
     /// Change an 4D-array to friendly notation
-    let friendly4D (d : 'T[,,,]) =
+    let friendly4D (d: 'T[,,,]) =
         [| for i in 0..Array4D.length1 d - 1 -> [| for j in 0..Array4D.length2 d - 1 -> [| for k in 0..Array4D.length3 d - 1 -> [| for m in 0..Array4D.length4 d - 1 -> d.[i,j,k,m]  |]|]|]|]
         |> array2D |> Array2D.map array2D
 

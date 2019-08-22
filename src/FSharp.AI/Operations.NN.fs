@@ -6,9 +6,12 @@ open FSharp.AI.Utils
 open Tensorflow
 open Tensorflow.Operations
 
+let tf = Tensorflow.Binding.tf
+
 type gen_ops with
 
-    static member reduce_dims(input : Tensor, ?axis : Tensor) = 
+    static member reduce_dims(input : Tensor, ?axis : Tensor) =
+        
         match axis with
         | Some(axis) -> axis
         | None ->
@@ -16,7 +19,7 @@ type gen_ops with
             let shape = input.TensorShape
             if shape.is_fully_defined() then
                 // NOTE: The python code distinguishes between tensor and sparsetensor
-                tf.constant([|0 .. shape.Size- 1|], TF_DataType.TF_INT32)
+                tf.constant([|0 .. shape.size - 1|], TF_DataType.TF_INT32)
             else
                 // Otherwise, we rely on Range and Rank to do the right thing at run-time.
                 gen_ops.range(tf.constant(0), gen_ops.rank (input), tf.constant(1))

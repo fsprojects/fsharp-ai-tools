@@ -9,6 +9,7 @@ open Tensorflow.Operations
 open NumSharp
 open FSharp.AI.Tests
 
+let tf = Tensorflow.Binding.tf
 
 [<Test>]
 let ``resnet 50 classifier`` () = 
