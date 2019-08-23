@@ -5,11 +5,10 @@
 // * The shape logic is simpler as they are determined entirely at runtime
 // * The tensor lifetime is managed with a series of disposable tensors.
 
-
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
 #I "../tests/bin/Debug/net472/"
-#r "TorchSharp"
+#r "TorchSharp.dll"
 #r "FSharp.AI.Tests.dll"
 
 open TorchSharp
@@ -31,7 +30,8 @@ type Model() as this=
         this.RegisterModule(fc2)
         this.RegisterModule(conv1)
         this.RegisterModule(conv2)
-    override this.Forward(input : TorchTensor) : TorchTensor =
+
+    override this.Forward(input: TorchTensor): TorchTensor =
         use l11 = conv1.Forward(input)
         use l12 = Model.MaxPool2D(l11,[|2L|])
         use l21 = conv2.Forward(l12)
@@ -44,15 +44,15 @@ type Model() as this=
         use l41 = fc2.Forward(l33)
         Model.LogSoftMax(l41,1L)
 
-let Train(model : Module, 
-          optimizer : Optimizer, 
-          loss : Loss,
-          dataLoader :  IEnumerable<struct (TorchTensor*TorchTensor)>,
-          epoch : int,
-          batchSize : int,
-          size : int64) = 
-    model.Train();
-    let mutable batchId = 1;
+let Train(model: Module, 
+          optimizer: Optimizer, 
+          loss: Loss,
+          dataLoader:  IEnumerable<struct (TorchTensor*TorchTensor)>,
+          epoch: int,
+          batchSize: int,
+          size: int64) = 
+    model.Train()
+    let mutable batchId = 1
     for struct (data,target) in dataLoader do
         optimizer.ZeroGrad()
         use prediction = model.Forward(data)
@@ -65,7 +65,7 @@ let Train(model : Module,
         data.Dispose()
         target.Dispose()
 
-let Test(model : Module, loss : Loss, dataLoader : IEnumerable<struct (TorchTensor*TorchTensor)> , size : int64) =
+let Test(model: Module, loss: Loss, dataLoader: IEnumerable<struct (TorchTensor*TorchTensor)>, size: int64) =
     model.Eval()
     let mutable testLoss = 0.1
     let mutable correct = 0

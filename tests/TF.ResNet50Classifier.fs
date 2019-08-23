@@ -6,8 +6,11 @@ open System
 
 // TODO replace fixed weights with variables
 // TODO add the ability to use variable name scoping
-
+#if FS47
+open Tensorflow.Binding
+#else
 let tf = Tensorflow.Binding.tf
+#endif
 
 let model (input :  Tensor, weights: Map<string, Tensor>) =
     use ns = tf.name_scope ("Resnet50")

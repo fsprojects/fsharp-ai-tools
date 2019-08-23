@@ -16,6 +16,7 @@
     <PackageReference Include="LibTorch.Redist" Version="0.2.0-preview-27915-4" />
     <PackageReference Include="SciSharp.TensorFlow.Redist" Version="1.14.0" />
     <PackageReference Include="SharpZipLib" Version="1.1.0" />
+    <PackageReference Include="Torch.NET" Version="3.7.1.1" />
     <PackageReference Include="TorchSharp" Version="0.2.0-preview-27915-4" />
     <PackageReference Update="FSharp.Core" Version="4.6.2" />
     <PackageReference Update="System.ValueTuple" Version="4.5.0" />
@@ -39,8 +40,8 @@
     <None Include="..\examples\NeuralStyleTransfer.fsx" />
     <None Include="..\examples\NeuralStyleTransfer-dsl.fsx" />
     <None Include="..\examples\dsl-live.fsx" />
-    <None Include="..\examples\Torch.MNist.fsx" Link="Torch.MNist.fsx" />
-    <None Include="..\examples\TF.MNist.fsx" Link="TF.MNist.fsx" />
+    <None Include="..\examples\TorchSharp.MNist.fsx" />
+    <None Include="..\examples\TF.MNist.fsx" />
   </ItemGroup>
   <Target Name="Debug">
     <Message Importance="High" Text="Hello World" />

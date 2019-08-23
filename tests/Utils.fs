@@ -6,6 +6,12 @@ open System.IO
 open Tensorflow.Operations
 open FSharp.AI.NPYReaderWriter
 
+#if FS47
+open Tensorflow.Binding
+#else
+let tf = Tensorflow.Binding.tf
+#endif
+
 let basePath = Path.Combine(__SOURCE_DIRECTORY__,"..")
 
 let downloadFile(url:string,path:string) =
