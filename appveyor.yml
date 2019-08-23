@@ -1,22 +1,9 @@
 
-version: 1.11.{build}
+version: 0.1.{build}
 
-branches:
-  only:
-    - master
-
-# Do not build fature branch with open Pull requests
-skip_branch_with_pr: true
-
-image: Visual Studio 2017
+image: Visual Studio 2019
 
 configuration: Release
-
-clone_folder: c:\projects\TFF
-
-install: 
-- "SET PATH=C:\\Program Files\\dotnet\\bin;%PATH%"
-- "SET PATH=C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\FSharp\\;%PATH%"
 
 build_script:
 - dotnet restore
