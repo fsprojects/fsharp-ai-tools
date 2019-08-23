@@ -3,9 +3,12 @@ module FSharp.AI.NNImpl
 
 open Tensorflow
 open Tensorflow.Operations
-open Tensorflow.Binding
 
-open System.Math
+#if FS47
+open Tensorflow.Binding
+#else
+let tf = Tensorflow.Binding.tf
+#endif
 
 type gen_ops with
 
@@ -14,7 +17,6 @@ type gen_ops with
         match axis with
         | Some axis -> axis
         | None ->
-            let x = Min (3.0, 4.0)
             // Fast path: avoid creating Rank and Range ops if ndims is known.
             let shape = input.TensorShape
             if shape.is_fully_defined() then

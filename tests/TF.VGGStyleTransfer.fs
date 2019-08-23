@@ -2,8 +2,13 @@
 
 open System
 open Tensorflow
-open Tensorflow.Binding
 open Tensorflow.Operations
+
+#if FS47
+open Tensorflow.Binding
+#else
+let tf = Tensorflow.Binding.tf
+#endif
 
 // TODO: replace fixed weights with variables
 // NOTE: This model architecture is tailored for fast feed forward style transfer and not as genearully useful as something like ResNet

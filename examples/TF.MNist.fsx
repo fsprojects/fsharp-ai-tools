@@ -18,10 +18,15 @@
 
 open System
 open Tensorflow
-open Tensorflow.Binding
 open Tensorflow.Operations
 open NumSharp
 open FSharp.AI.Tests.Data
+
+#if FS47
+open Tensorflow.Binding
+#else
+let tf = Tensorflow.Binding.tf
+#endif
 
 let mnist = MNist.Dataset.MNistDataset.read_data_sets("mnist", one_hot = true, validation_size = 5000)
 

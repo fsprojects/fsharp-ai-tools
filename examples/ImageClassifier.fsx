@@ -11,12 +11,17 @@
 #nowarn "760" "49"
 
 open Tensorflow
-open Tensorflow.Binding
 open FSharp.AI
 open FSharp.AI.Tests.TF
 open FSharp.AI.Tests
 open System.IO
 open NumSharp
+
+#if FS47
+open Tensorflow.Binding
+#else
+let tf = Tensorflow.Binding.tf
+#endif
 
 let input_data = tf.placeholder(TF_DataType.TF_STRING,name="input")
 let input_img = ResNet50Classifier.binaryJPGToImage(input_data)

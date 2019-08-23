@@ -5,10 +5,15 @@ open NUnit.Framework
 open System
 open System.IO
 open Tensorflow
-open Tensorflow.Binding
 open Tensorflow.Operations
 open NumSharp
 open FSharp.AI.Tests
+
+#if FS47
+open Tensorflow.Binding
+#else
+let tf = Tensorflow.Binding.tf
+#endif
 
 [<Test>]
 let ``resnet 50 classifier`` () = 

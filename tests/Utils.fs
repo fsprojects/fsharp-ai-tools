@@ -1,11 +1,16 @@
 ﻿module FSharp.AI.Tests.Utils
 
 open Tensorflow
-open Tensorflow.Binding
 open FSharp.AI
 open System.IO
 open Tensorflow.Operations
 open FSharp.AI.NPYReaderWriter
+
+#if FS47
+open Tensorflow.Binding
+#else
+let tf = Tensorflow.Binding.tf
+#endif
 
 let basePath = Path.Combine(__SOURCE_DIRECTORY__,"..")
 

@@ -1,18 +1,21 @@
 namespace FSharp.AI.DSL
 
-
-
 open System
 open System.Reflection
 open System.Collections.Generic
 open Tensorflow
-open Tensorflow.Binding
 open NumSharp
 open System.Numerics
 open System.Runtime.InteropServices
 open FSharp.AI.NNImpl
 
-
+#if FS47
+open Tensorflow.Binding
+#else
+[<AutoOpen>]
+module Binding = 
+    let tf = Tensorflow.Binding.tf
+#endif
 
 #nowarn "9"
 
