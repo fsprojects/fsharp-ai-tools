@@ -11,6 +11,7 @@
 #nowarn "760" "49"
 
 open Tensorflow
+open Tensorflow.Binding
 open FSharp.AI
 open FSharp.AI.Tests.TF
 open FSharp.AI.Tests

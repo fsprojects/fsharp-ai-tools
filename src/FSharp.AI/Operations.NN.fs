@@ -1,20 +1,20 @@
 ﻿[<AutoOpen>]
 module FSharp.AI.NNImpl
 
-open System
-open FSharp.AI.Utils
 open Tensorflow
 open Tensorflow.Operations
+open Tensorflow.Binding
 
-let tf = Tensorflow.Binding.tf
+open System.Math
 
 type gen_ops with
 
-    static member reduce_dims(input : Tensor, ?axis : Tensor) =
+    static member reduce_dims(input: Tensor, ?axis: Tensor) =
         
         match axis with
-        | Some(axis) -> axis
+        | Some axis -> axis
         | None ->
+            let x = Min (3.0, 4.0)
             // Fast path: avoid creating Rank and Range ops if ndims is known.
             let shape = input.TensorShape
             if shape.is_fully_defined() then
@@ -25,7 +25,7 @@ type gen_ops with
                 gen_ops.range(tf.constant(0), gen_ops.rank (input), tf.constant(1))
 
 
-    static member conv2d_transpose(value : Tensor, filter : Tensor, outputShape : Tensor, strides:int[], ?padding:string, ?data_format:string,?name:string) = 
+    static member conv2d_transpose(value: Tensor, filter: Tensor, outputShape: Tensor, strides:int[], ?padding:string, ?data_format:string, ?name:string) = 
         let paddingV     = defaultArg padding "SAME"
         let data_formatV = defaultArg data_format "NHWC"
         let name = defaultArg name "conv2d_transpose"

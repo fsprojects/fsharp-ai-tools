@@ -1,13 +1,13 @@
 ﻿module FSharp.AI.Tests.TF.ResNet50Classifier
 
 open Tensorflow
+open Tensorflow.Binding
 open Tensorflow.Operations
 open System
 
 // TODO replace fixed weights with variables
 // TODO add the ability to use variable name scoping
 
-let tf = Tensorflow.Binding.tf
 
 let model (input :  Tensor, weights: Map<string, Tensor>) =
     use ns = tf.name_scope ("Resnet50")

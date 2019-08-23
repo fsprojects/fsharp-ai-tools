@@ -11,7 +11,7 @@ open System.Threading.Tasks
 open Tensorflow
 
 type Compress() = 
-    static member ExtractGZip(gzipFileName : string, targetDir : string) =
+    static member ExtractGZip(gzipFileName: string, targetDir: string) =
         //let dataBuffer = Array.zeroCreate<byte> 4096
         //use fs = new FileStream(gzipFileName, FileMode.Open, FileAccess.Read)
         //use gzipStream = new Ionic.Zlib.GZipStream(fs, Ionic.Zlib.CompressionMode.Decompress)
@@ -20,7 +20,7 @@ type Compress() =
         //let fsOut = File.Create(fnOut)
         //StreamUtils.Copy(gzipStream, fsOut, dataBuffer)
         
-    static member UnZip(gzArchiveName : string, destFolder : string) =
+    static member UnZip(gzArchiveName: string, destFolder: string) =
         let flag = gzArchiveName.Split(Path.DirectorySeparatorChar).Last().Split('.').First() + ".bin"
         if not(File.Exists(Path.Combine(destFolder, flag))) then
             printfn "Extracting."
@@ -34,7 +34,7 @@ type Compress() =
 
 type Web() =
     /// TODO make this better 
-    static member Download(url : string, destDir : string, ?destFileName : string) = 
+    static member Download(url: string, destDir: string, ?destFileName: string) = 
         let destFileName = defaultArg destFileName (url.Split(Path.DirectorySeparatorChar).Last())
         Directory.CreateDirectory(destDir) |> ignore
         let relativeFilePath = Path.Combine(destDir, destFileName)
@@ -53,7 +53,7 @@ type Web() =
             true
             
 
-type DataSet(images : NDArray, labels : NDArray, dtype : TF_DataType, reshape : bool) = 
+type DataSet(images: NDArray, labels: NDArray, dtype: TF_DataType, reshape: bool) = 
     let _num_examples = images.shape.[0]
     let images = images.reshape(images.shape.[0], images.shape.[1] * images.shape.[2])
     let img = images.astype(dtype.as_numpy_dtype())
@@ -69,7 +69,7 @@ type DataSet(images : NDArray, labels : NDArray, dtype : TF_DataType, reshape : 
     member __.IndexInEpoch = _index_in_epoch
     member __.NumExamples = _num_examples
 
-    member __.next_batch(batch_size : int, ?fake_data : bool, ?shuffle : bool) = 
+    member __.next_batch(batch_size: int, ?fake_data: bool, ?shuffle: bool) = 
         let fake_data = defaultArg fake_data false
         let shuffle = defaultArg shuffle true
         let start = _index_in_epoch
@@ -101,9 +101,9 @@ type DataSet(images : NDArray, labels : NDArray, dtype : TF_DataType, reshape : 
 
 
 type Datasets = {
-    train : DataSet
-    validation : DataSet
-    test : DataSet
+    train: DataSet
+    validation: DataSet
+    test: DataSet
 }
 
 
@@ -121,12 +121,12 @@ module Dataset =
 
     let TEST_LABELS = "t10k-labels-idx1-ubyte.gz"
 
-    let private _read32(bytestream : FileStream) =  
+    let private _read32(bytestream: FileStream) =  
         let buffer = Array.zeroCreate<byte> (sizeof<uint32>)
         let count = bytestream.Read(buffer, 0, 4)
         np.frombuffer(buffer, ">u4").GetUInt32(0) //  Is this really necessary?
 
-    let dense_to_one_hot(labels_dense : NDArray, num_classes : int) =
+    let dense_to_one_hot(labels_dense: NDArray, num_classes: int) =
         let num_labels = labels_dense.shape.[0]
         let index_offset = np.arange(num_labels) * NDArray.op_Implicit(num_labels)
         let labels_one_hot = np.zeros(num_labels, num_classes)
@@ -136,7 +136,7 @@ module Dataset =
         labels_one_hot
 
     type MNistDataset() =
-        static member extract_images(file : string, ?limit : int) : NDArray =
+        static member extract_images(file: string, ?limit: int): NDArray =
             use bytestream = new FileStream(file, FileMode.Open)
             let magic = _read32(bytestream)
             if magic <> 2051u then raise <| ValueError(sprintf "Invalid magic number %i in MNIST image file %s" magic file)
@@ -148,7 +148,7 @@ module Dataset =
             let data = np.frombuffer(buf, np.uint8)
             data.reshape(num_images, rows, cols, 1)
             
-        static member extract_labels(file : string, ?one_hot : bool, ?num_classes : int, ?limit : int) : NDArray =
+        static member extract_labels(file: string, ?one_hot: bool, ?num_classes: int, ?limit: int): NDArray =
             let one_hot = defaultArg one_hot false
             let num_classes = defaultArg num_classes 10
             use bytestream = new FileStream(file, FileMode.Open)
@@ -161,13 +161,13 @@ module Dataset =
             if one_hot then dense_to_one_hot(labels,num_classes)
             else labels
 
-        static member read_data_sets(train_dir : string, 
-                                     ?one_hot : bool, 
-                                     ?dtype : TF_DataType,
-                                     ?reshape : bool,
-                                     ?validation_size : int,
-                                     ?train_size : int,
-                                     ?test_size : int,
+        static member read_data_sets(train_dir: string, 
+                                     ?one_hot: bool, 
+                                     ?dtype: TF_DataType,
+                                     ?reshape: bool,
+                                     ?validation_size: int,
+                                     ?train_size: int,
+                                     ?test_size: int,
                                      ?source_url) =
             let one_hot = defaultArg one_hot false
             let dtype   = defaultArg dtype TF_DataType.TF_FLOAT

@@ -1,6 +1,7 @@
 ﻿module FSharp.AI.Tests.Utils
 
 open Tensorflow
+open Tensorflow.Binding
 open FSharp.AI
 open System.IO
 open Tensorflow.Operations

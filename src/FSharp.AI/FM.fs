@@ -6,6 +6,7 @@ open System
 open System.Reflection
 open System.Collections.Generic
 open Tensorflow
+open Tensorflow.Binding
 open NumSharp
 open System.Numerics
 open System.Runtime.InteropServices
