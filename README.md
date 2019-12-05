@@ -1,6 +1,10 @@
-This repo is work-in-progress containing a prototype of a DSL "F# for AI Models". 
+This repo is work-in-progress contains tools and code the contribute to "F# for AI Models". 
 
-This currently executes using TensorFlow but could have additional backends such as DiffSharp or PyTorch.
+Contents: 
+* FM: F# for AI Models 
+* The TensorFlow API for F# 
+* Live Checking Tooling for AI models
+* fsx2nb
 
 # FM: F# for AI Models 
 
@@ -275,6 +279,33 @@ LiveCheck for a DNN:
        devenv.exe /rootsuffix RoslynDev
        (open dsl-live.fsx)
 
+# fsx2nb
+
+There is a useful tool `fsx2nb` in the repo to convert F# scripts to F# Jupyter notebooks:
+
+    dotnet fsi tools\fsx2nb.fsx tools\fsx2nb.fsx
+
+These scripts use the following elements:
+
+
+    (**markdown 
+    
+    *)
+
+    (**cell *)   -- delimits between two code cells
+    
+    (**ydec xyz *)   -- this adds 'xyz' to a code cell for use fo producing visual outputs
+    
+    #if INTERACTIVE   -- this is removed in a code block
+    ...
+    #endif
+    
+    #if NOTEBOOK   -- this is kept and the #if are removed
+    ...
+    #endif
+
+
+
 # Building
 
 First time only:
@@ -287,6 +318,7 @@ Then:
     dotnet build
     dotnet test
     dotnet pack
+
 
 # Roadmap - Core API
 

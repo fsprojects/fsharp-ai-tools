@@ -1,20 +1,22 @@
-// This example shows the NeuralStyles transfer model using the FM F#-for-AI-models DSL.
-//
-// See https://medium.com/tensorflow/neural-style-transfer-creating-art-with-deep-learning-using-tf-keras-and-eager-execution-7d541ac31398
-//
-// Build the Debug 'FSharp.AI.Tests' before using this
+(**markdown
+# Heading 1
+This example shows the NeuralStyles transfer model using the FM F#-for-AI-models DSL.
+
+See [the original python example](https://medium.com/tensorflow/neural-style-transfer-creating-art-with-deep-learning-using-tf-keras-and-eager-execution-7d541ac31398).
+
+Build the Debug 'FSharp.AI.Tests' before using this
+*) 
+
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
 #r "../tests/bin/Debug/net472/FSharp.AI.dll"
 #r "../tests/bin/Debug/net472/Tensorflow.Net.dll"
 #r "../tests/bin/Debug/net472/NumSharp.Core.dll"
-//#load "shared/NPYReaderWriter.fsx"
-//#load "shared/ScriptLib.fsx"
 
-
-//------------------------------------------------------------------------------
-// Preliminaries for F# scripting
+(**markdown
+Preliminaries for F# scripting
+*)
 
 open System
 open System.IO
@@ -22,14 +24,19 @@ open FSharp.AI
 open FSharp.AI.DSL
 open NPYReaderWriter
 
-// Check the process is 64-bit.  
+(**markdown
+Check the process is 64-bit.  
+*)
 if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 
-// Add the print helper for tensors in the REPL
+(**markdown
+Add the print helper for tensors in the REPL
+*)
 fsi.AddPrintTransformer(DT.PrintTransform)
 
-//------------------------------------------------------------------------------
-// This is the NeuralStyles transfer model proper
+(**markdown
+This is the NeuralStyles transfer model proper
+*)
 
 [<Model>]
 module NeuralStyles = 
@@ -105,9 +112,11 @@ module NeuralStyles =
         let dummyImage = DT.Dummy inputShapeForSingle
         PretrainedFFStyleVGG dummyImage  |> ignore
 
-//------------------------------------------------------------
 
-// Read the weights map
+(**markdown
+Read the weights map
+*)
+
 let readWeights weightsFile = 
     let npz = readFromNPZ (File.ReadAllBytes weightsFile)
     [| for KeyValue(k,(metadata, arr)) in npz do
@@ -116,7 +125,9 @@ let readWeights weightsFile =
             let value = DT.ConstArray (arr, shape=shape) |> DT.Cast<double> :> DT
             yield (name, value) |]
 
-/// Read an image from the path as a tensor value
+(**markdown
+Read an image from the path as a tensor value
+*)
 let readImage imgPath = 
     let imgName = File.ReadAllBytes(imgPath) |> DT.CreateString
     // read the image
@@ -125,8 +136,10 @@ let readImage imgPath =
     let mean_pixel  = pixel [| 123.68; 116.778; 103.939 |] 
     jpg - mean_pixel
 
-/// For convenience we add an entry point for one image
-// OK, now use the model on some sample data and pre-trained weights
+(**markdown
+For convenience we add an entry point for one image
+OK, now use the model on some sample data and pre-trained weights
+*)
 
 let imageFile imgName = Path.Combine(__SOURCE_DIRECTORY__,"../tests/examples", imgName)
 
@@ -149,6 +162,9 @@ let processImage (modelForStyle, style) imageName =
     let outfile = Path.Combine(__SOURCE_DIRECTORY__, sprintf "%s_in_%s_style2.png" imageName style)
     File.WriteAllBytes(outfile, png)
 
+(**markdown
+Add this code for timings:
+*)
 //for i in 1 .. 10 do 
 //    time (fun () -> processImage rain "chicago.jpg" )
 //     

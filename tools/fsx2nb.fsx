@@ -1,9 +1,7 @@
 ﻿// TODO get #r nuget from project file
 
-fsi.CommandLineArgs
-
+open System
 open System.IO
-
 open System.Text.RegularExpressions
 
 let escapeAndQuote(txt: string) = 
@@ -194,6 +192,8 @@ let linesToNotebook(lines: string[]) =
     // Merge ydec into code, filter out cell breaks, map into Cell type
     let cells = 
         sections
+        |> Array.filter (fun (t,s) -> not (t = Code && System.String.IsNullOrWhiteSpace s))
+        |> Array.map (fun (t,s) -> (t, s.Trim(' ', '\n', '\r')))
         |> Array.fold (fun (state,acc) (t,s) -> 
             let addOf(cellType: string) = 
                 let x = {Cell.Default with cell_type = cellType; source = s.Split([|'\n';'\r'|])}
@@ -219,15 +219,32 @@ let cwd = System.Environment.CurrentDirectory
 let getRooted(path: string) = if Path.IsPathRooted(path) then path else Path.Combine(cwd,path)
 
 
-match fsi.CommandLineArgs with
-| [|_;"-i";input;"-o";output|] ->
-    let input = getRooted input
-    let output = getRooted output
-    if not(File.Exists(input)) then failwithf "Input file %s does not exist" input
-    elif File.Exists(output) then failwithf "Output file %s already exists" output
-    let lines = File.ReadAllLines(input)
-    let notebook = lines |> linesToNotebook
-    File.WriteAllText(output,notebook.ToString())
-| _ -> 
-    printfn "Expected format of \"-i input -o output\". Input command line args were %s" (fsi.CommandLineArgs |> String.concat " ")
+let input, output =
+    match fsi.CommandLineArgs with
+    | [|_;"-i";input;"-o";output|] ->
+        let input = getRooted input
+        let output = getRooted output
+        (input, output)
+    | [|_;"-i";input|] ->
+        let input = getRooted input
+        let output = Path.ChangeExtension(input, "ipynb")
+        (input, output)
+    | _ -> 
+        printfn "Expected format of \"-i input [-o output]\". Input command line args were %s" (fsi.CommandLineArgs |> String.concat " ")
+        exit 1
+
+if not (input.EndsWith ".fsx" || input.EndsWith ".fs") then 
+    eprintfn "Unknown input %s. Input should be .fsx or .fs" input
+    exit 1
+    
+if not(File.Exists(input)) then 
+    eprintfn "Input file %s does not exist" input
+    exit 1
+let lines = File.ReadAllLines(input)
+let notebook = lines |> linesToNotebook
+if File.Exists(output) then
+    printfn "Overwriting %s..." output
+else
+    printfn "Writing %s..." output
+File.WriteAllText(output,notebook.ToString())
 
