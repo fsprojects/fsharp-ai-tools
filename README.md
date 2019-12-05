@@ -6,6 +6,7 @@ Contents:
 * Live Checking Tooling for AI models
 * fsx2nb
 
+
 # FM: F# for AI Models 
 
 FM an F# eDSL for writing numeric models. Models written in FM can be passed to 
@@ -18,7 +19,7 @@ This is a POC that it is possible to configure F# to be suitable for authoring A
 execute them as real, full-speed TensorFlow graphs, achieving cohabitation and win-win with the TF ecosystem.
 Live trajectory execution tooling can give added correctness guarantess interactively.
 
-FM currently executes using FSharp.AI, which is why it's in this repo.
+FM currently executes using FSAI.Tools, which is why it's in this repo.
 
 The aim of FM is to support the authoring of numeric functions and AI models - including
 neural networks - in F# code. For example:
@@ -193,13 +194,13 @@ module ModelExample =
     validation learnedCoeffs
 ```
 
-More examples/tests are in [dsl-live.fsx](https://github.com/fsprojects/FSharp.AI/blob/master/examples/dsl-live.fsx).
+More examples/tests are in [dsl-live.fsx](https://github.com/fsprojects/FSAI.Tools/blob/master/examples/dsl-live.fsx).
 
 The approach scales to the complete expression of deep neural networks 
 and full computation graphs. The links below show the implementation of a common DNN sample (the samples may not
 yet run, this is wet paint):
 
-* [NeuralStyleTransfer in DSL form](https://github.com/fsprojects/FSharp.AI/blob/master/examples/NeuralStyleTransfer-dsl.fsx)
+* [NeuralStyleTransfer in DSL form](https://github.com/fsprojects/FSAI.Tools/blob/master/examples/NeuralStyleTransfer-dsl.fsx)
 
 The design is intended to allow alternative execution with Torch or DiffSharp.
 DiffSharp may be used once Tensors are available in that library.
@@ -235,7 +236,7 @@ DiffSharp may be used once Tensors are available in that library.
 
 # The TensorFlow API for F# 
 
-See `FSharp.AI`.  This API is designed in a similar way to `TensorFlowSharp`, but is implemented directly in F# and
+See `FSAI.Tools`.  This API is designed in a similar way to `TensorFlowSharp`, but is implemented directly in F# and
 contains some additional functionality.
 
 # Live Checking Tooling for AI models
@@ -273,7 +274,7 @@ LiveCheck for a DNN:
 
 3. Start the tool and edit using experimental VS instance
 
-       cd FSharp.AI\examples
+       cd FSAI.Tools\examples
        ..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe --eval --writeinfo --watch --vshack --livechecksonly  --define:LIVECHECK dsl-live.fsx
 
        devenv.exe /rootsuffix RoslynDev
@@ -308,35 +309,12 @@ These scripts use the following elements:
 
 # Building
 
-First time only:
-
-    fsiAnyCpu setup\setup.fsx
-
-Then:
-
-    dotnet restore
     dotnet build
     dotnet test
     dotnet pack
 
 
-# Roadmap - Core API
-
-* Port gradient and training/optimization code (from the Scala-Tensorflow)
-
-* Port testing for core API
-
-* GPU execution
-
-* TPU execution
-
-* Add docs
-
 # Roadmap - DSL
-
-* Reuse graphs (deal with shape variables)
-
-* Switch to using ported gradient code when it is available in core API
 
 * Hand-code or generate larger TF surface area in FM DSL
 
@@ -358,7 +336,7 @@ Then:
 
 # Roadmap - Live checking
 
-* Make it into an F# Anaylzer, including adding tooltips to F# analyzer design
+* Make it into an F# Analyzer, including adding tooltips to F# analyzer design
 
 * Make it into a nuget you reference and start live checking from the script
 
@@ -382,6 +360,7 @@ Then:
 
 * Make existing constraints generalizable independently of Extension methods satisfying constraints
 
+* Improve Nullable interop
 
 
 

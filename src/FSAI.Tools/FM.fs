@@ -1,4 +1,4 @@
-namespace FSharp.AI.DSL
+namespace FSAI.Tools.DSL
 
 open System
 open System.Reflection
@@ -7,7 +7,7 @@ open Tensorflow
 open NumSharp
 open System.Numerics
 open System.Runtime.InteropServices
-open FSharp.AI.NNImpl
+open FSAI.Tools.NNImpl
 
 #if FS47
 open Tensorflow.Binding
@@ -1792,7 +1792,7 @@ module DT =
 (*
     // NOTE: not supported on TensorFlow due to use of C++ AddGradients only supporting
     // first-order differentials 
-    // Message: FSharp.AI.TFException: No gradient defined for op: OnesLike. 
+    // Message: FSAI.Tools.TFException: No gradient defined for op: OnesLike. 
 
     /// Hessian of a vector-to-scalar function `f`, at point `x`. Forward-on-reverse AD.
     let hessian (f: DT<'T> -> Scalars<'T>) x: Matrices<'T> =

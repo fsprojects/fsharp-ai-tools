@@ -9,7 +9,7 @@
 #r "netstandard"
 #I "../tests/bin/Debug/net472/"
 #r "TorchSharp.dll"
-#r "FSharp.AI.Tests.dll"
+#r "FSAI.Tools.Tests.dll"
 
 open TorchSharp
 open TorchSharp.Tensor

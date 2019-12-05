@@ -1,4 +1,4 @@
-﻿module FSharp.AI.NPYReaderWriter
+﻿module FSAI.Tools.NPYReaderWriter
 
 open System
 open System.IO

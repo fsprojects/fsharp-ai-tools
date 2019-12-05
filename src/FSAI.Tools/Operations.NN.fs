@@ -1,5 +1,5 @@
 ﻿[<AutoOpen>]
-module FSharp.AI.NNImpl
+module FSAI.Tools.NNImpl
 
 open Tensorflow
 open Tensorflow.Operations
@@ -32,7 +32,7 @@ type gen_ops with
         let data_formatV = defaultArg data_format "NHWC"
         let name = defaultArg name "conv2d_transpose"
         // TODO re-do Dimension and Shape functions 
-        // https://github.com/fsprojects/FSharp.AI/blob/cdbd841bc86136f8ef24524cfc346e77bf21e6af/src/FSharp.AI/Tensorflow.fs#L409
+        // https://github.com/fsprojects/FSAI.Tools/blob/cdbd841bc86136f8ef24524cfc346e77bf21e6af/src/FSAI.Tools/Tensorflow.fs#L409
 //        if not (data_formatV = "NCHW" || data_formatV = "NHWC") then 
 //            failwith "dataformat has to be either NCHW or NHWC."
 //        let axis = if data_formatV = "NHWC" then 3 else 1

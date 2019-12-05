@@ -1,12 +1,12 @@
-// Build the Debug 'FSharp.AI.Tests' before using this
+// Build the Debug 'FSAI.Tools.Tests' before using this
 
 module FM.Tests
 
 open NUnit.Framework
 
 open System
-open FSharp.AI
-open FSharp.AI.DSL
+open FSAI.Tools
+open FSAI.Tools.DSL
 
 [<Test>]
 let check64() = 

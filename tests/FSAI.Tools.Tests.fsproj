@@ -4,8 +4,8 @@
     <OutputType>Library</OutputType>
     <TargetFrameworks>netcoreapp2.0;net472</TargetFrameworks>
     <RuntimeIdentifiers>win-x64;osx-x86;linux-x64</RuntimeIdentifiers>
-    <RootNamespace>FSharp.AI.Tests</RootNamespace>
-    <AssemblyName>FSharp.AI.Tests</AssemblyName>
+    <RootNamespace>FSAI.Tools.Tests</RootNamespace>
+    <AssemblyName>FSAI.Tools.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="LibTorch.Redist" Version="0.2.0-preview-27915-4" />
-    <PackageReference Include="SciSharp.TensorFlow.Redist" Version="1.14.0" />
+    <PackageReference Include="SciSharp.TensorFlow.Redist" Version="1.14.1" />
     <PackageReference Include="SharpZipLib" Version="1.1.0" />
     <PackageReference Include="Torch.NET" Version="3.7.1.1" />
     <PackageReference Include="TorchSharp" Version="0.2.0-preview-27915-4" />
@@ -58,7 +58,7 @@
    
   </Target>
  <ItemGroup>
-    <ProjectReference Include="..\src\FSharp.AI\FSharp.AI.fsproj" />
+    <ProjectReference Include="..\src\FSAI.Tools\FSAI.Tools.fsproj" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(OS)' == 'Windows_NT' ">

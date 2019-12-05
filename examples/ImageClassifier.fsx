@@ -1,19 +1,19 @@
 ﻿#I __SOURCE_DIRECTORY__
 #r "netstandard"
 #I "../tests/bin/Debug/net472/"
-#r "FSharp.AI.dll"
+#r "FSAI.Tools.dll"
 #r "Tensorflow.NET.dll"
 #r "NumSharp.Core.dll"
-#r "FSharp.AI.Tests.dll"
+#r "FSAI.Tools.Tests.dll"
 #r "System.IO.Compression.dll"
 #r "System.Memory"
 #r "Markeli.Half"
 #nowarn "760" "49"
 
 open Tensorflow
-open FSharp.AI
-open FSharp.AI.Tests.TF
-open FSharp.AI.Tests
+open FSAI.Tools
+open FSAI.Tools.Tests.TF
+open FSAI.Tools.Tests
 open System.IO
 open NumSharp
 

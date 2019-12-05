@@ -4,13 +4,13 @@ This example shows the NeuralStyles transfer model using the FM F#-for-AI-models
 
 See [the original python example](https://medium.com/tensorflow/neural-style-transfer-creating-art-with-deep-learning-using-tf-keras-and-eager-execution-7d541ac31398).
 
-Build the Debug 'FSharp.AI.Tests' before using this
+Build the Debug 'FSAI.Tools.Tests' before using this
 *) 
 
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../tests/bin/Debug/net472/FSharp.AI.dll"
+#r "../tests/bin/Debug/net472/FSAI.Tools.dll"
 #r "../tests/bin/Debug/net472/Tensorflow.Net.dll"
 #r "../tests/bin/Debug/net472/NumSharp.Core.dll"
 
@@ -20,8 +20,8 @@ Preliminaries for F# scripting
 
 open System
 open System.IO
-open FSharp.AI
-open FSharp.AI.DSL
+open FSAI.Tools
+open FSAI.Tools.DSL
 open NPYReaderWriter
 
 (**markdown

@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module FSharp.AI.Utils
+module FSAI.Tools.Utils
 open System
 open System.Collections
 open System.Collections.Generic

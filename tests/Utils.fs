@@ -1,10 +1,10 @@
-﻿module FSharp.AI.Tests.Utils
+﻿module FSAI.Tools.Tests.Utils
 
 open Tensorflow
-open FSharp.AI
+open FSAI.Tools
 open System.IO
 open Tensorflow.Operations
-open FSharp.AI.NPYReaderWriter
+open FSAI.Tools.NPYReaderWriter
 
 #if FS47
 open Tensorflow.Binding

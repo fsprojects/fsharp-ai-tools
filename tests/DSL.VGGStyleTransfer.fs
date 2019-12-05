@@ -1,4 +1,4 @@
-﻿module FSharp.AI.VGGStyleTransferDSL
+﻿module FSAI.Tools.VGGStyleTransferDSL
 
 // NOTE: Most operations were converted from double (float) to single as that is how this model was designed
 // NOTE: I'm unsure why the shape resolver is not working 
@@ -7,11 +7,11 @@
 //
 // See https://medium.com/tensorflow/neural-style-transfer-creating-art-with-deep-learning-using-tf-keras-and-eager-execution-7d541ac31398
 //
-// Build the Debug 'FSharp.AI.Tests' before using this
+// Build the Debug 'FSAI.Tools.Tests' before using this
 
 //#I __SOURCE_DIRECTORY__
 //#r "netstandard"
-//#r "../tests/bin/Debug/net472/FSharp.AI.dll"
+//#r "../tests/bin/Debug/net472/FSAI.Tools.dll"
 //#r "../tests/bin/Debug/net472/Tensorflow.Net.dll"
 //#r "../tests/bin/Debug/net472/NumSharp.Core.dll"
 //#load "shared/NPYReaderWriter.fsx"
@@ -23,8 +23,8 @@
 
 open System
 open System.IO
-open FSharp.AI
-open FSharp.AI.DSL
+open FSAI.Tools
+open FSAI.Tools.DSL
 open NPYReaderWriter
 
 
