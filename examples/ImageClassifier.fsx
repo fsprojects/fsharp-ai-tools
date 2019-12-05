@@ -1,12 +1,6 @@
 ﻿#I __SOURCE_DIRECTORY__
-#r "netstandard"
-<<<<<<< Updated upstream
-#I "../tests/bin/Debug/net472/"
-#r "FSAI.Tools.dll"
-=======
 #I "../tests/bin/Debug/netcoreapp2.0/"
-#r "FSharp.AI.dll"
->>>>>>> Stashed changes
+#r "FSAI.Tools.dll"
 #r "Tensorflow.NET.dll"
 #r "NumSharp.Core.dll"
 #r "FSAI.Tools.Tests.dll"

@@ -1,19 +1,17 @@
 ﻿// Build the Debug 'FSAI.Tools.Tests' before using this
 
 #I __SOURCE_DIRECTORY__
-#r "netstandard"
-#r "../tests/bin/Debug/netcoreapp2.0/FSAI.Tools.dll"
-#r "../tests/bin/Debug/netcoreapp2.0/NumSharp.Core.dll"
-#r "../tests/bin/Debug/netcoreapp2.0/Tensorflow.Net.dll"
-#r "FSharp.Compiler.Interactive.Settings"
+#I "../tests/bin/Debug/netcoreapp2.0"
+#r "FSAI.Tools.dll"
+#r "NumSharp.Core.dll"
+#r "Tensorflow.Net.dll"
 #nowarn "49"
 
 open System
 open FSAI.Tools
 open FSAI.Tools.DSL
-open Microsoft.FSharp.Compiler.Interactive.Settings
 
-if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
+if not System.Environment.Is64BitProcess then printfn "64-bit expected"; System.Environment.Exit(-1)
 
 fsi.AddPrintTransformer(DT.PrintTransform)
 
@@ -115,6 +113,7 @@ module GradientDescent =
     let train f initial numSteps = 
         initial |> Seq.unfold (fun pos -> Some (pos, step f pos  |> DT.Eval)) |> Seq.truncate numSteps 
 
+(*
 module GradientDescentExample =
 
     // A numeric function of two parameters, returning a scalar, see
@@ -129,6 +128,7 @@ module GradientDescentExample =
     let check1() = train 4 |> Seq.last 
     
     let results = train 200 |> Seq.last
+*)
 
 module ModelExample =
 
@@ -195,13 +195,13 @@ module ModelExample =
         train coeffs (xs, y) 1  |> Seq.last
 
     let initialCoeffs = vec [ for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize ]
-    let learnedCoeffs = train initialCoeffs trainData 200 |> Seq.last |> DT.toArray
+    //let learnedCoeffs = train initialCoeffs trainData 200 |> Seq.last |> DT.toArray
          // [|1.017181246; 2.039034327; 2.968580146; 3.99544071; 4.935430581;
          //   5.988228378; 7.030374908; 8.013975714; 9.020138699; 9.98575733|]
 
     validation trueCoeffs
 
-    validation learnedCoeffs
+    //validation learnedCoeffs
 
 module ODEs = 
     let lotka_volterra(du, u: DT<double>, p: DT<double>, t) = 
@@ -236,6 +236,7 @@ module GradientDescentPreprocessed =
         let stepC = stepC f inputShape
         fun initial numSteps -> initial |> Seq.unfold (fun pos -> Some (pos, stepC pos)) |> Seq.truncate numSteps 
 
+(*
 module GradientDescentExamplePreprocessed =
 
     // A numeric function of two parameters, returning a scalar, see
@@ -252,6 +253,7 @@ module GradientDescentExamplePreprocessed =
     let check1() = f (vec [ -0.3; 0.3 ])
     
     let results = train 200 |> Seq.last
+*)
 
 module NeuralTransferFragments =
 
@@ -307,6 +309,11 @@ module NeuralTransferFragments =
     let check1() = 
         let dummyImages = DT.Dummy (Shape [ Dim.Named "BatchSz" 10; Dim.Named "H" 474;  Dim.Named "W" 712; Dim.Named "Channels" 3 ])
         style_transfer dummyImages
+    
+    do
+        printfn "checking that livecheck runs..."
+        use _holder = LiveChecking.WithLiveCheck() 
+        check1() |> ignore
 
     (*
     

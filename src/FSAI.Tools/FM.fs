@@ -27,10 +27,13 @@ type ops = Tensorflow.Operations.gen_ops
 
 [<AutoOpen>]
 module LiveChecking = 
-    let livecheck = 
+    let mutable livecheck = 
         try 
             match System.Environment.GetEnvironmentVariable("LIVECHECK") with null | "0" -> false | _ -> true 
         with _ -> false
+    let WithLiveCheck() = 
+       livecheck <- true
+       { new IDisposable with member __.Dispose() = livecheck <- false } 
 
 type internal InferenceVarSoln<'T> =
     | Solved of 'T
@@ -1614,7 +1617,11 @@ and [<Sealed>] DT<'T> internal
 
     /// Get a dummy value with the given shape for use in live checking
     static member Dummy(shape: Shape): DT<'T> = 
-        DT.MakeConstWithBroadcast(shape, (fun () -> failwith "dummy nodes should not be evaluated during live checking"))
+        DT.MakeConstWithBroadcast(shape, (fun () -> 
+            if livecheck then 
+                failwith "dummy nodes should not be evaluated during live checking"
+            else 
+                failwith "livechecking is not enabled but dummy nodes have been used"))
 
 /// Alias for a tensor scalar.
 type Scalar<'T> = DT<'T>
