@@ -3,8 +3,8 @@
 //
 //
 //open NUnit.Framework
-//open FSharp.AI
-//open FSharp.AI.Operations
+//open FSAI.Tools
+//open FSAI.Tools.Operations
 //open System.Runtime.CompilerServices
 //open System
 //open System.IO

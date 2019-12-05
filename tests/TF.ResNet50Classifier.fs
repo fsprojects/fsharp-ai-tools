@@ -1,4 +1,4 @@
-﻿module FSharp.AI.Tests.TF.ResNet50Classifier
+﻿module FSAI.Tools.Tests.TF.ResNet50Classifier
 
 open Tensorflow
 open Tensorflow.Operations

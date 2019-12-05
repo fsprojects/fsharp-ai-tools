@@ -1,4 +1,4 @@
-﻿module FSharp.AI.Tests.TF.VGGStyleTransfer
+﻿module FSAI.Tools.Tests.TF.VGGStyleTransfer
 
 open System
 open Tensorflow

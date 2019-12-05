@@ -1,4 +1,4 @@
-﻿module FSharp.AI.Tests.Data.MNist
+﻿module FSAI.Tools.Tests.Data.MNist
 
 open NumSharp
 open System

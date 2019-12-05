@@ -1,4 +1,4 @@
-﻿module FSharp.AI.Tests.TF.Tests
+﻿module FSAI.Tools.Tests.TF.Tests
 
 open NUnit.Framework
 
@@ -7,7 +7,7 @@ open System.IO
 open Tensorflow
 open Tensorflow.Operations
 open NumSharp
-open FSharp.AI.Tests
+open FSAI.Tools.Tests
 
 #if FS47
 open Tensorflow.Binding

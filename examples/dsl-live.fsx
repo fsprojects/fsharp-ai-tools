@@ -1,16 +1,16 @@
-﻿// Build the Debug 'FSharp.AI.Tests' before using this
+﻿// Build the Debug 'FSAI.Tools.Tests' before using this
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../tests/bin/Debug/net472/FSharp.AI.dll"
+#r "../tests/bin/Debug/net472/FSAI.Tools.dll"
 #r "../tests/bin/Debug/net472/NumSharp.Core.dll"
 #r "../tests/bin/Debug/net472/Tensorflow.Net.dll"
 #r "FSharp.Compiler.Interactive.Settings"
 #nowarn "49"
 
 open System
-open FSharp.AI
-open FSharp.AI.DSL
+open FSAI.Tools
+open FSAI.Tools.DSL
 open Microsoft.FSharp.Compiler.Interactive.Settings
 
 if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)

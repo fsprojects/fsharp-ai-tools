@@ -1,5 +1,5 @@
 ﻿[<AutoOpen>]
-module FSharp.AI.OperationExtras
+module FSAI.Tools.OperationExtras
 
 open System
 

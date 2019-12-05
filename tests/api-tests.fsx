@@ -1,15 +1,15 @@
-// Build the Debug 'FSharp.AI.Tests' before using this
+// Build the Debug 'FSAI.Tools.Tests' before using this
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../tests/bin/Debug/net472/FSharp.AI.Proto.dll"
-#r "bin/Debug/net472/FSharp.AI.dll"
+#r "../tests/bin/Debug/net472/FSAI.Tools.Proto.dll"
+#r "bin/Debug/net472/FSAI.Tools.dll"
 #nowarn "49"
 
 //open Argu
 open System
 open System.IO
-open FSharp.AI
+open FSAI.Tools
 
 if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
 

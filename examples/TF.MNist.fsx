@@ -3,10 +3,10 @@
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
 #I "../tests/bin/Debug/net472/"
-#r "FSharp.AI.dll"
+#r "FSAI.Tools.dll"
 #r "TensorFlow.Net.dll"
 #r "NumSharp.Core.dll"
-#r "FSharp.AI.Tests.dll"
+#r "FSAI.Tools.Tests.dll"
 #r "ICSharpCode.SharpZipLib.dll"
 #r "System.IO.Compression.dll"
 #r "System.IO.Compression.FileSystem.dll"
@@ -26,7 +26,7 @@ open System
 open Tensorflow
 open Tensorflow.Operations
 open NumSharp
-open FSharp.AI.Tests.Data
+open FSAI.Tools.Tests.Data
 
 #if FS47
 open Tensorflow.Binding
