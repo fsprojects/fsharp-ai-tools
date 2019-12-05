@@ -9,10 +9,9 @@ Build the Debug 'FSAI.Tools.Tests' before using this
 
 
 #I __SOURCE_DIRECTORY__
-#r "netstandard"
-#r "../tests/bin/Debug/net472/FSAI.Tools.dll"
-#r "../tests/bin/Debug/net472/Tensorflow.Net.dll"
-#r "../tests/bin/Debug/net472/NumSharp.Core.dll"
+#r "../tests/bin/Debug/netcoreapp2.0/FSAI.Tools.dll"
+#r "../tests/bin/Debug/netcoreapp2.0/Tensorflow.Net.dll"
+#r "../tests/bin/Debug/netcoreapp2.0/NumSharp.Core.dll"
 
 (**markdown
 Preliminaries for F# scripting

@@ -2,9 +2,9 @@
 
 #I __SOURCE_DIRECTORY__
 #r "netstandard"
-#r "../tests/bin/Debug/net472/FSAI.Tools.dll"
-#r "../tests/bin/Debug/net472/NumSharp.Core.dll"
-#r "../tests/bin/Debug/net472/Tensorflow.Net.dll"
+#r "../tests/bin/Debug/netcoreapp2.0/FSAI.Tools.dll"
+#r "../tests/bin/Debug/netcoreapp2.0/NumSharp.Core.dll"
+#r "../tests/bin/Debug/netcoreapp2.0/Tensorflow.Net.dll"
 #r "FSharp.Compiler.Interactive.Settings"
 #nowarn "49"
 

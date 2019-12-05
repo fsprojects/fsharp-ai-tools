@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>netcoreapp2.0;net472</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
     <RuntimeIdentifiers>win-x64;osx-x86;linux-x64</RuntimeIdentifiers>
     <RootNamespace>FSAI.Tools.Tests</RootNamespace>
     <AssemblyName>FSAI.Tools.Tests</AssemblyName>
