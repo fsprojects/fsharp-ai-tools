@@ -1,4 +1,6 @@
-﻿#I __SOURCE_DIRECTORY__
+﻿
+#if INTERACTIVE
+#I __SOURCE_DIRECTORY__
 #r "netstandard"
 #I "../tests/bin/Debug/net472/"
 #r "FSharp.AI.dll"
@@ -10,6 +12,10 @@
 #r "System.IO.Compression.FileSystem.dll"
 #r "System.IO.Compression.ZipFile.dll"
 #r "System.Runtime.Extensions.dll"
+#endif
+#if NOTEBOOK
+#r "nuget: "
+#endif
 
 // TODO needs better random initializers that draw from a normal
 // TODO tf.get_variable is not implemented
@@ -28,11 +34,23 @@ open Tensorflow.Binding
 let tf = Tensorflow.Binding.tf
 #endif
 
+(**markdown
+
+# Heading
+
+Table 
+
+*)
+
 let mnist = MNist.Dataset.MNistDataset.read_data_sets("mnist", one_hot = true, validation_size = 5000)
+
+(**cell *)
 
 let xtr = tf.placeholder(tf.float32, TensorShape(-1, 784))
 let ytr = tf.placeholder(tf.float32, TensorShape(-1, 10))
 
+
+/// This is a thing
 let getRandom(shape:int[]) = 
     np.random.randn(shape).astype(typeof<single>)
 
