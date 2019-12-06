@@ -35,11 +35,10 @@
     <Compile Include="TF.VGGStyleTransfer.fs" />
     <Compile Include="TF.ResNet50Classifier.fs" />
     <Compile Include="TF.Tests.fs" />
-    <Compile Include="DSL.VGGStyleTransfer.fs" />
     <Compile Include="DSL.Tests.fs" />
     <None Include="..\examples\ImageClassifier.fsx" />
     <None Include="..\examples\NeuralStyleTransfer.fsx" />
-    <None Include="..\examples\NeuralStyleTransfer-dsl.fsx" />
+    <Compile Include="..\examples\NeuralStyleTransfer-dsl.fsx" />
     <None Include="..\examples\dsl-live.fsx" />
     <None Include="..\examples\TorchSharp.MNist.fsx" />
     <None Include="..\examples\TF.MNist.fsx" />
