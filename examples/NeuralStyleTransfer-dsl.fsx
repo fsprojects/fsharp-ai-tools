@@ -168,12 +168,12 @@ let imageFile imgName = Path.Combine(__SOURCE_DIRECTORY__,"../images", imgName)
 let weightsFile style = Path.Combine(__SOURCE_DIRECTORY__,"../pretrained", sprintf "fast_style_weights_%s.npz" style)
 
 let prepareCoreModelForStyle style = 
-    printfn "preparing model for style %s" style
+    //printfn "preparing model for style %s" style
     let modelForStyle = DT.Preprocess(NeuralStyles.PretrainedFFStyleVGGCore, NeuralStyles.inputShapeForSingle, weights = readWeights (weightsFile style))
     modelForStyle, style
 
 let prepareFullModelForStyle style = 
-    printfn "preparing model for style %s" style
+    //printfn "preparing model for style %s" style
     let modelForStyle = DT.Preprocess(NeuralStyles.PretrainedFFStyleVGGFull, Shape.Known [| |], weights = readWeights (weightsFile style))
     modelForStyle, style
 
@@ -185,7 +185,7 @@ let readImage imageName =
     DT.CreateString bytes
 
 let runModel (modelForStyle, styleName) imageName = 
-    printfn "processing image %s in style %s" imageName styleName
+    //printfn "processing image %s in style %s" imageName styleName
     let inputBytes = readImage imageName
     let image = modelForStyle inputBytes |> DT.Cast<uint8> |> DT.toArray3D
     let png = image  |> ImageWriter.arrayToPNG_HWC 
