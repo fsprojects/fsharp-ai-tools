@@ -28,14 +28,16 @@ type Cell =
         sprintf """
           {
            "cell_type": %s,
-           "execution_count": %s,
            "metadata": {%s},
-           "outputs": [%s],
+           %s
            "source": [%s]
           }""" (escapeAndQuote this.cell_type)
-              (match this.execution_count with | None -> "null" | Some(x) -> string x) 
+              
               this.metadata
-              (this.outputs |> Array.map escapeAndQuote |> String.concat ",\n")
+              (if this.cell_type <> "code" then "" else
+                  (sprintf """ "execution_count": %s, "outputs": [%s], """
+                        (match this.execution_count with | None -> "null" | Some(x) -> string x) 
+                        (this.outputs |> Array.map escapeAndQuote |> String.concat ",\n")))
               (this.source |> Array.map escapeAndQuote |> String.concat ",\n")
 
 type Kernelspec = 
@@ -149,7 +151,7 @@ let linesToNotebook(lines: string[]) =
         |> List.toArray |> Array.rev |> String.concat "\n"
 
     let codeFromSource(src: string) = 
-        {Cell.Default with cell_type = "code"; source = src.Split([|'\n';'\r'|])}
+        {Cell.Default with cell_type = "code"; source = (src.Split([|'\n';'\r'|]) |> Array.map (sprintf "%s\n"))}
 
     // Handle (**... *) notation
     let sections = 
@@ -202,7 +204,7 @@ let linesToNotebook(lines: string[]) =
                 | Some(s1: string) -> x::(codeFromSource s1):: acc
             match t with
             | Ydec
-            | Code -> (Some((match state with | None -> "" | Some(s) -> s) + s),acc)
+            | Code -> (Some((match state with | None -> "" | Some(s) -> s) + "\n" + s),acc)
             | Cell -> 
                 match state with 
                 | None -> (None,acc)
