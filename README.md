@@ -7,9 +7,9 @@ Contents:
 * fsx2nb
 
 
-# FM: F# for AI Models 
+# FM: A DSL for F# for AI Models 
 
-FM an F# eDSL for writing numeric models. Models written in FM can be passed to 
+FM is an F# eDSL for writing numeric models. Models written in FM can be passed to 
 optimization and training algorithms utilising automatic differentiation without
 any change to modelling code, and can be executed on GPUs and TPUs using TensorFlow.
 
@@ -28,7 +28,7 @@ neural networks - in F# code. For example:
 /// A numeric function of two parameters, returning a scalar, see
 /// https://en.wikipedia.org/wiki/Gradient_descent
 let f (xs: DT<double>) = 
-    sin (0.5 * sqr xs.[0] - 0.25 * sqr xs.[1] + 3.0) * -cos (2.0 * xs.[0] + 1.0 - exp xs.[1])
+    sin (v 0.5 * sqr xs.[0] - v 0.25 * sqr xs.[1] + v 3.0) * -cos (v 2.0 * xs.[0] + v 1.0 - exp xs.[1])
 ```
 
 These functions and models can then be passed to optimization algorithms that utilise gradients, e.g.
@@ -85,7 +85,7 @@ module GradientDescent =
         initial |> Seq.unfold (fun pos -> Some (pos, step f pos)) |> Seq.truncate steps 
 ```
 
-Here the crucial call is `DT.diff` - FM allows optimizers to derive the gradients of FM
+Note the call is `DT.diff` - FM allows optimizers to derive the gradients of FM
 functions and models in a way inspired by the design of `DiffSharp`. For example:
 
 ```fsharp
@@ -162,7 +162,7 @@ module ModelExample =
 
     /// Evaluate the model for input and coefficients
     let model (xs: DT<double>, coeffs: DT<double>) = 
-        DT.Sum (xs * coeffs,axis= [| 1 |])
+        DT.Sum (xs * coeffs, axis= [| 1 |])
            
     let meanSquareError (z: DT<double>) tgt = 
         let dz = z - tgt 
