@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>netcoreapp2.0;net472</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
     <RuntimeIdentifiers>win-x64;osx-x86;linux-x64</RuntimeIdentifiers>
     <RootNamespace>FSAI.Tools.Tests</RootNamespace>
     <AssemblyName>FSAI.Tools.Tests</AssemblyName>
@@ -10,6 +10,7 @@
     <IsTestProject>true</IsTestProject>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <PlatformTarget>x64</PlatformTarget>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,11 +35,10 @@
     <Compile Include="TF.VGGStyleTransfer.fs" />
     <Compile Include="TF.ResNet50Classifier.fs" />
     <Compile Include="TF.Tests.fs" />
-    <Compile Include="DSL.VGGStyleTransfer.fs" />
     <Compile Include="DSL.Tests.fs" />
     <None Include="..\examples\ImageClassifier.fsx" />
     <None Include="..\examples\NeuralStyleTransfer.fsx" />
-    <None Include="..\examples\NeuralStyleTransfer-dsl.fsx" />
+    <Compile Include="..\examples\NeuralStyleTransfer-dsl.fsx" />
     <None Include="..\examples\dsl-live.fsx" />
     <None Include="..\examples\TorchSharp.MNist.fsx" />
     <None Include="..\examples\TF.MNist.fsx" />
@@ -79,7 +79,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' ">
-    <Content Include="$(NuGetPackageRoot)torchsharp\0.2.0-preview-27915-4\runtimes\linux-x64\native\LibTorchSharp.so" Condition="'$(PlatformTarget)' == 'x64'">
+    <Content Include="$(NuGetPackageRoot)torchsharp\0.2.0-preview-27915-4\runtimes\linux-x64\native\*" Condition="'$(PlatformTarget)' == 'x64'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
       <Link>%(Filename)%(Extension)</Link>
@@ -96,7 +96,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' ">
-    <Content Include="$(NuGetPackageRoot)torchsharp\0.2.0-preview-27915-4\runtimes\osx-x64\native\LibTorchSharp.dylib" Condition="'$(PlatformTarget)' == 'x64'">
+    <Content Include="$(NuGetPackageRoot)torchsharp\0.2.0-preview-27915-4\runtimes\osx-x64\native\*.dylib" Condition="'$(PlatformTarget)' == 'x64'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
       <Link>%(Filename)%(Extension)</Link>

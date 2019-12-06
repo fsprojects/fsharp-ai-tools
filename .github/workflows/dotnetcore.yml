@@ -1,6 +1,6 @@
-name: .NET Core
+name: .NET Core Linux Build and Test
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -8,10 +8,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - name: Checkout repo
+      uses: actions/checkout@v1
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 2.2.108
-    - name: Build with dotnet
+    - name: Build debug with dotnet
+      run: dotnet build
+    - name: Test debug with dotnet
+      run: dotnet test
+    - name: Pack debug with dotnet
+      run: dotnet pack
+    - name: Build release with dotnet
       run: dotnet build --configuration Release
+    - name: Test release with dotnet
+      run: dotnet test --configuration Release
+    - name: Pack release with dotnet
+      run: dotnet pack --configuration Release
