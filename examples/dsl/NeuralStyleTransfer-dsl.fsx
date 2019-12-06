@@ -10,11 +10,14 @@ Build the Debug 'FSAI.Tools.Tests' before using this
 
 #if INTERACTIVE
 #I __SOURCE_DIRECTORY__
-#I "../tests/bin/Debug/netcoreapp2.0/"
+#I "../../tests/bin/Debug/netcoreapp2.0/"
 #r "NumSharp.Core.dll"
 #r "TensorFlow.Net.dll"
 #r "FSAI.Tools.dll"
 #r "nunit.framework.dll"
+#endif
+#if NOTEBOOK
+#r "nuget: TODO"
 #endif
 
 (**markdown
@@ -26,12 +29,11 @@ open System.IO
 open FSAI.Tools
 open FSAI.Tools.DSL
 open NPYReaderWriter
-open NUnit.Framework
 
 (**markdown
 Check the process is 64-bit.  
 *)
-if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
+if not System.Environment.Is64BitProcess then  exit 100
 
 (**markdown
 Add the print helper for tensors in the REPL
@@ -164,9 +166,9 @@ For convenience we add an entry point for one image
 OK, now use the model on some sample data and pre-trained weights
 *)
 
-let imageFile imgName = Path.Combine(__SOURCE_DIRECTORY__,"../images", imgName)
+let imageFile imgName = Path.Combine(__SOURCE_DIRECTORY__,"../../images", imgName)
 
-let weightsFile style = Path.Combine(__SOURCE_DIRECTORY__,"../pretrained", sprintf "fast_style_weights_%s.npz" style)
+let weightsFile style = Path.Combine(__SOURCE_DIRECTORY__,"../../pretrained", sprintf "fast_style_weights_%s.npz" style)
 
 let prepareCoreModelForStyle style = 
     //printfn "preparing model for style %s" style
@@ -193,21 +195,25 @@ let runModel (modelForStyle, styleName) imageName =
     let outfile = Path.Combine(__SOURCE_DIRECTORY__, sprintf "%s_in_%s_style2.png" imageName styleName)
     File.WriteAllBytes(outfile, png)
 
+#if NOTEBOOK
 (**markdown
-Add this code for timings:
+Now run
 *)
-//let rain = prepareCoreModelForStyle "rain"
-//let wave = prepareCoreModelForStyle "wave" 
-//let starry_night = prepareCoreModelForStyle "starry_night"
-//for i in 1 .. 10 do 
-//    time (fun () -> runModel rain "chicago.jpg" )
-//     
-//runModel starry_night "chicago.jpg" 
+let rain = prepareCoreModelForStyle "rain"
+let wave = prepareCoreModelForStyle "wave" 
+let starry_night = prepareCoreModelForStyle "starry_night"
+for i in 1 .. 10 do 
+    time (fun () -> runModel rain "chicago.jpg" )
+     
+runModel starry_night "chicago.jpg" 
 //runModel wave "chicago.jpg" 
 //runModel wave "chicago.jpg" 
 //runModel wave "example_1.jpeg" 
 //runModel wave "example_0.jpeg" 
+#endif
 
+#if COMPILED
+open NUnit.Framework
 [<Test>]
 let ``decode image in the model`` () = 
     decodeImageModel (readImage "chicago.jpg") |> DT.Eval |> ignore 
@@ -235,3 +241,4 @@ let ``livecheck full model`` () =
     use _holder = LiveChecking.WithLiveCheck()
     NeuralStyles.check_full_model()
 
+#endif

@@ -5,11 +5,14 @@
 // * The shape logic is simpler as they are determined entirely at runtime
 // * The tensor lifetime is managed with a series of disposable tensors.
 
+#if INTERACTIVE
 #I __SOURCE_DIRECTORY__
-#r "netstandard"
-#I "../tests/bin/Debug/net472/"
+#I "../../tests/bin/Debug/netcoreapp2.0/"
 #r "TorchSharp.dll"
-#r "FSAI.Tools.Tests.dll"
+#endif
+#if NOTEBOOK
+#r "nuget: TODO"
+#endif
 
 open TorchSharp
 open TorchSharp.Tensor
@@ -93,4 +96,14 @@ sw.Start()
 for epoch in 1..10 do
     Train(model,optimizer,LossFunction.NLL(),train,epoch,64,train.Size())
     Test(model,LossFunction.NLL(reduction = NN.Reduction.Sum),test,test.Size())
+
+#if COMPILED
+
+let v = sprintf "running test in %s at %A" __SOURCE_FILE__ System.DateTime.Now
+open NUnit.Framework
+[<Test>]
+let ``run test`` () = 
+    v |> ignore
+#endif
+
 

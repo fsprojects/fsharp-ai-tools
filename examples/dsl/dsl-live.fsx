@@ -1,19 +1,28 @@
 ﻿// Build the Debug 'FSAI.Tools.Tests' before using this
 
+#if INTERACTIVE
 #I __SOURCE_DIRECTORY__
-#I "../tests/bin/Debug/netcoreapp2.0"
+#I "../../tests/bin/Debug/netcoreapp2.0"
 #r "FSAI.Tools.dll"
 #r "NumSharp.Core.dll"
 #r "Tensorflow.Net.dll"
 #nowarn "49"
+#endif
+#if NOTEBOOK
+#r "nuget: TODO"
+#endif
+
 
 open System
 open FSAI.Tools
 open FSAI.Tools.DSL
 
-if not System.Environment.Is64BitProcess then printfn "64-bit expected"; System.Environment.Exit(-1)
+if not System.Environment.Is64BitProcess then printfn "64-bit expected";  exit 100
 
+#if INTERACTIVE
 fsi.AddPrintTransformer(DT.PrintTransform)
+#endif
+
 
 module FirstLiveCheck = 
     let f x shift = DT.Sum(x * x, [| 1 |]) + v shift
@@ -171,7 +180,7 @@ module ModelExample =
            
     let meanSquareError (z: DT<double>) tgt = 
         let dz = z - tgt 
-        DT.Sum (dz * dz) / modelSize / z.Length 
+        DT.Sum (dz * dz) / v (double modelSize) / v (double z.Length)
 
     /// The loss function for the model w.r.t. a true output
     let loss (xs, y) coeffs = 
@@ -260,24 +269,24 @@ module NeuralTransferFragments =
     let instance_norm (input, name) =
         use __ = DT.WithScope(name + "/instance_norm")
         let mu, sigma_sq = DT.Moments (input, axes=[0;1])
-        let shift = DT.Variable (0, name + "/shift")
-        let scale = DT.Variable (1, name + "/scale")
-        let epsilon = 0.001
+        let shift = DT.Variable (v 0.0, name + "/shift")
+        let scale = DT.Variable (v 1.0, name + "/scale")
+        let epsilon = v 0.001
         let normalized = (input - mu) / sqrt (sigma_sq + epsilon)
         normalized * scale + shift 
 
     let conv_layer (out_channels, filter_size, stride, name) input = 
-        let filters = variable (DT.TruncatedNormal() * 0.1) (name + "/weights")
+        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights")
         let x = DT.Conv2D (input, filters, out_channels, filter_size=filter_size, stride=stride)
         instance_norm (x, name)
 
     let conv_transpose_layer (out_channels, filter_size, stride, name) input =
-        let filters = variable (DT.TruncatedNormal() * 0.1) (name + "/weights")
+        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights")
         let x = DT.Conv2DBackpropInput(filters, input, out_channels, filter_size=filter_size, stride=stride, padding="SAME")
         instance_norm (x, name)
 
     let to_pixel_value (input: DT<double>) = 
-        tanh input * v 150.0 + (255.0 / 2.0) 
+        tanh input * v 150.0 + v (255.0 / 2.0) 
 
     let residual_block (filter_size, name) input = 
         let tmp = conv_layer (128, filter_size, 1, name + "_c1") input  |> relu
@@ -314,6 +323,16 @@ module NeuralTransferFragments =
         printfn "checking that livecheck runs..."
         use _holder = LiveChecking.WithLiveCheck() 
         check1() |> ignore
+
+#if COMPILED
+
+let v = sprintf "running test in %s at %A" __SOURCE_FILE__ System.DateTime.Now
+open NUnit.Framework
+[<Test>]
+let ``run test`` () = 
+    v |> ignore
+#endif
+
 
     (*
     

@@ -1,10 +1,15 @@
-﻿#I __SOURCE_DIRECTORY__
-#I "../tests/bin/Debug/netcoreapp2.0/"
+﻿#if INTERACTIVE
+#I __SOURCE_DIRECTORY__
+#I "../../tests/bin/Debug/netcoreapp2.0/"
 #r "FSAI.Tools.dll"
 #r "TensorFlow.Net.dll"
 #r "NumSharp.Core.dll"
 #r "Argu.dll"
 #r "FSAI.Tools.Tests.dll"
+#endif
+#if NOTEBOOK
+#r "nuget: TODO"
+#endif
 
 open System
 open Tensorflow
@@ -75,4 +80,14 @@ printfn "Training cost=%f W=%f b=%f"  training_cost W_res b_res
 let testing_cost = sess.run(tf.reduce_sum(tf.square(pred - Y)) / (2.0f * float32 test_X.shape.[0]),[(X,test_X);(Y,test_Y)] |> toItems).Data<float32>().[0]
 printfn "Testing cost=%f"  testing_cost 
 printfn "Absolute mean square loss difference: %f" (Math.Abs(training_cost - testing_cost))
+
+#if COMPILED
+
+let v = sprintf "running test in %s at %A" __SOURCE_FILE__ System.DateTime.Now
+open NUnit.Framework
+[<Test>]
+let ``run test`` () = 
+    v |> ignore
+#endif
+
 

@@ -56,4 +56,4 @@ let fetchClassifierWeights() =
     |> readFromNPZ
     |> Map.map (fun k (metadata,arr) -> tf.reshape(tf.constant(arr), tf.constant(metadata.shape)))
 
-let is64 = if System.Environment.Is64BitProcess then true else System.Environment.Exit(-1); false
+let is64 = if System.Environment.Is64BitProcess then true else exit 100; false

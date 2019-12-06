@@ -233,15 +233,15 @@ let input, output =
         (input, output)
     | _ -> 
         printfn "Expected format of \"-i input [-o output]\". Input command line args were %s" (fsi.CommandLineArgs |> String.concat " ")
-        exit 1
+        exit 100
 
 if not (input.EndsWith ".fsx" || input.EndsWith ".fs") then 
     eprintfn "Unknown input %s. Input should be .fsx or .fs" input
-    exit 1
+    exit 100
     
 if not(File.Exists(input)) then 
     eprintfn "Input file %s does not exist" input
-    exit 1
+    exit 100
 let lines = File.ReadAllLines(input)
 let notebook = lines |> linesToNotebook
 if File.Exists(output) then

@@ -1,7 +1,7 @@
 ﻿
 #if INTERACTIVE
 #I __SOURCE_DIRECTORY__
-#I "../tests/bin/Debug/net472/"
+#I "../../tests/bin/Debug/netcoreapp2.0/"
 #r "TensorFlow.Net.dll"
 #r "NumSharp.Core.dll"
 #r "ICSharpCode.SharpZipLib.dll"
@@ -11,7 +11,7 @@
 #r "System.Runtime.Extensions.dll"
 #endif
 #if NOTEBOOK
-#r "nuget: "
+#r "nuget: TODO"
 #endif
 
 // TODO needs better random initializers that draw from a normal
@@ -111,4 +111,14 @@ let train(res: Tensor, loss: Tensor, optimizer: Operation, batches, display_step
 
 for _ in 0..10 do
     train(output, loss, optimizer, batches, display_step)
+
+#if COMPILED
+
+let v = sprintf "running test in %s at %A" __SOURCE_FILE__ System.DateTime.Now
+open NUnit.Framework
+[<Test>]
+let ``run test`` () = 
+    v |> ignore
+#endif
+
 
