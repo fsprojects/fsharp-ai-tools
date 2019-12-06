@@ -8,13 +8,14 @@ Build the Debug 'FSAI.Tools.Tests' before using this
 *) 
 
 
+#if INTERACTIVE
 #I __SOURCE_DIRECTORY__
 #I "../tests/bin/Debug/netcoreapp2.0/"
-#I __SOURCE_DIRECTORY__
 #r "NumSharp.Core.dll"
 #r "TensorFlow.Net.dll"
 #r "FSAI.Tools.dll"
 #r "nunit.framework.dll"
+#endif
 
 (**markdown
 Preliminaries for F# scripting
