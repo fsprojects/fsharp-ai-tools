@@ -1,13 +1,13 @@
 This repo is work-in-progress contains tools and code the contribute to "F# for AI Models". 
 
 Contents: 
-* FM: F# for AI Models 
+* FM: An F# DSL for AI Models with separated shape checking and tooling
 * The TensorFlow API for F# 
 * Live Checking Tooling for AI models
 * fsx2nb
 
 
-# FM: A DSL for F# for AI Models 
+# FM: An F# DSL for AI Models 
 
 FM is an F# eDSL for writing numeric models. Models written in FM can be passed to 
 optimization and training algorithms utilising automatic differentiation without
@@ -17,9 +17,9 @@ There is also experimental tooling for interactive tensor shape-checking, infere
 
 This is a POC that it is possible to configure F# to be suitable for authoring AI models. We
 execute them as real, full-speed TensorFlow graphs, achieving cohabitation and win-win with the TF ecosystem.
-Live trajectory execution tooling can give added correctness guarantess interactively.
+Live trajectory execution tooling gives added correctness guarantees and developer productivity interactively.
 
-FM currently executes using FSAI.Tools, which is why it's in this repo.
+FM is implemented in the FSAI.Tools package built in this repo.
 
 The aim of FM is to support the authoring of numeric functions and AI models - including
 neural networks - in F# code. For example:
@@ -218,21 +218,16 @@ DiffSharp may be used once Tensors are available in that library.
   a scalar input is used, a single total deriative is returned. If a vector of inputs is used, a vector of
   partial derivatives are returned.
 
-* `DT.jacobian` is used to differentiate `R^n -> R^2` vector-valued functions w.r.t. multiple input variables. A vector or
-  matrix of partial derivatives is returned.
-
-* Other gradient-based functions include `DT.grad`, `DT.curl`, `DT.hessian` and `DT.divergence`.
-
 * In the prototype, all gradient-based functions are implemented using TensorFlow's `AddGradients`, i.e. the C++ implementation of
-  gradients. Thus not all gradient-based functions are implemented efficiently for all inputs.
+  gradients. THis has many limitations.
 
 * `DT.*` is a DSL for expressing differentiable tensors using the TensorFlow fundamental building blocks.  The naming
   of operators in this DSL are currently TensorFLow specific and may change.
 
 * A preliminary pass of shape inference is performed _before_ any TensorFlow operations are performed.  This
-  allows you to check the shapes of your differentiable code indepentently of TensorFlow's shape computations.
+  allows you to check the shapes of your differentiable code independently of TensorFlow's shape computations.
   A shape inference system is used which allows for many shapes to be inferred and is akin to F# type inference.
-  Not all TensorFlow automatic shape transformations are applied during shape inference.
+  It also means not all TensorFlow automatic shape transformations are applied during shape inference.
 
 # The TensorFlow API for F# 
 
@@ -282,9 +277,9 @@ LiveCheck for a DNN:
 
 # fsx2nb
 
-There is a useful tool `fsx2nb` in the repo to convert F# scripts to F# Jupyter notebooks:
+There is a separate tool `fsx2nb` in the repo to convert F# scripts to F# Jupyter notebooks:
 
-    dotnet fsi tools\fsx2nb.fsx tools\fsx2nb.fsx
+    dotnet fsi tools\fsx2nb.fsx -i script\sample.fsx
 
 These scripts use the following elements:
 
@@ -300,6 +295,11 @@ These scripts use the following elements:
     #if INTERACTIVE   -- this is removed in a code block
     ...
     #endif
+
+    #if COMPILED   -- this is removed in a code block
+    ...
+    #endif
+    
     
     #if NOTEBOOK   -- this is kept and the #if are removed
     ...
@@ -313,22 +313,21 @@ These scripts use the following elements:
     dotnet test
     dotnet pack
 
-
 # Roadmap - DSL
 
 * Hand-code or generate larger TF surface area in FM DSL
 
+* Add DiffSharp as a backend
+
+* Add Torch as a backend
+
 * Add proper testing for DSL 
 
-* Consider control flow translation in DSL
+* Consider data dependencies and control flow translation in DSL
 
 * Add docs
 
 * Add examples of how to do static graph building and analysis based on FCS and quotations, e.g. for visualization
-
-* Add DiffSharp as a backend
-
-* Add Torch as a backend
 
 * Performance testing
 
