@@ -33,7 +33,7 @@ open NPYReaderWriter
 (**markdown
 Check the process is 64-bit.  
 *)
-if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
+if not System.Environment.Is64BitProcess then  exit 100
 
 (**markdown
 Add the print helper for tensors in the REPL

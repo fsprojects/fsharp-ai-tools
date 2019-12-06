@@ -17,7 +17,7 @@ open System
 open FSAI.Tools
 open FSAI.Tools.DSL
 
-if not System.Environment.Is64BitProcess then printfn "64-bit expected"; System.Environment.Exit(-1)
+if not System.Environment.Is64BitProcess then printfn "64-bit expected";  exit 100
 
 #if INTERACTIVE
 fsi.AddPrintTransformer(DT.PrintTransform)

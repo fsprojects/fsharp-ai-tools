@@ -10,7 +10,7 @@ open FSAI.Tools.DSL
 
 [<Test>]
 let check64() = 
-    if not System.Environment.Is64BitProcess then System.Environment.Exit(-1)
+    if not System.Environment.Is64BitProcess then exit 100
 
 let shouldEqual (msg: string) (v1: 'T) (v2: 'T) = 
     if v1 <> v2 then 
