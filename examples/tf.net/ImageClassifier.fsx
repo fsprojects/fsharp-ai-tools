@@ -1,12 +1,16 @@
-﻿#I __SOURCE_DIRECTORY__
-#I "../tests/bin/Debug/netcoreapp2.0/"
-#r "FSAI.Tools.dll"
+﻿#if INTERACTIVE
+#I __SOURCE_DIRECTORY__
+#I "../../tests/bin/Debug/netcoreapp2.0/"
 #r "Tensorflow.NET.dll"
 #r "NumSharp.Core.dll"
-#r "FSAI.Tools.Tests.dll"
 #r "System.IO.Compression.dll"
 #r "System.Memory"
 #r "Markeli.Half"
+#endif
+#if NOTEBOOK
+#r "nuget: TODO"
+#endif
+
 #nowarn "760" "49"
 
 open Tensorflow
@@ -33,4 +37,14 @@ let classifyImage(path:string) =
 
 for i in 0..5 do
     Path.Combine(Utils.basePath,"images",sprintf "example_%i.jpeg" i) |> classifyImage
+
+#if COMPILED
+
+let v = sprintf "running test in %s at %A" __SOURCE_FILE__ System.DateTime.Now
+open NUnit.Framework
+[<Test>]
+let ``run test`` () = 
+    v |> ignore
+#endif
+
 

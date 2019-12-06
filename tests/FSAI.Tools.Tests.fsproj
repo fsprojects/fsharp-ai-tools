@@ -36,12 +36,12 @@
     <Compile Include="TF.ResNet50Classifier.fs" />
     <Compile Include="TF.Tests.fs" />
     <Compile Include="DSL.Tests.fs" />
-    <None Include="..\examples\ImageClassifier.fsx" />
-    <None Include="..\examples\NeuralStyleTransfer.fsx" />
-    <Compile Include="..\examples\NeuralStyleTransfer-dsl.fsx" />
-    <None Include="..\examples\dsl-live.fsx" />
-    <None Include="..\examples\TorchSharp.MNist.fsx" />
-    <None Include="..\examples\TF.MNist.fsx" />
+    <Compile Include="..\examples\tf.net\ImageClassifier.fsx" />
+    <Compile Include="..\examples\tf.net\NeuralStyleTransfer.fsx" />
+    <Compile Include="..\examples\dsl\NeuralStyleTransfer-dsl.fsx" />
+    <Compile Include="..\examples\dsl\dsl-live.fsx" />
+    <None Include="..\examples\tf.net\TorchSharp.MNist.fsx" />
+    <None Include="..\examples\tf.net\TF.MNist.fsx" />
   </ItemGroup>
   <Target Name="Debug">
     <Message Importance="High" Text="Hello World" />
