@@ -79,7 +79,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' ">
-    <Content Include="$(NuGetPackageRoot)torchsharp\0.2.0-preview-27915-4\runtimes\linux-x64\native\LibTorchSharp.so" Condition="'$(PlatformTarget)' == 'x64'">
+    <Content Include="$(NuGetPackageRoot)torchsharp\0.2.0-preview-27915-4\runtimes\linux-x64\native\*" Condition="'$(PlatformTarget)' == 'x64'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
       <Link>%(Filename)%(Extension)</Link>
@@ -96,7 +96,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' ">
-    <Content Include="$(NuGetPackageRoot)torchsharp\0.2.0-preview-27915-4\runtimes\osx-x64\native\LibTorchSharp.dylib" Condition="'$(PlatformTarget)' == 'x64'">
+    <Content Include="$(NuGetPackageRoot)torchsharp\0.2.0-preview-27915-4\runtimes\osx-x64\native\*.dylib" Condition="'$(PlatformTarget)' == 'x64'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
       <Link>%(Filename)%(Extension)</Link>
