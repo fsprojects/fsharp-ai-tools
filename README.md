@@ -194,13 +194,13 @@ module ModelExample =
     validation learnedCoeffs
 ```
 
-More examples/tests are in [dsl-live.fsx](https://github.com/fsprojects/FSAI.Tools/blob/master/examples/dsl-live.fsx).
+More examples/tests are in [dsl-live.fsx](https://github.com/fsprojects/FSAI.Tools/blob/master/examples/dsl/dsl-live.fsx).
 
 The approach scales to the complete expression of deep neural networks 
 and full computation graphs. The links below show the implementation of a common DNN sample (the samples may not
 yet run, this is wet paint):
 
-* [NeuralStyleTransfer in DSL form](https://github.com/fsprojects/FSAI.Tools/blob/master/examples/NeuralStyleTransfer-dsl.fsx)
+* [NeuralStyleTransfer in DSL form](https://github.com/fsprojects/FSAI.Tools/blob/master/examples/dsl/NeuralStyleTransfer-dsl.fsx)
 
 The design is intended to allow alternative execution with Torch or DiffSharp.
 DiffSharp may be used once Tensors are available in that library.
