@@ -1,6 +1,5 @@
 ﻿#I __SOURCE_DIRECTORY__
-#r "netstandard"
-#I "../tests/bin/Debug/net472/"
+#I "../tests/bin/Debug/netcoreapp2.0/"
 #r "FSAI.Tools.dll"
 #r "TensorFlow.Net.dll"
 #r "NumSharp.Core.dll"
@@ -8,10 +7,10 @@
 #r "FSAI.Tools.Tests.dll"
 
 open System
-open System.IO
 open Tensorflow
 open NumSharp
-open Tensorflow.Operations
+
+let tf = Tensorflow.Binding.tf
 
 // Linear Regression
 
@@ -57,7 +56,7 @@ let toItems(xs : ('a*'b) seq) = [|for (x,y) in xs -> FeedItem(x,y)|]
 for epoch in 0 .. training_epochs do
 
   // Mini-batches of 1
-  for x,y in (train_X.Data<float32>(),train_Y.Data<float32>()) ||> Array.zip do
+  for x,y in (train_X.Data<float32>(),train_Y.Data<float32>()) ||> Seq.zip do
     sess.run(optimizer,[(X,x);(Y,y)] |> toItems) |> ignore
   
   // Display logs per epoch step

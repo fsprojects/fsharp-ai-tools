@@ -60,7 +60,7 @@ let model (input_img: Tensor, weights: Map<string,Tensor>) =
             //ops.shape
             let x = if strides = 1 then array_ops.shape(input) else tf.multiply(array_ops.shape(input), tf.constant(strides_array))
             gen_ops.concat_v2([|gen_ops.slice(x,tf.constant([|0|]),tf.constant([|3|]));tf.constant([|num_filters|])|],axis=tf.constant(0))
-        let rev(x) = gen_ops.reverse(x,tf.constant([|true|]))
+        //let rev(x) = gen_ops.reverse(x,tf.constant([|true|]))
         //let out_shape = graph.Print(out_shape,[|rev(graph.Shape(weights_init));rev(out_shape); rev(graph.Shape(input))|],"out_shape") 
         gen_ops.relu(instance_norm(gen_ops.conv2d_backprop_input(input_sizes = out_shape, filter = weights_init, out_backprop = input, strides = strides_array, padding = "SAME", data_format = "NHWC"), true, name))
 

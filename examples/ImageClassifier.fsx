@@ -1,6 +1,5 @@
 ﻿#I __SOURCE_DIRECTORY__
-#r "netstandard"
-#I "../tests/bin/Debug/net472/"
+#I "../tests/bin/Debug/netcoreapp2.0/"
 #r "FSAI.Tools.dll"
 #r "Tensorflow.NET.dll"
 #r "NumSharp.Core.dll"
@@ -17,11 +16,7 @@ open FSAI.Tools.Tests
 open System.IO
 open NumSharp
 
-#if FS47
-open Tensorflow.Binding
-#else
 let tf = Tensorflow.Binding.tf
-#endif
 
 let input_data = tf.placeholder(TF_DataType.TF_STRING,name="input")
 let input_img = ResNet50Classifier.binaryJPGToImage(input_data)
