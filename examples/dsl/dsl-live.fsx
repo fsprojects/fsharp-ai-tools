@@ -2,7 +2,7 @@
 
 #if INTERACTIVE
 #I __SOURCE_DIRECTORY__
-#I "../../tests/bin/Debug/netcoreapp2.0"
+#I "../../tests/bin/Debug/netcoreapp3.1"
 #r "FSAI.Tools.dll"
 #r "NumSharp.Core.dll"
 #r "Tensorflow.Net.dll"

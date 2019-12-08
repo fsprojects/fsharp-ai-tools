@@ -10,7 +10,7 @@ RUN dotnet tool install --global dotnet-try
 RUN dotnet try jupyter install 
 
 COPY /tools /tools
-COPY /scripts /scripts
+COPY /examples /examples
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x entrypoint.sh

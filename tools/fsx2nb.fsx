@@ -131,7 +131,7 @@ type SectionType =
     | Ydec
 
 let linesToNotebook(lines: string[]) =
-    // Strip simple lines, remove #if INTERACTIVE and clean up #if NOTEBOOK
+    // Strip simple lines, remove #if INTERACTIVE (or COMPILED) and clean up #if NOTEBOOK
     let text2 = 
         lines 
         |> Array.filter (fun x -> not(x.StartsWith("#time") || x.StartsWith("#nowarn"))) 
@@ -143,7 +143,8 @@ let linesToNotebook(lines: string[]) =
                 if line.StartsWith("#endif") then ((false,false),acc)
                 else ((isInter,isNote),line::acc)
             else
-                if line.StartsWith("#if INTERACTIVE") then ((true,false),acc)
+                if line.StartsWith("#if INTERACTIVE") ||  line.StartsWith("#if COMPILED") 
+                then ((true,false),acc)
                 elif line.StartsWith("#if NOTEBOOK") then ((false,true),acc)
                 else ((false,false),line::acc)
             ) ((false,false),[])

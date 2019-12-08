@@ -1,5 +1,6 @@
 ﻿// TODO/WARN: Dataset loading does not work yet
 
+failwith "Daset loading does not work yet"
 // NOTES:
 // * The need to use the static Model name is a bit verbose
 // * The shape logic is simpler as they are determined entirely at runtime
@@ -7,7 +8,7 @@
 
 #if INTERACTIVE
 #I __SOURCE_DIRECTORY__
-#I "../../tests/bin/Debug/netcoreapp2.0/"
+#I "../../tests/bin/Debug/netcoreapp3.1/"
 #r "TorchSharp.dll"
 #endif
 #if NOTEBOOK

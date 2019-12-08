@@ -1,20 +1,22 @@
 ﻿#if INTERACTIVE
 #I __SOURCE_DIRECTORY__
-#I "../../tests/bin/Debug/netcoreapp2.0/"
+#I "../../tests/bin/Debug/netcoreapp3.1/"
 #r "Tensorflow.NET.dll"
 #r "NumSharp.Core.dll"
 #r "System.IO.Compression.dll"
-#r "System.Memory"
 #r "Markeli.Half"
+#r "FSAI.Tools.dll"
+#r "FSAI.Tools.Tests.dll"
 #endif
+
 #if NOTEBOOK
 #r "nuget: TODO"
 #endif
 
 #nowarn "760" "49"
 
+
 open Tensorflow
-open FSAI.Tools
 open FSAI.Tools.Tests.TF
 open FSAI.Tools.Tests
 open System.IO

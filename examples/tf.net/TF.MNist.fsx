@@ -1,7 +1,7 @@
 ﻿
 #if INTERACTIVE
 #I __SOURCE_DIRECTORY__
-#I "../../tests/bin/Debug/netcoreapp2.0/"
+#I "../../tests/bin/Debug/netcoreapp3.1/"
 #r "TensorFlow.Net.dll"
 #r "NumSharp.Core.dll"
 #r "ICSharpCode.SharpZipLib.dll"
@@ -9,6 +9,8 @@
 #r "System.IO.Compression.FileSystem.dll"
 #r "System.IO.Compression.ZipFile.dll"
 #r "System.Runtime.Extensions.dll"
+#r "FSAI.Tools.dll"
+#r "FSAI.Tools.Tests.dll"
 #endif
 #if NOTEBOOK
 #r "nuget: TODO"

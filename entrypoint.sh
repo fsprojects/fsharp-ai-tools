@@ -1,4 +1,7 @@
 #!/bin/bash                                                                                   
+echo "Building FSAI"
+dotnet build
+
 echo "Converting fsx to inpynb"
 for f in examples/*.fsx
 do
