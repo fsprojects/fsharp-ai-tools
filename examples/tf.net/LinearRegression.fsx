@@ -24,8 +24,8 @@ let tf = Tensorflow.Binding.tf
 let X = tf.placeholder(TF_DataType.TF_FLOAT)
 let Y = tf.placeholder(TF_DataType.TF_FLOAT)
 
-let W = tf.Variable(-0.06f, name = "weight")
-let b = tf.Variable(-0.73f, name = "bias")
+let W = tf.variable(-0.06f, name = "weight")
+let b = tf.variable(-0.73f, name = "bias")
 
 // Construct a linear model
 let pred = tf.add(tf.multiply(X,W),b)
@@ -46,7 +46,7 @@ let rng = np.random;
 let cost = tf.reduce_sum(tf.square(pred - Y)) / (2.0f * float32 n_samples)
 
 // Gradient descent
-// Note, minimiuze() knows to modify W and b because Variable objects are trainable=True by default
+// Note, minimiuze() knows to modify W and b because variable objects are trainable=True by default
 let optimizer = tf.train.GradientDescentOptimizer(0.1f).minimize(cost)
 
 // Initialize the variables (i.e. assign their default value)

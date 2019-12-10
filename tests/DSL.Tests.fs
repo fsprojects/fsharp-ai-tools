@@ -6,7 +6,7 @@ open NUnit.Framework
 
 open System
 open FSAI.Tools
-open FSAI.Tools.DSL
+open FSAI.Tools.FM
 
 [<Test>]
 let check64() = 
@@ -18,144 +18,144 @@ let shouldEqual (msg: string) (v1: 'T) (v2: 'T) =
 
 [<Test>]
 let ``basic checks 1``() = 
-    v 1.0f |> DT.toScalar |> shouldEqual "wcevwo1" 1.0f
+    v 1.0f |> fm.to_scalar |> shouldEqual "wcevwo1" 1.0f
 
-    v 1.0 |> DT.toScalar |> shouldEqual "wcevwo2" 1.0
+    v 1.0 |> fm.to_scalar |> shouldEqual "wcevwo2" 1.0
 
-    (v 1.0 + v 3.0)  |> DT.toScalar |> shouldEqual "wcevwo3" 4.0
+    (v 1.0 + v 3.0)  |> fm.to_scalar |> shouldEqual "wcevwo3" 4.0
 
 [<Test>]
 let ``basic checks 2``() = 
 
-    fm { return v 1.0 }
-    |> DT.toScalar |> shouldEqual "wcevwo4" 1.0
+    node { return v 1.0 }
+    |> fm.to_scalar |> shouldEqual "wcevwo4" 1.0
     
-    fm { return v 1.0 }
-    |> DT.Eval
-    |> DT.toScalar |> shouldEqual "wcevwo5" 1.0
+    node { return v 1.0 }
+    |> fm.eval
+    |> fm.to_scalar |> shouldEqual "wcevwo5" 1.0
 
 [<Test>]
 let ``basic checks vec``() = 
-    fm { return (vec [1.0; 2.0]) }
-    |> DT.Eval
-    |> DT.toArray 
+    node { return (vec [1.0; 2.0]) }
+    |> fm.eval
+    |> fm.toArray 
     |> shouldEqual "wcevwo6" [| 1.0; 2.0 |]
 
 [<Test>]
 let ``basic checks Pack``() = 
-    fm { return (DT.Pack [v 1.0; v 2.0]) }
-    |> DT.Eval
-    |> DT.toArray 
+    node { return (fm.pack [v 1.0; v 2.0]) }
+    |> fm.eval
+    |> fm.toArray 
     |> shouldEqual "wcevwo7" [| 1.0; 2.0 |]
 
     // Gives a shape error of course
-    // fm { return (vec [1.0; 2.0] + matrix [ [1.0; 2.0] ]) }
-    // |> DT.Eval
+    // node { return (vec [1.0; 2.0] + matrix [ [1.0; 2.0] ]) }
+    // |> fm.eval
 
 [<Test>]
 let ``basic checks indexers``() = 
     // Test indexer notation
-    fm { return (vec [1.0]).[0] }
-    |> DT.Eval
-    |> DT.toScalar 
+    node { return (vec [1.0]).[0] }
+    |> fm.eval
+    |> fm.to_scalar 
     |> shouldEqual "wcevwo8" 1.0
 
     // Test indexer notation 
-    fm { return (vec [1.0; 2.0]).[1] }
-    |> DT.Eval
-    |> DT.toScalar
+    node { return (vec [1.0; 2.0]).[1] }
+    |> fm.eval
+    |> fm.to_scalar
     |> shouldEqual "wcevwo9" 2.0
    
 [<Test>]
 let ``basic checks slicing``() = 
     // Test slicing notation
-    fm { return (vec [1.0; 2.0]).[0..0] }
-    |> DT.Eval
-    |> DT.toArray 
+    node { return (vec [1.0; 2.0]).[0..0] }
+    |> fm.eval
+    |> fm.toArray 
     |> shouldEqual "wcevwo10" [| 1.0 |]
 
 [<Test>]
 let ``basic checks Reverse``() = 
-    fm { return DT.Reverse (vec [1.0; 2.0]) }
-    |> DT.Eval
-    |> DT.toArray 
+    node { return fm.reverse (vec [1.0; 2.0]) }
+    |> fm.eval
+    |> fm.toArray 
     |> shouldEqual "wcevwo11" [| 2.0; 1.0 |]
 
 [<Test>]
 let ``basic checks Zero``() = 
-    fm { return DT.Zero }
-    |> DT.Eval
-    |> DT.toScalar 
+    node { return fm.Zero }
+    |> fm.eval
+    |> fm.to_scalar 
     |> shouldEqual "wcevwo11" 0.0
 
 [<Test>]
-let ``basic checks Zero AssertShape``() = 
-    fm { return DT.Zero |> DT.AssertShape (shape [ 2; 2 ]) }
-    |> DT.Eval
-    |> DT.toArray2D
+let ``basic checks Zero assert_shape``() = 
+    node { return fm.Zero |> fm.assert_shape (shape [ 2; 2 ]) }
+    |> fm.eval
+    |> fm.toArray2D
     |> shouldEqual "wcevwo11" (array2D [ [ 0.0; 0.0 ]; [0.0; 0.0]])
 
 [<Test>]
 let ``basic checks diff``() = 
-    let f x = fm { return x * x + v 4.0 * x }
-    let df x = DT.diff f x
+    let f x = node { return x * x + v 4.0 * x }
+    let df x = fm.diff f x
 
     df (v 3.0)
-    |> DT.Eval
-    |> DT.toScalar
+    |> fm.eval
+    |> fm.to_scalar
     |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
 
 
 // [<Test>]
 // let ``basic checks scalar addition, multiplication, subtraction, division``() = 
 //     let f (x: DT<_>) = 1 * x * x * 1 / 1.0 + 4 * x + 5 - 1 + 1
-//     let df x = DT.diff f x
+//     let df x = fm.diff f x
 
 //     df (v 3.0)
-//     |> DT.Eval
-//     |> DT.toScalar
+//     |> fm.eval
+//     |> fm.to_scalar
 //     |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
 
 
 [<Test>]
 let ``basic checks broadcast``() = 
-    fm { return vec [1.0; 2.0] + v 4.0 }
-    |> DT.Eval
-    |> DT.toArray
+    node { return vec [1.0; 2.0] + v 4.0 }
+    |> fm.eval
+    |> fm.toArray
     |> shouldEqual "wcevwo13" [| 5.0; 6.0 |]
 
 [<Test>]
 let ``basic checks sum plus broadcast``() = 
-    fm { return sum (vec [1.0; 2.0] + v 4.0) }
-    |> DT.Eval
-    |> DT.toScalar
+    node { return sum (vec [1.0; 2.0] + v 4.0) }
+    |> fm.eval
+    |> fm.to_scalar
     |> shouldEqual "wcevwo14" 11.0
 
 [<Test>]
 let ``basic checks grad``() = 
-    let f2 x = fm { return sum (vec [1.0; 2.0] * x * x) }
-    let df2 x = DT.grad f2 x
+    let f2 x = node { return sum (vec [1.0; 2.0] * x * x) }
+    let df2 x = fm.grad f2 x
 
     f2 (vec [1.0; 2.0])
-    |> DT.Eval
-    |> DT.toScalar
+    |> fm.eval
+    |> fm.to_scalar
     |> shouldEqual "wcevwo15" 9.0
 //
 //[<Test>]
 //let ``basic checks jacobian``() = 
 //    let f3e (x: double[]) = [| x.[0]*x.[1]; 2.0*x.[1]*x.[0] |] 
-//    let f3 (x: DT<_>) = vec [1.0; 2.0] * x * DT.Reverse x //[ x1*x2; 2*x2*x1 ] 
-//    let df3 x = DT.jacobian f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
+//    let f3 (x: DT<_>) = vec [1.0; 2.0] * x * fm.Reverse x //[ x1*x2; 2*x2*x1 ] 
+//    let df3 x = fm.jacobian f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
 //    let expected (x1, x2) = array2D [| [| x2; x1 |]; [| 2.0*x2; 2.0*x1 |] |]  
 //
 //    f3 (vec [1.0; 2.0])
-//    |> DT.Eval
-//    |> DT.toArray
+//    |> fm.eval
+//    |> fm.toArray
 //    |> shouldEqual "wcevwo16" (f3e [| 1.0; 2.0 |])
 //
 //    df3 (vec [1.0; 2.0])
-//    |> DT.Eval
-//    |> DT.toArray2D
+//    |> fm.eval
+//    |> fm.toArray2D
 //    |> shouldEqual "wcevwo16" (expected (1.0, 2.0))
 //    // expect 
    
@@ -163,17 +163,17 @@ let ``basic checks grad``() =
 //let ``basic checks grad 2``() = 
 //    let f3e (x: double[]) = x.[0]*x.[1] + 2.0*x.[1]*x.[0]
 //    let f3 (x: DT<_>) = x.[0]*x.[1] + v 2.0*x.[1]*x.[0]
-//    let g3 x = DT.grad f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
+//    let g3 x = fm.grad f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
 //    let expected (x0, x1) = [| 3.0*x1; 3.0*x0  |]
 //
 //    f3 (vec [1.0; 2.0])
-//    |> DT.Eval
-//    |> DT.toScalar
+//    |> fm.eval
+//    |> fm.to_scalar
 //    |> shouldEqual "wcevwo17" (f3e [| 1.0; 2.0 |])
 //
 //    g3 (vec [1.0; 2.0])
-//    |> DT.Eval
-//    |> DT.toArray
+//    |> fm.eval
+//    |> fm.toArray
 //    |> shouldEqual "wcevwo18" (expected (1.0, 2.0))
 
 (*
@@ -182,47 +182,47 @@ let ``basic checks grad``() =
 let ``basic checks hessian``() = 
     let f3e (x: double[]) = x.[0]*x.[1] + 2.0*x.[1]*x.[0]
     let f3 (x: DT<_>) = x.[0]*x.[1] + v 2.0*x.[1]*x.[0]
-    let hf3 = DT.hessian f3 
+    let hf3 = fm.hessian f3 
     let expected (x0, x1) = array2D [| [| 3.0*x1; 3.0*x0  |] |]
 
     f3 (vec [1.0; 2.0])
-    |> DT.Eval
-    |> DT.toScalar
+    |> fm.eval
+    |> fm.to_scalar
     |> shouldEqual "wcevwo17" (f3e [| 1.0; 2.0 |])
 
     hf3 (vec [1.0; 2.0])
-    |> DT.Eval
-    |> DT.toArray2D
+    |> fm.eval
+    |> fm.toArray2D
     |> shouldEqual "wcevwo18" (expected (1.0, 2.0))
 
-fm { use _ = DT.WithScope("foo")
+node { use _ = fm.with_scope("foo")
          return vec [1.0; 2.0] + v 4.0 }
-   // |> DT.Diff
-    |> DT.Eval
+   // |> fm.Diff
+    |> fm.eval
 
-    fm { return matrix [ [ 1.0; 2.0 ]; [ 3.0; 4.0 ] ] }
-    |> DT.Eval
+    node { return matrix [ [ 1.0; 2.0 ]; [ 3.0; 4.0 ] ] }
+    |> fm.eval
 
-    fm { return matrix [ [ 1.0; 2.0 ]; [ 3.0; 4.0 ] ] + v 4.0 }
-    |> DT.Eval
+    node { return matrix [ [ 1.0; 2.0 ]; [ 3.0; 4.0 ] ] + v 4.0 }
+    |> fm.eval
 
-    fm { return DT.Variable (vec [ 1.0 ], name="hey") + v 4.0 }
-    |> DT.Eval
+    node { return fm.variable (vec [ 1.0 ], name="hey") + v 4.0 }
+    |> fm.eval
 
-    fm { return DT.Variable (1.0, name="hey") + 4.0 }
-    |> DT.Eval
+    node { return fm.variable (1.0, name="hey") + 4.0 }
+    |> fm.eval
 
-    let var v nm = DT.Variable (v, name=nm)
+    let var v nm = fm.variable (v, name=nm)
     
     // Specifying values for variables in the graph
-    fm { return var (vec [ 1.0 ]) "x" + v 4.0 }
-    |> fun dt -> DT.Eval(dt, ["x", (vec [2.0] :> DT)] )
+    node { return var (vec [ 1.0 ]) "x" + v 4.0 }
+    |> fun dt -> fm.eval(dt, ["x", (vec [2.0] :> DT)] )
 
-    fm { return var (vec [ 1.0 ]) "x" * var (vec [ 1.0 ]) "x" + v 4.0 }
-    |> DT.Eval
+    node { return var (vec [ 1.0 ]) "x" * var (vec [ 1.0 ]) "x" + v 4.0 }
+    |> fm.eval
 
-    fm { return DT.Variable (vec [ 1.0 ], name="hey") + v 4.0 }
-    |> fun dt -> DT.Eval(dt, ["hey", (vec [2.0] :> DT)])
+    node { return fm.variable (vec [ 1.0 ], name="hey") + v 4.0 }
+    |> fun dt -> fm.eval(dt, ["hey", (vec [2.0] :> DT)])
        // Gives 6.0
 
 
@@ -234,19 +234,13 @@ module GradientAscentWithRecordOfParameters =
     // The mathematics of the core model is always authored with respet to DT<_> values for scalars, vectors, matrices
     // and tensors.  Parameters/weights will be vectors and scalars
     //
-    // A combination of DT.* operations and standard overloaded math notation is used to express DT<_> 
-    // compuations.  This is a "value algebra DSL".
-    //
-    // DT<_> values can be evaluated - underneath this creates a TF graph and executes it, and a new
-    // DT<_> value containing the constant tensor is returned.
-    //
     // Live trajectory checking of your code will enrich your tooling with interactively
     // checked shape information.
     //
     // It is important that you feel comfortable with evaluating tensor values.
     type DParams = 
         { xs: DT<double>
-              y: DT<double> } 
+          y: DT<double> } 
 
     // Inline helpers can be used to simplify some mathematical presentation
     let inline sqr x = x * x 
@@ -259,9 +253,9 @@ module GradientAscentWithRecordOfParameters =
     // Get the partial derivatives of the function
     let df (ps: DParams) = 
         // TODO: ideally this would be
-        //    DT.gradients (f ps) ps
+        //    fm.gradients (f ps) ps
         // returning D<DParams>, a type derived structurally from DParams.
-        let dfs = DT.gradients (f ps) [| ps.xs; ps.y |] 
+        let dfs = fm.gradients (f ps) [| ps.xs; ps.y |] 
         dfs.[0], dfs.[1]
 
     let rate = 0.1
@@ -279,7 +273,7 @@ module GradientAscentWithRecordOfParameters =
         let ps = inject ps
         let df_dxs, df_dy = df ps
 
-        let xsNew, yNew = (ps.xs + v rate * df_dxs, ps.y + v rate * df_dy) |> DT.Eval2
+        let xsNew, yNew = (ps.xs + v rate * df_dxs, ps.y + v rate * df_dy) |> fm.eval2
         { xs = xsNew.ToArray(); y = yNew.ToScalar()}
 
     let initialParams = { xs = [| -0.3;  -0.3 |]; y = 0.3 }
@@ -315,20 +309,20 @@ module GradientAscentWithRecordOfParameters =
 module GradientDescentWithVariables =
     // Define a function which will be executed using TensorFlow
     let f (x: DT<double>, y: DT<double>) = 
-        fm { return sin (v 0.5 * x * x - v 0.25 * y * y + v 3.0) * cos (v 2.0 * x + v 1.0 - exp y) }
+        node { return sin (v 0.5 * x * x - v 0.25 * y * y + v 3.0) * cos (v 2.0 * x + v 1.0 - exp y) }
 
     // Get the partial derivatives of the scalar function
     // computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
     let df (x, y) = 
-        let dfs = DT.gradients (f (x,y))  [| x; y |] 
+        let dfs = fm.gradients (f (x,y))  [| x; y |] 
         (dfs.[0], dfs.[1])
 
     let rate = 0.1
     let step (x, y) = 
         // Repeatedly run the derivative 
         let dzx, dzy = df (v x, v y) 
-        let dzx = dzx |> DT.Eval 
-        let dzy = dzy |> DT.Eval 
+        let dzx = dzx |> fm.eval 
+        let dzy = dzy |> fm.eval 
         printfn "size = %f" (sqrt (dzx*dzx + dzy*dzy))
         (x + rate * dzx, y + rate * dzy)
 
@@ -367,14 +361,14 @@ module ModelExample =
     /// Make the validation data
     let validationInputs, validationOutputs = makeData validationSize |> makeInput
 
-    /// Evaluate the model for input and coefficients
+    /// evaluate the model for input and coefficients
     let model (xs: DT<double>, coeffs: DT<double>) = 
-        DT.Sum (xs * coeffs,axis= [| 1 |]) 
+        fm.sum (xs * coeffs,axis= [| 1 |]) 
 
-    /// Evaluate the loss function for the model w.r.t. a true output
+    /// evaluate the loss function for the model w.r.t. a true output
     let meanSquareError (z: DT<double>) tgt = 
         let dz = z - tgt 
-        DT.Sum (dz * dz) / v (double modelSize) / v (double z.Shape.[0].Value) 
+        fm.sum (dz * dz) / v (double modelSize) / v (double z.Shape.[0].Value) 
           
     // Gradient of the loss function w.r.t. the coefficients
     let loss (xs, y) coeffs = 
@@ -384,11 +378,11 @@ module ModelExample =
     // Gradient of the objective function w.r.t. the coefficients
     let dloss_dcoeffs inputs coeffs = 
         let z = loss inputs coeffs
-        DT.gradient z coeffs
+        fm.gradient z coeffs
  
     let validation coeffs = 
         let z = loss (validationInputs, validationOutputs) coeffs 
-        z |> DT.Eval
+        z |> fm.eval
 
     // Note, the rate in this example is constant. Many practical optimizers use variable
     // update (rate) - often reducing - which makes them more robust to poor convergence.
@@ -399,7 +393,7 @@ module ModelExample =
         let coeffsNew = coeffs - v rate * dz
 
         // An explicit evaluation step is needed to reduce the computation and get concrete values
-        let coeffsNew, dz = (coeffsNew, dz) |> DT.Eval2
+        let coeffsNew, dz = (coeffsNew, dz) |> fm.eval2
         printfn "coeffsNew = %A" coeffsNew 
         printfn "dz = %A" dz 
         printfn "validation = %A" (validation coeffsNew)
@@ -429,29 +423,31 @@ module NeuralTransferFragments =
     let input = tensor4 [ for i in 0 .. 9 -> [ for j in 1 .. 10 -> [ for k in 1 .. 10 -> [ for m in 1 .. 10 -> double (i+j+k+m) ]]]]
     let name = "a"
     let instance_norm (input, name) =
-        fm { use _ = DT.WithScope(name + "/instance_norm")
-             let mu, sigma_sq = DT.Moments (input, axes=[0;1])
-             let shift = DT.Variable (v 0.0, name + "/shift")
-             let scale = DT.Variable (v 1.0, name + "/scale")
+        node { 
+             use _ = fm.with_scope(name + "/instance_norm")
+             let mu, sigma_sq = fm.moments (input, axes=[0;1])
+             let shift = fm.variable (v 0.0, name + "/shift")
+             let scale = fm.variable (v 1.0, name + "/scale")
              let epsilon = v 0.001
              let normalized = (input - mu) / sqrt (sigma_sq + epsilon)
-             return scale * normalized + shift }
+             return scale * normalized + shift 
+         }
 
     let friendly4D (d : 'T[,,,]) =
         [| for i in 0..Array4D.length1 d - 1 -> [| for j in 0..Array4D.length2 d - 1 -> [| for k in 0..Array4D.length3 d - 1 -> [| for m in 0..Array4D.length4 d - 1 -> d.[i,j,k,m]  |]|]|]|]
         |> array2D |> Array2D.map array2D
 
-    // instance_norm (input, name) |> DT.Eval
+    // instance_norm (input, name) |> fm.eval
    
     let conv_layer (out_channels, filter_size, stride, name) input = 
-        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights")
-        let x = DT.Conv2D (input, filters, out_channels, filter_size=filter_size, stride=stride)
+        let filters = variable (fm.truncated_normal() * v 0.1) (name + "/weights")
+        let x = fm.conv2d (input, filters, out_channels, filter_size=filter_size, stride=stride)
         instance_norm (x, name)
     
     let out_channels = 128
     let filter_size = 7 
-    // conv_layer (out_channels, filter_size, 1, "layer") input  |> DT.Eval
-    //(fun input -> conv_layer (input, out_channels, filter_size, 1, true, "layer")) |> DT.gradient |> apply input |> DT.Eval
+    // conv_layer (out_channels, filter_size, 1, "layer") input  |> fm.eval
+    //(fun input -> conv_layer (input, out_channels, filter_size, 1, true, "layer")) |> fm.gradient |> apply input |> fm.eval
 
     let residual_block (filter_size, name) input = 
         let tmp = conv_layer (128, filter_size, 1, name + "_c1") input  |> relu
@@ -459,29 +455,29 @@ module NeuralTransferFragments =
         input + tmp2 
 
     let conv2D_transpose (input, filter, stride) = 
-        fm { return DT.Conv2DBackpropInput(filter, input, stride, padding = "SAME") }
+        node { return fm.conv2d_backprop(filter, input, stride, padding = "SAME") }
   
     let conv_transpose_layer (out_channels, filter_size, stride, name) input =
-        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights")
-        let x = DT.Conv2DBackpropInput(filters, input, out_channels, filter_size=filter_size, stride=stride, padding="SAME")
+        let filters = variable (fm.truncated_normal() * v 0.1) (name + "/weights")
+        let x = fm.conv2d_backprop(filters, input, out_channels, filter_size=filter_size, stride=stride, padding="SAME")
         instance_norm (x, name)
 
     let to_pixel_value (input: DT<double>) = 
-        fm { return tanh input * v 150.0 + (v 255.0 / v 2.0) }
+        node { return tanh input * v 150.0 + (v 255.0 / v 2.0) }
 
     // The style-transfer tf
 
 (*
-    fm { let x = conv_layer (32, 9, 1, "conv1") input
+    node { let x = conv_layer (32, 9, 1, "conv1") input
          return relu x }
-    |> DT.Eval
+    |> fm.eval
 
-    fm { let x = input |> conv_layer (32, 9, 1, "conv1") |> relu
+    node { let x = input |> conv_layer (32, 9, 1, "conv1") |> relu
          let x = conv_layer (64, 3, 2, "conv2") x |> relu
          return x }
-    |> DT.Eval
+    |> fm.eval
 
-    fm { let x = 
+    node { let x = 
             conv_layer (32, 9, 1, "conv1") input 
             |> relu 
             |> conv_layer (64, 3, 2, "conv2")
@@ -489,9 +485,9 @@ module NeuralTransferFragments =
             |> conv_layer (128, 3, 2, "conv3") 
             |> relu
          return x }
-    |> DT.Eval
+    |> fm.eval
 
-    fm { return
+    node { return
             input 
             |> conv_layer (32, 9, 1, "conv1")
             |> relu 
@@ -501,9 +497,9 @@ module NeuralTransferFragments =
             |> relu 
             |> residual_block (3, "resid1")
           }
-    |> DT.Eval
+    |> fm.eval
 
-    fm { return 
+    node { return 
             input 
             |> conv_layer (32, 9, 1, "conv1")
             |> relu 
@@ -517,11 +513,11 @@ module NeuralTransferFragments =
             |> residual_block (3, "resid4")
             |> residual_block (3, "resid5")
          }
-    |> DT.Eval
+    |> fm.eval
 
 
     let t1 = 
-        fm { return 
+        node { return 
                 input 
                 |> conv_layer (32, 9, 1, "conv1")
                 |> relu 
@@ -537,10 +533,10 @@ module NeuralTransferFragments =
          }
 
     let t2 = 
-        fm { return conv_transpose_layer (64, 3, 2, "conv_t1") t1 }
-        |> DT.Eval
+        node { return conv_transpose_layer (64, 3, 2, "conv_t1") t1 }
+        |> fm.eval
 
-    fm { return 
+    node { return 
             input 
             |> conv_layer (32, 9, 1, "conv1")
             |> relu 
@@ -555,7 +551,7 @@ module NeuralTransferFragments =
             |> residual_block (3, "resid5")
             |> conv_transpose_layer (64, 3, 2, "conv_t1")// TODO: check fails
          }
-    |> DT.Eval
+    |> fm.eval
 *)
 
 (*
@@ -577,8 +573,8 @@ module TensorFlow_PDE_Example =
     damping = tf.placeholder(tf.float32, shape=())
 
     # Create variables for simulation state
-    U  = tf.Variable(u_init)
-    Ut = tf.Variable(ut_init)
+    U  = tf.variable(u_init)
+    Ut = tf.variable(ut_init)
 
     # Discretized PDE update rules
     U_ = U + eps * Ut
@@ -600,7 +596,8 @@ module TensorFlow_PDE_Example =
 
 (*
 (fun input -> 
-        fm { let x = conv_layer (input, 32, 9, 1, true, "conv1")
+        node { 
+             let x = conv_layer (input, 32, 9, 1, true, "conv1")
              let x = conv_layer (x, 64, 3, 2, true, "conv2")
              let x = conv_layer (x, 128, 3, 2, true, "conv3")
              let x = residual_block (x, 3, "resid1")
@@ -610,7 +607,7 @@ module TensorFlow_PDE_Example =
              let x = residual_block (x, 3, "resid5")
              let x = conv_transpose_layer (x, 64, 3, 2, "conv_t1") // TODO: check fails
              return x })
-    |> DT.Diff |> apply input |> DT.Run |> fun x -> x.GetValue() :?> double[,,,] |> friendly4D
+    |> fm.Diff |> apply input |> fm.Run |> fun x -> x.GetValue() :?> double[,,,] |> friendly4D
 
 //2019-01-24 17:21:17.095544: F tensorflow/core/grappler/costs/op_level_cost_estimator.cc:577] Check failed: iz == filter_shape.dim(in_channel_index).size() (64 vs. 128)
     *)
@@ -619,7 +616,7 @@ module TensorFlow_PDE_Example =
 (*
 let x = conv_layer (x, 3, 9, 1, false, "conv_t3")
              let x = to_pixel_value x
-             let x = DT.ClipByValue (x, v 0.0, v 255.0)
+             let x = fm.clip_by_value (x, v 0.0, v 255.0)
              return x }
 *)
 
@@ -633,7 +630,7 @@ let x = conv_layer (x, 3, 9, 1, false, "conv_t3")
 *)
 
     //graph.Const("a", "b")
-    //graph.Variable( .MakeName("a", "b")
+    //graph.variable( .MakeName("a", "b")
 
     //TFTensor(TFDataType.Double, [| 2;2|], )
     //(TFDataType.Double, [| 2;2|])
