@@ -22,17 +22,17 @@ open NumSharp
 
 let tf = Tensorflow.Binding.tf
 
-let input_data = tf.placeholder(TF_DataType.TF_STRING,name="input")
-let input_img = ResNet50Classifier.binaryJPGToImage(input_data)
+let input_data = tf.placeholder(TF_DataType.TF_FLOAT,name="input")
 let weights = Utils.fetchClassifierWeights()
-let output = ResNet50Classifier.model(input_img,weights)
+let output = ResNet50Classifier.model(input_data,weights)
 
 let labels = File.ReadAllLines(Path.Combine(Utils.basePath,"pretrained","imagenet1000.txt"))
 
 let sess = Session()
 
 let classifyImage(path:string) = 
-    let label = sess.run(output,FeedItem(input_data,NDArray(File.ReadAllBytes(path)))).Data<int>().[0]
+    let image = ResNet50Classifier.binaryJPGToImage(path)
+    let label = sess.run(output,FeedItem(input_data,image)).Data<int>().[0]
     printfn "%i: %s" label labels.[label]
 
 for i in 0..5 do

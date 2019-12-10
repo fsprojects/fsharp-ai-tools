@@ -113,12 +113,12 @@
 //
 //// This tests and old verion of how variables work
 ////[<Test>]
-////let ``Test Variable`` =
+////let ``Test variable`` =
 ////    use s = new TFSession()
 ////    let g = s.Graph
 ////    let initValue = g.Const(new TFTensor(1.5))
 ////    let increment = g.Const(new TFTensor(0.5))
-////    let tfv = g.Variable(initValue)
+////    let tfv = g.variable(initValue)
 ////    // Not 100% on the following
 ////    let update = g.AssignVariableOp(tfv.VariableOp, g.Add(tfv.Read, increment))
 ////    for i = 0 to 4 do
@@ -165,7 +165,7 @@
 //    desc.FinishOperation()
 //
 //let add (left : TFOperation, right :TFOperation, graph : TFGraph, status : TFStatus) =
-//    let op = new TFOperationDesc(graph, "AddN", "add")
+//    let op = new TFOperationDesc(graph, "addn", "add")
 //    op.AddInputs(new TFOutput(left,0), new TFOutput (right, 0)) |> ignore
 //    op.FinishOperation()
 //

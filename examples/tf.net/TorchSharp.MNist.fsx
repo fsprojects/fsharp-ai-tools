@@ -24,8 +24,8 @@ type Loss = TorchSharp.NN.LossFunction.Loss
 
 type Model() as this=
     inherit Module()
-    let conv1 = Model.Conv2D(1L,10L,5L)
-    let conv2 = Model.Conv2D(10L,20L,5L)
+    let conv1 = Model.conv2d(1L,10L,5L)
+    let conv2 = Model.conv2d(10L,20L,5L)
     let fc1 = Model.Linear(320L,50L)
     let fc2 = Model.Linear(50L,10L)
     do
@@ -69,7 +69,7 @@ let Train(model: Module,
         target.Dispose()
 
 let Test(model: Module, loss: Loss, dataLoader: IEnumerable<struct (TorchTensor*TorchTensor)>, size: int64) =
-    model.Eval()
+    model.eval()
     let mutable testLoss = 0.1
     let mutable correct = 0
     for struct (data,target) in dataLoader do

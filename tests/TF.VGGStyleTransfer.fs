@@ -25,9 +25,9 @@ let model (input_img: Tensor, weights: Map<string,Tensor>) =
         //        [|filter_size; filter_size; in_channels; out_channels|]
         //    else
         //        [|filter_size; filter_size; out_channels; in_channels|]
-        //let truncatedNormal = graph.TruncatedNormal(graph.Const(TFShape(weights_shape).AsTensor()),TFDataType.Float, seed=System.Nullable(1L))
+        //let truncatedNormal = graph.truncated_normal(graph.Const(TFShape(weights_shape).AsTensor()),TFDataType.Float, seed=System.Nullable(1L))
         weights.[name + "/weights"]
-        //graph.Variable(graph.Mul(truncatedNormal,graph.Const(new TFTensor(0.1f))),operName="weights").Read
+        //graph.variable(graph.Mul(truncatedNormal,graph.Const(new TFTensor(0.1f))),operName="weights").Read
 
     let instance_norm(input:Tensor, train:bool, name:string) =
         use scope = tf.name_scope("instance_norm")
@@ -36,8 +36,8 @@ let model (input_img: Tensor, weights: Map<string,Tensor>) =
         let shift = weights.[name + "/shift"]
         let scale = weights.[name + "/scale"]
         //let var_shape = TFShape(graph.GetShape(input).[3])
-        //let shift = graph.Variable(graph.Zeros(var_shape),operName="shift").Read
-        //let scale = graph.Variable(graph.Ones(var_shape),operName="scale").Read
+        //let shift = graph.variable(graph.Zeros(var_shape),operName="shift").Read
+        //let scale = graph.variable(graph.Ones(var_shape),operName="scale").Read
         let epsilon = tf.constant(0.001f)
         // Note: The following would benefit from operator overloads
         let normalized = gen_ops.div(gen_ops.sub(input,mu), gen_ops.pow(gen_ops.add(sigma_sq,epsilon),tf.constant(0.5f)))
@@ -79,10 +79,21 @@ let model (input_img: Tensor, weights: Map<string,Tensor>) =
     |> fun x -> tf.cast(gen_ops.clip_by_value(tf.add(tf.multiply(tf.tanh(x),tf.constant(150.f)) , tf.constant(255.f/2.f)),tf.constant(0.f),tf.constant(255.f)),TF_DataType.TF_UINT8)
 
 /// Load and normalize JPEG Binary
-let binaryJPGToImage(input:Tensor) =
+let binaryJPGToImage(inputfile:string) =
     let mean_pixel = tf.constant([|123.68f; 116.778f; 103.939f|])
-    let decoded = tf.cast(gen_ops.decode_jpeg(contents=input, channels=Nullable(3)), TF_DataType.TF_FLOAT)
+    let read_img = tf.read_file (inputfile)
+    let decoded = tf.cast(gen_ops.decode_jpeg(contents=read_img, channels=Nullable(3)), TF_DataType.TF_FLOAT)
     let preprocessed = tf.sub(decoded,mean_pixel)
-    let expanded = gen_ops.expand_dims(input=preprocessed, dim = tf.constant(0))
+    let output = gen_ops.expand_dims(input=preprocessed, dim = tf.constant(0))
     //let resized = graph.ResizeBicubic(expanded,graph.Const(new TFTensor([|256;256|])),align_corners=Nullable(true))
-    expanded
+    let sess = new Session()
+    let result = sess.run(output)
+    result
+
+/// Load a JPEG Binary
+let decodeJPG(inputfile:string) =
+    let read_img = tf.read_file (inputfile)
+    let output = gen_ops.decode_jpeg(contents=read_img, channels=Nullable(3))
+    let sess = new Session()
+    let result = sess.run(output)
+    result
