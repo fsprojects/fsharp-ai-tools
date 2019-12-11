@@ -259,7 +259,7 @@ LiveCheck for a DNN:
        cd visualfsharp
        git fetch https://github.com/dsyme/visualfsharp livecheck
        git checkout livecheck
-       .\build.cmd vs
+       .\build.cmd
        cd ..
 
 2. Compile the extra tool
