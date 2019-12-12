@@ -253,26 +253,34 @@ LiveCheck for a DNN:
 </p>
 
 
-1. Build the VS tooling with the extensibility "hack" to allow 3rd party tools to add checking and tooltips
+1. Clone the necessary repos
 
-       git clone http://github.com/Microsoft/visualfsharp
-       cd visualfsharp
-       git fetch https://github.com/dsyme/visualfsharp livecheck
+       git clone http://github.com/dotnet/fsharp
+       git clone http://github.com/fsprojects/FSharp.Compiler.PortaCode
+       git clone http://github.com/fsprojects/fsharp-ai-tools
+
+2. Build the VS tooling with the extensibility "hack" to allow 3rd party tools to add checking and tooltips
+
+       cd fsharp
+       git fetch https://github.com/dsyme/fsharp livecheck
        git checkout livecheck
        .\build.cmd
        cd ..
 
-2. Compile the extra tool
+3. Compile the extra tool
 	
-       git clone http://github.com/fsprojects/FSharp.Compiler.PortaCode
        dotnet build FSharp.Compiler.PortaCode
 
-3. Start the tool and edit using experimental VS instance
+4. Compile this repo
 
-       cd FSAI.Tools\examples
-       ..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe --eval --writeinfo --watch --vshack --livechecksonly  --define:LIVECHECK dsl-live.fsx
+       dotnet build fsharp-ai-tools
 
+5. Start the tool and edit using experimental VS instance
+
+       cd fsharp-ai-tools\examples
        devenv.exe /rootsuffix RoslynDev
+       ..\..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe --eval --writeinfo --watch --vshack --livechecksonly  --define:LIVECHECK dsl-live.fsx
+
        (open dsl-live.fsx)
 
 # fsx2nb
