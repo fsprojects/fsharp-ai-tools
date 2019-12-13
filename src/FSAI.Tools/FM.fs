@@ -6,7 +6,6 @@ open System.Collections.Generic
 open Tensorflow
 open NumSharp
 open System.Numerics
-open System.Runtime.InteropServices
 open FSAI.Tools.NNImpl
 
 [<AutoOpen>]
@@ -112,50 +111,6 @@ module internal Utils =
             elif t = typeof<uint16>    then TF_DataType.TF_UINT16
             elif t = typeof<Complex>   then TF_DataType.TF_COMPLEX128
             else raise(ArgumentOutOfRangeException ("t", sprintf "The given type %A could not be mapped to an existing TFDataType." t))
-
-    [<DllImport ("tensorflow")>]
-    extern void TF_AddGradients (TF_Graph graph, TF_Output* ys, int ny, TF_Output* xs, int nx, TF_Output* dx, TF_Status status, TF_Output* dy)
-
-    /// <summary>
-    /// Adds a gradient: the operations needed to compute the partial derivatives of sum of <paramref name="y"/>` wrt to <paramref name="x"/>.
-    /// </summary>
-    /// <returns>The partial derivatives, the size of the array is the same as the length of the <paramref name="y"/> array.</returns>
-    /// <param name="y">The y elements.</param>
-    /// <param name="x">The x elements.</param>
-    /// <param name="dy">Initial gradients, which represent the symbolic partial derivatives of some loss function `L` w.r.t. <paramref name="y"/> ).   
-    /// If the parameter is null, the implementation will use dx for 'OnesLike' for all shapes in <paramref name="y"/></param>
-    /// <param name="status">Status buffer, if specified a status code will be left here, if not specified, a <see cref="T:TensorFlow.TFException"/> exception is raised if there is an error.</param>
-    /// <remarks>
-    /// d(y[0] + y[1]+ ...)/dx[0], d(y[0] + y[1] + ...)/dx[1]z...
-    /// </remarks>
-    type gen_ops =
-        // TODO this should be updated when the Status functions progress through TensorFlow.Net
-        static member add_gradients(y: TFOutput [], x: TFOutput [], ?dy: TFOutput []): TFOutput [] =
-          if y = null then raise(ArgumentNullException ("y"))
-          if x = null then raise(ArgumentNullException ("x"))
-          dy |> Option.iter (fun dy -> 
-              if dy.Length <> y.Length then 
-                  raise(ArgumentException ("If dy is not null, the size of the gradients must match the size of y", "dy")))
-          let ret = Array.zeroCreate<TF_Output> x.Length //new Output [x.Length]
-          use pret = fixed &ret.[0]
-          let f xs = xs |> Array.map (fun x -> TFOutput.op_Implicit(x): IntPtr)
-          let y = f y 
-          let x = f x 
-          use py = fixed &y.[0]
-          use px = fixed &x.[0] 
-          let graph_handle = Graph.op_Implicit(tf.get_default_graph()): IntPtr
-          use status = new Status()
-          match dy with
-          | None ->
-              TF_AddGradients (graph_handle, py, y.Length, px, x.Length, NativePtr.ofNativeInt IntPtr.Zero, Status.op_Implicit(status), pret)
-          | Some(dx) ->
-              let dx = f dx
-              use pdx = fixed &dx.[0]
-              TF_AddGradients (graph_handle, py, y.Length, px, x.Length, pdx, Status.op_Implicit(status), pret)
-          if status.Code <> TF_Code.TF_OK then
-            failwith status.Message
-          else
-            [|for x in ret -> new TFOutput(x)|]
 
 type internal InferenceVar<'T>(canSolve: bool) = 
     let mutable solution: InferenceVarSoln<'T> = Unsolved
@@ -1649,7 +1604,7 @@ and [<Sealed>] DT<'T> internal
         // Include the solved shape expressions in the output
         let allOutputNodes = [| yield! outputNodes; for v, d in outputDimVarNodes do yield d |]
             
-        let allOutputTensors = session.run(allOutputNodes,  feed_dict = feed_dict)
+        let allOutputTensors = session.run(allOutputNodes, feed_dict = feed_dict)
         let outputTensors = allOutputTensors.[0..outputNodes.Length-1]
         let outputDimVarTensors = allOutputTensors.[outputNodes.Length..]
         // Substitute the solved shape expressions through the symbolic expected output expression
@@ -1718,7 +1673,7 @@ and [<Sealed>] DT<'T> internal
             DT.FromNDArray tensors.[1]
 
     /// Execute a triple of DT<'T> values, returning triple of DT<'T> values
-    static member eval3 (value1: DT<'T1>, value2: DT<'T2>, value3: DT<'T3>,  ?weights: seq<string * DT>): DT<'T1> * DT<'T2> * DT<'T3> = 
+    static member eval3 (value1: DT<'T1>, value2: DT<'T2>, value3: DT<'T3>, ?weights: seq<string * DT>): DT<'T1> * DT<'T2> * DT<'T3> = 
         if livecheck then 
             value1, value2, value3
         else
