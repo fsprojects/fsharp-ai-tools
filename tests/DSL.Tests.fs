@@ -106,15 +106,15 @@ let ``basic checks diff``() =
     |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
 
 
-// [<Test>]
-// let ``basic checks scalar addition, multiplication, subtraction, division``() = 
-//     let f (x: DT<_>) = 1 * x * x * 1 / 1.0 + 4 * x + 5 - 1 + 1
-//     let df x = fm.diff f x
+[<Test>]
+let ``basic checks scalar addition, multiplication, subtraction, division``() = 
+    let f (x: DT<_>) = v 1.0 * x * x * v 1.0 / v 1.0 + v 4.0 * x + v 5.0 - v 1.0 + v 1.0
+    let df x = fm.diff f x
 
-//     df (v 3.0)
-//     |> fm.eval
-//     |> fm.to_scalar
-//     |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
+    df (v 3.0)
+    |> fm.eval
+    |> fm.to_scalar
+    |> shouldEqual "wcevwo12" (2.0 * 3.0 + 4.0)
 
 
 [<Test>]
@@ -140,41 +140,43 @@ let ``basic checks grad``() =
     |> fm.eval
     |> fm.to_scalar
     |> shouldEqual "wcevwo15" 9.0
-//
+
 //[<Test>]
 //let ``basic checks jacobian``() = 
 //    let f3e (x: double[]) = [| x.[0]*x.[1]; 2.0*x.[1]*x.[0] |] 
-//    let f3 (x: DT<_>) = vec [1.0; 2.0] * x * fm.Reverse x //[ x1*x2; 2*x2*x1 ] 
+//    let f3 (x: DT<_>) = vec [1.0; 2.0] * x * fm.reverse x //[ x1*x2; 2*x2*x1 ] 
 //    let df3 x = fm.jacobian f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
 //    let expected (x1, x2) = array2D [| [| x2; x1 |]; [| 2.0*x2; 2.0*x1 |] |]  
-//
+
 //    f3 (vec [1.0; 2.0])
 //    |> fm.eval
 //    |> fm.toArray
 //    |> shouldEqual "wcevwo16" (f3e [| 1.0; 2.0 |])
-//
+
 //    df3 (vec [1.0; 2.0])
 //    |> fm.eval
 //    |> fm.toArray2D
 //    |> shouldEqual "wcevwo16" (expected (1.0, 2.0))
 //    // expect 
    
-//[<Test>]
-//let ``basic checks grad 2``() = 
-//    let f3e (x: double[]) = x.[0]*x.[1] + 2.0*x.[1]*x.[0]
-//    let f3 (x: DT<_>) = x.[0]*x.[1] + v 2.0*x.[1]*x.[0]
-//    let g3 x = fm.grad f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
-//    let expected (x0, x1) = [| 3.0*x1; 3.0*x0  |]
-//
-//    f3 (vec [1.0; 2.0])
-//    |> fm.eval
-//    |> fm.to_scalar
-//    |> shouldEqual "wcevwo17" (f3e [| 1.0; 2.0 |])
-//
-//    g3 (vec [1.0; 2.0])
-//    |> fm.eval
-//    |> fm.toArray
-//    |> shouldEqual "wcevwo18" (expected (1.0, 2.0))
+#if SLICE_GRAD
+[<Test>]
+let ``basic checks grad 2``() = 
+    let f3e (x: double[]) = x.[0]*x.[1] + 2.0*x.[1]*x.[0]
+    let f3 (x: DT<_>) = x.[0]*x.[1] + v 2.0*x.[1]*x.[0]
+    let g3 x = fm.grad f3 x // [ [ x2; x1 ]; [2*x2; 2*x1 ] ]  
+    let expected (x0, x1) = [| 3.0*x1; 3.0*x0  |]
+
+    f3 (vec [1.0; 2.0])
+    |> fm.eval
+    |> fm.to_scalar
+    |> shouldEqual "wcevwo17" (f3e [| 1.0; 2.0 |])
+
+    g3 (vec [1.0; 2.0])
+    |> fm.eval
+    |> fm.toArray
+    |> shouldEqual "wcevwo18" (expected (1.0, 2.0))
+#endif
 
 (*
 
@@ -195,8 +197,8 @@ let ``basic checks hessian``() =
     |> fm.toArray2D
     |> shouldEqual "wcevwo18" (expected (1.0, 2.0))
 
-node { use _ = fm.with_scope("foo")
-         return vec [1.0; 2.0] + v 4.0 }
+    node { use _ = fm.with_scope("foo")
+           return vec [1.0; 2.0] + v 4.0 }
    // |> fm.Diff
     |> fm.eval
 
