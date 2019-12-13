@@ -6,8 +6,14 @@
 #r "FSAI.Tools.dll"
 #r "NumSharp.Core.dll"
 #r "Tensorflow.Net.dll"
+//#r "FSharp.Compiler.Interactive.Settings"
 #nowarn "49"
 #endif
+
+#if INTERACTIVE && EDITING
+#r @"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\CommonExtensions\Microsoft\FSharp\FSharp.Compiler.Interactive.Settings.dll"
+#endif
+
 #if NOTEBOOK
 #r "nuget: TODO"
 #endif
