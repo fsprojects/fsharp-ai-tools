@@ -75,17 +75,17 @@ module GradientDescent =
     // Gradient descent
     let step f xs =   
         // Get the partial derivatives of the function
-        let df xs =  DT.diff f xs  
+        let df xs =  fm.diff f xs  
         printfn "xs = %A" xs
         let dzx = df xs 
-        // Evaluate to output values 
-        xs - v rate * dzx |> DT.Eval
+        // evaluate to output values 
+        xs - v rate * dzx |> fm.eval
 
     let train f initial steps = 
         initial |> Seq.unfold (fun pos -> Some (pos, step f pos)) |> Seq.truncate steps 
 ```
 
-Note the call is `DT.diff` - FM allows optimizers to derive the gradients of FM
+Note the call is `fm.diff` - FM allows optimizers to derive the gradients of FM
 functions and models in a way inspired by the design of `DiffSharp`. For example:
 
 ```fsharp
@@ -93,10 +93,10 @@ functions and models in a way inspired by the design of `DiffSharp`. For example
 let f x = x * x + v 4.0 * x 
 
 // Get the derivative of the function. This computes "x*2 + 4.0"
-let df x = DT.diff f x  
+let df x = fm.diff f x  
 
 // Run the derivative 
-df (v 3.0) |> DT.RunScalar // returns 6.0 + 4.0 = 10.0
+df (v 3.0) |> fm.RunScalar // returns 6.0 + 4.0 = 10.0
 ```
 
 To differentiate a scalar function with multiple input variables:
@@ -104,14 +104,14 @@ To differentiate a scalar function with multiple input variables:
 ```fsharp
 // Define a function which will be executed using TensorFlow
 // computes [ x1*x1*x3 + x2*x2*x2 + x3*x3*x1 + x1*x1 ]
-let f (xs: DT<'T>) = sum (xs * xs * DT.Reverse xs)
+let f (xs: DT<'T>) = sum (xs * xs * fm.Reverse xs)
 
 // Get the partial derivatives of the scalar function
 // computes [ 2*x1*x3 + x3*x3; 3*x2*x2; 2*x3*x1 + x1*x1 ]
-let df xs = DT.diff f xs   
+let df xs = fm.diff f xs   
 
 // Run the derivative 
-df (vec [ 3.0; 4.0; 5.0 ]) |> DT.RunArray // returns [ 55.0; 48.0; 39.0 ]
+df (vec [ 3.0; 4.0; 5.0 ]) |> fm.RunArray // returns [ 55.0; 48.0; 39.0 ]
 ```
 
 ### A Larger Example
@@ -160,13 +160,13 @@ module ModelExample =
         let y = batchOfScalars y
         (xs, y)
 
-    /// Evaluate the model for input and coefficients
+    /// evaluate the model for input and coefficients
     let model (xs: DT<double>, coeffs: DT<double>) = 
-        DT.Sum (xs * coeffs, axis= [| 1 |])
+        fm.Sum (xs * coeffs, axis= [| 1 |])
            
     let meanSquareError (z: DT<double>) tgt = 
         let dz = z - tgt 
-        DT.Sum (dz * dz) / v (double modelSize) / v (double z.Shape.[0].Value) 
+        fm.Sum (dz * dz) / v (double modelSize) / v (double z.Shape.[0].Value) 
 
     /// The loss function for the model w.r.t. a true output
     let loss (xs, y) coeffs = 
@@ -175,7 +175,7 @@ module ModelExample =
           
     let validation coeffs = 
         let z = loss (prepare validationData) (vec coeffs)
-        z |> DT.Eval
+        z |> fm.eval
 
     let train inputs steps =
         let initialCoeffs = vec [ for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize ]
@@ -185,7 +185,7 @@ module ModelExample =
     [<LiveCheck>]
     let check1 = train checkData 1  |> Seq.last
 
-    let learnedCoeffs = train trainData 200 |> Seq.last |> DT.toArray
+    let learnedCoeffs = train trainData 200 |> Seq.last |> fm.toArray
          // [|1.017181246; 2.039034327; 2.968580146; 3.99544071; 4.935430581;
          //   5.988228378; 7.030374908; 8.013975714; 9.020138699; 9.98575733|]
 
@@ -212,16 +212,16 @@ DiffSharp may be used once Tensors are available in that library.
   If you are familiar with the design of `DiffSharp` there are similarities here: DiffSharp defines `D` (differentiable scalar), `DV` (differentiable
   vector), `DM` (differentiable matrix).
 
-* `DT.gradients` is used to get gradients of arbitrary outputs w.r.t. arbitrary inputs
+* `fm.gradients` is used to get gradients of arbitrary outputs w.r.t. arbitrary inputs
 
-* `DT.diff` is used to differentiate of `R^n -> R` scalar-valued functions (loss functions) w.r.t. multiple input variables. If 
+* `fm.diff` is used to differentiate of `R^n -> R` scalar-valued functions (loss functions) w.r.t. multiple input variables. If 
   a scalar input is used, a single total deriative is returned. If a vector of inputs is used, a vector of
   partial derivatives are returned.
 
 * In the prototype, all gradient-based functions are implemented using TensorFlow's `AddGradients`, i.e. the C++ implementation of
   gradients. THis has many limitations.
 
-* `DT.*` is a DSL for expressing differentiable tensors using the TensorFlow fundamental building blocks.  The naming
+* `fm.*` is a DSL for expressing differentiable tensors using the TensorFlow fundamental building blocks.  The naming
   of operators in this DSL are currently TensorFLow specific and may change.
 
 * A preliminary pass of shape inference is performed _before_ any TensorFlow operations are performed.  This
@@ -253,26 +253,34 @@ LiveCheck for a DNN:
 </p>
 
 
-1. Build the VS tooling with the extensibility "hack" to allow 3rd party tools to add checking and tooltips
+1. Clone the necessary repos
 
-       git clone http://github.com/Microsoft/visualfsharp
-       cd visualfsharp
-       git fetch https://github.com/dsyme/visualfsharp livecheck
+       git clone http://github.com/dotnet/fsharp
+       git clone http://github.com/fsprojects/FSharp.Compiler.PortaCode
+       git clone http://github.com/fsprojects/fsharp-ai-tools
+
+2. Build the VS tooling with the extensibility "hack" to allow 3rd party tools to add checking and tooltips
+
+       cd fsharp
+       git fetch https://github.com/dsyme/fsharp livecheck
        git checkout livecheck
-       .\build.cmd vs
+       .\build.cmd
        cd ..
 
-2. Compile the extra tool
+3. Compile the extra tool
 	
-       git clone http://github.com/fsprojects/FSharp.Compiler.PortaCode
        dotnet build FSharp.Compiler.PortaCode
 
-3. Start the tool and edit using experimental VS instance
+4. Compile this repo
 
-       cd FSAI.Tools\examples
-       ..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe --eval --writeinfo --watch --vshack --livechecksonly  --define:LIVECHECK dsl-live.fsx
+       dotnet build fsharp-ai-tools
 
+5. Start the tool and edit using experimental VS instance
+
+       cd fsharp-ai-tools\examples
        devenv.exe /rootsuffix RoslynDev
+       ..\..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net471\FsLive.Cli.exe --eval --writeinfo --watch --vshack --livechecksonly  --define:LIVECHECK dsl-live.fsx
+
        (open dsl-live.fsx)
 
 # fsx2nb

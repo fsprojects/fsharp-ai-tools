@@ -119,12 +119,16 @@ let model (input :  Tensor, weights: Map<string, Tensor>) =
     gen_ops.arg_max (output, tf.constant 1, output_type = Nullable (TF_DataType.TF_INT32))
 
 /// Load and normalize JPEG Binary
-let binaryJPGToImage (input: Tensor) =
+let binaryJPGToImage (inputfile: string) =
     /// This is from TensorflowSharp (Examples/ExampleCommon/ImageUtil.cs)
     /// It's intended for inception but used here for resnet as an example of this type of functionality 
     let W, H, Mean, Scale = 224, 224, 117.0f, 1.0f
-    let loaded_img = tf.cast (gen_ops.decode_jpeg (contents = input, channels = Nullable 3), TF_DataType.TF_FLOAT)
+    let read_img = tf.read_file (inputfile)
+    let loaded_img = tf.cast (gen_ops.decode_jpeg (contents = read_img, channels = Nullable 3), TF_DataType.TF_FLOAT)
     let expanded_img = gen_ops.expand_dims (input = loaded_img, dim = tf.constant 0)
     let resized_img = gen_ops.resize_bilinear (expanded_img, tf.constant [|W;H|])
     let final_img = gen_ops.div (gen_ops.sub (resized_img, tf.constant [|Mean|]), tf.constant [|Scale|])
-    tf.cast (final_img, TF_DataType.TF_FLOAT)
+    let output = tf.cast (final_img, TF_DataType.TF_FLOAT)
+    let sess = new Session()
+    let result = sess.run(output)
+    result

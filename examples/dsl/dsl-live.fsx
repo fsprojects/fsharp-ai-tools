@@ -6,7 +6,6 @@
 #r "FSAI.Tools.dll"
 #r "NumSharp.Core.dll"
 #r "Tensorflow.Net.dll"
-//#r "FSharp.Compiler.Interactive.Settings"
 #nowarn "49"
 #endif
 
@@ -21,7 +20,7 @@
 
 open System
 open FSAI.Tools
-open FSAI.Tools.DSL
+open FSAI.Tools.FM
 
 if not System.Environment.Is64BitProcess then printfn "64-bit expected";  exit 100
 
@@ -31,10 +30,10 @@ fsi.AddPrintTransformer(DT.PrintTransform)
 
 
 module FirstLiveCheck = 
-    let f x shift = DT.Sum(x * x, [| 1 |]) + v shift
+    let f x shift = DT.sum(x * x, [| 1 |]) + v shift
 
     [<LiveCheck>]
-    let check1() = f (DT.Dummy (Shape [ Dim.Named "Size1" 10;  Dim.Named "Size2" 100 ])) 3.0
+    let check1() = f (DT.dummy_input (Shape [ Dim.Named "Size1" 10;  Dim.Named "Size2" 100 ])) 3.0
      
 module PlayWithFM = 
     
@@ -42,7 +41,7 @@ module PlayWithFM =
        x * x + scalar 4.0 * x 
 
     // Get the derivative of the function. This computes "x*2 + 4.0"
-    let df x = DT.diff f x  
+    let df x = fm.diff f x  
 
 
 
@@ -53,12 +52,12 @@ module PlayWithFM =
     df (v 3.0) 
 
     // returns 6.0 + 4.0 = 10.0
-    df (v 3.0) |> DT.Eval
+    df (v 3.0) |> fm.eval
 
     v 2.0 + v 1.0 
 
-    // You can wrap in "fm { return ... }" if you like
-    fm { return v 2.0 + v 1.0 }
+    // You can wrap in "node { return ... }" if you like
+    node { return v 2.0 + v 1.0 }
       
 
 
@@ -123,10 +122,10 @@ module GradientDescent =
     // Gradient descent
     let step f xs =   
         // Evaluate to output values 
-        xs - v rate * DT.diff f xs
+        xs - v rate * fm.diff f xs
     
     let train f initial numSteps = 
-        initial |> Seq.unfold (fun pos -> Some (pos, step f pos  |> DT.Eval)) |> Seq.truncate numSteps 
+        initial |> Seq.unfold (fun pos -> Some (pos, step f pos  |> fm.eval)) |> Seq.truncate numSteps 
 
 (*
 module GradientDescentExample =
@@ -182,11 +181,11 @@ module ModelExample =
  
     /// Evaluate the model for input and coefficients
     let model (xs: Vectors, coeffs: Scalars) = 
-        DT.Sum (xs * coeffs,axis= [| 1 |])
+        DT.sum (xs * coeffs,axis= [| 1 |])
            
     let meanSquareError (z: DT<double>) tgt = 
         let dz = z - tgt 
-        DT.Sum (dz * dz) / v (double modelSize) / v (double z.Length)
+        DT.sum (dz * dz) / v (double modelSize) / v (double z.length)
 
     /// The loss function for the model w.r.t. a true output
     let loss (xs, y) coeffs = 
@@ -195,7 +194,7 @@ module ModelExample =
           
     let validation coeffs = 
         let z = loss validationData (vec coeffs)
-        z |> DT.Eval
+        z |> fm.eval
 
     let train initialCoeffs (xs, y) steps =
         GradientDescent.train (loss (xs, y)) initialCoeffs steps
@@ -204,9 +203,9 @@ module ModelExample =
     let check1() = 
         let DataSz = Dim.Named "DataSz" 100
         let ModelSz = Dim.Named "ModelSz" 10
-        let coeffs = DT.Dummy (Shape [ ModelSz ])
-        let xs = DT.Dummy (Shape [ DataSz; ModelSz ])
-        let y = DT.Dummy (Shape [ DataSz ])
+        let coeffs = DT.dummy_input (Shape [ ModelSz ])
+        let xs = DT.dummy_input (Shape [ DataSz; ModelSz ])
+        let y = DT.dummy_input (Shape [ DataSz ])
         train coeffs (xs, y) 1  |> Seq.last
 
     let initialCoeffs = vec [ for i in 0 .. modelSize - 1 -> rnd.NextDouble()  * double modelSize ]
@@ -224,7 +223,7 @@ module ODEs =
         let α, β, δ, γ = p.[0], p.[1], p.[2], p.[3]
         let dx = α*x - β*x*y
         let dy = -δ*y + γ*x*y 
-        DT.Pack [dx; dy]
+        DT.pack [dx; dy]
 
     let u0 = vec [1.0; 1.0]
     let tspan = (0.0, 10.0)
@@ -243,9 +242,9 @@ module GradientDescentPreprocessed =
     // Gradient descent
     let step f xs =   
         // Evaluate to output values 
-        xs - v rate * DT.diff f xs
+        xs - v rate * fm.diff f xs
     
-    let stepC f inputShape = DT.Preprocess (step f, inputShape)
+    let stepC f inputShape = DT.precompile (step f, inputShape)
 
     let trainC f inputShape = 
         let stepC = stepC f inputShape
@@ -273,22 +272,22 @@ module GradientDescentExamplePreprocessed =
 module NeuralTransferFragments =
 
     let instance_norm (input, name) =
-        use __ = DT.WithScope(name + "/instance_norm")
-        let mu, sigma_sq = DT.Moments (input, axes=[0;1])
-        let shift = DT.Variable (v 0.0, name + "/shift")
-        let scale = DT.Variable (v 1.0, name + "/scale")
+        use __ = DT.with_scope(name + "/instance_norm")
+        let mu, sigma_sq = DT.moments (input, axes=[0;1])
+        let shift = DT.variable (v 0.0, name + "/shift")
+        let scale = DT.variable (v 1.0, name + "/scale")
         let epsilon = v 0.001
         let normalized = (input - mu) / sqrt (sigma_sq + epsilon)
         normalized * scale + shift 
 
     let conv_layer (out_channels, filter_size, stride, name) input = 
-        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights")
-        let x = DT.Conv2D (input, filters, out_channels, filter_size=filter_size, stride=stride)
+        let filters = variable (DT.truncated_normal() * v 0.1) (name + "/weights")
+        let x = DT.conv2d (input, filters, out_channels, filter_size=filter_size, stride=stride)
         instance_norm (x, name)
 
     let conv_transpose_layer (out_channels, filter_size, stride, name) input =
-        let filters = variable (DT.TruncatedNormal() * v 0.1) (name + "/weights")
-        let x = DT.Conv2DBackpropInput(filters, input, out_channels, filter_size=filter_size, stride=stride, padding="SAME")
+        let filters = variable (DT.truncated_normal() * v 0.1) (name + "/weights")
+        let x = DT.conv2d_backprop(filters, input, out_channels, filter_size=filter_size, stride=stride, padding="SAME")
         instance_norm (x, name)
 
     let to_pixel_value (input: DT<double>) = 
@@ -300,7 +299,7 @@ module NeuralTransferFragments =
         input + tmp2 
 
     let clip min max x = 
-       DT.ClipByValue (x, v min, v max)
+       DT.clip_by_value (x, v min, v max)
 
     // The style-transfer neural network
     let style_transfer input = 
@@ -318,11 +317,11 @@ module NeuralTransferFragments =
         |> conv_layer (3, 9, 1, "conv_t3")
         |> to_pixel_value
         |> clip 0.0 255.0
-        |> DT.Eval 
+        |> fm.eval 
 
     [<LiveCheck>]
     let check1() = 
-        let dummyImages = DT.Dummy (Shape [ Dim.Named "BatchSz" 10; Dim.Named "H" 474;  Dim.Named "W" 712; Dim.Named "Channels" 3 ])
+        let dummyImages = DT.dummy_input (Shape [ Dim.Named "BatchSz" 10; Dim.Named "H" 474;  Dim.Named "W" 712; Dim.Named "Channels" 3 ])
         style_transfer dummyImages
     
     do
