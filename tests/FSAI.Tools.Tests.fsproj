@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="LibTorch.Redist" Version="0.2.0-preview-27915-4" />
-    <PackageReference Include="SciSharp.TensorFlow.Redist" Version="1.14.1" />
+    <PackageReference Include="SciSharp.TensorFlow.Redist" Version="1.15.0" />
     <PackageReference Include="SharpZipLib" Version="1.1.0" />
     <PackageReference Include="System.Memory" Version="4.5.3" />
     <PackageReference Include="Torch.NET" Version="3.7.1.1" />

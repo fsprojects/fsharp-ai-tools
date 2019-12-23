@@ -9,10 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NumSharp" Version="0.20.0" />
+    <PackageReference Include="NumSharp" Version="0.20.4" />
     <PackageReference Include="Markeli.Half" Version="1.0.0" />
     <PackageReference Include="Ionic.Zlib.Core" Version="1.0.0" />
-    <PackageReference Include="TensorFlow.NET" Version="0.11.0" />
+    <PackageReference Include="TensorFlow.NET" Version="0.13.0" />
     <PackageReference Update="FSharp.Core" Version="4.6.2" />
   </ItemGroup>
 

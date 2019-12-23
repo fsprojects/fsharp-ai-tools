@@ -101,7 +101,7 @@ type gen_ops with
 
 //    // Helper method to create a variable and track it.
 //    member graph.MakeVariable (initialValue : TFOutput, trainable : bool, ?name : string) : TFVariable =
-//        use newScope = graph.NameScope(name, "Variable", initialValue)
+//        use newScope = graph.NameScope(name, "variable", initialValue)
 //        let dtype = initialValue.TFDataType
 //        let shape = graph.GetShape (initialValue)
 //        let variableHandle = graph.VarHandleOp (dtype, shape)
@@ -115,24 +115,24 @@ type gen_ops with
 //        nv
 
     /// <summary>
-    /// Variable node, with a starting initial value.
+    /// variable node, with a starting initial value.
     /// </summary>
     /// <param name="initialValue">Initial value.</param>
     /// <param name="trainable">If true, this add the variable to the graph's TrainableVariables, this collection is intended to be used by the Optimizer classes.</param>
     /// <param name="name">Operation name, optional.</param>
-    /// <returns>The returning Variable contains the variable, with three nodes with the operations making up the variable assignment.</returns>
+    /// <returns>The returning variable contains the variable, with three nodes with the operations making up the variable assignment.</returns>
     /// <remarks>
     /// Variables need to be initialized before the main execution so you will typically want to
     /// run the session on the variable
     /// </remarks>
-//    member graph.Variable (initialValue : TFOutput, ?trainable : bool, ?name : string) =
+//    member graph.variable (initialValue : TFOutput, ?trainable : bool, ?name : string) =
 //        let trainable = defaultArg trainable true
 //        graph.MakeVariable (initialValue, trainable, ?name=name)
 
     /// <summary>
     /// Registers a specified variable as an initialization variable.
     /// </summary>
-    /// <param name="variable">Variable to register.</param>
+    /// <param name="variable">variable to register.</param>
     /// <remarks>
     /// <para>
     /// This is a convenience method to track the variables that need to be initialized in the graph,
@@ -232,7 +232,7 @@ type gen_ops with
     /// <returns>A clipped <see cref="Output">tensor</see>.</returns>
     member graph.ClipByValue2 (x : TFOutput, clip_value_min : TFOutput, clip_value_max : TFOutput, ?name : string) =
         // https://github.com/tensorflow/tensorflow/blob/r1.2/tensorflow/python/ops/clip_ops.py#L33
-        use newScope = graph.NameScope (name, "ClipByValue", x, clip_value_min, clip_value_max)
+        use newScope = graph.NameScope (name, "clip_by_value", x, clip_value_min, clip_value_max)
         // Go through list of tensors, for each value in each tensor clip
         let t_min = graph.Minimum (x, clip_value_max)
         let t_max = graph.Maximum (t_min, clip_value_min, ?name = name)
@@ -539,7 +539,7 @@ type gen_ops with
         let tmean = graph.Const(new TFTensor(mean), "mean")
         let tstddev = graph.Const(new TFTensor(stddev), "stddev")
         let graphSeed, localSeed = graph.GetRandomSeeds(?operationSeed=seed)
-        let rnd = graph.TruncatedNormal(shapeTensor, TFDataType.Float32, int64 graphSeed, int64 localSeed)
+        let rnd = graph.truncated_normal(shapeTensor, TFDataType.Float32, int64 graphSeed, int64 localSeed)
         let mul = graph.Mul(rnd, tstddev)
         graph.Add(mul, tmean,name= string ns)
 

@@ -23,11 +23,11 @@ let tf = Tensorflow.Binding.tf
 
 let sess = new Session()
 let weights = Utils.fetchStyleWeights("rain")
-let input_data = tf.placeholder(TF_DataType.TF_STRING)
-let input_img = TF.VGGStyleTransfer.binaryJPGToImage(input_data)
-let output = TF.VGGStyleTransfer.model(input_img,weights)
-let img_tf = NDArray(File.ReadAllBytes(Path.Combine(Utils.basePath,"images","chicago.jpg")))
-let styled_img = sess.run(output,FeedItem(input_data,img_tf)) 
+let input_data = tf.placeholder(TF_DataType.TF_FLOAT)
+let output = TF.VGGStyleTransfer.model(input_data,weights)
+let input_path = Path.Combine(Utils.basePath,"images","chicago.jpg")
+let input_img = TF.VGGStyleTransfer.binaryJPGToImage(input_path)
+let styled_img = sess.run(output,FeedItem(input_data,input_img)) 
 File.WriteAllBytes(Path.Combine(Utils.basePath,"images","chicago_rain.png"),styled_img |> ndarrayToPNG_NHWC)
 
 

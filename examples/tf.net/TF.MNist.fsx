@@ -18,7 +18,7 @@
 
 // TODO needs better random initializers that draw from a normal
 // TODO tf.get_variable is not implemented
-// TODO get_gradient_function Conv2D is not implemented
+// TODO get_gradient_function conv2d is not implemented
 // TODO implement dropout to improve accuracy
 
 open System
@@ -54,29 +54,29 @@ let getRandom(shape:int[]) =
     np.random.randn(shape).astype(typeof<single>)
 
 let basicModel(x): Tensor = 
-    let W = tf.Variable(getRandom([|784; 128|]), name = "weight")
-    let b = tf.Variable(getRandom([|128|]), name = "bias", dtype = TF_DataType.TF_FLOAT)
+    let W = tf.variable(getRandom([|784; 128|]), name = "weight")
+    let b = tf.variable(getRandom([|128|]), name = "bias", dtype = TF_DataType.TF_FLOAT)
     let x =  gen_ops.relu(tf.matmul(x, (W._AsTensor())) + (b._AsTensor()))
-    let W1 = tf.Variable(getRandom([|128; 48|]), name = "bias1")
-    let b1 = tf.Variable(getRandom([|48|]), name = "weight1", dtype = TF_DataType.TF_FLOAT)
+    let W1 = tf.variable(getRandom([|128; 48|]), name = "bias1")
+    let b1 = tf.variable(getRandom([|48|]), name = "weight1", dtype = TF_DataType.TF_FLOAT)
     let x =  gen_ops.relu(tf.matmul(x, (W1._AsTensor())) + (b1._AsTensor()))
-    let W2 = tf.Variable(getRandom([|48; 10|]), name = "weight2")
-    let b2 = tf.Variable(getRandom([|10|]), name = "bias2", dtype = TF_DataType.TF_FLOAT)
+    let W2 = tf.variable(getRandom([|48; 10|]), name = "weight2")
+    let b2 = tf.variable(getRandom([|10|]), name = "bias2", dtype = TF_DataType.TF_FLOAT)
     tf.sigmoid(tf.matmul(x, (W2._AsTensor())) + (b2._AsTensor()))
 
 // NHWC
 let cnnModel(xtr): Tensor= 
     let x = gen_ops.reshape(xtr, tf.constant([|-1; 28; 28; 1|]))
-    let c1f = tf.Variable(getRandom([|5; 5; 1; 32|]), name = "c1f")
+    let c1f = tf.variable(getRandom([|5; 5; 1; 32|]), name = "c1f")
     let x = gen_ops.relu(gen_ops.conv2d(x, c1f._AsTensor(), [|1; 2; 2; 1|], "SAME", data_format="NHWC"))
-    let c2f = tf.Variable(getRandom([|5; 5; 32; 64|]), name = "c2f")
+    let c2f = tf.variable(getRandom([|5; 5; 32; 64|]), name = "c2f")
     let x = gen_ops.relu(gen_ops.conv2d(x, c2f._AsTensor(), [|1; 2; 2; 1|], "SAME", data_format="NHWC"))
     let x = tf.reshape(x, [|-1; 7*7*64|])
-    let W = tf.Variable(getRandom([|7*7*64; 1024|]), name = "weight1")
-    let b = tf.Variable(getRandom([|1024|]), name = "bias1")
+    let W = tf.variable(getRandom([|7*7*64; 1024|]), name = "weight1")
+    let b = tf.variable(getRandom([|1024|]), name = "bias1")
     let x = gen_ops.relu(tf.matmul(x, (W._AsTensor())) + (b._AsTensor()))
-    let W = tf.Variable(getRandom([|1024; 10|]), name = "weight2")
-    let b = tf.Variable(getRandom([|10|]), name = "bias2")
+    let W = tf.variable(getRandom([|1024; 10|]), name = "weight2")
+    let b = tf.variable(getRandom([|10|]), name = "bias2")
     gen_ops.relu(tf.matmul(x, (W._AsTensor())) + (b._AsTensor()))
 
 

@@ -1,0 +1,97 @@
+{
+    "conventions": {
+        "naming": {
+            "interfaceNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny",
+                    "prefix": "I"
+                }
+            },
+            "exceptionNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny",
+                    "suffix": "Exception"
+                }
+            },
+            "typeNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            },
+            "recordFieldNames": { 
+              "enabled": false,
+              "config":  {
+                "underscores": "AllowAny"
+              }},
+            "enumCasesNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            },
+            "unionCasesNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            },
+            "moduleNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            },
+            "literalNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            },
+            "namespaceNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            },
+            "memberNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            },
+            "parameterNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            },
+            "measureTypeNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            },
+            "activePatternNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            },
+            "publicValuesNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            },
+            "nonPublicValuesNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            }
+        }
+    }
+}
