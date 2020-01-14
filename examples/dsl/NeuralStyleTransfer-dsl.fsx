@@ -28,7 +28,9 @@ open System
 open System.IO
 open FSAI.Tools
 open FSAI.Tools.FM
-open NPYReaderWriter
+open Tensorflow
+
+type np = NumSharp.np
 
 (**markdown
 Check the process is 64-bit.  
@@ -128,13 +130,14 @@ module NeuralStyles =
 Read the weights map
 *)
 
-let readWeights weightsFile = 
-    let npz = readFromNPZ (File.ReadAllBytes weightsFile)
-    [| for KeyValue(k,(metadata, arr)) in npz do
-            let shape = Shape.Known metadata.shape 
-            let name = k.[0..k.Length-5]
-            let value = fm.constant_array (arr, shape=shape) |> fm.cast<double> :> DT
-            yield (name, value) |]
+
+let readWeights (weightsFile : string) = 
+    [| 
+        for KeyValue(k,v) in np.Load_Npz<Array>(File.ReadAllBytes(weightsFile)) do
+            let shape = Shape([| for i in 0 .. v.Rank - 1-> v.GetLength(i) |])
+            yield (k.[0..k.Length-5], fm.constant_array(v, shape = shape) |> fm.cast<double> :> DT) 
+    |] 
+
 
 (**markdown
 For convenience we add an entry point for one image
@@ -162,7 +165,13 @@ let runModel (modelForStyle, styleName) imageName =
     //printfn "processing image %s in style %s" imageName styleName
     let inputBytes = readImage imageName
     let image = modelForStyle inputBytes |> fm.cast<uint8> |> fm.toArray3D
-    let png = image  |> ImageWriter.arrayToPNG_HWC 
+    let arrayToPNG( xs : uint8[,,]) = 
+        let tf = Tensorflow.Binding.tf
+        use sess = tf.Session()
+        let y = tf.placeholder(dtype = TF_DataType.TF_UINT8)
+        let jpg = Tensorflow.Operations.gen_ops.encode_png(tf.cast(y,dtype=TF_DataType.TF_UINT8))
+        sess.run(jpg, [|FeedItem(y,NumSharp.NDArray(xs))|]).ToByteArray()
+    let png = image  |> arrayToPNG
     let outfile = Path.Combine(__SOURCE_DIRECTORY__, sprintf "%s_in_%s_style2.png" imageName styleName)
     File.WriteAllBytes(outfile, png)
 

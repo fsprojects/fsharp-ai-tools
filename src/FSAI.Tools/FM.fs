@@ -6,11 +6,26 @@ open System.Collections.Generic
 open Tensorflow
 open NumSharp
 open System.Numerics
-open FSAI.Tools.NNImpl
 
 [<AutoOpen>]
 module internal Binding = 
     let tf = Tensorflow.Binding.tf
+
+    type Tensorflow.Operations.gen_ops with
+
+        static member reduce_dims(input: Tensor, ?axis: Tensor) =
+            match axis with
+            | Some axis -> axis
+            | None ->
+                // Fast path: avoid creating Rank and Range ops if ndims is known.
+                let shape = input.TensorShape
+                if shape.is_fully_defined() then
+                    // NOTE: The python code distinguishes between tensor and sparsetensor
+                    tf.constant([|0 .. shape.size - 1|], TF_DataType.TF_INT32)
+                else
+                    // Otherwise, we rely on Range and Rank to do the right thing at run-time.
+                    Tensorflow.Operations.gen_ops.range(tf.constant(0), Tensorflow.Operations.gen_ops.rank (input), tf.constant(1))
+
     //let mutable invocation = 0
     //let mutable indent = ""
     //let enter msg = 
@@ -31,6 +46,7 @@ type TFGraph = Graph
 type TFOutput = Tensorflow.Tensor
 
 type ops = Tensorflow.Operations.gen_ops
+
 
 [<AutoOpen>]
 module LiveChecking = 
