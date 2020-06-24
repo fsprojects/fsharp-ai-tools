@@ -21,7 +21,6 @@
     <None Include="onnx_code_gen.py" />
     <None Include="onnx_schema.proto3" />
     <None Include="SetupNotes.md" />
-    <None Include="CodeGen.fsx" />
   </ItemGroup>
 
   <ItemGroup>
