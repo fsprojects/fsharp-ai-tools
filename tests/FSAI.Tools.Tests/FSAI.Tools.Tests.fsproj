@@ -37,12 +37,12 @@
     <Compile Include="TF.ResNet50Classifier.fs" />
     <Compile Include="TF.Tests.fs" />
     <Compile Include="DSL.Tests.fs" />
-    <Compile Include="..\examples\tf.net\ImageClassifier.fsx" />
-    <Compile Include="..\examples\tf.net\NeuralStyleTransfer.fsx" />
-    <Compile Include="..\examples\dsl\NeuralStyleTransfer-dsl.fsx" />
-    <Compile Include="..\examples\dsl\dsl-live.fsx" />
-    <None Include="..\examples\tf.net\TorchSharp.MNist.fsx" />
-    <None Include="..\examples\tf.net\TF.MNist.fsx" />
+    <Compile Include="..\..\examples\tf.net\ImageClassifier.fsx" />
+    <Compile Include="..\..\examples\tf.net\NeuralStyleTransfer.fsx" />
+    <Compile Include="..\..\examples\dsl\NeuralStyleTransfer-dsl.fsx" />
+    <Compile Include="..\..\examples\dsl\dsl-live.fsx" />
+    <None Include="..\..\examples\tf.net\TorchSharp.MNist.fsx" />
+    <None Include="..\..\examples\tf.net\TF.MNist.fsx" />
   </ItemGroup>
   <Target Name="Debug">
     <Message Importance="High" Text="Hello World" />
@@ -58,9 +58,6 @@
       <Message Text="Project Extension = $(MSBuildProjectExtension)" Importance="high" />
    
   </Target>
- <ItemGroup>
-    <ProjectReference Include="..\src\FSAI.Tools\FSAI.Tools.fsproj" />
-  </ItemGroup>
 
   <ItemGroup Condition=" '$(OS)' == 'Windows_NT' ">
     <Content Include="$(NuGetPackageRoot)torchsharp\0.2.0-preview-27915-4\runtimes\win-x64\native\LibTorchSharp.dll" Condition="'$(PlatformTarget)' == 'x64'">
@@ -112,5 +109,8 @@
       <Visible>false</Visible>
       <Link>%(Filename)%(Extension)</Link>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FSAI.Tools\FSAI.Tools.fsproj" />
   </ItemGroup>
 </Project>

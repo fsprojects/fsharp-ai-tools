@@ -3,9 +3,10 @@ namespace FSAI.Tools.FM
 open System
 open System.Reflection
 open System.Collections.Generic
-open Tensorflow
-open NumSharp
 open System.Numerics
+open Tensorflow
+open Tensorflow.Operations
+open NumSharp
 
 [<AutoOpen>]
 module internal Binding = 
@@ -41,11 +42,6 @@ module internal Binding =
 
 #nowarn "9"
 
-type TFGraph = Graph
-
-type TFOutput = Tensorflow.Tensor
-
-type ops = Tensorflow.Operations.gen_ops
 
 
 [<AutoOpen>]
@@ -215,11 +211,11 @@ type Dim =
         | Some value -> value
         | None -> failwith "the value for the dimension could not be inferred"
 
-    member internal dim.AsTFNode(subst: IDictionary<InferenceVar<Dim>, (bool * TFOutput)>) = 
+    member internal dim.AsTFNode(subst: IDictionary<InferenceVar<Dim>, (bool * Tensor)>) = 
         let rec loop (d: Dim) = 
             match d.StripSolutions() with 
             | DimMulInt (dim2, n) -> tf.multiply(loop dim2, tf.constant(n))
-            | DimDivInt (dim2, n) -> ops.floor_div(ops.add(loop dim2, tf.constant(n-1)), tf.constant(n))
+            | DimDivInt (dim2, n) -> tf.floordiv(gen_ops.add(loop dim2, tf.constant(n-1)), tf.constant(n))
             //| DimDivInt (dim2, n) -> tf.divide(tf.add(loop dim2, tf.constant(n-1)), tf.constant(n))
             | DimKnown n -> tf.constant(n)
 
@@ -447,7 +443,7 @@ type Shape internal (flex: InferenceVar<Shape> option, suffix: Dim[]) =
         Shape.NoFlex [| for dim in dims -> dim.Subst(subst) |]
 
     /// Get the shape as a TensorFlow node
-    member internal shape.AsTFNode(subst: IDictionary<InferenceVar<Dim>, (bool * TFOutput)>) = 
+    member internal shape.AsTFNode(subst: IDictionary<InferenceVar<Dim>, (bool * Tensor)>) = 
         if shape.IsSolved then 
             tf.constant(shape.AsTFShape().dims) // NOTE: we're assuming tf.constant can handle shapes
         else
@@ -456,7 +452,7 @@ type Shape internal (flex: InferenceVar<Shape> option, suffix: Dim[]) =
                 tf.constant(shape.AsTFShape().dims) // NOTE: we're assuming tf.constant can handle shapes
             else
                 let dimExprs = [| for dim in dims -> dim.AsTFNode(subst) |]
-                ops.pack dimExprs
+                gen_ops.pack dimExprs
 
     /// Copy the shape returning a map of old variables to new.  The new shape is then unified against another shape, giving a solution for those variables
     member internal shape.Match(shape2) = 
@@ -641,30 +637,39 @@ type internal WithScopeDisposable(name:string) =
 
 /// Represents a context for turning DT into a TensorFlow graph
 type internal  TFCtxt = 
-    { Graph: TFGraph 
+    { Graph: Graph 
       
       // The tensor expressions for inferred shape dimensions
-      DimVarNodes: Dictionary<InferenceVar<Dim>, (bool * TFOutput)>
+      DimVarNodes: Dictionary<InferenceVar<Dim>, (bool * Tensor)>
       
       // Ensure unique nodes from unique DT values
-      Nodes: Dictionary<obj, TFOutput * bool> 
+      Nodes: Dictionary<obj, Tensor * bool> 
 
       // Ensure unique nodes from unique DT values for linked moment nodes
-      MomentNodes: Dictionary<DT, TFOutput * TFOutput> 
+      MomentNodes: Dictionary<DT, Tensor * Tensor> 
 
       // Ensure unique nodes from unique DT values for linked AddGradient nodes
-      AddGradientNodes: Dictionary<DT * DT[] * DT option, TFOutput[]>
+      AddGradientNodes: Dictionary<DT * DT[] * DT option, Tensor[]>
 
       // The values to use for variable nodes on pretrained models
       Values: Map<string, DT> }
 
 /// Represents a differentiable tensor value, which later corresponds to a node in a TensorFlow graph
 and DT internal (shape: Shape, nodeCount: int, 
-                 makeNode: (TFCtxt * bool -> TFOutput * bool), 
+                 makeNode: (TFCtxt * bool -> Tensor * bool), 
                  asNDArray: (unit -> NDArray) option) = 
 
+#if SLICE_GRAD
+    // See https://github.com/SciSharp/TensorFlow.NET/issues/463
+    // Laziness is to workaround https://github.com/SciSharp/TensorFlow.NET/issues/464
+    static let _init =
+       lazy
+          ops.RegisterGradientFunction("Slice", fun op ins -> DT._SliceGrad(op, ins))
+    static member _Init = _init
+#endif
+
     /// Used for operations that can produce a shape that doesn'T need broadcasting
-    static member internal ProducesCorrectShape f (ctxt:TFCtxt, _canProduceSmallerShape: bool): TFOutput * bool =
+    static member internal ProducesCorrectShape f (ctxt:TFCtxt, _canProduceSmallerShape: bool): Tensor * bool =
         f ctxt, false
 
     /// Used for operations that can produce a smaller shape and may need broadcasting
@@ -673,7 +678,7 @@ and DT internal (shape: Shape, nodeCount: int,
         let insertBroadcast  = not canProduceSmallerShape && prelimOutputHasSmallerShape
         let outputNode = 
             if insertBroadcast then 
-                ops.broadcast_to(prelimOutputNode, outputShape.AsTFNode(ctxt.DimVarNodes))
+                gen_ops.broadcast_to(prelimOutputNode, outputShape.AsTFNode(ctxt.DimVarNodes))
             else
                 prelimOutputNode
         let outputHasSmallerShape = canProduceSmallerShape && prelimOutputHasSmallerShape
@@ -715,7 +720,7 @@ and DT internal (shape: Shape, nodeCount: int,
             nodeCount, 
             DT.ProducesCorrectShape (fun ctxt -> 
                 //use _holder = enter "placeholder - makeNode" 
-                ops.placeholder(TF_DataType.FromType ty (* , shape.AsTFShape() *))), 
+                tf.placeholder(TF_DataType.FromType ty (* , shape.AsTFShape() *))), 
             None
         let args = [| box arg1; box arg2; box arg3; box arg4 |]
 
@@ -762,7 +767,7 @@ and DT internal (shape: Shape, nodeCount: int,
 and [<Sealed>] DT<'T> internal
          (shape: Shape, 
           nodeCount: int, 
-          eval: (TFCtxt * bool -> TFOutput * bool), 
+          eval: (TFCtxt * bool -> Tensor * bool), 
           ?asNDArray: (unit -> NDArray)) =
 
     inherit DT(shape, nodeCount, eval, asNDArray)
@@ -791,7 +796,7 @@ and [<Sealed>] DT<'T> internal
                    let prelimOutputHasSmallerShape = inputHasSmallerShape1 && inputHasSmallerShape2
                    prelimOutputNode, prelimOutputHasSmallerShape))
 
-    static member inline internal ReduceOp keep_dims (axis: int[] option) (input: DT<'T>) (f: TFCtxt -> int[] option -> TFOutput-> TFOutput): DT<'T> = 
+    static member inline internal ReduceOp keep_dims (axis: int[] option) (input: DT<'T>) (f: TFCtxt -> int[] option -> Tensor-> Tensor): DT<'T> = 
         let outputShape = 
             match keep_dims, axis with
             | Some true, _ -> input.Shape 
@@ -820,16 +825,16 @@ and [<Sealed>] DT<'T> internal
                 DT.ProducesCorrectShape (fun ctxt -> 
                     //use _holder = enter "addn - makeNode" 
                     let inputNodes = DT.MakeNodesOfCorrectShape (ctxt, inputs)
-                    ops.add_n(inputNodes)))
+                    tf.add_n(inputNodes)))
 
     /// Pointwise negation
     static member ( ~- ) (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.neg node) input
+        DT.Unop (fun graph node -> gen_ops.neg node) input
 
     /// Pointwise addition
     static member (+) (input1: DT<'T>, input2: DT<'T>): DT<'T> = 
         // TODO: should this be AddV2
-        DT.Binop "(+)" (fun graph node1 node2 -> ops.add(node1, node2)) (+) input1 input2
+        DT.Binop "(+)" (fun graph node1 node2 -> gen_ops.add(node1, node2)) (+) input1 input2
 
     ///// Pointwise addition with implicit lift to broadcastable tensor
     //static member (+) (input1: DT<double>, input2: double): DT<double> = 
@@ -849,7 +854,7 @@ and [<Sealed>] DT<'T> internal
 
     /// Pointwise subtraction
     static member (-) (input1: DT<'T>, input2: DT<'T>): DT<'T> = 
-        DT.Binop "(-)" (fun graph node1 node2 -> ops.sub(node1, node2)) (-) input1 input2
+        DT.Binop "(-)" (fun graph node1 node2 -> gen_ops.sub(node1, node2)) (-) input1 input2
 
     ///// Pointwise subtraction with implicit lift to broadcastable tensor
     //static member (-) (input1: DT<double>, input2: double): DT<double> = 
@@ -869,7 +874,7 @@ and [<Sealed>] DT<'T> internal
 
     /// Pointwise multiplication
     static member (*) (input1: DT<'T>, input2: DT<'T>): DT<'T> = 
-        DT.Binop "(*)" (fun graph node1 node2 -> ops.mul(node1, node2)) ( * ) input1 input2
+        DT.Binop "(*)" (fun graph node1 node2 -> gen_ops.mul(node1, node2)) ( * ) input1 input2
 
     ///// Pointwise multiplication with implicit lift to broadcastable tensor
     //static member (*) (input1: DT<double>, input2: double): DT<double> = 
@@ -889,7 +894,7 @@ and [<Sealed>] DT<'T> internal
 
     /// Pointwise division
     static member (/) (input1: DT<'T>, input2: DT<'T>): DT<'T> = 
-        DT.Binop "(/)" (fun graph node1 node2 -> ops.div(node1, node2)) (/) input1 input2
+        DT.Binop "(/)" (fun graph node1 node2 -> tf.div(node1, node2)) (/) input1 input2
 
     ///// Pointwise division with implicit lift to broadcastable tensor
     //static member (/) (input1: DT<double>, input2: double): DT<double> = 
@@ -911,63 +916,59 @@ and [<Sealed>] DT<'T> internal
                     //use _holder = enter "*! - makeNode" 
                     let inputNode1 = input1.MakeNodeOfCorrectShape(ctxt)
                     let inputNode2 = input2.MakeNodeOfCorrectShape(ctxt)
-                    ops.mat_mul(inputNode1, inputNode2)))
+                    tf.matmul(inputNode1, inputNode2)))
 
     /// Pointwise absolute-value
     static member Abs (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.abs node) input
+        DT.Unop (fun graph node -> tf.abs node) input
 
     /// Pointwise arc-cosine
     static member Acos (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.acos node) input
-
-    /// Pointwise hyperbolic arc-cosine
-    static member Acosh (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.acosh node) input
+        DT.Unop (fun graph node -> tf.acos node) input
 
     /// Pointwise arc-sine
     static member Asin (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.asin node) input
+        DT.Unop (fun graph node -> tf.asin node) input
 
     /// Pointwise cosine
     static member Cos (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.cos node) input
+        DT.Unop (fun graph node -> tf.cos node) input
 
     /// Pointwise hyperbolic cosine
     static member Cosh (input: DT<'T>): DT<'T> =  
-        DT.Unop (fun graph node -> ops.cosh node) input
+        DT.Unop (fun graph node -> tf.cosh node) input
 
     /// Pointwise sine
     static member sin (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.sin node) input
+        DT.Unop (fun graph node -> tf.sin node) input
 
     /// Pointwise hyperbolic sine
     static member Sinh (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.sinh node) input
+        DT.Unop (fun graph node -> tf.sinh node) input
 
     /// Pointwise sqrt
     static member Sqrt (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.sqrt node) input
+        DT.Unop (fun graph node -> tf.sqrt node) input
 
     /// Pointwise square
     static member square (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.square node) input
+        DT.Unop (fun graph node -> tf.square node) input
 
     /// Pointwise exponential
     static member Exp (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.exp node) input
+        DT.Unop (fun graph node -> tf.exp node) input
 
     /// Pointwise relu
     static member relu(input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.relu node) input
+        DT.Unop (fun graph node -> tf.nn.relu node) input
 
     /// Pointwise tangent 
     static member Tan (input: DT<'T>): DT<'T> = 
-        DT.Unop (fun graph node -> ops.tan node) input
+        DT.Unop (fun graph node -> tf.tan node) input
 
     /// Pointwise hyperbolic tangent
     static member Tanh (input: DT<'T>): DT<'T> =  
-        DT.Unop (fun graph node -> ops.tanh node) input
+        DT.Unop (fun graph node -> tf.tanh node) input
 
     /// Sum along a particular axis. The default axis is zero.
     static member sum (v: DT<'T>, ?axis: int[], ?keep_dims: bool): DT<'T> = 
@@ -987,22 +988,22 @@ and [<Sealed>] DT<'T> internal
             (fun ctxt axis vnode -> 
               //use _holder = enter "Mean - makeNode" 
               match axis,keep_dims with
-              | Some(axis),Some(keep_dims) -> math_ops.reduce_mean(vnode, axis=axis,keepdims=keep_dims)
+              | Some(axis),Some(keep_dims) -> math_ops.reduce_mean(vnode, axis=axis, keepdims=keep_dims)
               | Some(axis),None -> math_ops.reduce_mean(vnode, axis=axis)
-              | None,Some(keep_dims) -> math_ops.reduce_mean(vnode, keepdims=keep_dims)
-              | None,None -> math_ops.reduce_mean(vnode)
+              | None,Some(keep_dims) -> tf.reduce_mean(vnode, keepdims=keep_dims)
+              | None,None -> tf.reduce_mean(vnode)
               ) 
 
     /// Take a product along a particular axis. The default axis is zero.
     static member prod (v: DT<'T>, ?axis: int[], ?keep_dims: bool): DT<'T> = 
         DT.ReduceOp keep_dims axis v 
-            (fun ctxt (axis: int[] option) vnode -> 
+            (fun ctxt axis vnode -> 
               //use _holder = enter "Prod - makeNode" 
               match axis,keep_dims with
               | Some(axis),Some(keep_dims) -> math_ops.reduce_prod(vnode, axis=axis,keepdims=keep_dims)
               | Some(axis),None -> math_ops.reduce_prod(vnode, axis=axis)
-              | None,Some(keep_dims) -> math_ops.reduce_prod(vnode, keepdims=keep_dims)
-              | None,None -> math_ops.reduce_prod(vnode)
+              | None,Some(keep_dims) -> tf.reduce_prod(vnode, keepdims=keep_dims)
+              | None,None -> tf.reduce_prod(vnode)
               ) 
 
     /// Take a minimum across all values in the tensor.
@@ -1014,8 +1015,8 @@ and [<Sealed>] DT<'T> internal
                DT.ProducesCorrectShape (fun ctxt -> 
                    //use _holder = enter "Min - makeNode" 
                    let inputNode = input.MakeNodeOfCorrectShape(ctxt)
-                   let reduce_dims = ops.reduce_dims(inputNode)
-                   ops.min(inputNode, reduce_dims, keep_dims= (keep_dims |> Option.toNullable))))
+                   let reduce_dims = gen_ops.reduce_dims(inputNode)
+                   gen_ops.min(inputNode, reduce_dims, keep_dims= (keep_dims |> Option.toNullable))))
 
     /// Take a maximum across all values in the tensor
     static member max (input: DT<'T>, ?keep_dims: bool): DT<'T> = 
@@ -1026,7 +1027,8 @@ and [<Sealed>] DT<'T> internal
                DT.ProducesCorrectShape (fun ctxt -> 
                    //use _holder = enter "Max - makeNode" 
                    let inputNode = input.MakeNodeOfCorrectShape(ctxt)
-                   ops.max(inputNode, ops.reduce_dims(inputNode), keep_dims= (keep_dims |> Option.toNullable))))
+                   let reduce_dims = gen_ops.reduce_dims(inputNode)
+                   gen_ops.max(inputNode, reduce_dims, keep_dims= (keep_dims |> Option.toNullable))))
 
     // TODO: take the dimension along which to reverse
     static member reverse (input: DT<'T>): DT<'T> = 
@@ -1037,7 +1039,7 @@ and [<Sealed>] DT<'T> internal
                     //use _holder = enter "Reverse - makeNode" 
                    // TODO: can we propagate canProduceSmallerShape here?
                     let inputNode = input.MakeNodeOfCorrectShape(ctxt)
-                    ops.reverse_v2(inputNode, tf.constant([|0|]))))
+                    gen_ops.reverse_v2(inputNode, tf.constant([|0|]))))
 
     static member diag_part (input: DT<'T>): DT<'T> = 
         let dims = input.Shape.DimensionsEliminatingFlex
@@ -1051,7 +1053,7 @@ and [<Sealed>] DT<'T> internal
                DT.ProducesCorrectShape (fun ctxt -> 
                     //use _holder = enter "DiagPart - makeNode" 
                     let inputNode = input.MakeNodeOfCorrectShape(ctxt)
-                    ops.diag_part(inputNode)))
+                    gen_ops.diag_part(inputNode)))
 
     static member norm (v: DT<'T>, ?axis, ?keep_dims: bool): DT<'T> = 
         DT.Sqrt(DT.sum(v * v, ?axis=axis, ?keep_dims= keep_dims))
@@ -1066,7 +1068,7 @@ and [<Sealed>] DT<'T> internal
             //use _holder = enter "truncated_normal - makeNode"
             let graph = ctxt.Graph 
             let shapeNode = shape.AsTFNode(ctxt.DimVarNodes)
-            let outputNode = ops.truncated_normal(shapeNode, TF_DataType.FromType typeof<'T>)
+            let outputNode = gen_ops.truncated_normal(shapeNode, TF_DataType.FromType typeof<'T>)
             outputNode, false)
 
     member input.rank = input.Shape.Rank
@@ -1099,9 +1101,24 @@ and [<Sealed>] DT<'T> internal
                DT.ProducesCorrectShape (fun ctxt -> 
                     //use _holder = enter "Slice - makeNode" 
                     let inputNode = input.MakeNodeOfCorrectShape(ctxt)
-                    ops.slice(inputNode, tf.constant(_begin), tf.constant(size))))
+                    gen_ops.slice(inputNode, tf.constant(_begin), tf.constant(size))))
 
-    member input.Squeeze (squeeze_dims: int[]): DT<'T> = 
+#if SLICE_GRAD
+    // Not working, see https://github.com/SciSharp/TensorFlow.NET/issues/463
+    static member _SliceGrad(op: Operation, grad: Tensor[]) =
+        let input_vec = op.inputs.[0]
+        let begin_vec = op.inputs.[1]
+        let input_rank = array_ops.rank(input_vec)
+        let slice_size = array_ops.shape(op.outputs.[0])
+
+        let shape = array_ops.stack [| input_rank; new Tensor(1) |]
+        let before_pad = array_ops.reshape(begin_vec, shape)
+        let after_pad = array_ops.reshape(array_ops.shape(input_vec) - slice_size - begin_vec, shape)
+        let paddings = array_ops.concat ([| before_pad; after_pad |], 1)
+        [| array_ops.pad(grad.[0], paddings); null; null |]
+#endif
+
+    member input.squeeze (squeeze_dims: int[]): DT<'T> = 
         let inputShape = Shape.NoFlex [| for i, dim in Array.indexed input.Shape.DimensionsEliminatingFlex -> if Array.contains i squeeze_dims then Dim.Known 1 else dim |]
         let outputShape = Shape.NoFlex [| for i, dim in Array.indexed input.Shape.DimensionsEliminatingFlex do if not (Array.contains i squeeze_dims) then yield dim |]
         Shape.Unify "Squeeze (input)" input.Shape inputShape
@@ -1109,10 +1126,10 @@ and [<Sealed>] DT<'T> internal
                DT.ProducesCorrectShape  (fun ctxt -> 
                    //use _holder = enter "Squeeze - makeNode" 
                    let inputNode = input.MakeNodeOfCorrectShape(ctxt)
-                   ops.squeeze(inputNode, squeeze_dims)))
+                   gen_ops.squeeze(inputNode, squeeze_dims=squeeze_dims)))
 
     member input.GetItem (indexes: int[]): DT<'T> = 
-        input.slice(indexes, [| for i in indexes -> 1 |]).Squeeze([| for (pos, _) in Array.indexed indexes -> pos |])
+        input.slice(indexes, [| for i in indexes -> 1 |]).squeeze([| for (pos, _) in Array.indexed indexes -> pos |])
 
     member input.GetSlice(choices: Choice<int, int option * int option>[]) =
         let choices = Array.indexed choices
@@ -1138,7 +1155,7 @@ and [<Sealed>] DT<'T> internal
         if squeeze_dims.Length = 0 then 
             slice 
         else 
-            slice.Squeeze(squeeze_dims)
+            slice.squeeze(squeeze_dims)
 
     /// Supports notation `input.[n]`. Index an element in a vector tensor.
     member input.Item 
@@ -1200,7 +1217,7 @@ and [<Sealed>] DT<'T> internal
                DT.ProducesCorrectShape (fun ctxt  -> 
                    //use _holder = enter "ExpandDims - makeNode" 
                    let inputNode = input.MakeNodeOfCorrectShape(ctxt)
-                   ops.expand_dims(inputNode, tf.constant([| dim |]))))
+                   gen_ops.expand_dims(inputNode, tf.constant([| dim |]))))
 
     //static member Concat (concat_dim: int, vs: seq<DT<'T>>): DT<'T> = 
     //    let vs = Seq.toArray vs
@@ -1226,7 +1243,7 @@ and [<Sealed>] DT<'T> internal
         DT<'T>(outputShape, nodeCount, fun (ctxt, canProduceSmallerShape) -> 
             //use _holder = enter "pack - makeNode"
             let inputNodes = DT.MakeNodesOfCorrectShape (ctxt, inputs)
-            let outputNode = ops.pack(inputNodes, axis = Nullable(axis))
+            let outputNode = gen_ops.pack(inputNodes, axis = Nullable(axis))
             outputNode, false)
 
     static member reshape shape (input: DT<'T>): DT<'T> = 
@@ -1236,7 +1253,7 @@ and [<Sealed>] DT<'T> internal
                    //use _holder = enter "Reshape - makeNode" 
                    let inputNode = input.MakeNodeOfCorrectShape(ctxt)
                    let graph = ctxt.Graph
-                   ops.reshape(inputNode, shape.AsTFNode(ctxt.DimVarNodes))))
+                   tf.reshape(inputNode, shape.AsTFNode(ctxt.DimVarNodes))))
 
     static member broadcast_to (input: DT<'T>, outputShape: Shape): DT<'T> = 
         let nodeCount = input.NodeCount + 1
@@ -1276,7 +1293,7 @@ and [<Sealed>] DT<'T> internal
                   let graph = ctxt.Graph
                   let tensor = asNDArray(): NDArray
                   let prelimOutputNode = tf.constant(tensor) //tf.constant(tensor)
-                  ops.reshape(prelimOutputNode, shape.AsTFNode(ctxt.DimVarNodes))),
+                  tf.reshape(prelimOutputNode, shape.AsTFNode(ctxt.DimVarNodes))),
                asNDArray = asNDArray)
 
     /// MM) opening this up temporarily try to do a workaround
@@ -1366,6 +1383,15 @@ and [<Sealed>] DT<'T> internal
                     memoize ctxt.AddGradientNodes key (fun () -> 
                         let xnodes: Tensor[] = DT.MakeNodesOfCorrectShape(ctxt, xs)
                         let ynodes: Tensor[] = [| y.MakeNodeOfCorrectShape(ctxt) |]
+
+#if SLICE_GRAD
+                        // Workaround https://github.com/SciSharp/TensorFlow.NET/issues/464
+                        try 
+                           Tensorflow.ops.get_gradient_function(ynodes.[0].op) |> ignore
+                        with _ -> ()
+                        DT._Init.Force()
+#endif
+
                         let dynodesIn: Tensor[] option = match dy with None -> None | Some z -> Some [| z.MakeNodeOfCorrectShape(ctxt) |]
                         let dynodes = 
                             match dynodesIn with 
@@ -1424,12 +1450,12 @@ and [<Sealed>] DT<'T> internal
             let dims = input.Shape.DimensionsEliminatingFlex
             let is3D = (dims.Length = 3)
             let inputNode = input.MakeNodeOfCorrectShape(ctxt)
-            let inputNode = if is3D then ops.expand_dims(inputNode, tf.constant([| 0 |])) else inputNode
+            let inputNode = if is3D then tf.expand_dims(inputNode, 0) else inputNode
             // TODO: consider the 1 stride on the channels - is it always 1
             let strides = [|1;stride;stride;1|]
             let filtersNode = filters.MakeNodeOfCorrectShape(ctxt)
-            let outputNode = ops.conv2d(inputNode, filtersNode,strides = strides, padding=padding)
-            let outputNode = if is3D then ops.squeeze(outputNode, [| 0 |]) else outputNode
+            let outputNode = gen_ops.conv2d(inputNode, filtersNode,strides = strides, padding=padding)
+            let outputNode = if is3D then tf.squeeze(outputNode, squeeze_dims=0) else outputNode
             outputNode, false)
 
     /// Works on 3D or 4D (4D = batch-of-3D) tensors
@@ -1464,7 +1490,7 @@ and [<Sealed>] DT<'T> internal
             let dims = inputShape.DimensionsEliminatingFlex
             let is3D = (dims.Length = 3)
             let outputBackpropNode = out_backprop.MakeNodeOfCorrectShape(ctxt)
-            let outputBackpropNodeExp = if is3D then ops.expand_dims(outputBackpropNode, tf.constant([| 0 |])) else outputBackpropNode
+            let outputBackpropNodeExp = if is3D then gen_ops.expand_dims(outputBackpropNode, tf.constant([| 0 |])) else outputBackpropNode
             
             let inputShapeExp = if is3D then Shape.NoFlex [| yield Dim.Known 1;  yield! inputShape.DimensionsEliminatingFlex |] else inputShape 
             let inputSizesExp = inputShapeExp.AsTFNode(ctxt.DimVarNodes)
@@ -1472,8 +1498,8 @@ and [<Sealed>] DT<'T> internal
             let filtersNode = filters.MakeNodeOfCorrectShape(ctxt)
             //printfn "is3D = %b, inputShape = %A, filters.Shape = %A, outputBackpropNodeExp.shape = %A, out_backprop.Shape = %A, strides=%A, padding=%A"
             //   is3D inputShape filters.Shape outputBackpropNodeExp.shape out_backprop.Shape strides padding
-            let inputNode = ops.conv2d_backprop_input(input_sizes=inputSizesExp, filter=filtersNode, out_backprop=outputBackpropNodeExp, strides=strides, padding=padding)
-            let inputNode = if is3D then ops.squeeze(inputNode, [| 0 |]) else inputNode
+            let inputNode = gen_ops.conv2d_backprop_input(input_sizes=inputSizesExp, filter=filtersNode, out_backprop=outputBackpropNodeExp, strides=strides, padding=padding)
+            let inputNode = if is3D then tf.squeeze(inputNode, squeeze_dims=0) else inputNode
             inputNode, false)
 
     /// Clips tensor values to a specified min and max.
@@ -1485,7 +1511,7 @@ and [<Sealed>] DT<'T> internal
                    let inputNode = input.MakeNodeOfCorrectShape(ctxt)
                    let lowNode = low.MakeNodeOfCorrectShape(ctxt)
                    let highNode = high.MakeNodeOfCorrectShape(ctxt)
-                   ops.clip_by_value(inputNode, lowNode, highNode)))
+                   tf.clip_by_value(inputNode, lowNode, highNode)))
 
     /// Calculate the mean and variance of <c>input</c>
     static member moments(input: DT<'T>, axes: int list): DT<'T> * DT<'T> = 
@@ -1526,11 +1552,11 @@ and [<Sealed>] DT<'T> internal
                    
                    //let inputNode = input.MakeNodeOfCorrectShape(ctxt)
                    let inputNode = tf.read_file(filename)
-                   let outputNode = ops.decode_jpeg(contents=inputNode, channels=Nullable(channels))
-                   let outputNodeShape = ops.shape(outputNode,out_type=Nullable TF_DataType.TF_INT32 )
+                   let outputNode = gen_ops.decode_jpeg(contents=inputNode, channels=Nullable(channels))
+                   let outputNodeShape = gen_ops.shape(outputNode,out_type=Nullable TF_DataType.TF_INT32 )
                    // Record the solutions to the H and W sizes as shapes available at runtime
-                   ctxt.DimVarNodes.Add(hv, (false, ops.squeeze(ops.slice(outputNodeShape, tf.constant([| 0 |]), tf.constant([| 1 |]), name="slice44"), [| 0 |])))
-                   ctxt.DimVarNodes.Add(wv, (false, ops.squeeze(ops.slice(outputNodeShape, tf.constant([| 1 |]), tf.constant([| 1 |]), name="slice45"), [| 0 |])))
+                   ctxt.DimVarNodes.Add(hv, (false, tf.squeeze(tf.slice(outputNodeShape, [| 0 |], [| 1 |]), squeeze_dims=0)))
+                   ctxt.DimVarNodes.Add(wv, (false, tf.squeeze(tf.slice(outputNodeShape, [| 1 |], [| 1 |]), squeeze_dims=0)))
                    outputNode))
 
     static member with_scope(name: string): IDisposable = 
@@ -1565,7 +1591,7 @@ and [<Sealed>] DT<'T> internal
         //printfn "inputSHapes = %A" (Array.map snd inputShapes)
         //use _holder = enter "PreprocessCore: Create ctxt"
         let dimVarNodes = Dictionary()
-        let inputDimVarPlaceholders = [| for v in inputDimVars -> (v, ops.placeholder(TF_DataType.TF_INT32)) |]
+        let inputDimVarPlaceholders = [| for v in inputDimVars -> (v, tf.placeholder(TF_DataType.TF_INT32)) |]
         for v, ph in inputDimVarPlaceholders do
            dimVarNodes.Add (v, (true, ph))
 
@@ -1593,7 +1619,7 @@ and [<Sealed>] DT<'T> internal
         //printfn "PreprocessCore: Create output nodes, #inputDimVarPlaceholders = %d" inputDimVarPlaceholders.Length
         inputDimVarPlaceholders, placeholderNodes, outputs, outputNodes, outputDimVarNodes, session
 
-    static member internal RunModel (inputDimVarPlaceholders, placeholderNodes, outputValues: DT[], outputNodes: TFOutput[], outputDimVarNodes, session: Session) (inputs: (Shape * NDArray)[]) =
+    static member internal RunModel (inputDimVarPlaceholders, placeholderNodes, outputValues: DT[], outputNodes: Tensor[], outputDimVarNodes, session: Session) (inputs: (Shape * NDArray)[]) =
         //use _holder = enter "precompile phase two start"
         let placeholders = Array.append (Array.map snd inputDimVarPlaceholders) placeholderNodes
         //printfn "inputTensor = %A, #inputDimVarPlaceholders = %d" (inputTensor.ToMuliDimArray()) inputDimVarPlaceholders.Length

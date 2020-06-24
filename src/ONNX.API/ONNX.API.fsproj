@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Utils.fs" />
+    <Compile Include="Utils.Expr.fs" />
+    <Compile Include="Onnx.Protobuf.fs" />
+    <Compile Include="Onnx.API.PascalCase.g.fs" />
+    <Compile Include="Onnx.API.SnakeCase.g.fs" />
+    <Compile Include="Onnx.API.Graph.g.fs" />
+    <Compile Include="Onnx.Expr.fs" />
+    <Compile Include="Onnx.Extensions.fs" />
+    <None Include="onnx_code_gen.py" />
+    <None Include="onnx_schema.proto3" />
+    <None Include="SetupNotes.md" />
+    <None Include="CodeGen.fsx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Quotations.Evaluator" Version="2.1.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.11.4" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.1.2" />
+    <PackageReference Include="System.Runtime" Version="4.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="OnnxMLProto">
+      <HintPath>..\..\protobuf\onnx\csharp\OnnxMLProto.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

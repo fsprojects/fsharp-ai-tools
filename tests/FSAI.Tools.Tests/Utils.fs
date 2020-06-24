@@ -14,7 +14,7 @@ let tf = Tensorflow.Binding.tf
 
 type np = NumSharp.np
 
-let basePath = Path.Combine(__SOURCE_DIRECTORY__,"..")
+let basePath = Path.Combine(__SOURCE_DIRECTORY__,"..","..")
 
 let downloadFile(url:string,path:string) =
     Directory.CreateDirectory(Path.GetDirectoryName(path)) |> ignore

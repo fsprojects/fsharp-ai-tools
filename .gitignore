@@ -17,3 +17,6 @@ notes.txt
 tests/pretrained/
 setup/protogen/
 pretrained/
+protobuf/protoc-3.11.4-win64/
+src/chkpt/
+src/data/
