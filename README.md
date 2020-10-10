@@ -14,7 +14,7 @@ Contents:
 
   **This is now being merged to [DiffSharp 1.0](https://github.com/DiffSharp/DiffSharp/pull/207).**
 
-* fsx2nb now part of [the fsdocs tool](https://fsprojects.github.io/FSharp.Formatting/commandline.html).**
+* fsx2nb **now part of [the fsdocs tool](https://fsprojects.github.io/FSharp.Formatting/commandline.html).**
 
 # ARCHIVAL MATERIAL: FM: An F# DSL for AI Models 
 
