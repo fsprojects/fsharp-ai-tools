@@ -1,5 +1,5 @@
 ﻿
-# TensorFlow Examples in F#
+# ARCHIVAL: TensorFlow Examples in F#
 
 List of examples
 * ImageClassifier
